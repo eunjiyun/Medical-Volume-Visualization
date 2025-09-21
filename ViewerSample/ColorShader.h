@@ -1,4 +1,5 @@
 #pragma once
+#include "QDirect3D11Widget.h"
 class ColorShader : public AlignedAllocationPolicy<16>
 {
 private:
@@ -10,9 +11,9 @@ private:
 	};
 
 public:
-	ColorShaderClass();
-	ColorShaderClass(const ColorShaderClass&);
-	~ColorShaderClass();
+	ColorShader();
+	ColorShader(const ColorShader&);
+	~ColorShader();
 
 	bool Initialize(ID3D11Device*, HWND);
 	void Shutdown();

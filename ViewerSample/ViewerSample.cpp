@@ -1,25 +1,28 @@
 #include "ViewerSample.h"
 
-//À§Á¬ÀÇ ¿ÜÇü Ä¿½ºÅÍ¸¶ÀÌÂ¡
-//¹öÆ°, Ã¼Å©¹Ú½º, ½ºÅ©·Ñ¹Ù µî ±âº» À§Á¬ÀÇ ¸ð¾çÀ» Á÷Á¢ ±×¸± ¼ö ÀÖÀ½
+#include "GraphicsClass.h"
+#include "D3DClass.h"
+
+//ìœ„ì ¯ì˜ ì™¸í˜• ì»¤ìŠ¤í„°ë§ˆì´ì§•
+//ë²„íŠ¼, ì²´í¬ë°•ìŠ¤, ìŠ¤í¬ë¡¤ë°” ë“± ê¸°ë³¸ ìœ„ì ¯ì˜ ëª¨ì–‘ì„ ì§ì ‘ ê·¸ë¦´ ìˆ˜ ìžˆìŒ
 #include <QStyle>
 
-//µð¹ö±ë ¸Þ½ÃÁö Ãâ·Â
+//ë””ë²„ê¹… ë©”ì‹œì§€ ì¶œë ¥
 #include <QDebug>
 
-//ÇöÀç ½Ã°£ °¡Á®¿À±â
+//í˜„ìž¬ ì‹œê°„ ê°€ì ¸ì˜¤ê¸°
 #include <QTime>
 
-//Qt¿¡¼­ µð½ºÇÃ·¹ÀÌ °ü·Ã Á¤º¸¸¦ °¡Á®¿À°Å³ª Á¦¾îÇÒ ¶§ »ç¿ëÇÏ´Â Çì´õ
+//Qtì—ì„œ ë””ìŠ¤í”Œë ˆì´ ê´€ë ¨ ì •ë³´ë¥¼ ê°€ì ¸ì˜¤ê±°ë‚˜ ì œì–´í•  ë•Œ ì‚¬ìš©í•˜ëŠ” í—¤ë”
 #include <QScreen>
 
-//Qt¿¡¼­ ÆË¾÷ ¸Þ½ÃÁö Ã¢(´ëÈ­»óÀÚ) ¶ç¿ï ¶§ »ç¿ëÇÏ´Â Çì´õ
+//Qtì—ì„œ íŒì—… ë©”ì‹œì§€ ì°½(ëŒ€í™”ìƒìž) ë„ìš¸ ë•Œ ì‚¬ìš©í•˜ëŠ” í—¤ë”
 #include <QMessageBox>
 
-//Qt¿¡¼­ Ã¢ÀÌ ´ÝÈú ¶§ ¹ß»ýÇÏ´Â ÀÌº¥Æ®¸¦ Ã³¸®ÇÏ±â À§ÇØ »ç¿ëÇÏ´Â Çì´õ
+//Qtì—ì„œ ì°½ì´ ë‹«íž ë•Œ ë°œìƒí•˜ëŠ” ì´ë²¤íŠ¸ë¥¼ ì²˜ë¦¬í•˜ê¸° ìœ„í•´ ì‚¬ìš©í•˜ëŠ” í—¤ë”
 #include <QCloseEvent>
 
-//Qt¿¡¼­ È­¸é(µð½ºÇÃ·¹ÀÌ)Á¤º¸¿¡ Á¢±ÙÇÏ±â À§ÇØ »ç¿ëµÇ´ø Çì´õ
+//Qtì—ì„œ í™”ë©´(ë””ìŠ¤í”Œë ˆì´)ì •ë³´ì— ì ‘ê·¼í•˜ê¸° ìœ„í•´ ì‚¬ìš©ë˜ë˜ í—¤ë”
 #include <QDesktopWidget>
 
 ViewerSample::ViewerSample(QWidget * parent)
@@ -29,14 +32,34 @@ ViewerSample::ViewerSample(QWidget * parent)
 
 	, m_WindowSize(QSize(1280, 800))
 
-	//Ã¼Å©¹Ú½º À§Á¬À» °¡¸®Å°´Â Æ÷ÀÎÅÍ
+	//ì²´í¬ë°•ìŠ¤ ìœ„ì ¯ì„ ê°€ë¦¬í‚¤ëŠ” í¬ì¸í„°
 	, m_pCbxDoFrames(new QCheckBox(this))
 {
-	//setupUi(this)´Â .ui ÆÄÀÏ¿¡ Á¤ÀÇµÈ ¸ðµç À§Á¬À» this (ex: QMainWindow)¿¡ ºÙÀÌ°í ÃÊ±âÈ­ ÀÛ¾÷
+	//setupUi(this)ëŠ” .ui íŒŒì¼ì— ì •ì˜ëœ ëª¨ë“  ìœ„ì ¯ì„ this (ex: QMainWindow)ì— ë¶™ì´ê³  ì´ˆê¸°í™” ìž‘ì—…
 	ui->setupUi(this);
 
+	// System ê°ì²´ ìƒì„±
+	System = new SystemClass;
+	
+	if (!System)
+	{
+		return;
+	}
 
-	m_pScene = ui->view;
+	// System ê°ì²´ ì´ˆê¸°í™” ë° ì‹¤í–‰
+	if (System->Initialize())
+	{
+		System->m_Graphics->m_Direct3D->qtD3dWidget = ui->view;
+		System->Run();
+	}
+
+	// System ê°ì²´ ì¢…ë£Œ ë° ë©”ëª¨ë¦¬ ë°˜í™˜
+	System->Shutdown();
+	delete System;
+	System = nullptr;
+
+	/*m_pScene = ui->view;
+	m_pScene = ui->view;*/
 
 	adjustWindowSize();
 	addToolbarWidgets();
@@ -59,18 +82,26 @@ void ViewerSample::addToolbarWidgets()
 	m_pCbxDoFrames->setChecked(true);
 	connect(m_pCbxDoFrames, &QCheckBox::stateChanged, [&] {
 		if (m_pCbxDoFrames->isChecked())
-			m_pScene->continueFrames();
+			//System->m_Graphics->m_Direct3D->qtD3dWidget
+			//m_pScene->continueFrames();
+			System->m_Graphics->m_Direct3D->qtD3dWidget->continueFrames();
 		else
-			m_pScene->pauseFrames();
+			//System->m_Graphics->m_Direct3D->qtD3dWidget
+			//m_pScene->pauseFrames();
+			System->m_Graphics->m_Direct3D->qtD3dWidget->pauseFrames();
 		});
 	ui->mainToolBar->addWidget(m_pCbxDoFrames);
 }
 
 void ViewerSample::connectSlots()
 {
-	connect(m_pScene, &QDirect3D11Widget::deviceInitialized, this, &ViewerSample::init);
+	/*connect(m_pScene, &QDirect3D11Widget::deviceInitialized, this, &ViewerSample::init);
 	connect(m_pScene, &QDirect3D11Widget::ticked, this, &ViewerSample::tick);
-	connect(m_pScene, &QDirect3D11Widget::rendered, this, &ViewerSample::render);
+	connect(m_pScene, &QDirect3D11Widget::rendered, this, &ViewerSample::render);*/
+
+	connect(System->m_Graphics->m_Direct3D->qtD3dWidget, &QDirect3D11Widget::deviceInitialized, this, &ViewerSample::init);
+	connect(System->m_Graphics->m_Direct3D->qtD3dWidget, &QDirect3D11Widget::ticked, this, &ViewerSample::tick);
+	connect(System->m_Graphics->m_Direct3D->qtD3dWidget, &QDirect3D11Widget::rendered, this, &ViewerSample::render);
 
 	// NOTE: Additionally, you can listen to some basic IO events.
 	// connect(m_pScene, &QDirect3D11Widget::keyPressed, this, &ViewerSample::onKeyPressed);
@@ -94,8 +125,12 @@ void ViewerSample::init(bool success)
 
 	// Start processing frames with a short delay in case things are still initializing/loading
 	// in the background.
-	QTimer::singleShot(500, this, [&] { m_pScene->run(); });
-	disconnect(m_pScene, &QDirect3D11Widget::deviceInitialized, this, &ViewerSample::init);
+
+
+	//QTimer::singleShot(500, this, [&] { m_pScene->run(); });
+	QTimer::singleShot(500, this, [&] { System->m_Graphics->m_Direct3D->qtD3dWidget->run(); });
+	//disconnect(m_pScene, &QDirect3D11Widget::deviceInitialized, this, &ViewerSample::init);
+	disconnect(System->m_Graphics->m_Direct3D->qtD3dWidget, &QDirect3D11Widget::deviceInitialized, this, &ViewerSample::init);
 }
 
 void ViewerSample::tick()
@@ -113,7 +148,9 @@ void ViewerSample::render()
 void ViewerSample::closeEvent(QCloseEvent * event)
 {
 	event->ignore();
-	m_pScene->release();
+	//System->m_Graphics->m_Direct3D->qtD3dWidget
+	//m_pScene->release();
+	System->m_Graphics->m_Direct3D->qtD3dWidget->release();
 	QTime dieTime = QTime::currentTime().addMSecs(500);
 	while (QTime::currentTime() < dieTime)
 		QCoreApplication::processEvents(QEventLoop::AllEvents, 100);

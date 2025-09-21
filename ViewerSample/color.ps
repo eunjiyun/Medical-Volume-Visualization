@@ -10,14 +10,92 @@ struct PixelInputType
 {
     float4 position : SV_POSITION;
     float4 color : COLOR;
+	 float3 worldPos : TEXCOORD0; // ?îÎìú Í≥µÍ∞Ñ ?ÑÏπò
+
 };
+
+
+
 
 
 ////////////////////////////////////////////////////////////////////////////////
 // Pixel Shader
 ////////////////////////////////////////////////////////////////////////////////
+
+/*
 float4 ColorPixelShader(PixelInputType input) : SV_TARGET
 {
     //return input.color;
-	 return float4(1.0f, 0.0f, 0.0f, 1.0f); // ª°∞£ªˆ
+	 return float4(1.0f, 0.0f, 0.0f, 1.0f); // Îπ®Í∞Ñ??
+}
+*/
+
+
+
+
+
+float4 ColorPixelShader(PixelInputType input) : SV_TARGET {
+
+//float4 lightDir = normalize(float3(0.0f, 0.0f, -1.0f)); // Í¥ëÏõê Î∞©Ìñ•
+float3 lightDir = normalize(float3(0.0f, 0.0f, 1.0f)); // ???Ä???ºÏπò
+
+
+float4 ambientColor = float4(0.2f, 0.2f, 0.2f, 1.0f);   // Ï£ºÎ?Í¥?
+
+    float3 normal = float3(0.0f, 0.0f, 1.0f); // ?âÎ©¥ ?ºÍ∞Å?ïÏùò Î≤ïÏÑ†
+
+
+
+	
+	/*
+	float3 viewDir = normalize(cameraPos - input.worldPos); // ?úÏ†ê Î∞©Ìñ•
+float3 reflectDir = reflect(-lightDir, normal);         // Î∞òÏÇ¨ Î≤°ÌÑ∞
+float spec = pow(saturate(dot(viewDir, reflectDir)), 32); // ?òÏù¥?ºÏù¥??
+
+*/
+
+
+
+
+
+
+
+    float diffuseIntensity = saturate(dot(normal, lightDir));
+
+//	diffuseIntensity = pow(diffuseIntensity, 0.5); // Î∞ùÍ∏∞ Î∂Ä?§ÌåÖ
+
+//	diffuseIntensity = clamp(dot(normal, lightDir) * 2.0, 0.0, 1.0);
+
+	// float diffuseIntensity = saturate(normal, lightDir);
+
+	
+
+	float4 baseColor = float4(1.0f, 0.0f, 0.0f, 1.0f); // ?∞Î°ú Î≥Ä?òÎ°ú ?†Ïñ∏
+
+	    float4 diffuseColor = input.color * diffuseIntensity;
+
+
+		float4 lightColor = float4(1.0f, 0.95f, 0.8f, 1.0f); // ?∞Îúª??Î∞±ÏÉâÍ¥?float4 diffuseColor = input.color * diffuseIntensity * lightColor;
+
+	//diffuseIntensity=1.0;
+
+  //  float4 diffuseColor = input.color;
+
+
+  return ambientColor + diffuseColor;
+
+//  return ambientColor + diffuseColor + specularColor;
+
+
+ // return ambientColor + input.color;
+
+  // return float4(diffuseIntensity.xxx, 1.0f)*10;
+	
+
+	//return dot(normal, lightDir);
+
+	//return float4(diffuseIntensity, diffuseIntensity, diffuseIntensity, 1.0f);
+
+	//return input.color; // Î∞ùÍ∏∞ Ï°∞Ï†à
+
 }
