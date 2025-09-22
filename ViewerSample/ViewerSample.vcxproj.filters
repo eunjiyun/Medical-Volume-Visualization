@@ -111,6 +111,8 @@
   <ItemGroup>
     <FxCompile Include="color.vs" />
     <FxCompile Include="color.ps" />
+    <FxCompile Include="PixelShader.hlsl" />
+    <FxCompile Include="VertexShader.hlsl" />
   </ItemGroup>
   <ItemGroup>
     <None Include=".editorconfig" />

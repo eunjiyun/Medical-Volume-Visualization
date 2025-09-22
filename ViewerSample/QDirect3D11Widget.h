@@ -107,8 +107,15 @@ private:
 
 	void createSwapChainRTV();
 
-	void DrawQuadWithTexture(ID3D11ShaderResourceView* pSRV, const D3D11_VIEWPORT& vp);
+	//void DrawQuadWithTexture(ID3D11ShaderResourceView* pSRV, const D3D11_VIEWPORT& vp);
 	void render();
+	void UpdateColorBuffer();
+	void DrawColoredQuad(const D3D11_VIEWPORT& vp);
+	void InitShaders();
+	D3D11_VIEWPORT CreateViewport(int index);
+	void SetBackgroundColor(int index);
+	void RenderAllQuads();
+	void DrawQuadWithTexture(ID3D11ShaderResourceView* pSRV, const D3D11_VIEWPORT& vp);
 
 	// Qt Events
 private:
@@ -141,6 +148,8 @@ signals:
 	void mouseClicked(QMouseEvent *);
 	void mouseReleased(QMouseEvent *);
 
+
+	
 private slots:
 	void onFrame();
 	void onReset();
@@ -163,6 +172,7 @@ public:
 
 
 	std::vector<ID3D11ShaderResourceView*> m_SRViews;
+	ID3D11Buffer* m_colorBuffer = nullptr;
 private:
 	
 	ID3D11DeviceContext *    m_pDeviceContext;

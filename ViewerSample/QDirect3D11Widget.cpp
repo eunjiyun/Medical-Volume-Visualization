@@ -1,4 +1,4 @@
-﻿/*
+/*
  *
  */
 #pragma comment(lib, "d3d11.lib")
@@ -21,8 +21,8 @@
 #include "modelclass.h"
 #include "colorshader.h"
 #include "graphicsclass.h"
-
-
+#include <wrl/client.h>
+using Microsoft::WRL::ComPtr;
 
 
 
@@ -154,12 +154,17 @@ bool QDirect3D11Widget::init()
 
 	resetEnvironment();
 
-	connect(&m_qTimer, &QTimer::timeout, this, &QDirect3D11Widget::onFrame);
+
+	
 
 
 	initializeRenderTargets();
 
 	createSwapChainRTV();
+	// ✅ 셰이더 초기화
+	InitShaders();
+
+	connect(&m_qTimer, &QTimer::timeout, this, &QDirect3D11Widget::onFrame);
 
 	return true;
 }
@@ -169,7 +174,8 @@ void QDirect3D11Widget::onFrame()
 	if (m_bRenderActive) tick();
 
 	beginScene();
-	render();
+	//render();
+	RenderAllQuads();
 	endScene();
 }
 
@@ -374,27 +380,27 @@ void QDirect3D11Widget::createSwapChainRTV()
 	ReleaseObject(pBackBuffer);
 }
 
-void QDirect3D11Widget::DrawQuadWithTexture(ID3D11ShaderResourceView* pSRV, const D3D11_VIEWPORT& vp)
-{
-	// 1. 뷰포트 설정
-	m_pDeviceContext->RSSetViewports(1, &vp);
-
-	// 2. 셰이더 바인딩
-	m_pDeviceContext->VSSetShader(m_vertexShader, nullptr, 0);
-	m_pDeviceContext->PSSetShader(m_pixelShader, nullptr, 0);
-
-	// 3. 텍스처 바인딩
-	m_pDeviceContext->PSSetShaderResources(0, 1, &pSRV);
-
-	// 4. 정점 버퍼 설정
-	UINT stride = sizeof(Vertex);
-	UINT offset = 0;
-	m_pDeviceContext->IASetVertexBuffers(0, 1, &m_vertexBuffer, &stride, &offset);
-	m_pDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
-
-	// 5. 드로우 호출
-	m_pDeviceContext->Draw(4, 0); // 사각형
-}
+//void QDirect3D11Widget::DrawQuadWithTexture(ID3D11ShaderResourceView* pSRV, const D3D11_VIEWPORT& vp)
+//{
+//	// 1. 뷰포트 설정
+//	m_pDeviceContext->RSSetViewports(1, &vp);
+//
+//	// 2. 셰이더 바인딩
+//	m_pDeviceContext->VSSetShader(m_vertexShader, nullptr, 0);
+//	m_pDeviceContext->PSSetShader(m_pixelShader, nullptr, 0);
+//
+//	// 3. 텍스처 바인딩
+//	m_pDeviceContext->PSSetShaderResources(0, 1, &pSRV);
+//
+//	// 4. 정점 버퍼 설정
+//	UINT stride = sizeof(Vertex);
+//	UINT offset = 0;
+//	m_pDeviceContext->IASetVertexBuffers(0, 1, &m_vertexBuffer, &stride, &offset);
+//	m_pDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
+//
+//	// 5. 드로우 호출
+//	m_pDeviceContext->Draw(4, 0); // 사각형
+//}
 
 void QDirect3D11Widget::render()
 {
@@ -463,6 +469,328 @@ void QDirect3D11Widget::render()
 
 	emit rendered();
 }
+void QDirect3D11Widget::UpdateColorBuffer()
+{
+	D3D11_MAPPED_SUBRESOURCE mapped;
+	m_pDeviceContext->Map(m_colorBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped);
+	memcpy(mapped.pData, &m_BackColor, sizeof(XMFLOAT4));
+	m_pDeviceContext->Unmap(m_colorBuffer, 0);
+
+	m_pDeviceContext->PSSetConstantBuffers(0, 1, &m_colorBuffer);
+}
+void QDirect3D11Widget::DrawColoredQuad(const D3D11_VIEWPORT& vp)
+{
+	m_pDeviceContext->RSSetViewports(1, &vp);
+
+	m_pDeviceContext->IASetInputLayout(m_inputLayout);
+
+	m_pDeviceContext->VSSetShader(m_vertexShader, nullptr, 0);
+	m_pDeviceContext->PSSetShader(m_pixelShader, nullptr, 0);
+	
+
+	UINT stride = sizeof(Vertex);
+	UINT offset = 0;
+	m_pDeviceContext->IASetVertexBuffers(0, 1, &m_vertexBuffer, &stride, &offset);
+	m_pDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
+
+	// 6. ConstantBuffer 적용 (색상 전달)
+	m_pDeviceContext->PSSetConstantBuffers(0, 1, &m_colorBuffer);
+
+	m_pDeviceContext->Draw(4, 0);
+}
+void QDirect3D11Widget::InitShaders()
+{
+	using Microsoft::WRL::ComPtr;
+
+	ComPtr<ID3DBlob> vsBlob;
+	ComPtr<ID3DBlob> psBlob;
+	ComPtr<ID3DBlob> errorBlob;
+
+	// 1. Vertex Shader 컴파일
+	HRESULT hr = D3DCompileFromFile(
+		L"VertexShader.hlsl", nullptr, nullptr,
+		"VSMain", "vs_5_0",
+		D3DCOMPILE_ENABLE_STRICTNESS, 0,
+		&vsBlob, &errorBlob
+	);
+	if (FAILED(hr)) {
+		if (errorBlob) OutputDebugStringA((char*)errorBlob->GetBufferPointer());
+		throw std::runtime_error("Vertex Shader 컴파일 실패");
+	}
+
+	// 2. Pixel Shader 컴파일
+	hr = D3DCompileFromFile(
+		L"PixelShader.hlsl", nullptr, nullptr,
+		"PSMain", "ps_5_0",
+		D3DCOMPILE_ENABLE_STRICTNESS, 0,
+		&psBlob, &errorBlob
+	);
+	if (FAILED(hr)) {
+		if (errorBlob) OutputDebugStringA((char*)errorBlob->GetBufferPointer());
+		throw std::runtime_error("Pixel Shader 컴파일 실패");
+	}
+
+	// 3. 셰이더 객체 생성
+	DXCall(m_pDevice->CreateVertexShader(
+		vsBlob->GetBufferPointer(), vsBlob->GetBufferSize(),
+		nullptr, &m_vertexShader));
+	DXCall(m_pDevice->CreatePixelShader(
+		psBlob->GetBufferPointer(), psBlob->GetBufferSize(),
+		nullptr, &m_pixelShader));
+
+	// 4. 입력 레이아웃 생성
+	D3D11_INPUT_ELEMENT_DESC layout[] = {
+		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0,
+		  D3D11_INPUT_PER_VERTEX_DATA, 0 },
+		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 12,
+		  D3D11_INPUT_PER_VERTEX_DATA, 0 },
+	};
+	DXCall(m_pDevice->CreateInputLayout(
+		layout, ARRAYSIZE(layout),
+		vsBlob->GetBufferPointer(),
+		vsBlob->GetBufferSize(),
+		&m_inputLayout));
+
+	// 5. Constant Buffer 생성
+	D3D11_BUFFER_DESC cbDesc = {};
+	cbDesc.ByteWidth = sizeof(XMFLOAT4);
+	cbDesc.Usage = D3D11_USAGE_DYNAMIC;
+	cbDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+	cbDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+	DXCall(m_pDevice->CreateBuffer(&cbDesc, nullptr, &m_colorBuffer));
+
+		struct Vertex {
+		float x, y, z;
+		float u, v;
+	};
+
+	// 6. 정점 버퍼 생성
+	Vertex vertices[] = {
+		{ -1.0f,  1.0f, 0.0f, 0.0f, 0.0f }, // 좌상
+		{  1.0f,  1.0f, 0.0f, 1.0f, 0.0f }, // 우상
+		{ -1.0f, -1.0f, 0.0f, 0.0f, 1.0f }, // 좌하
+		{  1.0f, -1.0f, 0.0f, 1.0f, 1.0f }  // 우하
+	};
+
+	D3D11_BUFFER_DESC bd = {};
+	bd.Usage = D3D11_USAGE_DEFAULT;
+	bd.ByteWidth = sizeof(vertices);
+	bd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+
+	D3D11_SUBRESOURCE_DATA initData = {};
+	initData.pSysMem = vertices;
+	DXCall(m_pDevice->CreateBuffer(&bd, &initData, &m_vertexBuffer));
+}
+
+//void QDirect3D11Widget::InitShaders()
+//{
+//	using Microsoft::WRL::ComPtr;
+//
+//	ComPtr<ID3DBlob> vsBlob;
+//	ComPtr<ID3DBlob> psBlob;
+//	ComPtr<ID3DBlob> errorBlob;
+//
+//	// --- (셰이더 컴파일 & 입력 레이아웃 생성 부분은 그대로 두시고) ---
+//
+//	// 💡 ConstantBuffer 생성 (색상 전달용)
+//	D3D11_BUFFER_DESC cbDesc = {};
+//	cbDesc.ByteWidth = sizeof(XMFLOAT4);
+//	cbDesc.Usage = D3D11_USAGE_DYNAMIC;
+//	cbDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+//	cbDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+//
+//	HRESULT hr = m_pDevice->CreateBuffer(&cbDesc, nullptr, &m_colorBuffer);
+//	if (FAILED(hr)) {
+//		throw std::runtime_error("ConstantBuffer 생성 실패");
+//	}
+//
+//	// =========================
+//	// 💡 정점 버퍼 생성 추가
+//	// =========================
+//	struct Vertex {
+//		float x, y, z;
+//		float u, v;
+//	};
+//
+//	Vertex vertices[] = {
+//		{ -1.0f,  1.0f, 0.0f, 0.0f, 0.0f }, // 좌상
+//		{  1.0f,  1.0f, 0.0f, 1.0f, 0.0f }, // 우상
+//		{ -1.0f, -1.0f, 0.0f, 0.0f, 1.0f }, // 좌하
+//		{  1.0f, -1.0f, 0.0f, 1.0f, 1.0f }  // 우하
+//	};
+//
+//	D3D11_BUFFER_DESC bd = {};
+//	bd.Usage = D3D11_USAGE_DEFAULT;
+//	bd.ByteWidth = sizeof(vertices);
+//	bd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+//	bd.CPUAccessFlags = 0;
+//
+//	D3D11_SUBRESOURCE_DATA initData = {};
+//	initData.pSysMem = vertices;
+//
+//	hr = m_pDevice->CreateBuffer(&bd, &initData, &m_vertexBuffer);
+//	if (FAILED(hr)) {
+//		throw std::runtime_error("VertexBuffer 생성 실패");
+//	}
+//}
+
+//void QDirect3D11Widget::InitShaders()
+//{
+//	
+//	using Microsoft::WRL::ComPtr;
+//
+//	ComPtr<ID3DBlob> vsBlob;
+//	ComPtr<ID3DBlob> psBlob;
+//	ComPtr<ID3DBlob> errorBlob;
+//
+//	// Vertex Shader 컴파일
+//	HRESULT hr = D3DCompileFromFile(
+//		L"VertexShader.hlsl", nullptr, nullptr,
+//		"VSMain", "vs_5_0",
+//		D3DCOMPILE_ENABLE_STRICTNESS, 0,
+//		&vsBlob, &errorBlob
+//	);
+//	if (FAILED(hr)) {
+//		if (errorBlob) {
+//			OutputDebugStringA((char*)errorBlob->GetBufferPointer());
+//		}
+//		throw std::runtime_error("Vertex Shader 컴파일 실패");
+//	}
+//
+//	// Pixel Shader 컴파일
+//	hr = D3DCompileFromFile(
+//		L"PixelShader.hlsl", nullptr, nullptr,
+//		"PSMain", "ps_5_0",
+//		D3DCOMPILE_ENABLE_STRICTNESS, 0,
+//		&psBlob, &errorBlob
+//	);
+//	if (FAILED(hr)) {
+//		if (errorBlob) {
+//			OutputDebugStringA((char*)errorBlob->GetBufferPointer());
+//		}
+//		throw std::runtime_error("Pixel Shader 컴파일 실패");
+//	}
+//
+//	// 셰이더 객체 생성
+//	m_pDevice->CreateVertexShader(vsBlob->GetBufferPointer(), vsBlob->GetBufferSize(), nullptr, &m_vertexShader);
+//	m_pDevice->CreatePixelShader(psBlob->GetBufferPointer(), psBlob->GetBufferSize(), nullptr, &m_pixelShader);
+//
+//	// 입력 레이아웃 정의
+//	D3D11_INPUT_ELEMENT_DESC layout[] = {
+//		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0,  D3D11_INPUT_PER_VERTEX_DATA, 0 },
+//		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT,    0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+//	};
+//
+//	m_pDevice->CreateInputLayout(layout, ARRAYSIZE(layout), vsBlob->GetBufferPointer(), vsBlob->GetBufferSize(), &m_inputLayout);
+//
+//	// 💡 ConstantBuffer 생성 (색상 전달용)
+//	D3D11_BUFFER_DESC cbDesc = {};
+//	cbDesc.ByteWidth = sizeof(XMFLOAT4);
+//	cbDesc.Usage = D3D11_USAGE_DYNAMIC;
+//	cbDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+//	cbDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+//
+//	hr = m_pDevice->CreateBuffer(&cbDesc, nullptr, &m_colorBuffer);
+//	if (FAILED(hr)) {
+//		throw std::runtime_error("ConstantBuffer 생성 실패");
+//	}
+//
+//}
+D3D11_VIEWPORT QDirect3D11Widget::CreateViewport(int index)
+{
+	D3D11_VIEWPORT vp = {};
+	vp.Width = static_cast<float>(width()) / 2;
+	vp.Height = static_cast<float>(height()) / 2;
+	vp.MinDepth = 0.0f;
+	vp.MaxDepth = 1.0f;
+
+	switch (index) {
+	case 0: vp.TopLeftX = 0; vp.TopLeftY = 0; break;
+	case 1: vp.TopLeftX = vp.Width; vp.TopLeftY = 0; break;
+	case 2: vp.TopLeftX = 0; vp.TopLeftY = vp.Height; break;
+	case 3: vp.TopLeftX = vp.Width; vp.TopLeftY = vp.Height; break;
+	}
+
+	return vp;
+}
+void QDirect3D11Widget::SetBackgroundColor(int index)
+{
+	switch (index) {
+	case 0: m_BackColor = { 1.0f, 0.0f, 0.0f, 1.0f }; break; // 빨강
+	case 1: m_BackColor = { 0.0f, 1.0f, 0.0f, 1.0f }; break; // 초록
+	case 2: m_BackColor = { 0.0f, 0.0f, 1.0f, 1.0f }; break; // 파랑
+	case 3: m_BackColor = { 1.0f, 1.0f, 0.0f, 1.0f }; break; // 노랑
+	}
+}
+//void QDirect3D11Widget::RenderAllQuads()
+//{
+//	m_pDeviceContext->OMSetRenderTargets(1, &m_pSwapChainRTV, nullptr);
+//
+//	for (int i = 0; i < m_SRViews.size(); ++i) {
+//		D3D11_VIEWPORT vp = CreateViewport(i);
+//		SetBackgroundColor(i);
+//
+//		//m_pDeviceContext->ClearRenderTargetView(m_pSwapChainRTV, reinterpret_cast<float*>(&m_BackColor));
+//		DrawQuadWithTexture(m_SRViews[i], vp);
+//	}
+//	// 루프 밖에서 한 번만 클리어
+//	SetBackgroundColor(0); // 초기 배경색 (예: 빨강)
+//	m_pDeviceContext->ClearRenderTargetView(m_pSwapChainRTV, reinterpret_cast<float*>(&m_BackColor));
+//	emit rendered();
+//}
+//void QDirect3D11Widget::RenderAllQuads()
+//{
+//	// 렌더 타겟 설정
+//	m_pDeviceContext->OMSetRenderTargets(1, &m_pSwapChainRTV, nullptr);
+//
+//	// 전체 화면을 초기 배경색으로 클리어 (선택사항)
+//	m_BackColor = { 0.0f, 0.0f, 0.0f, 1.0f }; // 검정 배경
+//	m_pDeviceContext->ClearRenderTargetView(m_pSwapChainRTV, reinterpret_cast<float*>(&m_BackColor));
+//
+//	// 사분할로 텍스처 출력
+//	for (int i = 0; i < m_SRViews.size(); ++i) {
+//		D3D11_VIEWPORT vp = CreateViewport(i);     // 뷰포트 설정
+//		SetBackgroundColor(i);                     // 배경색 설정 (셰이더에서 사용하려면 ConstantBuffer로 전달해야 함)
+//		DrawQuadWithTexture(m_SRViews[i], vp);     // 텍스처 quad 출력
+//	}
+//
+//	emit rendered(); // Qt 시그널
+//}
+void QDirect3D11Widget::RenderAllQuads()
+{
+	// 1. 렌더 타겟 설정
+	m_pDeviceContext->OMSetRenderTargets(1, &m_pSwapChainRTV, nullptr);
+
+	// 2. 전체 화면 초기화 (검정 배경)
+	m_BackColor = { 0.0f, 0.0f, 0.0f, 1.0f };
+	m_pDeviceContext->ClearRenderTargetView(m_pSwapChainRTV, reinterpret_cast<float*>(&m_BackColor));
+
+	// 3. 사분할로 색상 quad 출력
+	for (int i = 0; i < 4; ++i) {
+		D3D11_VIEWPORT vp = CreateViewport(i);  // 뷰포트 설정
+		SetBackgroundColor(i);                  // 색상 설정
+		UpdateColorBuffer();                    // ConstantBuffer에 색상 전달
+		DrawColoredQuad(vp);                    // 색상 quad 출력
+	}
+
+	emit rendered(); // Qt 시그널
+}
+void QDirect3D11Widget::DrawQuadWithTexture(ID3D11ShaderResourceView* pSRV, const D3D11_VIEWPORT& vp)
+{
+	m_pDeviceContext->RSSetViewports(1, &vp);
+	m_pDeviceContext->VSSetShader(m_vertexShader, nullptr, 0);
+	m_pDeviceContext->PSSetShader(m_pixelShader, nullptr, 0);
+	m_pDeviceContext->PSSetShaderResources(0, 1, &pSRV);
+	m_pDeviceContext->IASetInputLayout(m_inputLayout);
+
+	UINT stride = sizeof(Vertex);
+	UINT offset = 0;
+	m_pDeviceContext->IASetVertexBuffers(0, 1, &m_vertexBuffer, &stride, &offset);
+	m_pDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
+
+	m_pDeviceContext->Draw(4, 0);
+}
+
 //
 //void QDirect3D11Widget::onReset()
 //{
