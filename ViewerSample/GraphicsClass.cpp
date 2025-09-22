@@ -24,14 +24,14 @@ GraphicsClass::~GraphicsClass()
 
 bool GraphicsClass::Initialize(int screenWidth, int screenHeight, HWND hwnd)
 {
-	// Direct3D 媛앹껜 ?앹꽦
+	// Direct3D ?�쏆빘猿???밴쉐
 	m_Direct3D = new D3DClass;
 	if(!m_Direct3D)
 	{
 		return false;
 	}
 
-	// Direct3D 媛앹껜 珥덇린??
+	// Direct3D ?�쏆빘猿??λ?�由??
 	//250922
 	/*if(!m_Direct3D->Initialize(screenWidth, screenHeight, VSYNC_ENABLED, hwnd, FULL_SCREEN, SCREEN_DEPTH, SCREEN_NEAR))
 	{
@@ -46,24 +46,24 @@ bool GraphicsClass::Initialize(int screenWidth, int screenHeight, HWND hwnd)
 	//11111111111111111
 	//m_Direct3D->qtD3dWidget->deviceInitialized();
 
-	// m_Camera 媛앹껜 ?앹꽦
+	// m_Camera ?�쏆빘猿???밴쉐
 	m_Camera = new CameraClass;
 	if (!m_Camera)
 	{
 		return false;
 	}
 
-	// 移대찓???ъ????ㅼ젙
+	// ?�삳?�??????????�젟
 	m_Camera->SetPosition(0.0f, 0.0f, -5.0f);
 
-	// m_Model 媛앹껜 ?앹꽦
+	// m_Model ?�쏆빘猿???밴쉐
 	m_Model = new ModelClass;
 	if (!m_Model)
 	{
 		return false;
 	}
 
-	//// m_Model 媛앹껜 珥덇린??
+	//// m_Model ?�쏆빘猿??λ?�由??
 	//if (!m_Model->Initialize(m_Direct3D->qtD3dWidget->m_pDevice))
 	//{
 	//	//250922
@@ -72,14 +72,14 @@ bool GraphicsClass::Initialize(int screenWidth, int screenHeight, HWND hwnd)
 	//	return false;
 	//}
 
-	// m_ColorShader 媛앹껜 ?앹꽦
+	// m_ColorShader ?�쏆빘猿???밴쉐
 	m_ColorShader = new ColorShader;
 	if (!m_ColorShader)
 	{
 		return false;
 	}
 
-	// m_ColorShader 媛앹껜 珥덇린??
+	// m_ColorShader ?�쏆빘猿??λ?�由??
 	//250922
 	/*if (!m_ColorShader->Initialize(m_Direct3D->GetDevice(), hwnd))
 	{
@@ -98,7 +98,7 @@ bool GraphicsClass::Initialize(int screenWidth, int screenHeight, HWND hwnd)
 
 void GraphicsClass::Shutdown()
 {
-	// m_ColorShader 媛앹껜 諛섑솚
+	// m_ColorShader ?�쏆빘猿??�쏆�??
 	if (m_ColorShader)
 	{
 		m_ColorShader->Shutdown();
@@ -106,7 +106,7 @@ void GraphicsClass::Shutdown()
 		m_ColorShader = 0;
 	}
 
-	// m_Model 媛앹껜 諛섑솚
+	// m_Model ?�쏆빘猿??�쏆�??
 	if (m_Model)
 	{
 		m_Model->Shutdown();
@@ -114,14 +114,14 @@ void GraphicsClass::Shutdown()
 		m_Model = 0;
 	}
 
-	// m_Camera 媛앹껜 諛섑솚
+	// m_Camera ?�쏆빘猿??�쏆�??
 	if (m_Camera)
 	{
 		delete m_Camera;
 		m_Camera = 0;
 	}
 
-	// Direct3D 媛앹껜 諛섑솚
+	// Direct3D ?�쏆빘猿??�쏆�??
 	if(m_Direct3D)
 	{
 		m_Direct3D->Shutdown();
@@ -133,35 +133,35 @@ void GraphicsClass::Shutdown()
 
 bool GraphicsClass::Frame()
 {
-	// 洹몃옒???쒕뜑留?泥섎━
+	// ?�밸�?????뺣쐭�?筌ｌ�??
 	return Render();
 }
 
 
 bool GraphicsClass::Render()
 {
-	// ?ъ쓣 洹몃━湲??꾪빐 踰꾪띁瑜?吏?곷땲??
+	// ?????�밸�?곫묾??袁る???�곌??�?��?筌왖???�룸�??
 	m_Direct3D->BeginScene(0.0f, 0.0f, 0.0f, 1.0f);
 
-	// 移대찓?쇱쓽 ?꾩튂???곕씪 酉??됰젹???앹꽦?⑸땲??
+	// ?�삳?�??깆벥 ?袁⑺?????�뺤�?????곗졊????밴쉐??몃빍??
 	m_Camera->Render();
 
-	// 移대찓??諛?d3d 媛앹껜?먯꽌 ?붾뱶, 酉?諛??ъ쁺 ?됰젹??媛?몄샃?덈떎
+	// ?�삳?�????d3d ?�쏆빘猿???????�얜�? ??????????곗졊???�쎛??紐꾩�???�뼄
 	XMMATRIX worldMatrix, viewMatrix, projectionMatrix;
 	m_Direct3D->GetWorldMatrix(worldMatrix);
 	m_Camera->GetViewMatrix(viewMatrix);
 	m_Direct3D->GetProjectionMatrix(projectionMatrix);
 
-	// 紐⑤뜽 踰꾪뀓?ㅼ? ?몃뜳??踰꾪띁瑜?洹몃옒???뚯씠???쇱씤??諛곗튂?섏뿬 ?쒕줈?됱쓣 以鍮꾪빀?덈떎.
+	// 筌뤴뫀???�곌????? ?紐껊????�곌??�?��??�밸�??????�????깆뵥???�쏄????뤿연 ??뺤쨮??깆뱽 餓Β???�鍮????�뼄.
 	m_Model->Render(m_Direct3D->GetDeviceContext());
 
-	// ?됱긽 ?먯씠?붾? ?ъ슜?섏뿬 紐⑤뜽???뚮뜑留곹빀?덈떎.
+	// ??깃맒 ???�??? ?????뤿연 筌뤴뫀????????��?�낱??�???�뼄.
 	if (!m_ColorShader->Render(m_Direct3D->GetDeviceContext(), m_Model->GetIndexCount(), worldMatrix, viewMatrix, projectionMatrix))
 	{
 		return false;
 	}
 
-	// 踰꾪띁???댁슜???붾㈃??異쒕젰?⑸땲??
+	// ?�곌??????곸뒠????�얇????곗뮆???몃빍??
 	m_Direct3D->EndScene();
 
 	return true;

@@ -27,8 +27,9 @@ private:
 	bool SetShaderParameters(ID3D11DeviceContext*, XMMATRIX, XMMATRIX, XMMATRIX);
 	void RenderShader(ID3D11DeviceContext*, int);
 
-private:
+public:
 	ID3D11VertexShader* m_vertexShader = nullptr;
+	//ID3D11VertexShader* vs = nullptr;
 	ID3D11PixelShader* m_pixelShader = nullptr;
 	ID3D11InputLayout* m_layout = nullptr;
 	ID3D11Buffer* m_matrixBuffer = nullptr;
