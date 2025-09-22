@@ -3,26 +3,26 @@
 #include "GraphicsClass.h"
 #include "D3DClass.h"
 
-//위젯의 외형 커스터마이징
-//버튼, 체크박스, 스크롤바 등 기본 위젯의 모양을 직접 그릴 수 있음
+//?袁⑹졐???紐낆굨 ?뚣끉??怨뺤춳??곸췅
+//甕곌쑵?? 筌ｋ똾寃뺠쳸類ㅻ뮞, ??쎄쾿嚥▲끇而???疫꿸퀡???袁⑹졐??筌뤴뫁堉??筌욊낯??域밸챶??????됱벉
 #include <QStyle>
 
-//디버깅 메시지 출력
+//?遺얠쒔繹?筌롫뗄?놅쭪? ?곗뮆??
 #include <QDebug>
 
-//현재 시간 가져오기
+//?袁⑹삺 ??볦퍢 揶쎛?紐꾩궎疫?
 #include <QTime>
 
-//Qt에서 디스플레이 관련 정보를 가져오거나 제어할 때 사용하는 헤더
+//Qt?癒?퐣 ?遺용뮞???쟿???온???類ｋ궖??揶쎛?紐꾩궎椰꾧퀡援???뽯선?????????롫뮉 ??삳쐭
 #include <QScreen>
 
-//Qt에서 팝업 메시지 창(대화상자) 띄울 때 사용하는 헤더
+//Qt?癒?퐣 ??밸씜 筌롫뗄?놅쭪? 筌????遺욧맒?? ?袁⑹뒻 ???????롫뮉 ??삳쐭
 #include <QMessageBox>
 
-//Qt에서 창이 닫힐 때 발생하는 이벤트를 처리하기 위해 사용하는 헤더
+//Qt?癒?퐣 筌≪럩?????쁽 ??獄쏆뮇源??롫뮉 ??源?紐? 筌ｌ꼶???띾┛ ?袁る퉸 ?????롫뮉 ??삳쐭
 #include <QCloseEvent>
 
-//Qt에서 화면(디스플레이)정보에 접근하기 위해 사용되던 헤더
+//Qt?癒?퐣 ?遺얇늺(?遺용뮞???쟿???類ｋ궖???臾롫젏??띾┛ ?袁る퉸 ?????롫쐲 ??삳쐭
 #include <QDesktopWidget>
 
 ViewerSample::ViewerSample(QWidget * parent)
@@ -32,34 +32,36 @@ ViewerSample::ViewerSample(QWidget * parent)
 
 	, m_WindowSize(QSize(1280, 800))
 
-	//체크박스 위젯을 가리키는 포인터
+	//筌ｋ똾寃뺠쳸類ㅻ뮞 ?袁⑹졐??揶쎛?귐뗪텕???????
 	, m_pCbxDoFrames(new QCheckBox(this))
 {
-	//setupUi(this)는 .ui 파일에 정의된 모든 위젯을 this (ex: QMainWindow)에 붙이고 초기화 작업
+	//setupUi(this)??.ui ???뵬???類ㅼ벥??筌뤴뫀諭??袁⑹졐??this (ex: QMainWindow)???븐늿?졿??λ뜃由???臾믩씜
 	ui->setupUi(this);
 
-	// System 객체 생성
-	System = new SystemClass;
-	
-	if (!System)
-	{
-		return;
-	}
+	//// System 揶쏆빘猿???밴쉐
+	//System = new SystemClass;
+	//
+	//if (!System)
+	//{
+	//	return;
+	//}
 
-	// System 객체 초기화 및 실행
-	if (System->Initialize())
-	{
-		System->m_Graphics->m_Direct3D->qtD3dWidget = ui->view;
-		System->Run();
-	}
+	//System->qtD3dWidget = ui->view;
 
-	// System 객체 종료 및 메모리 반환
-	System->Shutdown();
-	delete System;
-	System = nullptr;
+	//// System 揶쏆빘猿??λ뜃由??獄???쎈뻬
+	//if (System->Initialize())
+	//{
+	//	
+	//	System->Run();
+	//}
 
-	/*m_pScene = ui->view;
-	m_pScene = ui->view;*/
+	//// System 揶쏆빘猿??ル굝利?獄?筌롫뗀?덄뵳?獄쏆꼹??
+	//System->Shutdown();
+	//delete System;
+	//System = nullptr;
+
+	m_pScene = ui->view;
+	m_pScene = ui->view;
 
 	adjustWindowSize();
 	addToolbarWidgets();
@@ -95,13 +97,17 @@ void ViewerSample::addToolbarWidgets()
 
 void ViewerSample::connectSlots()
 {
-	/*connect(m_pScene, &QDirect3D11Widget::deviceInitialized, this, &ViewerSample::init);
+	connect(m_pScene, &QDirect3D11Widget::deviceInitialized, this, &ViewerSample::init);
 	connect(m_pScene, &QDirect3D11Widget::ticked, this, &ViewerSample::tick);
-	connect(m_pScene, &QDirect3D11Widget::rendered, this, &ViewerSample::render);*/
+	connect(m_pScene, &QDirect3D11Widget::rendered, this, &ViewerSample::render);
 
-	connect(System->m_Graphics->m_Direct3D->qtD3dWidget, &QDirect3D11Widget::deviceInitialized, this, &ViewerSample::init);
+	/*connect(System->m_Graphics->m_Direct3D->qtD3dWidget, &QDirect3D11Widget::deviceInitialized, this, &ViewerSample::init);
 	connect(System->m_Graphics->m_Direct3D->qtD3dWidget, &QDirect3D11Widget::ticked, this, &ViewerSample::tick);
-	connect(System->m_Graphics->m_Direct3D->qtD3dWidget, &QDirect3D11Widget::rendered, this, &ViewerSample::render);
+	connect(System->m_Graphics->m_Direct3D->qtD3dWidget, &QDirect3D11Widget::rendered, this, &ViewerSample::render);*/
+
+	//connect(System->qtD3dWidget, &QDirect3D11Widget::deviceInitialized, this, &ViewerSample::init);
+	//connect(System->qtD3dWidget, &QDirect3D11Widget::ticked, this, &ViewerSample::tick);
+	//connect(System->qtD3dWidget, &QDirect3D11Widget::rendered, this, &ViewerSample::render);
 
 	// NOTE: Additionally, you can listen to some basic IO events.
 	// connect(m_pScene, &QDirect3D11Widget::keyPressed, this, &ViewerSample::onKeyPressed);
@@ -127,10 +133,12 @@ void ViewerSample::init(bool success)
 	// in the background.
 
 
-	//QTimer::singleShot(500, this, [&] { m_pScene->run(); });
-	QTimer::singleShot(500, this, [&] { System->m_Graphics->m_Direct3D->qtD3dWidget->run(); });
-	//disconnect(m_pScene, &QDirect3D11Widget::deviceInitialized, this, &ViewerSample::init);
-	disconnect(System->m_Graphics->m_Direct3D->qtD3dWidget, &QDirect3D11Widget::deviceInitialized, this, &ViewerSample::init);
+	QTimer::singleShot(500, this, [&] { m_pScene->run(); });
+	disconnect(m_pScene, &QDirect3D11Widget::deviceInitialized, this, &ViewerSample::init);
+
+
+	//QTimer::singleShot(500, this, [&] { System->m_Graphics->m_Direct3D->qtD3dWidget->run(); });
+	//disconnect(System->m_Graphics->m_Direct3D->qtD3dWidget, &QDirect3D11Widget::deviceInitialized, this, &ViewerSample::init);
 }
 
 void ViewerSample::tick()

@@ -2,6 +2,9 @@
 #include "inputclass.h"
 #include "graphicsclass.h"
 #include "systemclass.h"
+#include "QDirect3D11Widget.h"
+#include "D3DClass.h"
+
 
 
 SystemClass::SystemClass()
@@ -21,38 +24,38 @@ SystemClass::~SystemClass()
 
 bool SystemClass::Initialize()
 {
-	// 윈도우 창 가로, 세로 넓이 변수 초기화
+	// ??덈즲??筌?揶쎛嚥? ?紐껋쨮 ?蹂?뵠 癰궰???λ뜃由??
 	int screenWidth = 0;
 	int screenHeight = 0;
 
-	// 윈도우 생성 초기화
+	// ??덈즲????밴쉐 ?λ뜃由??
 	InitializeWindows(screenWidth, screenHeight);
 
-	// m_Input 객체 생성. 이 클래스는 추후 사용자의 키보드 입력 처리에 사용됩니다.
+	// m_Input 揶쏆빘猿???밴쉐. ???????삳뮉 ?곕???????癒?벥 ??삳궖????낆젾 筌ｌ꼶????????몃빍??
 	m_Input = new InputClass;
 	if (!m_Input)
 	{
 		return false;
 	}
 
-	// m_Input 객체 초기화
+	// m_Input 揶쏆빘猿??λ뜃由??
 	m_Input->Initialize();
 
-	// m_Graphics 객체 생성.  그래픽 랜더링을 처리하기 위한 객체입니다.
+	// m_Graphics 揶쏆빘猿???밴쉐.  域밸챶?????뺣쐭筌띻낯??筌ｌ꼶???띾┛ ?袁る립 揶쏆빘猿??낅빍??
 	m_Graphics = new GraphicsClass;
 	if (!m_Graphics)
 	{
 		return false;
 	}
 
-	// m_Graphics 객체 초기화.
+	// m_Graphics 揶쏆빘猿??λ뜃由??
 	return m_Graphics->Initialize(screenWidth, screenHeight, m_hwnd);
 }
 
 
 void SystemClass::Shutdown()
 {
-	// m_Graphics 객체 반환
+	// m_Graphics 揶쏆빘猿?獄쏆꼹??
 	if (m_Graphics)
 	{
 		m_Graphics->Shutdown();
@@ -60,31 +63,31 @@ void SystemClass::Shutdown()
 		m_Graphics = 0;
 	}
 
-	// m_Input 객체 반환
+	// m_Input 揶쏆빘猿?獄쏆꼹??
 	if (m_Input)
 	{
 		delete m_Input;
 		m_Input = 0;
 	}
 
-	// Window 종료 처리
+	// Window ?ル굝利?筌ｌ꼶??
 	ShutdownWindows();
 }
 
 
 void SystemClass::Run()
 {
-	// 메시지 구조체 생성 및 초기화
+	// 筌롫뗄?놅쭪? ?닌듼쒙㎗???밴쉐 獄??λ뜃由??
 	MSG msg;
 	ZeroMemory(&msg, sizeof(MSG));
 
-	// 사용자로부터 종료 메시지를 받을때까지 메시지루프를 돕니다
+	// ????癒?쨮?봔???ル굝利?筌롫뗄?놅쭪???獄쏆룇????돱筌왖 筌롫뗄?놅쭪??룐뫂遊썹몴??類ｋ빍??
 	while (true)
 	{
-		// 윈도우 메시지를 처리합니다
+		// ??덈즲??筌롫뗄?놅쭪???筌ｌ꼶???몃빍??
 		if (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
 		{
-			// 종료 메시지를 받을 경우 메시지 루프를 탈출합니다
+			// ?ル굝利?筌롫뗄?놅쭪???獄쏆룇??野껋럩??筌롫뗄?놅쭪? ?룐뫂遊썹몴???됲뀱??몃빍??
 			if (msg.message == WM_QUIT)
 				break;
 
@@ -93,7 +96,7 @@ void SystemClass::Run()
 		}
 		else
 		{
-			// 그 외에는 Frame 함수를 처리합니다.
+			// 域??紐꾨퓠??Frame ??λ땾??筌ｌ꼶???몃빍??
 			if (!Frame())
 				break;
 		}
@@ -103,13 +106,13 @@ void SystemClass::Run()
 
 bool SystemClass::Frame()
 {
-	// ESC 키 감지 및 종료 여부를 처리합니다
+	// ESC ??揶쏅Ŋ? 獄??ル굝利??????筌ｌ꼶???몃빍??
 	if (m_Input->IsKeyDown(VK_ESCAPE))
 	{
 		return false;
 	}
 
-	// 그래픽 객체의 Frame을 처리합니다
+	// 域밸챶???揶쏆빘猿??Frame??筌ｌ꼶???몃빍??
 	return m_Graphics->Frame();
 }
 
@@ -118,23 +121,23 @@ LRESULT CALLBACK SystemClass::MessageHandler(HWND hwnd, UINT umsg, WPARAM wparam
 {
 	switch (umsg)
 	{
-		// 키보드가 눌러졌는가 처리
+		// ??삳궖??? ???쑎鈺곕슢?쀥첎? 筌ｌ꼶??
 	case WM_KEYDOWN:
 	{
-		// 키 눌림 flag를 m_Input 객체에 처리하도록 합니다
+		// ?????뵝 flag??m_Input 揶쏆빘猿??筌ｌ꼶???롫즲嚥???몃빍??
 		m_Input->KeyDown((unsigned int)wparam);
 		return 0;
 	}
 
-	// 키보드가 떨어졌는가 처리
+	// ??삳궖??? ??λ선鈺곕슢?쀥첎? 筌ｌ꼶??
 	case WM_KEYUP:
 	{
-		// 키 해제 flag를 m_Input 객체에 처리하도록 합니다.
+		// ????곸젫 flag??m_Input 揶쏆빘猿??筌ｌ꼶???롫즲嚥???몃빍??
 		m_Input->KeyUp((unsigned int)wparam);
 		return 0;
 	}
 
-	// 그 외의 모든 메시지들은 기본 메시지 처리로 넘깁니다.
+	// 域??紐꾩벥 筌뤴뫀諭?筌롫뗄?놅쭪???? 疫꿸퀡??筌롫뗄?놅쭪? 筌ｌ꼶?곫에???랁돥??덈뼄.
 	default:
 	{
 		return DefWindowProc(hwnd, umsg, wparam, lparam);
@@ -145,16 +148,17 @@ LRESULT CALLBACK SystemClass::MessageHandler(HWND hwnd, UINT umsg, WPARAM wparam
 
 void SystemClass::InitializeWindows(int& screenWidth, int& screenHeight)
 {
-	// 외부 포인터를 이 객체로 지정합니다
+	
+	// ?紐? ????怨? ??揶쏆빘猿쒏에?筌왖?類λ???덈뼄
 	ApplicationHandle = this;
 
-	// 이 프로그램의 인스턴스를 가져옵니다
+	// ???袁⑥쨮域밸챶????紐꾨뮞??곷뮞??揶쎛?紐꾩긿??덈뼄
 	m_hinstance = GetModuleHandle(NULL);
 
-	// 프로그램 이름을 지정합니다
+	// ?袁⑥쨮域밸챶????已??筌왖?類λ???덈뼄
 	m_applicationName = L"Dx11Demo_04";
 
-	// windows 클래스를 아래와 같이 설정합니다.
+	// windows ?????? ?袁⑥삋?? 揶쏆늿????쇱젟??몃빍??
 	WNDCLASSEX wc;
 	wc.style = CS_HREDRAW | CS_VREDRAW | CS_OWNDC;
 	wc.lpfnWndProc = WndProc;
@@ -166,23 +170,25 @@ void SystemClass::InitializeWindows(int& screenWidth, int& screenHeight)
 	wc.hCursor = LoadCursor(NULL, IDC_ARROW);
 	wc.hbrBackground = (HBRUSH)GetStockObject(BLACK_BRUSH);
 	wc.lpszMenuName = NULL;
-	wc.lpszClassName = (LPCSTR)m_applicationName;
+	//250922
+	//wc.lpszClassName = (LPCSTR)m_applicationName;
+	wc.lpszClassName = m_applicationName;
 	wc.cbSize = sizeof(WNDCLASSEX);
 
-	// windows class를 등록합니다
+	// windows class???源낆쨯??몃빍??
 	RegisterClassEx(&wc);
 
-	// 모니터 화면의 해상도를 읽어옵니다
+	// 筌뤴뫀????遺얇늺????곴맒?袁? ??뚮선??щ빍??
 	screenWidth = GetSystemMetrics(SM_CXSCREEN);
 	screenHeight = GetSystemMetrics(SM_CYSCREEN);
 
 	int posX = 0;
 	int posY = 0;
 
-	// FULL_SCREEN 변수 값에 따라 화면을 설정합니다.
+	// FULL_SCREEN 癰궰??揶쏅?肉??怨뺤뵬 ?遺얇늺????쇱젟??몃빍??
 	if (FULL_SCREEN)
 	{
-		// 풀스크린 모드로 지정했다면 모니터 화면 해상도를 데스크톱 해상도로 지정하고 색상을 32bit로 지정합니다.
+		// ????쎄쾿??筌뤴뫀諭뜻에?筌왖?類λ뻥??삠늺 筌뤴뫀????遺얇늺 ??곴맒?袁? ?怨쀫뮞??????곴맒?袁⑥쨮 筌왖?類λ릭????깃맒??32bit嚥?筌왖?類λ???덈뼄.
 		DEVMODE dmScreenSettings;
 		memset(&dmScreenSettings, 0, sizeof(dmScreenSettings));
 		dmScreenSettings.dmSize = sizeof(dmScreenSettings);
@@ -191,26 +197,46 @@ void SystemClass::InitializeWindows(int& screenWidth, int& screenHeight)
 		dmScreenSettings.dmBitsPerPel = 32;
 		dmScreenSettings.dmFields = DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT;
 
-		// 풀스크린으로 디스플레이 설정을 변경합니다.
+		// ????쎄쾿?깃퀣?앮에??遺용뮞???쟿????쇱젟??癰궰野껋?鍮??덈뼄.
 		ChangeDisplaySettings(&dmScreenSettings, CDS_FULLSCREEN);
 	}
 	else
 	{
-		// 윈도우 모드의 경우 800 * 600 크기를 지정합니다.
+		// ??덈즲??筌뤴뫀諭??野껋럩??800 * 600 ??由곁몴?筌왖?類λ???덈뼄.
 		screenWidth = 800;
 		screenHeight = 600;
 
-		// 윈도우 창을 가로, 세로의 정 가운데 오도록 합니다.
+		// ??덈즲??筌≪럩??揶쎛嚥? ?紐껋쨮????揶쎛??????삳즲嚥???몃빍??
 		posX = (GetSystemMetrics(SM_CXSCREEN) - screenWidth) / 2;
 		posY = (GetSystemMetrics(SM_CYSCREEN) - screenHeight) / 2;
 	}
 
-	// 윈도우를 생성하고 핸들을 구합니다.
-	m_hwnd = CreateWindowEx(WS_EX_APPWINDOW, (LPCSTR)m_applicationName, (LPCSTR)m_applicationName,
-		WS_CLIPSIBLINGS | WS_CLIPCHILDREN | WS_POPUP,
-		posX, posY, screenWidth, screenHeight, NULL, NULL, m_hinstance, NULL);
+	////250922
+	//// ??덈즲?怨? ??밴쉐??랁??紐껊굶???닌뗫???덈뼄.
+	///*m_hwnd = CreateWindowEx(WS_EX_APPWINDOW, (LPCSTR)m_applicationName, (LPCSTR)m_applicationName,
+	//	WS_CLIPSIBLINGS | WS_CLIPCHILDREN | WS_POPUP,
+	//	posX, posY, screenWidth, screenHeight, NULL, NULL, m_hinstance, NULL);*/
+	//m_hwnd = CreateWindowEx(WS_EX_APPWINDOW, m_applicationName,m_applicationName,
+	//	WS_CLIPSIBLINGS | WS_CLIPCHILDREN | WS_POPUP,
+	//	posX, posY, screenWidth, screenHeight, NULL, NULL, m_hinstance, NULL);
 
-	// 윈도우를 화면에 표시하고 포커스를 지정합니다
+
+//	qtD3dWidget->showEvent();
+	//m_hwnd = reinterpret_cast<HWND>(m_Graphics->m_Direct3D->qtD3dWidget->nativeHandle());
+
+
+
+
+	//m_hwnd = reinterpret_cast<HWND>(qtD3dWidget->nativeHandle());
+
+
+
+
+
+	//m_hwnd = reinterpret_cast<HWND>(m_pScene->winId());
+	//m_hwnd = (HWND)(m_Graphics->m_Direct3D->qtD3dWidget->winId());
+
+	// ??덈즲?怨? ?遺얇늺????뽯뻻??랁???鍮??? 筌왖?類λ???덈뼄
 	ShowWindow(m_hwnd, SW_SHOW);
 	SetForegroundWindow(m_hwnd);
 	SetFocus(m_hwnd);
@@ -219,21 +245,23 @@ void SystemClass::InitializeWindows(int& screenWidth, int& screenHeight)
 
 void SystemClass::ShutdownWindows()
 {
-	// 풀스크린 모드였다면 디스플레이 설정을 초기화합니다.
+	// ????쎄쾿??筌뤴뫀諭????삠늺 ?遺용뮞???쟿????쇱젟???λ뜃由?酉鍮??덈뼄.
 	if (FULL_SCREEN)
 	{
 		ChangeDisplaySettings(NULL, 0);
 	}
 
-	// 창을 제거합니다
+	// 筌≪럩????볤탢??몃빍??
 	DestroyWindow(m_hwnd);
 	m_hwnd = NULL;
 
-	// 프로그램 인스턴스를 제거합니다
-	UnregisterClass((LPCSTR)m_applicationName, m_hinstance);
+	// ?袁⑥쨮域밸챶???紐꾨뮞??곷뮞????볤탢??몃빍??
+	//250922
+	//UnregisterClass((LPCSTR)m_applicationName, m_hinstance);
+	UnregisterClass(m_applicationName, m_hinstance);
 	m_hinstance = NULL;
 
-	// 외부포인터 참조를 초기화합니다
+	// ?紐??????筌〓챷?쒐몴??λ뜃由?酉鍮??덈뼄
 	ApplicationHandle = NULL;
 }
 
@@ -242,21 +270,21 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT umessage, WPARAM wparam, LPARAM lparam)
 {
 	switch (umessage)
 	{
-		// 윈도우 종료를 확인합니다
+		// ??덈즲???ル굝利븀몴??類ㅼ뵥??몃빍??
 	case WM_DESTROY:
 	{
 		PostQuitMessage(0);
 		return 0;
 	}
 
-	// 윈도우가 닫히는지 확인합니다
+	// ??덈즲?怨? ???뿳?遺? ?類ㅼ뵥??몃빍??
 	case WM_CLOSE:
 	{
 		PostQuitMessage(0);
 		return 0;
 	}
 
-	// 그 외의 모든 메시지들은 시스템 클래스의 메시지 처리로 넘깁니다.
+	// 域??紐꾩벥 筌뤴뫀諭?筌롫뗄?놅쭪???? ??뽯뮞???????쇱벥 筌롫뗄?놅쭪? 筌ｌ꼶?곫에???랁돥??덈뼄.
 	default:
 	{
 		return ApplicationHandle->MessageHandler(hwnd, umessage, wparam, lparam);

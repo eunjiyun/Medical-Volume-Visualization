@@ -13,6 +13,7 @@ class D3DClass;
 class CameraClass;
 class ModelClass;
 class ColorShader;
+class QDirect3D11Widget;
 
 class GraphicsClass
 {

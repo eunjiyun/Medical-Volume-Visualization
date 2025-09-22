@@ -3,6 +3,8 @@
 
 class InputClass;
 class GraphicsClass;
+class QDirect3D11Widget;
+class D3DClass;
 
 
 class SystemClass
@@ -31,6 +33,7 @@ private:
 	InputClass* m_Input = nullptr;
 public:
 	GraphicsClass* m_Graphics = nullptr;
+	QDirect3D11Widget* qtD3dWidget = nullptr;
 };
 
 static LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);

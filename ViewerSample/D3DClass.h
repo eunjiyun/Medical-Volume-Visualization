@@ -1,8 +1,8 @@
 #pragma once
-#include "QDirect3D11Widget.h"
+//#include "QDirect3D11Widget.h"
 #include "ui_ViewerSample.h"
 
-
+class QDirect3D11Widget;
 
 class D3DClass : public AlignedAllocationPolicy<16>
 {
