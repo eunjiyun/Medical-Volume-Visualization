@@ -7,10 +7,10 @@
 
 #include <QDebug>
 
- //Qt????源???룐뫂遊?癒?퐣 獄쏆뮇源??롫뮉 ??源?紐? ??쀬겱??롫뮉 揶쏆빘猿?
+ //Qt?????繹???猷먮쳜???????꾩룇裕뉑틦??濡ル츎 ???繹?筌? ???ш껑??濡ル츎 ?띠룇鍮섊뙼?
 #include <QEvent>
 
-//Qt?癒?퐣 筌띾뜆????醫롮뵠???紐껋삌??ㅻ굡 ??쎄쾿嚥???뽯뮞筌ｌ꼶? 筌ｌ꼶??????????롫뮉 ??삳쐭
+//Qt?????嶺뚮씭??????ル‘逾???筌뤾퍔????산덧 ???꾩씩????戮?츩嶺뚳퐣瑗? 嶺뚳퐣瑗??????????濡ル츎 ???녹맠
 #include <QWheelEvent>
 
 
@@ -161,7 +161,7 @@ bool QDirect3D11Widget::init()
 	initializeRenderTargets();
 
 	createSwapChainRTV();
-	// ✅ 셰이더 초기화
+	// ???곗씠??珥덇린??
 	InitShaders();
 
 	connect(&m_qTimer, &QTimer::timeout, this, &QDirect3D11Widget::onFrame);
@@ -181,8 +181,8 @@ void QDirect3D11Widget::onFrame()
 
 void QDirect3D11Widget::beginScene()
 {
-	//???쐭??野껋옕? ??甕곕뜄彛???쇱젟
-	//DX11?? 筌ㅼ뮆? 8揶쏆뮇?????쐭??野껋옕????덈뻻??獄쏅뗄???븍막 ????됱벉
+	//???????롪퍔?? ???뺢퀡?꾢퐲????깆젧
+	//DX11?? 嶺뚣끉裕? 8?띠룇裕?????????롪퍔??????덈뻣???꾩룆????釉띾쭑 ?????깅쾳
 
 
 	/*m_pDeviceContext->OMSetRenderTargets
@@ -204,14 +204,14 @@ void QDirect3D11Widget::beginScene()
 			vp.TopLeftX = 0;
 			vp.TopLeftY = 0;
 
-			m_BackColor.r = 1.0f; m_BackColor.g = 0.0f; m_BackColor.b = 0.0f; m_BackColor.a = 1.0f;  // 빨강
+			m_BackColor.r = 1.0f; m_BackColor.g = 0.0f; m_BackColor.b = 0.0f; m_BackColor.a = 1.0f;  // 鍮④컯
 
 		}
 		else if (1 == i) {
 			vp.TopLeftX = width() / 2;
 			vp.TopLeftY = 0;
 
-			m_BackColor.r = 0.0f; m_BackColor.g = 1.0f; m_BackColor.b = 0.0f; m_BackColor.a = 1.0f;  // 초록
+			m_BackColor.r = 0.0f; m_BackColor.g = 1.0f; m_BackColor.b = 0.0f; m_BackColor.a = 1.0f;  // 珥덈줉
 
 
 		}
@@ -219,19 +219,19 @@ void QDirect3D11Widget::beginScene()
 			vp.TopLeftX = 0;
 			vp.TopLeftY = height() / 2;
 
-			m_BackColor.r = 0.0f; m_BackColor.g = 0.0f; m_BackColor.b = 1.0f; m_BackColor.a = 1.0f; // 파랑
+			m_BackColor.r = 0.0f; m_BackColor.g = 0.0f; m_BackColor.b = 1.0f; m_BackColor.a = 1.0f; // ?뚮옉
 
 		}
 		else if (3 == i) {
 			vp.TopLeftX = width() / 2;
 			vp.TopLeftY = height() / 2;
 
-			m_BackColor.r = 1.0f; m_BackColor.g = 1.0f; m_BackColor.b = 0.0f; m_BackColor.a = 1.0f; // 노랑
+			m_BackColor.r = 1.0f; m_BackColor.g = 1.0f; m_BackColor.b = 0.0f; m_BackColor.a = 1.0f; // ?몃옉
 
 		}
 
 		
-		m_pDeviceContext->OMSetRenderTargets(1, &m_RTViews[i], nullptr); // 개별 설정
+		m_pDeviceContext->OMSetRenderTargets(1, &m_RTViews[i], nullptr); // 媛쒕퀎 ?ㅼ젙
 
 	
 		m_pDeviceContext->RSSetViewports(1, &vp);
@@ -270,7 +270,7 @@ void QDirect3D11Widget::initializeRenderTargets()
 	m_SRViews.clear();
 
 	for (int i = 0; i < 4; ++i) {
-		// 1. 텍스처 생성
+		// 1. ?띿뒪泥??앹꽦
 		D3D11_TEXTURE2D_DESC texDesc = {};
 		texDesc.Width = width() / 2;
 		texDesc.Height = height() / 2;
@@ -286,17 +286,17 @@ void QDirect3D11Widget::initializeRenderTargets()
 		//250922  texture
 		DXCall(m_pDevice->CreateTexture2D(&texDesc, nullptr, &pTexture));
 
-		// 2. RenderTargetView 생성
+		// 2. RenderTargetView ?앹꽦
 		ID3D11RenderTargetView* pRTV = nullptr;
 		DXCall(m_pDevice->CreateRenderTargetView(pTexture, nullptr, &pRTV));
 		m_RTViews.push_back(pRTV);
 
-		// 3. ShaderResourceView 생성
+		// 3. ShaderResourceView ?앹꽦
 		ID3D11ShaderResourceView* pSRV = nullptr;
 		DXCall(m_pDevice->CreateShaderResourceView(pTexture, nullptr, &pSRV));
 		m_SRViews.push_back(pSRV);
 
-		// 4. 텍스처 해제
+		// 4. ?띿뒪泥??댁젣
 		pTexture->Release();
 	}
 }
@@ -324,7 +324,7 @@ void QDirect3D11Widget::render()
 	m_pDeviceContext->OMSetRenderTargets(1, &m_pSwapChainRTV, nullptr);
 
 
-	// 뷰포트 설정 (전체 화면)
+	// 酉고룷???ㅼ젙 (?꾩껜 ?붾㈃)
 	D3D11_VIEWPORT vp = {};
 	vp.TopLeftX = 0;
 	vp.TopLeftY = 0;
@@ -334,43 +334,43 @@ void QDirect3D11Widget::render()
 	vp.MaxDepth = 1.0f;
 	m_pDeviceContext->RSSetViewports(1, &vp);
 
-	// 각 렌더 타겟을 ShaderResourceView로 화면에 출력
+	// 媛??뚮뜑 ?寃잛쓣 ShaderResourceView濡??붾㈃??異쒕젰
 	for (int i{}; i < m_SRViews.size(); ++i) {
-		// 예: DrawQuadWithTexture(m_SRViews[i], viewport[i]);
-		// 이 부분은 셰이더와 정점 버퍼로 구현해야 해요
+		// ?? DrawQuadWithTexture(m_SRViews[i], viewport[i]);
+		// ??遺遺꾩? ?곗씠?붿? ?뺤젏 踰꾪띁濡?援ы쁽?댁빞 ?댁슂
 
 
 		if (0 == i) {
 			vp.TopLeftX = 0;
 			vp.TopLeftY = 0;
 
-			m_BackColor.r = 1.0f; m_BackColor.g = 0.0f; m_BackColor.b = 0.0f; m_BackColor.a = 1.0f;  // 빨강
+			m_BackColor.r = 1.0f; m_BackColor.g = 0.0f; m_BackColor.b = 0.0f; m_BackColor.a = 1.0f;  // 鍮④컯
 		}
 		else if (1 == i) {
 			vp.TopLeftX = width() / 2;
 			vp.TopLeftY = 0;
 
-			m_BackColor.r = 0.0f; m_BackColor.g = 1.0f; m_BackColor.b = 0.0f; m_BackColor.a = 1.0f;  // 초록
+			m_BackColor.r = 0.0f; m_BackColor.g = 1.0f; m_BackColor.b = 0.0f; m_BackColor.a = 1.0f;  // 珥덈줉
 		}
 		else if (2 == i) {
 			vp.TopLeftX = 0;
 			vp.TopLeftY = height() / 2;
 
-			m_BackColor.r = 0.0f; m_BackColor.g = 0.0f; m_BackColor.b = 1.0f; m_BackColor.a = 1.0f; // 파랑
+			m_BackColor.r = 0.0f; m_BackColor.g = 0.0f; m_BackColor.b = 1.0f; m_BackColor.a = 1.0f; // ?뚮옉
 		}
 		else if (3 == i) {
 			vp.TopLeftX = width() / 2;
 			vp.TopLeftY = height() / 2;
 
-			m_BackColor.r = 1.0f; m_BackColor.g = 1.0f; m_BackColor.b = 0.0f; m_BackColor.a = 1.0f; // 노랑
+			m_BackColor.r = 1.0f; m_BackColor.g = 1.0f; m_BackColor.b = 0.0f; m_BackColor.a = 1.0f; // ?몃옉
 		}
 
 
 
 
-		m_pDeviceContext->RSSetViewports(1, &vp); // 뷰포트 설정
+		m_pDeviceContext->RSSetViewports(1, &vp); // 酉고룷???ㅼ젙
 
-		DrawQuadWithTexture(m_SRViews[i], vp); // viewport[i]는 위치 정보
+		DrawQuadWithTexture(m_SRViews[i], vp); // viewport[i]???꾩튂 ?뺣낫
 
 
 	}
@@ -402,7 +402,7 @@ void QDirect3D11Widget::DrawColoredQuad(const D3D11_VIEWPORT& vp)
 	m_pDeviceContext->IASetVertexBuffers(0, 1, &m_vertexBuffer, &stride, &offset);
 	m_pDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
 
-	// 6. ConstantBuffer 적용 (색상 전달)
+	// 6. ConstantBuffer ?곸슜 (?됱긽 ?꾨떖)
 	m_pDeviceContext->PSSetConstantBuffers(0, 1, &m_colorBuffer);
 
 	m_pDeviceContext->Draw(4, 0);
@@ -415,7 +415,7 @@ void QDirect3D11Widget::InitShaders()
 	ComPtr<ID3DBlob> psBlob;
 	ComPtr<ID3DBlob> errorBlob;
 
-	// 1. Vertex Shader 컴파일
+	// 1. Vertex Shader 而댄뙆??
 	HRESULT hr = D3DCompileFromFile(
 		L"VertexShader.hlsl", nullptr, nullptr,
 		"VSMain", "vs_5_0",
@@ -424,10 +424,10 @@ void QDirect3D11Widget::InitShaders()
 	);
 	if (FAILED(hr)) {
 		if (errorBlob) OutputDebugStringA((char*)errorBlob->GetBufferPointer());
-		throw std::runtime_error("Vertex Shader 컴파일 실패");
+		throw std::runtime_error("Vertex Shader 而댄뙆???ㅽ뙣");
 	}
 
-	// 2. Pixel Shader 컴파일
+	// 2. Pixel Shader 而댄뙆??
 	hr = D3DCompileFromFile(
 		L"PixelShader.hlsl", nullptr, nullptr,
 		"PSMain", "ps_5_0",
@@ -436,10 +436,10 @@ void QDirect3D11Widget::InitShaders()
 	);
 	if (FAILED(hr)) {
 		if (errorBlob) OutputDebugStringA((char*)errorBlob->GetBufferPointer());
-		throw std::runtime_error("Pixel Shader 컴파일 실패");
+		throw std::runtime_error("Pixel Shader 而댄뙆???ㅽ뙣");
 	}
 
-	// 3. 셰이더 객체 생성
+	// 3. ?곗씠??媛앹껜 ?앹꽦
 	DXCall(m_pDevice->CreateVertexShader(
 		vsBlob->GetBufferPointer(), vsBlob->GetBufferSize(),
 		nullptr, &m_vertexShader));
@@ -447,7 +447,7 @@ void QDirect3D11Widget::InitShaders()
 		psBlob->GetBufferPointer(), psBlob->GetBufferSize(),
 		nullptr, &m_pixelShader));
 
-	// 4. 입력 레이아웃 생성
+	// 4. ?낅젰 ?덉씠?꾩썐 ?앹꽦
 	D3D11_INPUT_ELEMENT_DESC layout[] = {
 		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0,
 		  D3D11_INPUT_PER_VERTEX_DATA, 0 },
@@ -460,7 +460,7 @@ void QDirect3D11Widget::InitShaders()
 		vsBlob->GetBufferSize(),
 		&m_inputLayout));
 
-	// 5. Constant Buffer 생성
+	// 5. Constant Buffer ?앹꽦
 	D3D11_BUFFER_DESC cbDesc = {};
 	cbDesc.ByteWidth = sizeof(XMFLOAT4);
 	cbDesc.Usage = D3D11_USAGE_DYNAMIC;
@@ -473,12 +473,12 @@ void QDirect3D11Widget::InitShaders()
 		float u, v;
 	};
 
-	// 6. 정점 버퍼 생성
+	// 6. ?뺤젏 踰꾪띁 ?앹꽦
 	Vertex vertices[] = {
-		{ -1.0f,  1.0f, 0.0f, 0.0f, 0.0f }, // 좌상
-		{  1.0f,  1.0f, 0.0f, 1.0f, 0.0f }, // 우상
-		{ -1.0f, -1.0f, 0.0f, 0.0f, 1.0f }, // 좌하
-		{  1.0f, -1.0f, 0.0f, 1.0f, 1.0f }  // 우하
+		{ -1.0f,  1.0f, 0.0f, 0.0f, 0.0f }, // 醫뚯긽
+		{  1.0f,  1.0f, 0.0f, 1.0f, 0.0f }, // ?곗긽
+		{ -1.0f, -1.0f, 0.0f, 0.0f, 1.0f }, // 醫뚰븯
+		{  1.0f, -1.0f, 0.0f, 1.0f, 1.0f }  // ?고븯
 	};
 
 	D3D11_BUFFER_DESC bd = {};
@@ -512,31 +512,31 @@ D3D11_VIEWPORT QDirect3D11Widget::CreateViewport(int index)
 void QDirect3D11Widget::SetBackgroundColor(int index)
 {
 	switch (index) {
-	case 0: m_BackColor = { 1.0f, 0.0f, 0.0f, 1.0f }; break; // 빨강
-	case 1: m_BackColor = { 0.0f, 1.0f, 0.0f, 1.0f }; break; // 초록
-	case 2: m_BackColor = { 0.0f, 0.0f, 1.0f, 1.0f }; break; // 파랑
-	case 3: m_BackColor = { 1.0f, 1.0f, 0.0f, 1.0f }; break; // 노랑
+	case 0: m_BackColor = { 1.0f, 0.0f, 0.0f, 1.0f }; break; // 鍮④컯
+	case 1: m_BackColor = { 0.0f, 1.0f, 0.0f, 1.0f }; break; // 珥덈줉
+	case 2: m_BackColor = { 0.0f, 0.0f, 1.0f, 1.0f }; break; // ?뚮옉
+	case 3: m_BackColor = { 1.0f, 1.0f, 0.0f, 1.0f }; break; // ?몃옉
 	}
 }
 
 void QDirect3D11Widget::RenderAllQuads()
 {
-	// 1. 렌더 타겟 설정
+	// 1. ?뚮뜑 ?寃??ㅼ젙
 	m_pDeviceContext->OMSetRenderTargets(1, &m_pSwapChainRTV, nullptr);
 
-	// 2. 전체 화면 초기화 (검정 배경)
+	// 2. ?꾩껜 ?붾㈃ 珥덇린??(寃??諛곌꼍)
 	m_BackColor = { 0.0f, 0.0f, 0.0f, 1.0f };
 	m_pDeviceContext->ClearRenderTargetView(m_pSwapChainRTV, reinterpret_cast<float*>(&m_BackColor));
 
-	// 3. 사분할로 색상 quad 출력
+	// 3. ?щ텇?좊줈 ?됱긽 quad 異쒕젰
 	for (int i = 0; i < 4; ++i) {
-		D3D11_VIEWPORT vp = CreateViewport(i);  // 뷰포트 설정
-		SetBackgroundColor(i);                  // 색상 설정
-		UpdateColorBuffer();                    // ConstantBuffer에 색상 전달
-		DrawColoredQuad(vp);                    // 색상 quad 출력
+		D3D11_VIEWPORT vp = CreateViewport(i);  // 酉고룷???ㅼ젙
+		SetBackgroundColor(i);                  // ?됱긽 ?ㅼ젙
+		UpdateColorBuffer();                    // ConstantBuffer???됱긽 ?꾨떖
+		DrawColoredQuad(vp);                    // ?됱긽 quad 異쒕젰
 	}
 
-	emit rendered(); // Qt 시그널
+	emit rendered(); // Qt ?쒓렇??
 }
 void QDirect3D11Widget::DrawQuadWithTexture(ID3D11ShaderResourceView* pSRV, const D3D11_VIEWPORT& vp)
 {
@@ -558,7 +558,7 @@ void QDirect3D11Widget::DrawQuadWithTexture(ID3D11ShaderResourceView* pSRV, cons
 
 void QDirect3D11Widget::onReset()
 {
-	// 1. 기존 리소스 해제
+	// 1. 湲곗〈 由ъ냼???댁젣
 	for (auto& view : m_RTViews)
 		ReleaseObject(view);
 	m_RTViews.clear();
@@ -570,8 +570,8 @@ void QDirect3D11Widget::onReset()
 	
 	ReleaseObject(pBackBuffer);
 
-	// 4. 오프스크린 렌더 타겟 재생성
-	initializeRenderTargets(); // ← 이 함수에서 m_RTViews, m_SRViews 생성
+	// 4. ?ㅽ봽?ㅽ겕由??뚮뜑 ?寃??ъ깮??
+	initializeRenderTargets(); // ?????⑥닔?먯꽌 m_RTViews, m_SRViews ?앹꽦
 }
 
 
