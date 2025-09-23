@@ -5,8 +5,7 @@
 //{
 //	return tex.Sample(samp, uv);
 //
-//	//return float4(1, 0, 0, 1); // 빨간색 출력
-//
+//	//return float4(1, 0, 0, 1); // ??몿而???곗뮆??//
 //}
 
 
@@ -20,7 +19,7 @@
 //
 //float4 PSMain(PS_INPUT input) : SV_TARGET{
 //	return g_texture.Sample(g_sampler, input.tex);
-//// return float4(1,0,0,1);  // ← 이렇게 되어있으면 무조건 빨강
+//// return float4(1,0,0,1);  // ?????껃칰???뤿선??됱몵筌??얜똻?쒎쳞???몿而?
 //}
 
 
@@ -49,15 +48,7 @@ struct PSOutput {
 	float4 color3 : SV_Target3;
 };
 
-//PSOutput PSMain(float2 uv : TEXCOORD)
-//{
-//	PSOutput o;
-//	o.color0 = tex0.Sample(samp0, uv);
-//	o.color1 = tex1.Sample(samp1, uv);
-//	o.color2 = tex2.Sample(samp2, uv);
-//	o.color3 = tex3.Sample(samp3, uv);
-//	return o;
-//}
+
 
 
 struct VSOutput
@@ -73,5 +64,26 @@ PSOutput PSMain(VSOutput input)
 	o.color1 = tex1.Sample(samp1, input.texcoord);
 	o.color2 = tex2.Sample(samp2, input.texcoord);
 	o.color3 = tex3.Sample(samp3, input.texcoord);
+
+
 	return o;
 }
+
+
+
+//float box(float2 uv, float2 center, float2 size)
+//{
+//	float2 diff = abs(uv - center);
+//	return step(diff.x, size.x) * step(diff.y, size.y);
+//}
+//
+//PSOutput PSMain(VSOutput input)
+//{
+//	PSOutput o;
+//
+//	float2 uv = input.texcoord;
+//
+//	o.color0 = float4(box(uv, float2(0.5, 0.5), float2(0.2, 0.1)), 0, 0, 1); // ??몿而?獄쏅벡??//	o.color1 = float4(0, box(uv, float2(0.3, 0.3), float2(0.1, 0.1)), 0, 1); // ?λ뜄以?獄쏅벡??//	o.color2 = float4(0, 0, box(uv, float2(0.7, 0.7), float2(0.15, 0.15)), 1); // ???삂 獄쏅벡??//	o.color3 = float4(box(uv, float2(0.2, 0.8), float2(0.05, 0.05))); // ?紐껋삂 ?癒?덱
+//
+//	return o;
+//}
