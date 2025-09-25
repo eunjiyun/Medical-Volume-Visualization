@@ -111,6 +111,9 @@ void QDirect3D11Widget::showEvent(QShowEvent* event)
 	}
 
 	QWidget::showEvent(event);
+
+	LoadDICOMSeries();  // 최초 표시 시 DICOM 로드
+
 }
 
 bool QDirect3D11Widget::init()
@@ -176,26 +179,32 @@ bool QDirect3D11Widget::init()
 
 void QDirect3D11Widget::LoadDICOMSeries()
 {
-	std::string folderPath = "D:\\Data\\신이지 cr guide 프로젝트\\DICOM"; // 또는 UI에서 선택된 경로
+	//std::string folderPath = "D:\\Data\\sez\\DICOM"; // 또는 UI에서 선택된 경로
 
-	// FileReader 인스턴스 생성
-	fileReader = new FileReader;
+	//// FileReader 인스턴스 생성
+	//fileReader = new FileReader;
 
-	// DICOM 시리즈 로드
-	if (!fileReader->LoadDICOMSeries(folderPath)) {
-		qDebug() << "Failed to load DICOM series from folder:" << QString::fromStdString(folderPath);
-		return;
-	}
+	//// DICOM 시리즈 로드
+	//if (!fileReader->LoadDICOMSeries(folderPath)) {
+	//	qDebug() << "LoadDICOMSeries : Failed to load DICOM series from folder:" << QString::fromStdString(folderPath);
+	//	return;
+	//}
 
-	//	UINT16 m_width;
-	//UINT16 m_height;
-	// 첫 번째 슬라이스 생성 및 텍스처로 변환
-	std::vector<uint8_t> slice = fileReader->GenerateAxialSlice(0);
-	ID3D11ShaderResourceView* texture = fileReader->CreateTextureFromSlice(slice, fileReader->m_width, fileReader->m_height, m_pDevice);
+	////	UINT16 m_width;
+	////UINT16 m_height;
+	//// 첫 번째 슬라이스 생성 및 텍스처로 변환
+	//std::vector<uint8_t> slice = fileReader->GenerateAxialSlice(0);
+	//ID3D11ShaderResourceView* texture = fileReader->CreateTextureFromSlice(slice, fileReader->m_width, fileReader->m_height, m_pDevice);
 
-	// 텍스처를 위젯에 적용 (예시)
-	m_texture = (ID3D11Texture2D*)texture;
-	//m_fileReader = std::move(fileReader); // 멤버 변수로 저장하고 싶다면
+	//// 텍스처를 위젯에 적용 (예시)
+	//m_texture = (ID3D11Texture2D*)texture;
+	////m_fileReader = std::move(fileReader); // 멤버 변수로 저장하고 싶다면
+
+
+	fileReader = new FileReader();
+	//LoadDICOMSeries
+	//fileReader->ParseSlice((std::string)"D:\\Data\\sez\\DICOM",0);
+	fileReader->LoadDICOMSeries((std::string)"D:\\Data\\sez\\DICOM");
 }
 
 void QDirect3D11Widget::onFrame()
@@ -826,11 +835,6 @@ void QDirect3D11Widget::RenderAllQuads()
 	}
 
 	//// 4. 스왑체인 Present
-
-
-
-
-
 
 
 

@@ -35,6 +35,8 @@
 #*.sqlproj   merge=binary
 #*.wwaproj   merge=binary
 
+
+
 ###############################################################################
 # behavior for image files
 #
@@ -61,3 +63,7 @@
 #*.PDF   diff=astextplain
 #*.rtf   diff=astextplain
 #*.RTF   diff=astextplain
+
+*.vcxproj text eol=crlf
+*.h text eol=crlf
+*.cpp text eol=crlf

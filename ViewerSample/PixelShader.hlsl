@@ -5,7 +5,7 @@
 //{
 //	return tex.Sample(samp, uv);
 //
-//	//return float4(1, 0, 0, 1); // ??몿而???곗뮆??//
+//	//return float4(1, 0, 0, 1); // ??몿�???곗뮆??//
 //}
 
 
@@ -19,7 +19,7 @@
 //
 //float4 PSMain(PS_INPUT input) : SV_TARGET{
 //	return g_texture.Sample(g_sampler, input.tex);
-//// return float4(1,0,0,1);  // ?????껃칰???뤿선??됱몵筌??얜똻?쒎쳞???몿而?
+//// return float4(1,0,0,1);  // ??????껃칰???뤿선???�몵�???�똻??�쳞???몿�?
 //}
 
 
@@ -83,7 +83,6 @@ PSOutput PSMain(VSOutput input)
 //
 //	float2 uv = input.texcoord;
 //
-//	o.color0 = float4(box(uv, float2(0.5, 0.5), float2(0.2, 0.1)), 0, 0, 1); // ??몿而?獄쏅벡??//	o.color1 = float4(0, box(uv, float2(0.3, 0.3), float2(0.1, 0.1)), 0, 1); // ?λ뜄以?獄쏅벡??//	o.color2 = float4(0, 0, box(uv, float2(0.7, 0.7), float2(0.15, 0.15)), 1); // ???삂 獄쏅벡??//	o.color3 = float4(box(uv, float2(0.2, 0.8), float2(0.05, 0.05))); // ?紐껋삂 ?癒?덱
-//
+//	o.color0 = float4(box(uv, float2(0.5, 0.5), float2(0.2, 0.1)), 0, 0, 1); // ??몿�??�쏅�??//	o.color1 = float4(0, box(uv, float2(0.3, 0.3), float2(0.1, 0.1)), 0, 1); // ?λ?�以??�쏅�??//	o.color2 = float4(0, 0, box(uv, float2(0.7, 0.7), float2(0.15, 0.15)), 1); // ??????�쏅�??//	o.color3 = float4(box(uv, float2(0.2, 0.8), float2(0.05, 0.05))); // ?紐껋???????//
 //	return o;
 //}

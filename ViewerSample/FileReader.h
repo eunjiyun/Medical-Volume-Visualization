@@ -1,6 +1,10 @@
 #pragma once
 #include<vector>
+#include<string>
 #include "stdafx.h"
+
+using namespace std;
+
 
 class FileReader {
 public:
@@ -11,13 +15,17 @@ public:
 	UINT16 m_width;
 	UINT16 m_height;
 	int m_depth = 0;
+	//Uint16* m_pixelData = nullptr;
+
 
 	uint16_t sliceSize = m_width * m_height;
-	std::vector<uint16_t> rawSlice; // 반드시 있어야 함!
+	std::vector<uint16_t> rawSlice; // 獄쏆꼶諭????됰선????
 
 public:
-	bool LoadDICOMSeries(const std::string& folderPath);
-	bool ParseSlice(std::string& filePath, int sliceIndex);
+	//bool LoadDICOMSeries(const std::string& folderPath);
+	bool LoadDICOMSeries(std::string folderPath);
+
+	bool ParseSlice(std::string filePath, int sliceIndex);
 	bool BuildVolume();
 	void PrintMetadata();
 	std::vector<uint8_t> GenerateAxialSlice(int zIndex);
