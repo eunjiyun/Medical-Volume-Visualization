@@ -27,6 +27,10 @@
 #include <vector>
 #include "FileReader.h"
 
+#include "imgui.h"
+#include "imgui_impl_dx11.h"
+#include "imgui_impl_win32.h"
+
 using Microsoft::WRL::ComPtr;
 
 
@@ -113,6 +117,18 @@ void QDirect3D11Widget::showEvent(QShowEvent* event)
 	QWidget::showEvent(event);
 
 	LoadDICOMSeries();  // 최초 표시 시 DICOM 로드
+
+
+    ImGui::CreateContext();
+    ImGuiIO& io = ImGui::GetIO();
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+
+    ImGui::StyleColorsDark();
+
+    HWND hwnd = (HWND)this->winId(); // QWidget 기반이라면 this->winId()로 HWND 확보
+
+    ImGui_ImplWin32_Init(hwnd); // Qt에서 가져온 HWND
+    ImGui_ImplDX11_Init(m_pDevice, m_pDeviceContext);
 
 }
 
