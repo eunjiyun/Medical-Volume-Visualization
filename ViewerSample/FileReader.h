@@ -2,6 +2,7 @@
 #include<vector>
 #include<string>
 #include "stdafx.h"
+#include <dcmtk/ofstd/ofstring.h>
 
 using namespace std;
 
@@ -20,6 +21,9 @@ public:
 
 	uint16_t sliceSize = m_width * m_height;
 	std::vector<uint16_t> rawSlice; // 獄쏆꼶諭????됰선????
+
+
+    OFString patientName, birthDate, studyDate, kvp;
 
 public:
 	//bool LoadDICOMSeries(const std::string& folderPath);

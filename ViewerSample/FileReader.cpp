@@ -4,7 +4,7 @@
 #include <dcmtk/dcmdata/dcfilefo.h>
 #include <dcmtk/dcmdata/dcdeftag.h>
 #include <dcmtk/ofstd/ofcond.h>
-#include <dcmtk/ofstd/ofstring.h>
+
 #include <dcmtk/dcmdata/dctypes.h>
 #include <dcmtk/config/osconfig.h>  // 플랫폼별 타입 정의
 #include <filesystem>
@@ -130,7 +130,7 @@ bool FileReader::ParseSlice(const std::string path, int sliceIndex) {
 	}
 
 	// 메타데이터 출력 (선택 사항)
-	OFString patientName, birthDate, studyDate, kvp;
+	//OFString patientName, birthDate, studyDate, kvp;
 	dataset->findAndGetOFString(DCM_PatientName, patientName);
 	dataset->findAndGetOFString(DCM_PatientBirthDate, birthDate);
 	dataset->findAndGetOFString(DCM_StudyDate, studyDate);

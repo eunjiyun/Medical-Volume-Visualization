@@ -850,6 +850,40 @@ void QDirect3D11Widget::RenderAllQuads()
 		DrawQuadWithTexture(m_SRViews[i], vp);      // ← 여기서 호출!
 	}
 
+
+    // ✅ 여기에 ImGui 렌더링 추가!
+    ImGui_ImplDX11_NewFrame();
+    ImGui_ImplWin32_NewFrame();
+    ImGui::NewFrame();
+
+    ImGuiIO& io = ImGui::GetIO();
+
+    //C:\\Projects\\sample\\Qt3DViewer\\x64\\Debug\\NotoSansCJKkr-Regular.otf
+
+    //auto path = QCoreApplication::applicationDirPath()+"NotoSansCJKkr-Regular.otf";
+    //QByteArray fontPathUtf8 = path.toUtf8(); // UTF-8로 변환
+
+
+    io.Fonts->AddFontFromFileTTF("C:\\Projects\\sample\\Qt3DViewer\\x64\\Debug\\NotoSansCJKkr-Regular.otf", 18.0f, nullptr, io.Fonts->GetGlyphRangesKorean());
+    io.Fonts->Build();
+  
+    ImGui::SetNextWindowPos(ImVec2(0, 0)); // 좌측 상단 위치
+    ImGui::SetNextWindowSize(ImVec2(200, 100));
+    ImGui::Begin("DICOM Info", nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
+    ImGui::Text("Patient Name: %s", fileReader->patientName.c_str());
+    ImGui::Text("Birth Date: %s", fileReader->birthDate.c_str());
+    ImGui::Text("Study Date: %s", fileReader->studyDate.c_str());
+    ImGui::Text("KVP: %s", fileReader->kvp.c_str());
+
+    ImGui::End();
+
+    ImGui::Render();
+    ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
+
+
+
+
+
 	//// 4. 스왑체인 Present
 
 
