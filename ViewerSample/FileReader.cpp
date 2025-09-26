@@ -134,7 +134,15 @@ bool FileReader::ParseSlice(const std::string path, int sliceIndex) {
 	dataset->findAndGetOFString(DCM_PatientName, patientName);
 	dataset->findAndGetOFString(DCM_PatientBirthDate, birthDate);
 	dataset->findAndGetOFString(DCM_StudyDate, studyDate);
-	dataset->findAndGetOFString(DCM_KVP, kvp);
+//	dataset->findAndGetOFString(DCM_KVP, kvp);
+
+
+
+    // 추가 정보
+    dataset->findAndGetOFString(DCM_PatientID, patientID);       // 환자 ID
+    dataset->findAndGetOFString(DCM_PatientSex, patientMF);     // 성별 (M/F/O)
+   // dataset->findAndGetOFString(DCM_PatientAge, patientAge);     // 나이 (예: "032Y")
+
 
 	//std::string birthYear = birthDate.substr(0, 4);
 
@@ -142,7 +150,8 @@ bool FileReader::ParseSlice(const std::string path, int sliceIndex) {
 	std::cout << " Patient Name: " << patientName << std::endl;
 	std::cout << " Birth Date:   " << birthDate << std::endl;
 	std::cout << " Study Date:  " << studyDate << std::endl;
-	std::cout << " KVP:          " << kvp << " kV" << std::endl;
+	std::cout << " DCM_PatientAge:          " << patientAge <<  std::endl;
+    std::cout << " DCM_PatientBirthDate:          " << birthDate << std::endl;
 
 	return true;
 }

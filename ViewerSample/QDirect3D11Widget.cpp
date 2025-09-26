@@ -851,29 +851,172 @@ void QDirect3D11Widget::RenderAllQuads()
 	}
 
 
+  
+
+    ImGuiIO& io = ImGui::GetIO();
+
+ //   //C:\\Projects\\sample\\Qt3DViewer\\x64\\Debug\\NotoSansCJKkr-Regular.otf
+
+ //   //auto path = QCoreApplication::applicationDirPath()+"NotoSansCJKkr-Regular.otf";
+ //   //QByteArray fontPathUtf8 = path.toUtf8(); // UTF-8로 변환
+
+
+ //   //io.Fonts->AddFontFromFileTTF("C:\\Projects\\sample\\Qt3DViewer\\x64\\Debug\\NotoSansCJKkr-Regular.otf", 18.0f, nullptr, io.Fonts->GetGlyphRangesKorean());
+
+
+ //   ImFontConfig font_cfg;
+ //   font_cfg.OversampleH = 3;
+ //   font_cfg.OversampleV = 3;
+ //   font_cfg.PixelSnapH = true;
+
+ //   //io.Fonts->AddFontFromFileTTF("C:\\Projects\\sample\\Qt3DViewer\\x64\\Debug\\NotoSansCJKkr-Regular.otf", 20.0f, &font_cfg, io.Fonts->GetGlyphRangesKorean());
+
+
+ //   //static const ImWchar* ranges = io.Fonts->GetGlyphRangesKorean();
+ //   //io.Fonts->AddFontFromFileTTF("C:\\Projects\\sample\\Qt3DViewer\\x64\\Debug\\NotoSansCJKkr-Regular.otf", 20.0f, &font_cfg, ranges);
+ //   
+ //   static const ImWchar customRange[] = {
+ //   0x0020, 0x00FF, // 기본 라틴
+ //   0x3131, 0x3163, // 한글 자모
+ //   0xAC00, 0xD7A3, // 한글 완성형
+ //   0
+ //   };
+ //   io.Fonts->AddFontFromFileTTF("NotoSansCJKkr-Regular.otf", 30.0f, &font_cfg, customRange);
+
+ //   /*ImFont* font = ImGui::GetIO().Fonts->Fonts[0];
+ //   if (font) {
+ //       const ImFontGlyph* glyph = font->FindGlyph(u'한');
+ //       if (glyph) {
+ //           std::cout << "[디버깅] '한' 글리프 있음! Index: " << glyph->Codepoint << std::endl;
+ //       }
+ //       else {
+ //           std::cout << "[디버깅] '한' 글리프 없음! => 폰트에 한글이 포함되지 않았거나 범위 누락" << std::endl;
+ //       }
+
+ //       std::cout << "[디버깅] 전체 글리프 개수: " << font->Glyphs.Size << std::endl;
+ //   }
+ //   else {
+ //       std::cout << "[디버깅] 폰트 로딩 실패! Fonts[0]이 nullptr입니다." << std::endl;
+ //   }*/
+
+ ///*   std::string name = fileReader->patientName.c_str();
+ //   qDebug() << "[디버깅] 환자 이름 원본:"
+ //       << QString::fromStdString(fileReader->patientName);*/
+
+ //   QString name = QString::fromLocal8Bit(fileReader->patientName.c_str());
+ //   qDebug() << "[디버깅] 환자 이름 (로컬 인코딩 → UTF-8):" << name;
+
+ //  
+ //   //// UTF-8 유효성 검사 (간단한 방식)
+ //   //bool isUtf8 = true;
+ //   //for (size_t i = 0; i < name.size(); ++i) {
+ //   //    unsigned char c = name[i];
+ //   //    if (c >= 0x80) {
+ //   //        if ((c & 0xE0) == 0xC0 && i + 1 < name.size() &&
+ //   //            (name[i + 1] & 0xC0) == 0x80) {
+ //   //            i += 1;
+ //   //        }
+ //   //        else if ((c & 0xF0) == 0xE0 && i + 2 < name.size() &&
+ //   //            (name[i + 1] & 0xC0) == 0x80 &&
+ //   //            (name[i + 2] & 0xC0) == 0x80) {
+ //   //            i += 2;
+ //   //        }
+ //   //        else {
+ //   //            isUtf8 = false;
+ //   //            break;
+ //   //        }
+ //   //    }
+ //   //}
+ //   //qDebug() << "[디버깅] 환자 이름 UTF-8 여부:"
+ //   //    << (isUtf8 ? "✅ UTF-8" : "❌ UTF-8 아님");
+
+
+ //   io.Fonts->Build();
+
+
+
+ //   //ImFont* font = io.Fonts->Fonts[0];
+ //   //if (font) {
+ //   //    const ImFontGlyph* glyph = font->FindGlyph(u'신');
+ //   //    qDebug() << "[디버깅] '신' 글리프 있음:" << (glyph ? "✅ 있음" : "❌ 없음");
+ //   //}
+
+
+
+
+
+
+
+    // 폰트 등록은 여기서!
+    static bool fontLoaded = false;
+    if (!fontLoaded) {
+        ImFontConfig font_cfg;
+        font_cfg.OversampleH = 3;
+        font_cfg.OversampleV = 3;
+        font_cfg.PixelSnapH = true;
+
+        static const ImWchar customRange[] = {
+            0x0020, 0x00FF,
+            0x3131, 0x3163,
+            0xAC00, 0xD7A3,
+            0
+        };
+
+        io.Fonts->AddFontFromFileTTF("NotoSansCJKkr-Regular.otf", 18.0f, &font_cfg, customRange);
+        io.Fonts->Build();
+        fontLoaded = true;
+    }
+
+
+
     // ✅ 여기에 ImGui 렌더링 추가!
     ImGui_ImplDX11_NewFrame();
     ImGui_ImplWin32_NewFrame();
     ImGui::NewFrame();
 
-    ImGuiIO& io = ImGui::GetIO();
-
-    //C:\\Projects\\sample\\Qt3DViewer\\x64\\Debug\\NotoSansCJKkr-Regular.otf
-
-    //auto path = QCoreApplication::applicationDirPath()+"NotoSansCJKkr-Regular.otf";
-    //QByteArray fontPathUtf8 = path.toUtf8(); // UTF-8로 변환
 
 
-    io.Fonts->AddFontFromFileTTF("C:\\Projects\\sample\\Qt3DViewer\\x64\\Debug\\NotoSansCJKkr-Regular.otf", 18.0f, nullptr, io.Fonts->GetGlyphRangesKorean());
-    io.Fonts->Build();
+
+
   
     ImGui::SetNextWindowPos(ImVec2(0, 0)); // 좌측 상단 위치
-    ImGui::SetNextWindowSize(ImVec2(200, 100));
-    ImGui::Begin("DICOM Info", nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
-    ImGui::Text("Patient Name: %s", fileReader->patientName.c_str());
-    ImGui::Text("Birth Date: %s", fileReader->birthDate.c_str());
-    ImGui::Text("Study Date: %s", fileReader->studyDate.c_str());
-    ImGui::Text("KVP: %s", fileReader->kvp.c_str());
+    ImGui::SetNextWindowSize(ImVec2(140, 150));
+    ImGui::Begin((QString::fromLocal8Bit("환자 정보")).toUtf8().constData(), nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
+   // ImGui::Text("Patient Name: %s", fileReader->patientName.c_str());
+        QString name = QString::fromLocal8Bit(fileReader->patientName.c_str());
+
+    //ImGui::Text(QString::fromLocal8Bit("이름: ")%s", name.toUtf8().constData());
+        QString label = QString::fromLocal8Bit("이름 : ") + name;
+        ImGui::Text("%s", label.toUtf8().constData());
+
+
+    //qDebug()  << "name.toUtf8().constData() : " << name.toUtf8().constData() << endl;
+
+        QString patientMF = QString::fromLocal8Bit(fileReader->patientMF.c_str());
+        QString patientMFLabel = QString::fromLocal8Bit("성별 : ") + patientMF;
+        ImGui::Text("%s", patientMFLabel.toUtf8().constData());
+
+        QString patientID = QString::fromLocal8Bit(fileReader->patientID.c_str());
+        QString patientIDLabel = QString::fromLocal8Bit("아이디 : ") + patientID;
+        ImGui::Text("%s", patientIDLabel.toUtf8().constData());
+
+        /*QString patientAge = QString::fromLocal8Bit(fileReader->patientAge.c_str());
+        QString patientAgeLabel = QString::fromLocal8Bit("나이 : ") + patientAge;
+        ImGui::Text("%s", patientAgeLabel.toUtf8().constData());*/
+
+        QString patientBirth = QString::fromLocal8Bit(fileReader->birthDate.c_str());
+        QString patientBirthDate = QString::fromLocal8Bit("생년월일 : ") + patientBirth;
+        ImGui::Text("%s", patientBirthDate.toUtf8().constData());
+
+        QString studyDate = QString::fromLocal8Bit(fileReader->studyDate.c_str());
+        QString studyDateLabel = QString::fromLocal8Bit("검사일 : ") + studyDate;
+        ImGui::Text("%s", studyDateLabel.toUtf8().constData());
+
+    ////ImGui::Text("Birth Date: %s", fileReader->birthDate.c_str());
+    //ImGui::Text("성별: %s", fileReader->patientMF.c_str());
+    //ImGui::Text("아이디: %s", fileReader->patientID.c_str());
+    //ImGui::Text("나이: %s", fileReader->patientAge.c_str());
+    //ImGui::Text("검사일: %s", fileReader->studyDate.c_str());
 
     ImGui::End();
 
