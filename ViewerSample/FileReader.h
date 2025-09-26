@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include<vector>
 #include<string>
 #include "stdafx.h"
@@ -20,15 +20,17 @@ public:
 
 
 	uint16_t sliceSize = m_width * m_height;
-	std::vector<uint16_t> rawSlice; // ?�쏆꼶諭?????�선????
+	std::vector<uint16_t> rawSlice; // ?꾩룇瑗띈キ?????곗꽑????
 
 
     OFString patientName, birthDate, studyDate, kvp;
     OFString patientID, patientMF, patientAge;
+    std::vector<uint8_t> axialSlice;
+    ID3D11ShaderResourceView* axialTextureSRV, *coronalTextureSRV, *sagittalTextureSRV;
 
 public:
 	//bool LoadDICOMSeries(const std::string& folderPath);
-	bool LoadDICOMSeries(std::string folderPath);
+	bool LoadDICOMSeries(std::string folderPath,  ID3D11Device* g_pd3dDevice);
 
 	bool ParseSlice(std::string filePath, int sliceIndex);
 	bool BuildVolume();

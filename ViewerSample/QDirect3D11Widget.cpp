@@ -116,7 +116,7 @@ void QDirect3D11Widget::showEvent(QShowEvent* event)
 
 	QWidget::showEvent(event);
 
-	LoadDICOMSeries();  // 최초 표시 시 DICOM 로드
+	//LoadDICOMSeries();  // 최초 표시 시 DICOM 로드
 
 
     ImGui::CreateContext();
@@ -181,7 +181,7 @@ bool QDirect3D11Widget::init()
 
 
 
-
+    LoadDICOMSeries();  // 최초 표시 시 DICOM 로드
 	initializeRenderTargets();
 
 	createSwapChainRTV();
@@ -220,7 +220,7 @@ void QDirect3D11Widget::LoadDICOMSeries()
 	fileReader = new FileReader();
 	//LoadDICOMSeries
 	//fileReader->ParseSlice((std::string)"D:\\Data\\sez\\DICOM",0);
-	fileReader->LoadDICOMSeries((std::string)"D:\\Data\\sez\\DICOM");
+	fileReader->LoadDICOMSeries((std::string)"D:\\Data\\sez\\DICOM", m_pDevice);
 }
 
 void QDirect3D11Widget::onFrame()
@@ -297,6 +297,7 @@ void QDirect3D11Widget::endScene()
 	if (FAILED(m_pSwapChain->Present(1, 0))) { onReset(); }
 }
 
+
 void QDirect3D11Widget::tick()
 {
 	// TODO: Update your scene here. For aesthetics reasons, only do it here if it's an
@@ -313,6 +314,9 @@ void QDirect3D11Widget::initializeRenderTargets()
 	m_RTViews.clear();
 	m_SRViews.clear();
 	m_samplerState.clear();
+
+
+
 
 	for (int i = 0; i < 4; ++i) {
 		// 1. ??용뮞筌???밴쉐
@@ -336,10 +340,23 @@ void QDirect3D11Widget::initializeRenderTargets()
 		DXCall(m_pDevice->CreateRenderTargetView(pTexture, nullptr, &pRTV));
 		m_RTViews.push_back(pRTV);
 
-		// 3. ShaderResourceView ??밴쉐
-		ID3D11ShaderResourceView* pSRV = nullptr;
-		DXCall(m_pDevice->CreateShaderResourceView(pTexture, nullptr, &pSRV));
-		m_SRViews.push_back(pSRV);
+        if (0== i) {
+            // 3. ShaderResourceView ??밴쉐
+            ID3D11ShaderResourceView* pSRV = nullptr;
+            DXCall(m_pDevice->CreateShaderResourceView(pTexture, nullptr, &pSRV));
+
+            m_SRViews.push_back(pSRV);
+        }
+        else if(1==i){
+            m_SRViews.push_back(fileReader->axialTextureSRV);
+        }
+        else if (2 == i) {
+            m_SRViews.push_back(fileReader->coronalTextureSRV);
+        }
+        else if (3 == i) {
+            m_SRViews.push_back(fileReader->sagittalTextureSRV);
+        }
+
 
 		// 4. 샘플러 상태 생성
 		D3D11_SAMPLER_DESC sampDesc = {};
@@ -433,7 +450,7 @@ void QDirect3D11Widget::render()
 
 		DrawQuadWithTexture(m_SRViews[i], vp); // viewport[i]???袁⑺뒄 ?類ｋ궖
 
-
+        
 	}
 
 
@@ -798,6 +815,14 @@ void QDirect3D11Widget::RenderAllQuads()
 	//	DrawColoredQuad(vp);                    // ??깃맒 quad ?곗뮆??
 	//}
 
+
+    //250926
+    //int currentZ = fileReader->m_depth / 2;
+    //std::vector<uint8_t> axialSlice = fileReader->GenerateAxialSlice(currentZ);
+    //axialTextureSRV = fileReader->CreateTextureFromSlice(axialSlice,
+    //    fileReader->m_width, fileReader->m_height, m_pDevice);
+
+
 	m_pDeviceContext->OMSetRenderTargets(4, m_RTViews.data(), nullptr);
 
 	//// 1. 각 렌더 타겟에 개별 콘텐츠 렌더링
@@ -812,10 +837,33 @@ void QDirect3D11Widget::RenderAllQuads()
 	//}
 
 
+    //250926
+    //axial texture 바인딩
+    //
+
+
+
+    //m_pDeviceContext->PSSetShaderResources(0, 1, &axialTextureSRV);
+    //m_pDeviceContext->PSSetSamplers(0, 1, &m_samplerState[0]);
+
+
+   
+
+
+    
+
 
 	m_pDeviceContext->PSSetShaderResources(0, 4, m_SRViews.data());     // tex0~tex3
+
+
+  //  m_pDeviceContext->PSSetShaderResources(0, 4, axialTextureSRV.data());     // tex0~tex3
 	m_pDeviceContext->PSSetSamplers(0, 4, m_samplerState.data());       // samp0~samp3
 
+
+    //m_pDeviceContext->PSSetShaderResources(0, 1, &axialTextureSRV);
+
+
+   
 	//m_pDeviceContext->OMSetRenderTargets(1, &m_pSwapChainRTV, nullptr);
 
 	//for (int i = 0; i < 4; ++i)
@@ -980,7 +1028,7 @@ void QDirect3D11Widget::RenderAllQuads()
 
   
     ImGui::SetNextWindowPos(ImVec2(0, 0)); // 좌측 상단 위치
-    ImGui::SetNextWindowSize(ImVec2(140, 150));
+    ImGui::SetNextWindowSize(ImVec2(130, 150));
     ImGui::Begin((QString::fromLocal8Bit("환자 정보")).toUtf8().constData(), nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
    // ImGui::Text("Patient Name: %s", fileReader->patientName.c_str());
         QString name = QString::fromLocal8Bit(fileReader->patientName.c_str());
@@ -1093,7 +1141,7 @@ void QDirect3D11Widget::onReset()
 	ReleaseObject(pBackBuffer);
 
 	// 4. ??쎈늄??쎄쾿?????쐭 ??野???源??
-	initializeRenderTargets(); // ??????λ땾?癒?퐣 m_RTViews, m_SRViews ??밴쉐
+	//initializeRenderTargets(); // ??????λ땾?癒?퐣 m_RTViews, m_SRViews ??밴쉐
 }
 
 

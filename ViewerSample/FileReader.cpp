@@ -1,6 +1,4 @@
-﻿//#define __cplusplus 201103L
-
-#include "FileReader.h"
+﻿#include "FileReader.h"
 #include <dcmtk/dcmdata/dcfilefo.h>
 #include <dcmtk/dcmdata/dcdeftag.h>
 #include <dcmtk/ofstd/ofcond.h>
@@ -27,27 +25,9 @@ m_filePaths()*/
 }
 
 
-bool FileReader::LoadDICOMSeries(std::string folderPath)
+bool FileReader::LoadDICOMSeries(std::string folderPath,ID3D11Device* g_pd3dDevice)
 {
-	//m_filePaths.clear();
-	//for (const auto& entry : std::filesystem::directory_iterator(folderPath)) {
-	//	if (entry.path().extension() == ".dcm") {
-	//		m_filePaths.push_back(entry.path().string());
-	//	}
-	//}
-
-	//m_depth = static_cast<int>(m_filePaths.size());
-	//m_volumeData.resize(m_width * m_height * m_depth); // ???쒓낄????嶺뚮쮳?곌섈?????源껉펾???釉뚰???
-	//return BuildVolume();
-
-
-	////m_filePaths.push_back((std::string)"sez");
-	//std::vector<std::string> t;
-
-
-	//if(!t.empty())
-	//	//if(0<m_filePaths.size())
-	//	t.clear();
+	
 
 	cout << "this : " << this << endl;
 
@@ -65,7 +45,8 @@ bool FileReader::LoadDICOMSeries(std::string folderPath)
 
 
 			// width, height는 첫 번째 파일에서만 읽기
-			if (m_filePaths.front()== entry) {
+            if (entry.path().string() == m_filePaths.front())
+            {
 				
 				DcmFileFormat file;
 				OFCondition status = file.loadFile(/*folderPath + "0000.dcm"*/entry.path().string());
@@ -96,6 +77,18 @@ bool FileReader::LoadDICOMSeries(std::string folderPath)
 			return false;
 		}
 	}
+
+    int zIndex = m_depth / 2; // 가운데 슬라이스
+    std::vector<uint8_t> axialSlice = GenerateAxialSlice(zIndex);
+    axialTextureSRV = CreateTextureFromSlice(axialSlice, m_width, m_height, g_pd3dDevice);
+
+    int zIndexC = m_depth / 2; // 가운데 슬라이스
+    std::vector<uint8_t> coronalSlice = GenerateCoronalSlice(zIndexC);
+    coronalTextureSRV = CreateTextureFromSlice(coronalSlice, m_width, m_height, g_pd3dDevice);
+
+    int zIndexS = m_depth / 2; // 가운데 슬라이스
+    std::vector<uint8_t> sagittalSlice = GenerateSagittalSlice(zIndexS);
+    sagittalTextureSRV = CreateTextureFromSlice(sagittalSlice, m_width, m_height, g_pd3dDevice);
 
 	return true;
 }
@@ -129,6 +122,8 @@ bool FileReader::ParseSlice(const std::string path, int sliceIndex) {
 		m_volumeData[offset + i] = pixelData[i];
 	}
 
+
+
 	// 메타데이터 출력 (선택 사항)
 	//OFString patientName, birthDate, studyDate, kvp;
 	dataset->findAndGetOFString(DCM_PatientName, patientName);
@@ -155,121 +150,6 @@ bool FileReader::ParseSlice(const std::string path, int sliceIndex) {
 
 	return true;
 }
-
-//bool FileReader::ParseSlice(std::string filePath, int sliceIndex)
-//{
-//	DcmFileFormat file;
-//
-//	////D:\Data\?醫롮뵠筌왖 cr guide ?袁⑥쨮??븍뱜\DICOM
-//	//filePath = "D:\\Data\\sez\\DICOM";
-//
-//	//OFCondition status;
-//	//for (int i{}; i < m_filePaths.size(); ++i) {
-//	//	status = file.loadFile(m_filePaths[i].c_str());
-//	//	if (!status.good()) {
-//	//		std::cerr << "ParseSlice : Failed to load DICOM file: " << m_filePaths[i].c_str() << std::endl;
-//	//		return false;
-//	//	}
-//	//}
-//
-//	//DcmDataset* dataset = file.getDataset();
-//	//const Uint16* pixelData = nullptr;
-//	//status = dataset->findAndGetUint16Array(DCM_PixelData, pixelData);
-//	//if (!status.good() || pixelData == nullptr) {
-//	//	std::cerr << "Failed to get pixel data from: " << filePath << std::endl;
-//
-//
-//	//	return false;
-//	//}
-//	//dataset->findAndGetUint16(DCM_Rows, m_height);     // ?嶺뚮ㅎ?붷ㅇ?	dataset->findAndGetUint16(DCM_Columns, m_width);   // ??좊읈???
-//	//// ???怨뺣빰: sliceIndex?????ㅻ깹???怨뚮옩?????怨뚮옖甕곕?苡?	int sliceSize = m_width * m_height;
-//	//std::copy(pixelData, pixelData + sliceSize, m_volumeData.begin() + sliceIndex * sliceSize);
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//	for (int i{}; i < m_filePaths.size(); ++i) {
-//		std::string path = m_filePaths[i];
-//		file.loadFile(path.c_str());
-//		DcmDataset* dataset = file.getDataset();
-//
-//
-//		const Uint16* m_pixelData = nullptr;
-//		dataset->findAndGetUint16Array(DCM_PixelData, m_pixelData);
-//		std::copy(m_pixelData, m_pixelData + sliceSize, m_volumeData.begin() + i * sliceSize);
-//	}
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//	//filePath = "D:\\Data\\sez\\DICOM\\0000.dcm";
-//
-//	//DcmFileFormat file;
-//	////OFCondition status = file.loadFile(m_filePaths[0].c_str());
-//	//OFCondition status = file.loadFile(filePath);
-//	//if (!status.good()) {
-//	//	std::cerr << "Failed to load DICOM file: " << m_filePaths[0] << std::endl;
-//	//	return false;
-//	//}
-//
-//	//DcmDataset* dataset = file.getDataset();
-//
-//
-//	//OFString patientName, birthDate, studyDate, kvp;
-//	//dataset->findAndGetOFString(DCM_PatientName, patientName);
-//	//dataset->findAndGetOFString(DCM_PatientBirthDate, birthDate);
-//	//dataset->findAndGetOFString(DCM_StudyDate, studyDate);
-//	//dataset->findAndGetOFString(DCM_KVP, kvp);
-//
-//
-//	//std::cout << " DICOM Metadata for slice " << sliceIndex << std::endl;
-//	//std::cout << " Patient Name: " << patientName << std::endl;
-//	//std::cout << " Birth Year:   " << birthDate << std::endl;
-//	//std::cout << " Study Date:  " << studyDate << std::endl;
-//	//std::cout << " KVP:          " << kvp << " kV" << std::endl;
-//
-//
-//	//const Uint16* pixelData = nullptr;
-//	//status = dataset->findAndGetUint16Array(DCM_PixelData, pixelData);
-//	//if (!status.good() || pixelData == nullptr) {
-//	//	std::cerr << "Failed to get pixel data from: " << m_filePaths[0] << std::endl;
-//	//	return false;
-//	//}
-//
-//	//dataset->findAndGetUint16(DCM_Rows, m_height);
-//	//dataset->findAndGetUint16(DCM_Columns, m_width);
-//
-//	//int sliceSize = m_width * m_height;
-//	//std::copy(pixelData, pixelData + sliceSize, m_volumeData.begin() + sliceIndex * sliceSize);
-//
-//
-//	return true;
-//}
 
 bool FileReader::BuildVolume()
 {
@@ -315,7 +195,7 @@ std::vector<uint8_t> FileReader::GenerateAxialSlice(int zIndex)
 
 	// ???亦????Β????? ???⑤챶援??類?뺨??щ빝????モ닪??	std::vector<uint16_t> rawSlice(sliceSize);
 
-
+    rawSlice.resize(m_width * m_height); // 먼저 크기 확보
 	std::copy(
 		m_volumeData.begin() + zIndex * m_width * m_height,
 		m_volumeData.begin() + (zIndex + 1) * m_width * m_height,
@@ -329,7 +209,8 @@ std::vector<uint8_t> FileReader::GenerateAxialSlice(int zIndex)
 }
 std::vector<uint8_t> FileReader::GenerateCoronalSlice(int yIndex)
 {
-	std::vector<uint16_t> rawSlice(m_width * m_depth);
+
+	/*std::vector<uint16_t> rawSlice(m_width * m_depth);
 	for (int z = 0; z < m_depth; ++z) {
 		for (int x = 0; x < m_width; ++x) {
 			rawSlice[z * m_width + x] = m_volumeData[z * m_width * m_height + yIndex * m_width + x];
@@ -338,22 +219,50 @@ std::vector<uint8_t> FileReader::GenerateCoronalSlice(int yIndex)
 
 	std::vector<uint8_t> normalized;
 	NormalizeSlice(rawSlice, normalized);
-	return normalized;
+	return normalized;*/
+
+
+    std::vector<uint16_t> rawSlice(m_width * m_depth);
+
+   // for (int z = 0; z < m_depth; ++z) {
+        std::copy(
+            m_volumeData.begin() + yIndex * m_width * m_height + yIndex * m_width,
+            m_volumeData.begin() + yIndex * m_width * m_height + (yIndex + 1) * m_width,
+            rawSlice.begin() + yIndex * m_width
+        );
+   // }
+
+    std::vector<uint8_t> normalized;
+    NormalizeSlice(rawSlice, normalized);
+    return normalized;
 
 }
 std::vector<uint8_t> FileReader::GenerateSagittalSlice(int xIndex)
 {
-	std::vector<uint16_t> rawSlice(m_height * m_depth);
-	for (int z = 0; z < m_depth; ++z) {
-		for (int y = 0; y < m_height; ++y) {
-			rawSlice[z * m_height + y] = m_volumeData[z * m_width * m_height + y * m_width + xIndex];
-		}
-	}
+	//std::vector<uint16_t> rawSlice(m_height * m_depth);
+	//for (int z = 0; z < m_depth; ++z) {
+	//	for (int y = 0; y < m_height; ++y) {
+	//		rawSlice[z * m_height + y] = m_volumeData[z * m_width * m_height + y * m_width + xIndex];
+	//	}
+	//}
 
-	std::vector<uint8_t> normalized;
-	NormalizeSlice(rawSlice, normalized);
-	return normalized;
+	//std::vector<uint8_t> normalized;
+	//NormalizeSlice(rawSlice, normalized);
+	//return normalized;
 
+
+
+    std::vector<uint16_t> rawSlice(m_height * m_depth);
+
+   // for (int z = 0; z < m_depth; ++z) {
+        for (int y = 0; y < m_height; ++y) {
+            rawSlice[z * m_height + y] = m_volumeData[z * m_width * m_height + y * m_width + xIndex];
+        }
+    //}
+
+    std::vector<uint8_t> normalized;
+    NormalizeSlice(rawSlice, normalized);
+    return normalized;
 }
 
 bool FileReader::NormalizeSlice(const std::vector<uint16_t>& rawSlice, std::vector<uint8_t>& outSlice)
@@ -377,7 +286,7 @@ bool FileReader::NormalizeSlice(const std::vector<uint16_t>& rawSlice, std::vect
 ID3D11ShaderResourceView* FileReader::CreateTextureFromSlice(const std::vector<uint8_t>& slice, int width, int height, ID3D11Device* g_pd3dDevice)
 {
 	if (slice.empty()) return nullptr;
-
+    
 	// Direct3D ?붾컮?댁뒪媛 ?꾩슂?⑸땲?? ?몃??먯꽌 ?꾨떖諛쏄굅???대옒??硫ㅻ쾭濡??덉뼱???⑸땲??
 	//extern ID3D11Device* g_pd3dDevice; // ?먮뒗 this->m_device ?깆쑝濡?泥섎━
 
@@ -386,7 +295,7 @@ ID3D11ShaderResourceView* FileReader::CreateTextureFromSlice(const std::vector<u
 	texDesc.Height = height;
 	texDesc.MipLevels = 1;
 	texDesc.ArraySize = 1;
-	texDesc.Format = DXGI_FORMAT_R8_UNORM; // 8鍮꾪듃 grayscale
+	texDesc.Format = DXGI_FORMAT_R8_UNORM; //8鍮꾪듃 grayscale
 	texDesc.SampleDesc.Count = 1;
 	texDesc.Usage = D3D11_USAGE_DEFAULT;
 	texDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
@@ -401,6 +310,8 @@ ID3D11ShaderResourceView* FileReader::CreateTextureFromSlice(const std::vector<u
 		std::cerr << "Failed to create texture from slice." << std::endl;
 		return nullptr;
 	}
+
+
 
 	ID3D11ShaderResourceView* textureView = nullptr;
 	hr = g_pd3dDevice->CreateShaderResourceView(texture, nullptr, &textureView);

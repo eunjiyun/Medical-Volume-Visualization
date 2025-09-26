@@ -230,6 +230,8 @@ public:
 
 	FileReader* fileReader = nullptr;
 
+    ID3D11ShaderResourceView* axialTextureSRV = nullptr;
+
 };
 
 
