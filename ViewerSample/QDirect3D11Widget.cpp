@@ -1156,6 +1156,22 @@ void QDirect3D11Widget::RenderAllQuads()
     //ImGui::Text("나이: %s", fileReader->patientAge.c_str());
     //ImGui::Text("검사일: %s", fileReader->studyDate.c_str());
 
+
+        ImDrawList* drawList = ImGui::GetBackgroundDrawList();
+
+        ImVec2 screenSize = ImGui::GetIO().DisplaySize;
+        float cx = screenSize.x * 0.5f;
+        float cy = screenSize.y * 0.5f;
+
+        // 수직선
+        drawList->AddLine(ImVec2(cx, 0), ImVec2(cx, screenSize.y), IM_COL32(255, 255, 0, 255), 1.0f);
+        // 수평선
+        drawList->AddLine(ImVec2(0, cy), ImVec2(screenSize.x, cy), IM_COL32(0, 128, 255, 255), 1.0f);
+
+
+
+
+
     ImGui::End();
 
     ImGui::Render();
