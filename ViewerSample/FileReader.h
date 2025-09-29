@@ -31,6 +31,7 @@ public:
     OFString patientID, patientMF, patientAge;
     std::vector<uint8_t> axialSlice;
     ID3D11Texture2D* axialTexture, *coronalTexture, *sagittalTexture;
+    int windowCenter, windowWidth;
 
 public:
 	//bool LoadDICOMSeries(const std::string& folderPath);

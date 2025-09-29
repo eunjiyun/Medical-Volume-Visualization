@@ -62,22 +62,22 @@ PSOutput PSMain(VSOutput input)
 	PSOutput o;
 
 
-	/*o.color0 = tex0.Sample(samp0, input.texcoord);
+	o.color0 = tex0.Sample(samp0, input.texcoord);
 	o.color1 = tex1.Sample(samp1, input.texcoord);
 	o.color2 = tex2.Sample(samp2, input.texcoord);
-	o.color3 = tex3.Sample(samp3, input.texcoord);*/
+	o.color3 = tex3.Sample(samp3, input.texcoord);
 
 
 
-    float gray0 = tex0.Sample(samp0, input.texcoord).r;
-    float gray1 = tex1.Sample(samp1, input.texcoord).r;
-    float gray2 = tex2.Sample(samp2, input.texcoord).r;
-    float gray3 = tex3.Sample(samp3, input.texcoord).r;
+    //float gray0 = tex0.Sample(samp0, input.texcoord).r;
+    //float gray1 = tex1.Sample(samp1, input.texcoord).r;
+    //float gray2 = tex2.Sample(samp2, input.texcoord).r;
+    //float gray3 = tex3.Sample(samp3, input.texcoord).r;
 
-    o.color0 = float4(gray0, gray0, gray0, 1.0);
-    o.color1 = float4(gray1, gray1, gray1, 1.0);
-    o.color2 = float4(gray2, gray2, gray2, 1.0);
-    o.color3 = float4(gray3, gray3, gray3, 1.0);
+    //o.color0 = float4(gray0, gray0, gray0, 1.0);
+    //o.color1 = float4(gray1, gray1, gray1, 1.0);
+    //o.color2 = float4(gray2, gray2, gray2, 1.0);
+    //o.color3 = float4(gray3, gray3, gray3, 1.0);
 
 
 
