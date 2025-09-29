@@ -43,7 +43,20 @@ public:
 	std::vector<uint8_t> GenerateAxialSlice(int zIndex);
 	std::vector<uint8_t> GenerateCoronalSlice(int yIndex);
 	std::vector<uint8_t> GenerateSagittalSlice(int xIndex);
-	bool NormalizeSlice(const std::vector<uint16_t>& rawSlice, std::vector<uint8_t>& outSlice, uint16_t globalMin, uint16_t globalMax);
+
+
+    //bool NormalizeSlice(const std::vector<uint16_t>& rawSlice, std::vector<uint8_t>& outSlice, uint16_t globalMin, uint16_t globalMax);
+
+
+
+    bool NormalizeSlice(const std::vector<uint16_t>& rawSlice,
+        std::vector<uint8_t>& outSlice,
+        float windowCenter,
+        float windowWidth);
+
+
+
+
     ID3D11Texture2D* CreateTextureFromSlice(const std::vector<uint8_t>& slice, int width, int height, ID3D11Device* g_pd3dDevice);
 
     void ComputeGlobalMinMax();

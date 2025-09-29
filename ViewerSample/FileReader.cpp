@@ -242,7 +242,8 @@ std::vector<uint8_t> FileReader::GenerateAxialSlice(int zIndex)
 
     // 8비트 정규화
     std::vector<uint8_t> normalized;
-    NormalizeSlice(rawSlice, normalized, m_globalMin, m_globalMax);
+    //NormalizeSlice(rawSlice, normalized, m_globalMin, m_globalMax);
+    NormalizeSlice(rawSlice, normalized, windowCenter, windowWidth);
 
     // RGBA 변환: 픽셀당 4바이트
     std::vector<uint8_t> rgbaSlice(sliceSize * 4);
@@ -328,7 +329,8 @@ std::vector<uint8_t> FileReader::GenerateCoronalSlice(int yIndex)
     }
 
     std::vector<uint8_t> normalized;
-    NormalizeSlice(rawSlice, normalized, m_globalMin, m_globalMax);
+    //NormalizeSlice(rawSlice, normalized, m_globalMin, m_globalMax);
+    NormalizeSlice(rawSlice, normalized, windowCenter, windowWidth);
 
     // RGBA 변환: 픽셀당 4바이트
     std::vector<uint8_t> rgbaSlice(sliceSize * 4);
@@ -408,7 +410,8 @@ std::vector<uint8_t> FileReader::GenerateSagittalSlice(int xIndex)
     }
 
     std::vector<uint8_t> normalized;
-    NormalizeSlice(rawSlice, normalized, m_globalMin, m_globalMax);
+    //NormalizeSlice(rawSlice, normalized, m_globalMin, m_globalMax);
+    NormalizeSlice(rawSlice, normalized, windowCenter, windowWidth);
 
     // RGBA 변환: 픽셀당 4바이트
     std::vector<uint8_t> rgbaSlice(sliceSize * 4);
@@ -424,23 +427,49 @@ std::vector<uint8_t> FileReader::GenerateSagittalSlice(int xIndex)
 }
 
 
-bool FileReader::NormalizeSlice(const std::vector<uint16_t>& rawSlice, std::vector<uint8_t>& outSlice, uint16_t globalMin, uint16_t globalMax)
+//bool FileReader::NormalizeSlice(const std::vector<uint16_t>& rawSlice, std::vector<uint8_t>& outSlice, uint16_t globalMin, uint16_t globalMax)
+//{
+//	if (rawSlice.empty()) return false;
+//
+//
+//	/*uint16_t minVal = *std::min_element(rawSlice.begin(), rawSlice.end());
+//	uint16_t maxVal = *std::max_element(rawSlice.begin(), rawSlice.end());*/
+//
+//	outSlice.resize(rawSlice.size());
+//
+//	for (size_t i = 0; i < rawSlice.size(); ++i) {
+//		outSlice[i] = static_cast<uint8_t>(
+//			255.0 * (rawSlice[i] - globalMin) / (globalMax - globalMin + 1e-5)
+//			);
+//	}
+//
+//	return true;
+//}
+
+bool FileReader::NormalizeSlice(const std::vector<uint16_t>& rawSlice,
+    std::vector<uint8_t>& outSlice,
+    float windowCenter,
+    float windowWidth)
 {
-	if (rawSlice.empty()) return false;
+    if (rawSlice.empty() || windowWidth <= 1e-5f) return false;
 
+    const float minHU = windowCenter - windowWidth / 2.0f;
+    const float maxHU = windowCenter + windowWidth / 2.0f;
 
-	/*uint16_t minVal = *std::min_element(rawSlice.begin(), rawSlice.end());
-	uint16_t maxVal = *std::max_element(rawSlice.begin(), rawSlice.end());*/
+    outSlice.resize(rawSlice.size());
 
-	outSlice.resize(rawSlice.size());
+    for (size_t i = 0; i < rawSlice.size(); ++i) {
+        float val = static_cast<float>(rawSlice[i]);
 
-	for (size_t i = 0; i < rawSlice.size(); ++i) {
-		outSlice[i] = static_cast<uint8_t>(
-			255.0 * (rawSlice[i] - globalMin) / (globalMax - globalMin + 1e-5)
-			);
-	}
+        // 클램핑
+        if (val < minHU) val = minHU;
+        if (val > maxHU) val = maxHU;
 
-	return true;
+        float normalized = (val - minHU) / (maxHU - minHU);
+        outSlice[i] = static_cast<uint8_t>(normalized * 255.0f);
+    }
+
+    return true;
 }
 
 ID3D11Texture2D* FileReader::CreateTextureFromSlice(const std::vector<uint8_t>& slice, int width, int height, ID3D11Device* g_pd3dDevice)
