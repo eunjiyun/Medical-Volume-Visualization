@@ -830,6 +830,31 @@ void QDirect3D11Widget::RenderSceneToTarget(int i)
 	m_pDeviceContext->Draw(4, 0);
 }
 
+void QDirect3D11Widget::mousePressEvent(QMouseEvent* event)
+{
+   px = event->pos().x(); // 클릭된 x 좌표
+   py = event->pos().y(); // 클릭된 y 좌표
+
+
+    //float scale = this->devicePixelRatioF();
+    //float px = event->pos().x() * scale;
+    //float py = event->pos().y() * scale;
+}
+
+int QDirect3D11Widget::GetClickedViewIndex(int px, int py, int width, int height)
+{
+    if (px < width / 2 && py < height / 2)
+        return 0; // 왼쪽 위 → Axial
+    else if (px >= width / 2 && py < height / 2)
+        return 1; // 오른쪽 위 → Coronal
+    else if (px < width / 2 && py >= height / 2)
+        return 2; // 왼쪽 아래 → Sagittal
+    else
+        return 3; // 오른쪽 아래 → Volume
+}
+
+
+
 
 void QDirect3D11Widget::RenderAllQuads()
 {
@@ -880,11 +905,43 @@ void QDirect3D11Widget::RenderAllQuads()
     //m_pDeviceContext->PSSetSamplers(0, 1, &m_samplerState[0]);
 
 
+
+   // 1. 십자선 위치 계산
+    CrosshairData crosshair = {};
+
+    // 예: 클릭된 뷰가 i번째 뷰라고 가정
+    //int clickedViewIndex = i; // 0: Axial, 1: Coronal, 2: Sagittal, 3: Volume
+    int clickedViewIndex = GetClickedViewIndex(px, py, this->width(), this->height());
+
+
+    D3D11_VIEWPORT vp = CreateViewport(clickedViewIndex); // i = 0~3
+    float viewX = vp.TopLeftX;
+    float viewY = vp.TopLeftY;
+    float viewWidth = vp.Width;
+    float viewHeight = vp.Height;
+
+
+    // 마우스 클릭 좌표 정규화
+    float normX = static_cast<float>(px - viewX) / viewWidth;
+    float normY = static_cast<float>(py - viewY) / viewHeight;
+
+
+    // 모든 뷰에 동일한 십자선 위치 적용
+    DirectX::XMFLOAT2 crossUV = { normX, normY };
+    crosshair.cross0 = crossUV;
+    crosshair.cross1 = crossUV;
+    crosshair.cross2 = crossUV;
+    crosshair.cross3 = crossUV;
+
+    crosshair.crossThickness = 0.002f;
+    crosshair.crossColor = { 1.0f, 0.0f, 0.0f, 1.0f }; // 빨강
+
    
+    // 2. UpdateSubresource로 GPU에 전달
+    m_pDeviceContext->UpdateSubresource(fileReader->m_crosshairBuffer, 0, nullptr, &crosshair, 0, 0);
 
-
-    
-
+    // 3. 셰이더에 바인딩
+    m_pDeviceContext->PSSetConstantBuffers(0, 1, &fileReader->m_crosshairBuffer);
 
 	m_pDeviceContext->PSSetShaderResources(0, 4, m_SRViews.data());     // tex0~tex3
 

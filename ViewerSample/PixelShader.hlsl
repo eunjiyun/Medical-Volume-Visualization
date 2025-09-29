@@ -31,6 +31,18 @@
 //	return tex0.Sample(samp0, uv);
 //}
 
+
+cbuffer Crosshair : register(b0)
+{
+    float2 cross0;         // tex0용 십자선 위치
+    float2 cross1;         // tex1용
+    float2 cross2;
+    float2 cross3;
+    float crossThickness;  // 선 두께 (예: 0.002)
+    float4 crossColor;     // 십자선 색상 (예: 빨강 float4(1,0,0,1))
+}
+
+
 Texture2D tex0 : register(t0);
 Texture2D tex1 : register(t1);
 Texture2D tex2 : register(t2);
@@ -40,6 +52,9 @@ SamplerState samp0 : register(s0);
 SamplerState samp1 : register(s1);
 SamplerState samp2 : register(s2);
 SamplerState samp3 : register(s3);
+
+
+
 
 struct PSOutput {
 	float4 color0 : SV_Target0;
@@ -59,29 +74,56 @@ struct VSOutput
 
 PSOutput PSMain(VSOutput input)
 {
-	PSOutput o;
+	//PSOutput o;
 
 
-	o.color0 = tex0.Sample(samp0, input.texcoord);
-	o.color1 = tex1.Sample(samp1, input.texcoord);
-	o.color2 = tex2.Sample(samp2, input.texcoord);
-	o.color3 = tex3.Sample(samp3, input.texcoord);
-
-
-
-    /*float gray0 = tex0.Sample(samp0, input.texcoord).r;
-    float gray1 = tex1.Sample(samp1, input.texcoord).r;
-    float gray2 = tex2.Sample(samp2, input.texcoord).r;
-    float gray3 = tex3.Sample(samp3, input.texcoord).r;
-
-    o.color0 = float4(gray0, gray0, gray0, 1.0);
-    o.color1 = float4(gray1, gray1, gray1, 1.0);
-    o.color2 = float4(gray2, gray2, gray2, 1.0);
-    o.color3 = float4(gray3, gray3, gray3, 1.0);*/
+	//o.color0 = tex0.Sample(samp0, input.texcoord);
+	//o.color1 = tex1.Sample(samp1, input.texcoord);
+	//o.color2 = tex2.Sample(samp2, input.texcoord);
+	//o.color3 = tex3.Sample(samp3, input.texcoord);
 
 
 
-	return o;
+ //   /*float gray0 = tex0.Sample(samp0, input.texcoord).r;
+ //   float gray1 = tex1.Sample(samp1, input.texcoord).r;
+ //   float gray2 = tex2.Sample(samp2, input.texcoord).r;
+ //   float gray3 = tex3.Sample(samp3, input.texcoord).r;
+
+ //   o.color0 = float4(gray0, gray0, gray0, 1.0);
+ //   o.color1 = float4(gray1, gray1, gray1, 1.0);
+ //   o.color2 = float4(gray2, gray2, gray2, 1.0);
+ //   o.color3 = float4(gray3, gray3, gray3, 1.0);*/
+
+
+
+	//return o;
+
+
+
+    PSOutput o;
+
+    float2 uv = input.texcoord;
+
+    // 각 텍스처 샘플링
+    float4 base0 = tex0.Sample(samp0, uv);
+    float4 base1 = tex1.Sample(samp1, uv);
+    float4 base2 = tex2.Sample(samp2, uv);
+    float4 base3 = tex3.Sample(samp3, uv);
+
+    // 십자선 조건
+    bool isCross0 = abs(uv.x - cross0.x) < crossThickness || abs(uv.y - cross0.y) < crossThickness;
+    bool isCross1 = abs(uv.x - cross1.x) < crossThickness || abs(uv.y - cross1.y) < crossThickness;
+    bool isCross2 = abs(uv.x - cross2.x) < crossThickness || abs(uv.y - cross2.y) < crossThickness;
+    bool isCross3 = abs(uv.x - cross3.x) < crossThickness || abs(uv.y - cross3.y) < crossThickness;
+
+    // 십자선 포함 색상 출력
+    o.color0 = isCross0 ? crossColor : base0;
+    o.color1 = isCross1 ? crossColor : base1;
+    o.color2 = isCross2 ? crossColor : base2;
+    o.color3 = isCross3 ? crossColor : base3;
+
+    return o;
+
 }
 
 

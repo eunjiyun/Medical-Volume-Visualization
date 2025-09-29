@@ -102,6 +102,11 @@ public:
 	bool init();
 
 	void LoadDICOMSeries();
+
+    void mousePressEvent(QMouseEvent* event);
+    int GetClickedViewIndex(int px, int py, int width, int height);
+
+    int px, py;
 private:
 	
 
@@ -231,6 +236,7 @@ public:
 	FileReader* fileReader = nullptr;
 
     ID3D11ShaderResourceView* axialTextureSRV = nullptr;
+
 
 };
 
