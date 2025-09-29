@@ -208,6 +208,47 @@ std::vector<uint8_t> FileReader::GenerateAxialSlice(int zIndex)
 	return normalized;
 
 }
+//std::vector<uint8_t> FileReader::GenerateAxialSlice(int zIndex)
+//{
+//    const size_t sliceSize = static_cast<size_t>(m_width) * m_height;
+//
+//    // 16비트 원본 슬라이스 추출
+//    std::vector<uint16_t> rawSlice(sliceSize);
+//    const size_t offset = static_cast<size_t>(zIndex) * sliceSize;
+//
+//    if (offset + sliceSize > m_volumeData.size()) {
+//        std::cerr << "Invalid zIndex: out of bounds." << std::endl;
+//        return {};
+//    }
+//
+//    std::copy(
+//        m_volumeData.begin() + offset,
+//        m_volumeData.begin() + offset + sliceSize,
+//        rawSlice.begin()
+//    );
+//
+//    // 8비트 정규화
+//    std::vector<uint8_t> normalized;
+//    NormalizeSlice(rawSlice, normalized, m_globalMin, m_globalMax);
+//
+//    // RGBA 변환: 픽셀당 4바이트
+//    std::vector<uint8_t> rgbaSlice(sliceSize * 4);
+//    for (size_t i = 0; i < sliceSize; ++i) {
+//        uint8_t gray = normalized[i];
+//        rgbaSlice[i * 4 + 0] = gray; // R
+//        rgbaSlice[i * 4 + 1] = gray; // G
+//        rgbaSlice[i * 4 + 2] = gray; // B
+//        rgbaSlice[i * 4 + 3] = 255;  // A
+//    }
+//
+//    return rgbaSlice;
+//}
+
+
+
+
+
+
 //std::vector<uint8_t> FileReader::GenerateCoronalSlice(int yIndex)
 //{
 //

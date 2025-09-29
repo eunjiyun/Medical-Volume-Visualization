@@ -227,7 +227,7 @@ void QDirect3D11Widget::onFrame()
 {
 	if (m_bRenderActive) tick();
 
-	beginScene();
+	//beginScene();
 	//render();
 	RenderAllQuads();
 	endScene();
