@@ -318,7 +318,7 @@ void QDirect3D11Widget::initializeRenderTargets()
 
 
 
-	for (int i = 0; i < 4; ++i) {
+    for (int i{}; i < 4; ++i) {
 		// 1. ??용뮞筌???밴쉐
 		D3D11_TEXTURE2D_DESC texDesc = {};
 		texDesc.Width = width() / 2;
@@ -335,26 +335,59 @@ void QDirect3D11Widget::initializeRenderTargets()
 		//250922  texture
 		DXCall(m_pDevice->CreateTexture2D(&texDesc, nullptr, &pTexture));
 
-		// 2. RenderTargetView ??밴쉐
-		ID3D11RenderTargetView* pRTV = nullptr;
-		DXCall(m_pDevice->CreateRenderTargetView(pTexture, nullptr, &pRTV));
-		m_RTViews.push_back(pRTV);
+		//// 2. RenderTargetView ??밴쉐
+		//ID3D11RenderTargetView* pRTV = nullptr;
+		//DXCall(m_pDevice->CreateRenderTargetView(pTexture, nullptr, &pRTV));
+		//m_RTViews.push_back(pRTV);
 
         if (0== i) {
+
+            // 2. RenderTargetView ??밴쉐
+            ID3D11RenderTargetView* pRTV = nullptr;
+            DXCall(m_pDevice->CreateRenderTargetView(pTexture, nullptr, &pRTV));
+            m_RTViews.push_back(pRTV);
+
+
             // 3. ShaderResourceView ??밴쉐
             ID3D11ShaderResourceView* pSRV = nullptr;
             DXCall(m_pDevice->CreateShaderResourceView(pTexture, nullptr, &pSRV));
-
             m_SRViews.push_back(pSRV);
         }
         else if(1==i){
-            m_SRViews.push_back(fileReader->axialTextureSRV);
+
+            // 2. RenderTargetView ??밴쉐
+            ID3D11RenderTargetView* pRTV = nullptr;
+            DXCall(m_pDevice->CreateRenderTargetView(fileReader->axialTexture, nullptr, &pRTV));
+            m_RTViews.push_back(pRTV);
+
+
+            // 3. ShaderResourceView ??밴쉐
+            ID3D11ShaderResourceView* pSRV = nullptr;
+            DXCall(m_pDevice->CreateShaderResourceView(fileReader->axialTexture, nullptr, &pSRV));
+            m_SRViews.push_back(pSRV);
+
         }
         else if (2 == i) {
-            m_SRViews.push_back(fileReader->coronalTextureSRV);
+            // 2. RenderTargetView ??밴쉐
+            ID3D11RenderTargetView* pRTV = nullptr;
+            DXCall(m_pDevice->CreateRenderTargetView(fileReader->coronalTexture, nullptr, &pRTV));
+            m_RTViews.push_back(pRTV);
+
+            // 3. ShaderResourceView ??밴쉐
+            ID3D11ShaderResourceView* pSRV = nullptr;
+            DXCall(m_pDevice->CreateShaderResourceView(fileReader->coronalTexture, nullptr, &pSRV));
+            m_SRViews.push_back(pSRV);
         }
         else if (3 == i) {
-            m_SRViews.push_back(fileReader->sagittalTextureSRV);
+            // 2. RenderTargetView ??밴쉐
+            ID3D11RenderTargetView* pRTV = nullptr;
+            DXCall(m_pDevice->CreateRenderTargetView(fileReader->sagittalTexture, nullptr, &pRTV));
+            m_RTViews.push_back(pRTV);
+
+            // 3. ShaderResourceView ??밴쉐
+            ID3D11ShaderResourceView* pSRV = nullptr;
+            DXCall(m_pDevice->CreateShaderResourceView(fileReader->sagittalTexture, nullptr, &pSRV));
+            m_SRViews.push_back(pSRV);
         }
 
 

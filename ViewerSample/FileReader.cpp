@@ -27,8 +27,6 @@ m_filePaths()*/
 
 bool FileReader::LoadDICOMSeries(std::string folderPath,ID3D11Device* g_pd3dDevice)
 {
-	
-
 	cout << "this : " << this << endl;
 
 
@@ -78,17 +76,19 @@ bool FileReader::LoadDICOMSeries(std::string folderPath,ID3D11Device* g_pd3dDevi
 		}
 	}
 
+    ComputeGlobalMinMax(); // 로딩 직후 전체 min/max 계산
+
     int zIndex = m_depth / 2; // 가운데 슬라이스
     std::vector<uint8_t> axialSlice = GenerateAxialSlice(zIndex);
-    axialTextureSRV = CreateTextureFromSlice(axialSlice, m_width, m_height, g_pd3dDevice);
+    axialTexture = CreateTextureFromSlice(axialSlice, m_width, m_height, g_pd3dDevice);
 
     int zIndexC = m_depth / 2; // 가운데 슬라이스
     std::vector<uint8_t> coronalSlice = GenerateCoronalSlice(zIndexC);
-    coronalTextureSRV = CreateTextureFromSlice(coronalSlice, m_width, m_height, g_pd3dDevice);
+    coronalTexture = CreateTextureFromSlice(coronalSlice, m_width, m_depth, g_pd3dDevice);
 
     int zIndexS = m_depth / 2; // 가운데 슬라이스
     std::vector<uint8_t> sagittalSlice = GenerateSagittalSlice(zIndexS);
-    sagittalTextureSRV = CreateTextureFromSlice(sagittalSlice, m_width, m_height, g_pd3dDevice);
+    sagittalTexture = CreateTextureFromSlice(sagittalSlice, m_height, m_depth, g_pd3dDevice);
 
 	return true;
 }
@@ -122,6 +122,7 @@ bool FileReader::ParseSlice(const std::string path, int sliceIndex) {
 		m_volumeData[offset + i] = pixelData[i];
 	}
 
+   
 
 
 	// 메타데이터 출력 (선택 사항)
@@ -203,87 +204,124 @@ std::vector<uint8_t> FileReader::GenerateAxialSlice(int zIndex)
 	);
 
 	std::vector<uint8_t> normalized;
-	NormalizeSlice(rawSlice, normalized);
+	NormalizeSlice(rawSlice, normalized, m_globalMin, m_globalMax);
 	return normalized;
 
 }
-std::vector<uint8_t> FileReader::GenerateCoronalSlice(int yIndex)
-{
+//std::vector<uint8_t> FileReader::GenerateCoronalSlice(int yIndex)
+//{
+//
+//	/*std::vector<uint16_t> rawSlice(m_width * m_depth);
+//	for (int z = 0; z < m_depth; ++z) {
+//		for (int x = 0; x < m_width; ++x) {
+//			rawSlice[z * m_width + x] = m_volumeData[z * m_width * m_height + yIndex * m_width + x];
+//		}
+//	}
+//
+//	std::vector<uint8_t> normalized;
+//	NormalizeSlice(rawSlice, normalized);
+//	return normalized;*/
+//
+//
+//    std::vector<uint16_t> rawSlice(m_width * m_depth);
+//
+//   // for (int z = 0; z < m_depth; ++z) {
+//        std::copy(
+//            m_volumeData.begin() + yIndex * m_width * m_height + yIndex * m_width,
+//            m_volumeData.begin() + yIndex * m_width * m_height + (yIndex + 1) * m_width,
+//            rawSlice.begin() + yIndex * m_width
+//        );
+//   // }
+//
+//    std::vector<uint8_t> normalized;
+//    NormalizeSlice(rawSlice, normalized);
+//    return normalized;
+//
+//}
 
-	/*std::vector<uint16_t> rawSlice(m_width * m_depth);
-	for (int z = 0; z < m_depth; ++z) {
-		for (int x = 0; x < m_width; ++x) {
-			rawSlice[z * m_width + x] = m_volumeData[z * m_width * m_height + yIndex * m_width + x];
-		}
-	}
+std::vector<uint8_t> FileReader::GenerateCoronalSlice(int yIndex) {
+    int sliceSize = m_width * m_depth;
+    std::vector<uint16_t> rawSlice(sliceSize);
 
-	std::vector<uint8_t> normalized;
-	NormalizeSlice(rawSlice, normalized);
-	return normalized;*/
-
-
-    std::vector<uint16_t> rawSlice(m_width * m_depth);
-
-   // for (int z = 0; z < m_depth; ++z) {
-        std::copy(
-            m_volumeData.begin() + yIndex * m_width * m_height + yIndex * m_width,
-            m_volumeData.begin() + yIndex * m_width * m_height + (yIndex + 1) * m_width,
-            rawSlice.begin() + yIndex * m_width
-        );
-   // }
-
-    std::vector<uint8_t> normalized;
-    NormalizeSlice(rawSlice, normalized);
-    return normalized;
-
-}
-std::vector<uint8_t> FileReader::GenerateSagittalSlice(int xIndex)
-{
-	//std::vector<uint16_t> rawSlice(m_height * m_depth);
-	//for (int z = 0; z < m_depth; ++z) {
-	//	for (int y = 0; y < m_height; ++y) {
-	//		rawSlice[z * m_height + y] = m_volumeData[z * m_width * m_height + y * m_width + xIndex];
-	//	}
-	//}
-
-	//std::vector<uint8_t> normalized;
-	//NormalizeSlice(rawSlice, normalized);
-	//return normalized;
-
-
-
-    std::vector<uint16_t> rawSlice(m_height * m_depth);
-
-   // for (int z = 0; z < m_depth; ++z) {
-        for (int y = 0; y < m_height; ++y) {
-            rawSlice[z * m_height + y] = m_volumeData[z * m_width * m_height + y * m_width + xIndex];
+    for (int z{}; z < m_depth; ++z) {
+        for (int x{}; x < m_width; ++x) {
+            size_t srcIndex = z * (m_width * m_height) + yIndex * m_width + x;
+            size_t dstIndex = z * m_width + x;
+            rawSlice[dstIndex] = m_volumeData[srcIndex];
         }
-    //}
+    }
 
     std::vector<uint8_t> normalized;
-    NormalizeSlice(rawSlice, normalized);
+    NormalizeSlice(rawSlice, normalized, m_globalMin, m_globalMax);
     return normalized;
 }
 
-bool FileReader::NormalizeSlice(const std::vector<uint16_t>& rawSlice, std::vector<uint8_t>& outSlice)
+//std::vector<uint8_t> FileReader::GenerateSagittalSlice(int xIndex)
+//{
+//	//std::vector<uint16_t> rawSlice(m_height * m_depth);
+//	//for (int z = 0; z < m_depth; ++z) {
+//	//	for (int y = 0; y < m_height; ++y) {
+//	//		rawSlice[z * m_height + y] = m_volumeData[z * m_width * m_height + y * m_width + xIndex];
+//	//	}
+//	//}
+//
+//	//std::vector<uint8_t> normalized;
+//	//NormalizeSlice(rawSlice, normalized);
+//	//return normalized;
+//
+//
+//
+//    std::vector<uint16_t> rawSlice(m_height * m_depth);
+//
+//   // for (int z = 0; z < m_depth; ++z) {
+//        for (int y = 0; y < m_height; ++y) {
+//            rawSlice[z * m_height + y] = m_volumeData[z * m_width * m_height + y * m_width + xIndex];
+//        }
+//    //}
+//
+//    std::vector<uint8_t> normalized;
+//    NormalizeSlice(rawSlice, normalized);
+//    return normalized;
+//}
+
+std::vector<uint8_t> FileReader::GenerateSagittalSlice(int xIndex) {
+    int sliceSize = m_height * m_depth;
+    std::vector<uint16_t> rawSlice(sliceSize);
+
+    for (int z{}; z < m_depth; ++z) {
+        for (int y{}; y < m_height; ++y) {
+            size_t srcIndex = z * (m_width * m_height) + y * m_width + xIndex;
+            size_t dstIndex = z * m_height + y;
+            rawSlice[dstIndex] = m_volumeData[srcIndex];
+        }
+    }
+
+    std::vector<uint8_t> normalized;
+    NormalizeSlice(rawSlice, normalized, m_globalMin, m_globalMax);
+    return normalized;
+}
+
+
+bool FileReader::NormalizeSlice(const std::vector<uint16_t>& rawSlice, std::vector<uint8_t>& outSlice, uint16_t globalMin, uint16_t globalMax)
 {
 	if (rawSlice.empty()) return false;
 
-	uint16_t minVal = *std::min_element(rawSlice.begin(), rawSlice.end());
-	uint16_t maxVal = *std::max_element(rawSlice.begin(), rawSlice.end());
+
+	/*uint16_t minVal = *std::min_element(rawSlice.begin(), rawSlice.end());
+	uint16_t maxVal = *std::max_element(rawSlice.begin(), rawSlice.end());*/
 
 	outSlice.resize(rawSlice.size());
 
 	for (size_t i = 0; i < rawSlice.size(); ++i) {
 		outSlice[i] = static_cast<uint8_t>(
-			255.0 * (rawSlice[i] - minVal) / (maxVal - minVal + 1e-5)
+			255.0 * (rawSlice[i] - globalMin) / (globalMax - globalMin + 1e-5)
 			);
 	}
 
 	return true;
 }
 
-ID3D11ShaderResourceView* FileReader::CreateTextureFromSlice(const std::vector<uint8_t>& slice, int width, int height, ID3D11Device* g_pd3dDevice)
+ID3D11Texture2D* FileReader::CreateTextureFromSlice(const std::vector<uint8_t>& slice, int width, int height, ID3D11Device* g_pd3dDevice)
 {
 	if (slice.empty()) return nullptr;
     
@@ -295,14 +333,19 @@ ID3D11ShaderResourceView* FileReader::CreateTextureFromSlice(const std::vector<u
 	texDesc.Height = height;
 	texDesc.MipLevels = 1;
 	texDesc.ArraySize = 1;
-	texDesc.Format = DXGI_FORMAT_R8_UNORM; //8鍮꾪듃 grayscale
+	//texDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM; //8鍮꾪듃 grayscale
+    texDesc.Format = DXGI_FORMAT_R8_UNORM; //8鍮꾪듃 grayscale
+
 	texDesc.SampleDesc.Count = 1;
 	texDesc.Usage = D3D11_USAGE_DEFAULT;
-	texDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+	//texDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+    texDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_RENDER_TARGET;
+
 
 	D3D11_SUBRESOURCE_DATA initData = {};
 	initData.pSysMem = slice.data();
-	initData.SysMemPitch = width * sizeof(uint8_t);
+	//initData.SysMemPitch = 4*width * sizeof(uint8_t);
+    initData.SysMemPitch = width * sizeof(uint8_t);
 
 	ID3D11Texture2D* texture = nullptr;
 	HRESULT hr = g_pd3dDevice->CreateTexture2D(&texDesc, &initData, &texture);
@@ -313,16 +356,24 @@ ID3D11ShaderResourceView* FileReader::CreateTextureFromSlice(const std::vector<u
 
 
 
-	ID3D11ShaderResourceView* textureView = nullptr;
-	hr = g_pd3dDevice->CreateShaderResourceView(texture, nullptr, &textureView);
-	texture->Release(); // 酉곌? 李몄“?섎?濡??먮낯? ?댁젣
+	//ID3D11ShaderResourceView* textureView = nullptr;
+	//hr = g_pd3dDevice->CreateShaderResourceView(texture, nullptr, &textureView);
+	//texture->Release(); // 酉곌? 李몄“?섎?濡??먮낯? ?댁젣
 
-	if (FAILED(hr)) {
-		std::cerr << "Failed to create shader resource view." << std::endl;
-		return nullptr;
-	}
+	//if (FAILED(hr)) {
+	//	std::cerr << "Failed to create shader resource view." << std::endl;
+	//	return nullptr;
+	//}
 
-	return textureView;
+	return texture;
+}
+
+void FileReader::ComputeGlobalMinMax() {
+    if (m_volumeData.empty()) return;
+
+    auto[minIt, maxIt] = std::minmax_element(m_volumeData.begin(), m_volumeData.end());
+    m_globalMin = *minIt;
+    m_globalMax = *maxIt;
 }
 
 
