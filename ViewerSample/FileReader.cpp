@@ -459,7 +459,9 @@ bool FileReader::NormalizeSlice(const std::vector<uint16_t>& rawSlice,
     outSlice.resize(rawSlice.size());
 
     for (size_t i = 0; i < rawSlice.size(); ++i) {
-        float val = static_cast<float>(rawSlice[i]);
+        //float val = static_cast<float>(rawSlice[i]);
+        // 원래 HU 값이 음수일 수 있으므로 int16_t로 처리해야 함
+        float val = static_cast<float>(static_cast<int16_t>(rawSlice[i]));
 
         // 클램핑
         if (val < minHU) val = minHU;
