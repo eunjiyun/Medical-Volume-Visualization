@@ -3,7 +3,8 @@
 #include <QtWidgets/QMainWindow>
 #include <QCheckBox>
 #include "ui_ViewerSample.h"
-#include "SystemClass.h"
+
+class QDirect3D11Widget;
 class ViewerSample : public QMainWindow
 {
     Q_OBJECT
@@ -28,7 +29,7 @@ public slots:
 
 private:
     Ui::ViewerSampleClass* ui;
-    SystemClass* System = nullptr;
+  
     QDirect3D11Widget * m_pScene;
     QSize               m_WindowSize;
     QCheckBox *         m_pCbxDoFrames;
