@@ -43,27 +43,6 @@
     <ClCompile Include="QDirect3D11Widget.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="ColorShader.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="GraphicsClass.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="InputClass.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="CameraClass.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="ModelClass.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="D3DClass.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="SystemClass.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <QtMoc Include="QDirect3D11Widget.h">
@@ -74,22 +53,7 @@
     <ClInclude Include="resource.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="ColorShader.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="AlignedAllocationPolicy.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="GraphicsClass.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="InputClass.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="CameraClass.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="ModelClass.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="stdafx.h">
@@ -101,20 +65,15 @@
     <ClInclude Include="DxDefine.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D3DClass.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="SystemClass.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <FxCompile Include="color.vs" />
-    <FxCompile Include="color.ps" />
     <FxCompile Include="PixelShader.hlsl" />
+    <FxCompile Include="GeometryShader.hlsl" />
     <FxCompile Include="VertexShader.hlsl" />
+    <FxCompile Include="PixelShaderQuad.hlsl" />
   </ItemGroup>
   <ItemGroup>
     <None Include=".editorconfig" />
+    <None Include="Common.hlsli" />
   </ItemGroup>
 </Project>
