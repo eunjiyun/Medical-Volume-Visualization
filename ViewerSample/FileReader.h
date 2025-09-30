@@ -2,8 +2,8 @@
 #include<vector>
 #include<string>
 #include "stdafx.h"
-#include <dcmtk/ofstd/ofstring.h>
 
+#include <dcmtk/ofstd/ofstring.h>
 using namespace std;
 
 

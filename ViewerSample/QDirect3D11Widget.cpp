@@ -1,7 +1,7 @@
 ﻿/*
  *
  */
-#pragma comment(lib, "d3d11.lib")
+//#pragma comment(lib, "d3d11.lib")
 
 
 
@@ -18,11 +18,11 @@
 
 
 #include "stdafx.h"
-#include "d3dclass.h"
-#include "cameraclass.h"
-#include "modelclass.h"
-#include "colorshader.h"
-#include "graphicsclass.h"
+//#include "d3dclass.h"
+//#include "cameraclass.h"
+//#include "modelclass.h"
+//#include "colorshader.h"
+//#include "graphicsclass.h"
 #include <wrl/client.h>
 #include <vector>
 #include "FileReader.h"

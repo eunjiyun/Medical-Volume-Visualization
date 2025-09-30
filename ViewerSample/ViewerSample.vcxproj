@@ -14,12 +14,12 @@
     <ProjectGuid>{CECAEE7B-4466-46F7-AD63-DB82C1122DD9}</ProjectGuid>
     <Keyword>QtVS_v304</Keyword>
     <QtMsBuild Condition="'$(QtMsBuild)'=='' OR !Exists('$(QtMsBuild)\qt.targets')">$(MSBuildProjectDirectory)\QtMsBuild</QtMsBuild>
-    <WindowsTargetPlatformVersion>10.0.22621.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0.20348.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
-    <PlatformToolset>v141</PlatformToolset>
+    <PlatformToolset>v142</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x64'" Label="Configuration">
@@ -32,7 +32,7 @@
     <Import Project="$(QtMsBuild)\qt_defaults.props" />
   </ImportGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'" Label="QtSettings">
-    <QtInstall>Qt5.10.1_msvc2017_64</QtInstall>
+    <QtInstall>5.15.2_msvc2019_64</QtInstall>
     <QtModules>core;gui;widgets</QtModules>
     <QtBuildConfig>debug</QtBuildConfig>
   </PropertyGroup>
@@ -61,7 +61,7 @@
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>C:\Qt\Qt5.10.1\5.10.1\msvc2017_64\include;C:\Projects\sample\Q3DViewer\SDK\Debug\include;C:\Projects\sample\imgui-master\imgui-master;C:\Projects\sample\imgui-master\imgui-master\backends;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Qt\Qt5.10.1\5.10.1\msvc2017_64\include;C:\Projects\sample\Q3DViewer\SDK\Debug\include;C:\Projects\sample\imgui-master\imgui-master;C:\Projects\sample\imgui-master\imgui-master\backends;C:\Projects\Qt3DViewer\ViewerSample\DCMTK\Debug\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <PreprocessorDefinitions>%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -111,14 +111,7 @@
     <QtRcc Include="ViewerSample.qrc" />
     <QtUic Include="ViewerSample.ui" />
     <QtMoc Include="ViewerSample.h" />
-    <ClCompile Include="CameraClass.cpp" />
-    <ClCompile Include="ColorShader.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-    </ClCompile>
-    <ClCompile Include="D3DClass.cpp" />
     <ClCompile Include="FileReader.cpp" />
-    <ClCompile Include="GraphicsClass.cpp" />
     <ClCompile Include="imgui.cpp" />
     <ClCompile Include="imgui_demo.cpp" />
     <ClCompile Include="imgui_draw.cpp">
@@ -128,10 +121,7 @@
     <ClCompile Include="imgui_impl_win32.cpp" />
     <ClCompile Include="imgui_tables.cpp" />
     <ClCompile Include="imgui_widgets.cpp" />
-    <ClCompile Include="InputClass.cpp" />
-    <ClCompile Include="ModelClass.cpp" />
     <ClCompile Include="QDirect3D11Widget.cpp" />
-    <ClCompile Include="SystemClass.cpp" />
     <ClCompile Include="ViewerSample.cpp" />
     <ClCompile Include="main.cpp" />
   </ItemGroup>
@@ -139,16 +129,8 @@
     <QtMoc Include="QDirect3D11Widget.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="AlignedAllocationPolicy.h" />
-    <ClInclude Include="CameraClass.h" />
-    <ClInclude Include="ColorShader.h">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-    </ClInclude>
-    <ClInclude Include="D3DClass.h" />
     <ClInclude Include="DxDefine.h" />
     <ClInclude Include="FileReader.h" />
-    <ClInclude Include="GraphicsClass.h" />
     <ClInclude Include="imconfig.h" />
     <ClInclude Include="imgui.h" />
     <ClInclude Include="imgui_impl_dx11.h" />
@@ -157,11 +139,8 @@
     <ClInclude Include="imstb_rectpack.h" />
     <ClInclude Include="imstb_textedit.h" />
     <ClInclude Include="imstb_truetype.h" />
-    <ClInclude Include="InputClass.h" />
-    <ClInclude Include="ModelClass.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="stdafx.h" />
-    <ClInclude Include="SystemClass.h" />
     <ClInclude Include="targetver.h" />
   </ItemGroup>
   <ItemGroup>

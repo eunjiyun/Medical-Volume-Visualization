@@ -67,7 +67,7 @@
 #include <D3Dcompiler.h>
 #include <directxmath.h>
 using namespace DirectX;
-#include "AlignedAllocationPolicy.h"
+//#include "AlignedAllocationPolicy.h"
 
 
 class D3DClass;
