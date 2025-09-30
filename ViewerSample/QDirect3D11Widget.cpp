@@ -1039,99 +1039,27 @@ void QDirect3D11Widget::RenderAllQuads()
     ImGui_ImplWin32_NewFrame();
     ImGui::NewFrame();
 
-
-
-
-
-
-    ImGui::SetNextWindowPos(ImVec2(0, 0)); // 좌측 상단 위치
-    ImGui::SetNextWindowSize(ImVec2(130, 150));
-    ImGui::Begin((QString::fromLocal8Bit("환자 정보")).toUtf8().constData(), nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
-
-
-
-
-
-    // ImGui::Text("Patient Name: %s", fileReader->patientName.c_str());
-    QString name = QString::fromLocal8Bit(fileReader->patientName.c_str());
-
-    //ImGui::Text(QString::fromLocal8Bit("이름: ")%s", name.toUtf8().constData());
-    QString label = QString::fromLocal8Bit("이름 : ") + name;
-    ImGui::Text("%s", label.toUtf8().constData());
-
-
-    //qDebug()  << "name.toUtf8().constData() : " << name.toUtf8().constData() << endl;
-
-    QString patientMF = QString::fromLocal8Bit(fileReader->patientMF.c_str());
-    QString patientMFLabel = QString::fromLocal8Bit("성별 : ") + patientMF;
-    ImGui::Text("%s", patientMFLabel.toUtf8().constData());
-
-    QString patientID = QString::fromLocal8Bit(fileReader->patientID.c_str());
-    QString patientIDLabel = QString::fromLocal8Bit("아이디 : ") + patientID;
-    ImGui::Text("%s", patientIDLabel.toUtf8().constData());
-
-    /*QString patientAge = QString::fromLocal8Bit(fileReader->patientAge.c_str());
-    QString patientAgeLabel = QString::fromLocal8Bit("나이 : ") + patientAge;
-    ImGui::Text("%s", patientAgeLabel.toUtf8().constData());*/
-
-    QString patientBirth = QString::fromLocal8Bit(fileReader->birthDate.c_str());
-    QString patientBirthDate = QString::fromLocal8Bit("생년월일 : ") + patientBirth;
-    ImGui::Text("%s", patientBirthDate.toUtf8().constData());
-
-    QString studyDate = QString::fromLocal8Bit(fileReader->studyDate.c_str());
-    QString studyDateLabel = QString::fromLocal8Bit("검사일 : ") + studyDate;
-    ImGui::Text("%s", studyDateLabel.toUtf8().constData());
-
-    ////ImGui::Text("Birth Date: %s", fileReader->birthDate.c_str());
-    //ImGui::Text("성별: %s", fileReader->patientMF.c_str());
-    //ImGui::Text("아이디: %s", fileReader->patientID.c_str());
-    //ImGui::Text("나이: %s", fileReader->patientAge.c_str());
-    //ImGui::Text("검사일: %s", fileReader->studyDate.c_str());
-
-
-    ImDrawList* drawList = ImGui::GetBackgroundDrawList();
-
-    ImVec2 screenSize = ImGui::GetIO().DisplaySize;
-    float cx = screenSize.x * 0.5f;
-    float cy = screenSize.y * 0.5f;
-
-    // 수직선
-    drawList->AddLine(ImVec2(cx, 0), ImVec2(cx, screenSize.y), IM_COL32(255, 255, 0, 255), 1.0f);
-    // 수평선
-    drawList->AddLine(ImVec2(0, cy), ImVec2(screenSize.x, cy), IM_COL32(0, 128, 255, 255), 1.0f);
-
-
-    //// ImGui::Begin("Main Window");
-
-    // // 스크롤 가능한 영역 정의
-    // ImGui::BeginChild("ScrollableRegion", ImVec2(0, 300), true, ImGuiWindowFlags_HorizontalScrollbar);
-
-    // // 여기에 많은 위젯을 넣으면 자동으로 스크롤바가 생김
-    // for (int i = 0; i < 50; i++) {
-    //     ImGui::Text("라인 %d", i);
-    // }
-
-    // ImGui::EndChild();
-
-
-     //float windowX = 600.0f;
-     //float windowY = 50.0f;
-     //float windowWidth = 400.0f;
-     //float windowHeight = 300.0f;
-
-     //ImGui::SetNextWindowPos(ImVec2(windowX, windowY));
-     //ImGui::SetNextWindowSize(ImVec2(windowWidth, windowHeight));
-
     static ImVec2 imageOffsetAxial = ImVec2(0, 0); // 이미지 위치 오프셋
     static bool isDraggingAxial = false;
     static ImVec2 dragStartAxial;
 
 
-    ImGui::SetNextWindowPos(ImVec2(viewWidth * 2 - 30, viewY));
-    ImGui::SetNextWindowSize(ImVec2(20, viewHeight));
+    //640   380
 
+    ImGui::SetNextWindowPos(ImVec2(640*2-35 , 0));
 
+    qDebug() << "viewWidth : " << viewWidth << endl;
+    qDebug() << "viewHeight : " << viewHeight << endl;
+     ImGui::SetNextWindowSize(ImVec2(20, 380));
+    //ImGui::SetNextWindowSize(ImVec2(130, 150));
 
+    //ImGui::SetNextWindowPos(ImVec2(viewWidth * 2 - 30, viewY)); // 좌측 상단 위치
+    //ImGui::SetNextWindowSize(ImVec2(20, viewHeight));
+
+    //ImGui::SetNextWindowPos(ImVec2(viewWidth, 0)); // 좌측 상단 위치
+    //ImGui::SetNextWindowSize(ImVec2(20, viewHeight));
+    //ImGui::Begin((QString::fromLocal8Bit("환자")).toUtf8().constData(), nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
+    //ImGui::BeginChild("SagittalScrollable", ImVec2(0, 0), true, ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_AlwaysVerticalScrollbar);
 
     ImGui::Begin("Axial View", nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
 
@@ -1140,7 +1068,7 @@ void QDirect3D11Widget::RenderAllQuads()
 
     if (
         ImGui::IsItemHovered() && ImGui::IsMouseClicked(ImGuiMouseButton_Left)) {
-        // if (ImGui::IsWindowFocused()) { // 또는 ImGui::IsWindowHovered()
+
 
         isDraggingAxial = true;
         dragStartAxial = io.MousePos;
@@ -1148,48 +1076,10 @@ void QDirect3D11Widget::RenderAllQuads()
         qDebug() << "[Axial] drag start";
         qDebug() << "isDraggingAxial:" << isDraggingAxial;
         qDebug() << "dragStartAxial:" << dragStartAxial.x << "," << dragStartAxial.y;
-        //  }
+
 
     }
 
-
-
-    //ImGui::BeginChild("AxialScrollable", ImVec2(520, 300), true, ImGuiWindowFlags_HorizontalScrollbar);
-
-  //  ImGui::GetStyle().ScrollbarSize = 10.0f;
-
-
-
-
-
-
-
-
-
-//// 드래그 이벤트를 Child 영역 전체에 적용
-//    if (ImGui::IsWindowHovered() && ImGui::IsMouseClicked(ImGuiMouseButton_Left)) {
-//        isDraggingAxial = true;
-//        dragStartAxial = io.MousePos;
-//    }
-//    if (isDraggingAxial && ImGui::IsMouseDown(ImGuiMouseButton_Left)) {
-//        ImVec2 dragDelta = ImVec2(io.MousePos.x - dragStartAxial.x, io.MousePos.y - dragStartAxial.y);
-//        imageOffsetAxial.x += dragDelta.x;
-//        imageOffsetAxial.y += dragDelta.y;
-//        dragStartAxial = io.MousePos;
-//    }
-//    if (ImGui::IsMouseReleased(ImGuiMouseButton_Left)) {
-//        isDraggingAxial = false;
-//    }
-//
-
-
-
-    // if (ImGui::IsWindowHovered()) {
-
-
-    //     // ImGui::SetCursorPos(ImVec2(viewWidth * 2 - 30, viewY + imageOffset.y));
-    //    // 1. 커서 위치 먼저 설정
-    //ImGui::SetCursorPos(imageOffsetAxial); // imageOffset는 드래그로 바뀌는 값
 
 
     //// ✅ 대신 이미지 크기를 키워서 스크롤이 생기게 하고, 드래그로 스크롤 위치를 조정
@@ -1207,7 +1097,7 @@ void QDirect3D11Widget::RenderAllQuads()
 //  }
 
 
-       
+
 
     if (isDraggingAxial && ImGui::IsMouseDown(ImGuiMouseButton_Left)) {
         ImVec2 dragDelta = ImVec2(io.MousePos.x - dragStartAxial.x, io.MousePos.y - dragStartAxial.y);
@@ -1232,8 +1122,62 @@ void QDirect3D11Widget::RenderAllQuads()
     }
 
 
-    ImGui::EndChild();
-    ImGui::End();
+   // ImGui::EndChild();
+   //ImGui::End();
+
+
+
+
+    ImGui::SetNextWindowPos(ImVec2(0, 0)); // 좌측 상단 위치
+    ImGui::SetNextWindowSize(ImVec2(130, 150));
+    ImGui::Begin((QString::fromLocal8Bit("환자 정보")).toUtf8().constData(), nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
+
+
+
+
+
+    QString name = QString::fromLocal8Bit(fileReader->patientName.c_str());
+
+
+    QString label = QString::fromLocal8Bit("이름 : ") + name;
+    ImGui::Text("%s", label.toUtf8().constData());
+
+
+    QString patientMF = QString::fromLocal8Bit(fileReader->patientMF.c_str());
+    QString patientMFLabel = QString::fromLocal8Bit("성별 : ") + patientMF;
+    ImGui::Text("%s", patientMFLabel.toUtf8().constData());
+
+    QString patientID = QString::fromLocal8Bit(fileReader->patientID.c_str());
+    QString patientIDLabel = QString::fromLocal8Bit("아이디 : ") + patientID;
+    ImGui::Text("%s", patientIDLabel.toUtf8().constData());
+
+
+
+    QString patientBirth = QString::fromLocal8Bit(fileReader->birthDate.c_str());
+    QString patientBirthDate = QString::fromLocal8Bit("생년월일 : ") + patientBirth;
+    ImGui::Text("%s", patientBirthDate.toUtf8().constData());
+
+    QString studyDate = QString::fromLocal8Bit(fileReader->studyDate.c_str());
+    QString studyDateLabel = QString::fromLocal8Bit("검사일 : ") + studyDate;
+    ImGui::Text("%s", studyDateLabel.toUtf8().constData());
+
+
+
+
+    ImDrawList* drawList = ImGui::GetBackgroundDrawList();
+
+    ImVec2 screenSize = ImGui::GetIO().DisplaySize;
+    float cx = screenSize.x * 0.5f;
+    float cy = screenSize.y * 0.5f;
+
+    // 수직선
+    drawList->AddLine(ImVec2(cx, 0), ImVec2(cx, screenSize.y), IM_COL32(255, 255, 0, 255), 1.0f);
+    // 수평선
+    drawList->AddLine(ImVec2(0, cy), ImVec2(screenSize.x, cy), IM_COL32(0, 128, 255, 255), 1.0f);
+
+
+
+    
 
 
 
@@ -1244,8 +1188,9 @@ void QDirect3D11Widget::RenderAllQuads()
     static ImVec2 dragStartSagittal;
 
     //sagittal
-    ImGui::SetNextWindowPos(ImVec2(viewWidth * 2 - 30, viewHeight+10));
-    ImGui::SetNextWindowSize(ImVec2(20, viewHeight));
+  //  ImGui::SetNextWindowPos(ImVec2(viewWidth * 2 - 30, viewHeight+10));
+    ImGui::SetNextWindowPos(ImVec2(640*2-35 , 380 ));
+    ImGui::SetNextWindowSize(ImVec2(20, 380));
 
 
 
@@ -1269,37 +1214,6 @@ void QDirect3D11Widget::RenderAllQuads()
     }
 
 
-    //ImGui::BeginChild("AxialScrollable", ImVec2(520, 300), true, ImGuiWindowFlags_HorizontalScrollbar);
-
-  //  ImGui::GetStyle().ScrollbarSize = 10.0f;
-
-
-
-
-
-
-
-
-//// 드래그 이벤트를 Child 영역 전체에 적용
-//    if (ImGui::IsWindowHovered() && ImGui::IsMouseClicked(ImGuiMouseButton_Left)) {
-//        isDraggingSagittal = true;
-//        dragStartSagittal = io.MousePos;
-//    }
-//    if (isDraggingSagittal && ImGui::IsMouseDown(ImGuiMouseButton_Left)) {
-//        ImVec2 dragDelta = ImVec2(io.MousePos.x - dragStartSagittal.x, io.MousePos.y - dragStartSagittal.y);
-//        imageOffsetSagittal.x += dragDelta.x;
-//        imageOffsetSagittal.y += dragDelta.y;
-//        dragStartSagittal = io.MousePos;
-//    }
-//    if (ImGui::IsMouseReleased(ImGuiMouseButton_Left)) {
-//        isDraggingSagittal = false;
-//    }
-
-
-
-    // ImGui::SetCursorPos(ImVec2(viewWidth * 2 - 30, viewY + imageOffset.y));
-   // 1. 커서 위치 먼저 설정
-    //ImGui::SetCursorPos(imageOffsetSagittal); // imageOffset는 드래그로 바뀌는 값
 
     // ✅ 대신 이미지 크기를 키워서 스크롤이 생기게 하고, 드래그로 스크롤 위치를 조정
     if (isDraggingSagittal) {
@@ -1355,8 +1269,8 @@ void QDirect3D11Widget::RenderAllQuads()
 
 
     //coronal
-    ImGui::SetNextWindowPos(ImVec2(viewWidth - 35, viewHeight));
-    ImGui::SetNextWindowSize(ImVec2(20, viewHeight));
+    ImGui::SetNextWindowPos(ImVec2(640-35, 380));
+    ImGui::SetNextWindowSize(ImVec2(20, 380));
 
 
 
@@ -1378,37 +1292,7 @@ void QDirect3D11Widget::RenderAllQuads()
     }
 
 
-    //ImGui::BeginChild("AxialScrollable", ImVec2(520, 300), true, ImGuiWindowFlags_HorizontalScrollbar);
-
-  //  ImGui::GetStyle().ScrollbarSize = 10.0f;
-
-
-
-
-
-
-
-
-//// 드래그 이벤트를 Child 영역 전체에 적용
-//    if (ImGui::IsWindowHovered() && ImGui::IsMouseClicked(ImGuiMouseButton_Left)) {
-//        isDraggingCoronal = true;
-//        dragStartCoronal = io.MousePos;
-//    }
-//    if (isDraggingCoronal && ImGui::IsMouseDown(ImGuiMouseButton_Left)) {
-//        ImVec2 dragDelta = ImVec2(io.MousePos.x - dragStartCoronal.x, io.MousePos.y - dragStartCoronal.y);
-//        imageOffsetCoronal.x += dragDelta.x;
-//        imageOffsetCoronal.y += dragDelta.y;
-//        dragStartCoronal = io.MousePos;
-//    }
-//    if (ImGui::IsMouseReleased(ImGuiMouseButton_Left)) {
-//        isDraggingCoronal = false;
-//    }
-//
-
-
-    // ImGui::SetCursorPos(ImVec2(viewWidth * 2 - 30, viewY + imageOffset.y));
-   // 1. 커서 위치 먼저 설정
-   // ImGui::SetCursorPos(imageOffsetCoronal); // imageOffset는 드래그로 바뀌는 값
+    
 
     // ✅ 대신 이미지 크기를 키워서 스크롤이 생기게 하고, 드래그로 스크롤 위치를 조정
     if (isDraggingCoronal) {
@@ -1457,6 +1341,9 @@ void QDirect3D11Widget::RenderAllQuads()
 
 
 
+    ImGui::End();
+
+    ImGui::EndChild();
     ImGui::End();
 
     ImGui::Render();
