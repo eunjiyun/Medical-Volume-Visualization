@@ -137,6 +137,15 @@ private:
 
 	void InitSampler();
 	void InitializeGraphics();
+
+public:
+
+    void mouseMoveEvent(QMouseEvent* event);
+
+
+    void mouseReleaseEvent(QMouseEvent* event);
+
+
 	// Qt Events
 private:
 	bool           event(QEvent * event) override;
@@ -163,7 +172,8 @@ signals:
 	void ticked();
 	void rendered();
 
-	void keyPressed(QKeyEvent *);
+	void key
+        ed(QKeyEvent *);
 	void mouseMoved(QMouseEvent *);
 	void mouseClicked(QMouseEvent *);
 	void mouseReleased(QMouseEvent *);
@@ -236,6 +246,11 @@ public:
 	FileReader* fileReader = nullptr;
 
     ID3D11ShaderResourceView* axialTextureSRV = nullptr;
+
+    float viewX;
+    float viewY;
+    float viewWidth;
+    float viewHeight;
 
 
 };
