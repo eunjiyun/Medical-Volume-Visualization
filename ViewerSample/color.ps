@@ -1,0 +1,101 @@
+////////////////////////////////////////////////////////////////////////////////
+// Filename: color.ps
+////////////////////////////////////////////////////////////////////////////////
+
+
+//////////////
+// TYPEDEFS //
+//////////////
+struct PixelInputType
+{
+    float4 position : SV_POSITION;
+    float4 color : COLOR;
+	 float3 worldPos : TEXCOORD0; // ?�드 공간 ?�치
+
+};
+
+
+
+
+
+////////////////////////////////////////////////////////////////////////////////
+// Pixel Shader
+////////////////////////////////////////////////////////////////////////////////
+
+/*
+float4 ColorPixelShader(PixelInputType input) : SV_TARGET
+{
+    //return input.color;
+	 return float4(1.0f, 0.0f, 0.0f, 1.0f); // 빨간??
+}
+*/
+
+
+
+
+
+float4 ColorPixelShader(PixelInputType input) : SV_TARGET {
+
+//float4 lightDir = normalize(float3(0.0f, 0.0f, -1.0f)); // 광원 방향
+float3 lightDir = normalize(float3(0.0f, 0.0f, 1.0f)); // ???�???�치
+
+
+float4 ambientColor = float4(0.2f, 0.2f, 0.2f, 1.0f);   // 주�?�?
+
+    float3 normal = float3(0.0f, 0.0f, 1.0f); // ?�면 ?�각?�의 법선
+
+
+
+	
+	/*
+	float3 viewDir = normalize(cameraPos - input.worldPos); // ?�점 방향
+float3 reflectDir = reflect(-lightDir, normal);         // 반사 벡터
+float spec = pow(saturate(dot(viewDir, reflectDir)), 32); // ?�이?�이??
+
+*/
+
+
+
+
+
+
+
+    float diffuseIntensity = saturate(dot(normal, lightDir));
+
+//	diffuseIntensity = pow(diffuseIntensity, 0.5); // 밝기 부?�팅
+
+//	diffuseIntensity = clamp(dot(normal, lightDir) * 2.0, 0.0, 1.0);
+
+	// float diffuseIntensity = saturate(normal, lightDir);
+
+	
+
+	float4 baseColor = float4(1.0f, 0.0f, 0.0f, 1.0f); // ?�로 변?�로 ?�언
+
+	    float4 diffuseColor = input.color * diffuseIntensity;
+
+
+		float4 lightColor = float4(1.0f, 0.95f, 0.8f, 1.0f); // ?�뜻??백색�?float4 diffuseColor = input.color * diffuseIntensity * lightColor;
+
+	//diffuseIntensity=1.0;
+
+  //  float4 diffuseColor = input.color;
+
+
+  return ambientColor + diffuseColor;
+
+//  return ambientColor + diffuseColor + specularColor;
+
+
+ // return ambientColor + input.color;
+
+  // return float4(diffuseIntensity.xxx, 1.0f)*10;
+	
+
+	//return dot(normal, lightDir);
+
+	//return float4(diffuseIntensity, diffuseIntensity, diffuseIntensity, 1.0f);
+
+	//return input.color; // 밝기 조절
+
+}
