@@ -994,34 +994,34 @@ void QDirect3D11Widget::RenderAllQuads()
 
 
 
-    ////// 2. 백버퍼에 출력할 준비
-    //m_pDeviceContext->OMSetRenderTargets(1, &m_pSwapChainRTV, nullptr);
-    //////m_pDeviceContext->ClearRenderTargetView(m_pSwapChainRTV, reinterpret_cast<float*>(&m_BackColor));
+    //// 2. 백버퍼에 출력할 준비
+    m_pDeviceContext->OMSetRenderTargets(1, &m_pSwapChainRTV, nullptr);
+    ////m_pDeviceContext->ClearRenderTargetView(m_pSwapChainRTV, reinterpret_cast<float*>(&m_BackColor));
 
-    //// 3. 각 렌더 타겟 텍스처를 quad로 출력
-    //for (int i{}; i < 4; ++i)
-    //{
-    //    D3D11_VIEWPORT vp = CreateViewport(i); // ← 4분할 뷰포트 계산
+    // 3. 각 렌더 타겟 텍스처를 quad로 출력
+    for (int i{}; i < 4; ++i)
+    {
+        D3D11_VIEWPORT vp = CreateViewport(i); // ← 4분할 뷰포트 계산
+
+/*
+
+        m_pDeviceContext->RSSetViewports(1, &vp);
+        m_pDeviceContext->VSSetShader(m_vertexShader, nullptr, 0);
+        m_pDeviceContext->PSSetShader(m_pixelShader, nullptr, 0);
+        m_pDeviceContext->PSSetShaderResources(0, 1, &pSRV);
+        m_pDeviceContext->IASetInputLayout(m_inputLayout);
+
+        UINT stride = sizeof(Vertex);
+        UINT offset = 0;
+        m_pDeviceContext->IASetVertexBuffers(0, 1, &m_vertexBuffer, &stride, &offset);
+        m_pDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
+
+        m_pDeviceContext->Draw(4, 0);*/
 
 
 
-    //    m_pDeviceContext->RSSetViewports(1, &vp);
-    //    m_pDeviceContext->VSSetShader(m_vertexShader, nullptr, 0);
-    //    m_pDeviceContext->PSSetShader(m_pixelShader, nullptr, 0);
-    //    m_pDeviceContext->PSSetShaderResources(0, 1, &pSRV);
-    //    m_pDeviceContext->IASetInputLayout(m_inputLayout);
-
-    //    UINT stride = sizeof(Vertex);
-    //    UINT offset = 0;
-    //    m_pDeviceContext->IASetVertexBuffers(0, 1, &m_vertexBuffer, &stride, &offset);
-    //    m_pDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
-
-    //    m_pDeviceContext->Draw(4, 0);
-
-
-
-    //    DrawQuadWithTexture(m_SRViews[i], vp);      // ← 여기서 호출!
-    //}
+        DrawQuadWithTexture(m_SRViews[i], vp);      // ← 여기서 호출!
+    }
 
 
 
@@ -1069,8 +1069,8 @@ void QDirect3D11Widget::RenderAllQuads()
 
     ImGui::SetNextWindowPos(ImVec2(640*2-32 , 3));
 
-    qDebug() << "viewWidth : " << viewWidth << endl;
-    qDebug() << "viewHeight : " << viewHeight << endl;
+    //qDebug() << "viewWidth : " << viewWidth << endl;
+    //qDebug() << "viewHeight : " << viewHeight << endl;
      ImGui::SetNextWindowSize(ImVec2(20, 380-3));
     //ImGui::SetNextWindowSize(ImVec2(130, 150));
 
