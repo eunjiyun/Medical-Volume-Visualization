@@ -79,64 +79,64 @@ class FileReader;
 
 // ??ÍøîÍ∫Ç??????????Áπ?????Î±ÄÎ±???ÍøîÍ∫Ç????????
 struct Vertex {
-	DirectX::XMFLOAT3 position;
-	DirectX::XMFLOAT2 texcoord;
+    DirectX::XMFLOAT3 position;
+    DirectX::XMFLOAT2 texcoord;
 };
 
 
 class QDirect3D11Widget : public QWidget
 {
-	Q_OBJECT
+    Q_OBJECT
 
 public:
-	QDirect3D11Widget(QWidget * parent);
-	~QDirect3D11Widget();
+    QDirect3D11Widget(QWidget * parent);
+    ~QDirect3D11Widget();
 
-	void release();
-	void resetEnvironment();
+    void release();
+    void resetEnvironment();
 
-	void run();
-	void pauseFrames();
-	void continueFrames();
+    void run();
+    void pauseFrames();
+    void continueFrames();
 
-	bool init();
+    bool init();
 
-	void LoadDICOMSeries();
+    void LoadDICOMSeries();
 
     void mousePressEvent(QMouseEvent* event);
     int GetClickedViewIndex(int px, int py, int width, int height);
 
     int px, py;
 private:
-	
 
-	void beginScene();
-	void endScene();
 
-	void tick();
-	void initializeRenderTargets();
+    void beginScene();
+    void endScene();
 
-	void createSwapChainRTV();
+    void tick();
+    void initializeRenderTargets();
 
-	//void DrawQuadWithTexture(ID3D11ShaderResourceView* pSRV, const D3D11_VIEWPORT& vp);
-	void render();
-	void UpdateColorBuffer();
-	void DrawColoredQuad(const D3D11_VIEWPORT& vp);
-	void InitShaders();
-	D3D11_VIEWPORT CreateViewport(int index);
-	void SetBackgroundColor(int index);
-	void RenderSceneToTarget(int i);
-	void RenderAllQuads();
-	void DrawFullScreenQuad();
-	void DrawQuadWithTexture(ID3D11ShaderResourceView* pSRV, const D3D11_VIEWPORT& vp);
+    void createSwapChainRTV();
 
-	UINT BytesPerPixel(DXGI_FORMAT format);
-	ID3D11Texture2D* CreateTexture2D(ID3D11Device* device, UINT width, UINT height, DXGI_FORMAT format, const void* initData);
-	ID3D11ShaderResourceView* CreateTextureSRV(ID3D11Device* device, ID3D11Texture2D* texture);
-	void InitTextures(UINT,UINT);
+    //void DrawQuadWithTexture(ID3D11ShaderResourceView* pSRV, const D3D11_VIEWPORT& vp);
+    void render();
+    void UpdateColorBuffer();
+    void DrawColoredQuad(const D3D11_VIEWPORT& vp);
+    void InitShaders();
+    D3D11_VIEWPORT CreateViewport(int index);
+    void SetBackgroundColor(int index);
+    void RenderSceneToTarget(int i);
+    void RenderAllQuads();
+    void DrawFullScreenQuad();
+    void DrawQuadWithTexture(ID3D11ShaderResourceView* pSRV, const D3D11_VIEWPORT& vp);
 
-	void InitSampler();
-	void InitializeGraphics();
+    UINT BytesPerPixel(DXGI_FORMAT format);
+    ID3D11Texture2D* CreateTexture2D(ID3D11Device* device, UINT width, UINT height, DXGI_FORMAT format, const void* initData);
+    ID3D11ShaderResourceView* CreateTextureSRV(ID3D11Device* device, ID3D11Texture2D* texture);
+    void InitTextures(UINT, UINT);
+
+    void InitSampler();
+    void InitializeGraphics();
 
 public:
 
@@ -146,104 +146,103 @@ public:
     void mouseReleaseEvent(QMouseEvent* event);
 
 
-	// Qt Events
+    // Qt Events
 private:
-	bool           event(QEvent * event) override;
-	void           showEvent(QShowEvent * event) override;
-	QPaintEngine * paintEngine() const override;
-	void           paintEvent(QPaintEvent * event) override;
-	void           resizeEvent(QResizeEvent * event) override;
-	void           wheelEvent(QWheelEvent * event) override;
+    bool           event(QEvent * event) override;
+    void           showEvent(QShowEvent * event) override;
+    QPaintEngine * paintEngine() const override;
+    void           paintEvent(QPaintEvent * event) override;
+    void           resizeEvent(QResizeEvent * event) override;
+    void           wheelEvent(QWheelEvent * event) override;
 
-	LRESULT WINAPI WndProc(MSG * pMsg);
+    LRESULT WINAPI WndProc(MSG * pMsg);
 
 #if QT_VERSION >= 0x050000
-	bool nativeEvent(const QByteArray & eventType, void * message, long * result) override;
+    bool nativeEvent(const QByteArray & eventType, void * message, long * result) override;
 #else
-	bool winEvent(MSG * message, long * result) override;
+    bool winEvent(MSG * message, long * result) override;
 #endif
 
 signals:
-	void deviceInitialized(bool success);
+    void deviceInitialized(bool success);
 
-	void eventHandled();
-	void widgetResized();
+    void eventHandled();
+    void widgetResized();
 
-	void ticked();
-	void rendered();
+    void ticked();
+    void rendered();
 
-	void key
-        ed(QKeyEvent *);
-	void mouseMoved(QMouseEvent *);
-	void mouseClicked(QMouseEvent *);
-	void mouseReleased(QMouseEvent *);
+    void keyPressed(QKeyEvent *);
+    void mouseMoved(QMouseEvent *);
+    void mouseClicked(QMouseEvent *);
+    void mouseReleased(QMouseEvent *);
 
 
-	
+
 private slots:
-	void onFrame();
-	void onReset();
+    void onFrame();
+    void onReset();
 
-	// Getters / Setters
+    // Getters / Setters
 public:
-	HWND const & nativeHandle() const { return m_hWnd; }
+    HWND const & nativeHandle() const { return m_hWnd; }
 
-	ID3D11Device *           device() const { return m_pDevice; }
-	ID3D11DeviceContext *    deviceContext() { return m_pDeviceContext; }
-	IDXGISwapChain *         swapChain() { return m_pSwapChain; }
-	//ID3D11RenderTargetView * TargetView() const { return m_pRTView; }
-	std::vector<ID3D11RenderTargetView*> TargetView() const{
-		return m_RTViews;
-	}
-	bool renderActive() const { return m_bRenderActive; }
-	void setRenderActive(bool active) { m_bRenderActive = active; }
+    ID3D11Device *           device() const { return m_pDevice; }
+    ID3D11DeviceContext *    deviceContext() { return m_pDeviceContext; }
+    IDXGISwapChain *         swapChain() { return m_pSwapChain; }
+    //ID3D11RenderTargetView * TargetView() const { return m_pRTView; }
+    std::vector<ID3D11RenderTargetView*> TargetView() const {
+        return m_RTViews;
+    }
+    bool renderActive() const { return m_bRenderActive; }
+    void setRenderActive(bool active) { m_bRenderActive = active; }
 
-	D3DCOLORVALUE * BackColor() { return &m_BackColor; }
+    D3DCOLORVALUE * BackColor() { return &m_BackColor; }
 
 
-	std::vector<ID3D11ShaderResourceView*> m_SRViews;
-	ID3D11Buffer* m_colorBuffer = nullptr;
+    std::vector<ID3D11ShaderResourceView*> m_SRViews;
+    ID3D11Buffer* m_colorBuffer = nullptr;
 private:
-	
-	ID3D11DeviceContext *    m_pDeviceContext;
-	IDXGISwapChain *         m_pSwapChain;
-	//ID3D11RenderTargetView * m_pRTView;
-	std::vector<ID3D11RenderTargetView*> m_RTViews;
-	ID3D11RenderTargetView* m_pSwapChainRTV = nullptr;
 
-	QTimer m_qTimer;
+    ID3D11DeviceContext *    m_pDeviceContext;
+    IDXGISwapChain *         m_pSwapChain;
+    //ID3D11RenderTargetView * m_pRTView;
+    std::vector<ID3D11RenderTargetView*> m_RTViews;
+    ID3D11RenderTargetView* m_pSwapChainRTV = nullptr;
 
-	HWND m_hWnd;
-	bool m_bDeviceInitialized;
+    QTimer m_qTimer;
 
-	bool m_bRenderActive;
-	bool m_bStarted;
+    HWND m_hWnd;
+    bool m_bDeviceInitialized;
 
-	D3DCOLORVALUE m_BackColor;
+    bool m_bRenderActive;
+    bool m_bStarted;
+
+    D3DCOLORVALUE m_BackColor;
 public:
-	ID3D11Device* m_pDevice;
+    ID3D11Device* m_pDevice;
 
 
-	ID3D11VertexShader*       m_vertexShader = nullptr;
-	ID3D11PixelShader*        m_pixelShader = nullptr;
+    ID3D11VertexShader*       m_vertexShader = nullptr;
+    ID3D11PixelShader*        m_pixelShader = nullptr;
 
-	// ??ÍøîÍ∫Ç???????Ô¶?????
-	ID3D11Buffer*             m_vertexBuffer = nullptr;
+    // ??ÍøîÍ∫Ç???????Ô¶?????
+    ID3D11Buffer*             m_vertexBuffer = nullptr;
 
-	// ??????§Ï±∑Á´????ÊøöÎ∞∏≈¶?¥ÏûèÎ™?????Î∞∏Î∏∂??(??ÍøîÍ∫Ç??????????Áπ????ÍøîÍ∫Ç?????????
-	ID3D11InputLayout*        m_inputLayout = nullptr;
-	//ID3D11Buffer* m_vertexBuffer = nullptr;
+    // ??????§Ï±∑Á´????ÊøöÎ∞∏≈¶?¥ÏûèÎ™?????Î∞∏Î∏∂??(??ÍøîÍ∫Ç??????????Áπ????ÍøîÍ∫Ç?????????
+    ID3D11InputLayout*        m_inputLayout = nullptr;
+    //ID3D11Buffer* m_vertexBuffer = nullptr;
 
-	// Direct3D ???©ÎÆûÁ≠?????®ÏÄ¨Îµ†???Í∑êÎîÖÍ∫????	
-	ID3D11Texture2D* m_texture = nullptr;
-	std::vector<ID3D11ShaderResourceView*> m_textureSRV;
-	std::vector < ID3D11SamplerState*> m_samplerState;
+    // Direct3D ???©ÎÆûÁ≠?????®ÏÄ¨Îµ†???Í∑êÎîÖÍ∫????	
+    ID3D11Texture2D* m_texture = nullptr;
+    std::vector<ID3D11ShaderResourceView*> m_textureSRV;
+    std::vector < ID3D11SamplerState*> m_samplerState;
 
 
-	//ID3D11Texture2D* m_texture = nullptr;
-	//ID3D11ShaderResourceView* m_textureSRV = nullptr;
+    //ID3D11Texture2D* m_texture = nullptr;
+    //ID3D11ShaderResourceView* m_textureSRV = nullptr;
 
-	FileReader* fileReader = nullptr;
+    FileReader* fileReader = nullptr;
 
     ID3D11ShaderResourceView* axialTextureSRV = nullptr;
 
@@ -275,28 +274,28 @@ public:
 
 inline std::string HrToString(HRESULT hr)
 {
-	char s_str[64] = {};
-	sprintf_s(s_str, "HRESULT of 0x%08X", static_cast<UINT>(hr));
-	return std::string(s_str);
+    char s_str[64] = {};
+    sprintf_s(s_str, "HRESULT of 0x%08X", static_cast<UINT>(hr));
+    return std::string(s_str);
 }
 
 class HrException : public std::runtime_error
 {
 public:
-	HrException(HRESULT hr)
-		: std::runtime_error(HrToString(hr))
-		, m_hr(hr)
-	{
-	}
-	HRESULT Error() const { return m_hr; }
+    HrException(HRESULT hr)
+        : std::runtime_error(HrToString(hr))
+        , m_hr(hr)
+    {
+    }
+    HRESULT Error() const { return m_hr; }
 
 private:
-	const HRESULT m_hr;
+    const HRESULT m_hr;
 };
 
 inline void ThrowIfFailed(HRESULT hr)
 {
-	if (FAILED(hr)) { throw HrException(hr); }
+    if (FAILED(hr)) { throw HrException(hr); }
 }
 
 #define DXCall(func) ThrowIfFailed(func)

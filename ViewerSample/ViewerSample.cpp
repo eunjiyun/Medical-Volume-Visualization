@@ -26,142 +26,142 @@
 #include <QDesktopWidget>
 
 ViewerSample::ViewerSample(QWidget* parent)
-	: QMainWindow(parent)
-	, ui(new Ui::ViewerSampleClass)
+    : QMainWindow(parent)
+    , ui(new Ui::ViewerSampleClass)
 
 
-	, m_WindowSize(QSize(1280, 800))
+    , m_WindowSize(QSize(1280, 800))
 
-	//?饔낅??????????�굩?????�렭??????濾곌?????????諛몃�?????????�늉???????�컯??????????
-	, m_pCbxDoFrames(new QCheckBox(this))
+    //?饔낅??????????�굩?????�렭??????濾곌?????????諛몃�?????????�늉???????�컯??????????
+    , m_pCbxDoFrames(new QCheckBox(this))
 {
-	//setupUi(this)??.ui ????????轅붽???????????饔낅?????????�뇡????????諛몃�????this (ex: QMainWindow)?????�?????�슦??????????멸괜?????????
-	ui->setupUi(this);
+    //setupUi(this)??.ui ????????轅붽???????????饔낅?????????�뇡????????諛몃�????this (ex: QMainWindow)?????�?????�슦??????????멸괜?????????
+    ui->setupUi(this);
 
-	//// System ?????�늉??????????�곣뫖利???
-	//System = new SystemClass;
-	//
-	//if (!System)
-	//{
-	//	return;
-	//}
+    //// System ?????�늉??????????�곣뫖利???
+    //System = new SystemClass;
+    //
+    //if (!System)
+    //{
+    //	return;
+    //}
 
-	//System->qtD3dWidget = ui->view;
+    //System->qtD3dWidget = ui->view;
 
-	//// System ?????�늉????????????멸괜?????????????
-	//if (System->Initialize())
-	//{
-	//	
-	//	System->Run();
-	//}
+    //// System ?????�늉????????????멸괜?????????????
+    //if (System->Initialize())
+    //{
+    //	
+    //	System->Run();
+    //}
 
-	//// System ?????�늉?????????????�틢?????饔낅????????????�땟????????�땟戮녹????
-	//System->Shutdown();
-	//delete System;
-	//System = nullptr;
+    //// System ?????�늉?????????????�틢?????饔낅????????????�땟????????�땟戮녹????
+    //System->Shutdown();
+    //delete System;
+    //System = nullptr;
 
-	m_pScene = ui->view;
-	m_pScene = ui->view;
+    m_pScene = ui->view;
+    m_pScene = ui->view;
 
-	adjustWindowSize();
-	addToolbarWidgets();
-	connectSlots();
+    adjustWindowSize();
+    addToolbarWidgets();
+    connectSlots();
 }
 
 ViewerSample::~ViewerSample() = default;
 
 void ViewerSample::adjustWindowSize()
 {
-	resize(m_WindowSize.width(), m_WindowSize.height());
-	setGeometry(QStyle::alignedRect(Qt::LeftToRight, Qt::AlignCenter, size(),
-		qApp->screens().first()->availableGeometry()));
+    resize(m_WindowSize.width(), m_WindowSize.height());
+    setGeometry(QStyle::alignedRect(Qt::LeftToRight, Qt::AlignCenter, size(),
+        qApp->screens().first()->availableGeometry()));
 }
 
 void ViewerSample::addToolbarWidgets()
 {
-	// Add CheckBox to tool-bar to stop/continue frames execution.
-	m_pCbxDoFrames->setText("Do Frames");
-	m_pCbxDoFrames->setChecked(true);
-	connect(m_pCbxDoFrames, &QCheckBox::stateChanged, [&] {
-		if (m_pCbxDoFrames->isChecked())
-			//System->m_Graphics->m_Direct3D->qtD3dWidget
-			//m_pScene->continueFrames();
-			System->m_Graphics->m_Direct3D->qtD3dWidget->continueFrames();
-		else
-			//System->m_Graphics->m_Direct3D->qtD3dWidget
-			//m_pScene->pauseFrames();
-			System->m_Graphics->m_Direct3D->qtD3dWidget->pauseFrames();
-		});
-	ui->mainToolBar->addWidget(m_pCbxDoFrames);
+    // Add CheckBox to tool-bar to stop/continue frames execution.
+    m_pCbxDoFrames->setText("Do Frames");
+    m_pCbxDoFrames->setChecked(true);
+    connect(m_pCbxDoFrames, &QCheckBox::stateChanged, [&] {
+        if (m_pCbxDoFrames->isChecked())
+            //System->m_Graphics->m_Direct3D->qtD3dWidget
+            //m_pScene->continueFrames();
+            System->m_Graphics->m_Direct3D->qtD3dWidget->continueFrames();
+        else
+            //System->m_Graphics->m_Direct3D->qtD3dWidget
+            //m_pScene->pauseFrames();
+            System->m_Graphics->m_Direct3D->qtD3dWidget->pauseFrames();
+        });
+    ui->mainToolBar->addWidget(m_pCbxDoFrames);
 }
 
 void ViewerSample::connectSlots()
 {
-	connect(m_pScene, &QDirect3D11Widget::deviceInitialized, this, &ViewerSample::init);
-	connect(m_pScene, &QDirect3D11Widget::ticked, this, &ViewerSample::tick);
-	connect(m_pScene, &QDirect3D11Widget::rendered, this, &ViewerSample::render);
+    connect(m_pScene, &QDirect3D11Widget::deviceInitialized, this, &ViewerSample::init);
+    connect(m_pScene, &QDirect3D11Widget::ticked, this, &ViewerSample::tick);
+    connect(m_pScene, &QDirect3D11Widget::rendered, this, &ViewerSample::render);
 
-	/*connect(System->m_Graphics->m_Direct3D->qtD3dWidget, &QDirect3D11Widget::deviceInitialized, this, &ViewerSample::init);
-	connect(System->m_Graphics->m_Direct3D->qtD3dWidget, &QDirect3D11Widget::ticked, this, &ViewerSample::tick);
-	connect(System->m_Graphics->m_Direct3D->qtD3dWidget, &QDirect3D11Widget::rendered, this, &ViewerSample::render);*/
+    /*connect(System->m_Graphics->m_Direct3D->qtD3dWidget, &QDirect3D11Widget::deviceInitialized, this, &ViewerSample::init);
+    connect(System->m_Graphics->m_Direct3D->qtD3dWidget, &QDirect3D11Widget::ticked, this, &ViewerSample::tick);
+    connect(System->m_Graphics->m_Direct3D->qtD3dWidget, &QDirect3D11Widget::rendered, this, &ViewerSample::render);*/
 
-	//connect(System->qtD3dWidget, &QDirect3D11Widget::deviceInitialized, this, &ViewerSample::init);
-	//connect(System->qtD3dWidget, &QDirect3D11Widget::ticked, this, &ViewerSample::tick);
-	//connect(System->qtD3dWidget, &QDirect3D11Widget::rendered, this, &ViewerSample::render);
+    //connect(System->qtD3dWidget, &QDirect3D11Widget::deviceInitialized, this, &ViewerSample::init);
+    //connect(System->qtD3dWidget, &QDirect3D11Widget::ticked, this, &ViewerSample::tick);
+    //connect(System->qtD3dWidget, &QDirect3D11Widget::rendered, this, &ViewerSample::render);
 
-	// NOTE: Additionally, you can listen to some basic IO events.
-	// connect(m_pScene, &QDirect3D11Widget::keyPressed, this, &ViewerSample::onKeyPressed);
-	// connect(m_pScene, &QDirect3D11Widget::mouseMoved, this, &ViewerSample::onMouseMoved);
-	// connect(m_pScene, &QDirect3D11Widget::mouseClicked, this, &ViewerSample::onMouseClicked);
-	// connect(m_pScene, &QDirect3D11Widget::mouseReleased, this,
-	// &ViewerSample::onMouseReleased);
+    // NOTE: Additionally, you can listen to some basic IO events.
+    // connect(m_pScene, &QDirect3D11Widget::keyPressed, this, &ViewerSample::onKeyPressed);
+    // connect(m_pScene, &QDirect3D11Widget::mouseMoved, this, &ViewerSample::onMouseMoved);
+    // connect(m_pScene, &QDirect3D11Widget::mouseClicked, this, &ViewerSample::onMouseClicked);
+    // connect(m_pScene, &QDirect3D11Widget::mouseReleased, this,
+    // &ViewerSample::onMouseReleased);
 }
 
 void ViewerSample::init(bool success)
 {
-	if (!success)
-	{
-		QMessageBox::critical(this, "ERROR", "Direct3D widget initialization failed.",
-			QMessageBox::Ok);
-		return;
-	}
+    if (!success)
+    {
+        QMessageBox::critical(this, "ERROR", "Direct3D widget initialization failed.",
+            QMessageBox::Ok);
+        return;
+    }
 
-	// TODO: Add here your extra initialization here.
-	// ...
+    // TODO: Add here your extra initialization here.
+    // ...
 
-	// Start processing frames with a short delay in case things are still initializing/loading
-	// in the background.
-
-
-	QTimer::singleShot(500, this, [&] { m_pScene->run(); });
-	disconnect(m_pScene, &QDirect3D11Widget::deviceInitialized, this, &ViewerSample::init);
+    // Start processing frames with a short delay in case things are still initializing/loading
+    // in the background.
 
 
-	//QTimer::singleShot(500, this, [&] { System->m_Graphics->m_Direct3D->qtD3dWidget->run(); });
-	//disconnect(System->m_Graphics->m_Direct3D->qtD3dWidget, &QDirect3D11Widget::deviceInitialized, this, &ViewerSample::init);
+    QTimer::singleShot(500, this, [&] { m_pScene->run(); });
+    disconnect(m_pScene, &QDirect3D11Widget::deviceInitialized, this, &ViewerSample::init);
+
+
+    //QTimer::singleShot(500, this, [&] { System->m_Graphics->m_Direct3D->qtD3dWidget->run(); });
+    //disconnect(System->m_Graphics->m_Direct3D->qtD3dWidget, &QDirect3D11Widget::deviceInitialized, this, &ViewerSample::init);
 }
 
 void ViewerSample::tick()
 {
-	// TODO: Update the scene here.
-	// m_pMesh->Tick();
+    // TODO: Update the scene here.
+    // m_pMesh->Tick();
 }
 
 void ViewerSample::render()
 {
-	// TODO: Present the scene here.
-	// m_pMesh->Render();
+    // TODO: Present the scene here.
+    // m_pMesh->Render();
 }
 
 void ViewerSample::closeEvent(QCloseEvent * event)
 {
-	event->ignore();
-	//System->m_Graphics->m_Direct3D->qtD3dWidget
-	//m_pScene->release();
-	//System->m_Graphics->m_Direct3D->qtD3dWidget->release();
-	QTime dieTime = QTime::currentTime().addMSecs(500);
-	while (QTime::currentTime() < dieTime)
-		QCoreApplication::processEvents(QEventLoop::AllEvents, 100);
+    event->ignore();
+    //System->m_Graphics->m_Direct3D->qtD3dWidget
+    //m_pScene->release();
+    //System->m_Graphics->m_Direct3D->qtD3dWidget->release();
+    QTime dieTime = QTime::currentTime().addMSecs(500);
+    while (QTime::currentTime() < dieTime)
+        QCoreApplication::processEvents(QEventLoop::AllEvents, 100);
 
-	event->accept();
+    event->accept();
 }
