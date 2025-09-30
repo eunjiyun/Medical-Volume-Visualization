@@ -1046,11 +1046,11 @@ void QDirect3D11Widget::RenderAllQuads()
 
     //640   380
 
-    ImGui::SetNextWindowPos(ImVec2(640*2-35 , 0));
+    ImGui::SetNextWindowPos(ImVec2(640*2-32 , 3));
 
     qDebug() << "viewWidth : " << viewWidth << endl;
     qDebug() << "viewHeight : " << viewHeight << endl;
-     ImGui::SetNextWindowSize(ImVec2(20, 380));
+     ImGui::SetNextWindowSize(ImVec2(20, 380-3));
     //ImGui::SetNextWindowSize(ImVec2(130, 150));
 
     //ImGui::SetNextWindowPos(ImVec2(viewWidth * 2 - 30, viewY)); // 좌측 상단 위치
@@ -1189,7 +1189,7 @@ void QDirect3D11Widget::RenderAllQuads()
 
     //sagittal
   //  ImGui::SetNextWindowPos(ImVec2(viewWidth * 2 - 30, viewHeight+10));
-    ImGui::SetNextWindowPos(ImVec2(640*2-35 , 380 ));
+    ImGui::SetNextWindowPos(ImVec2(640*2-32 , 380+3 ));
     ImGui::SetNextWindowSize(ImVec2(20, 380));
 
 
@@ -1269,7 +1269,7 @@ void QDirect3D11Widget::RenderAllQuads()
 
 
     //coronal
-    ImGui::SetNextWindowPos(ImVec2(640-35, 380));
+    ImGui::SetNextWindowPos(ImVec2(640-32, 380+3));
     ImGui::SetNextWindowSize(ImVec2(20, 380));
 
 
