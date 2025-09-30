@@ -19,7 +19,7 @@
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
-    <PlatformToolset>v141</PlatformToolset>
+    <PlatformToolset>v142</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
@@ -30,7 +30,7 @@
     <Import Project="$(QtMsBuild)\qt_defaults.props" />
   </ImportGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'" Label="QtSettings">
-    <QtInstall>Qt5.10.1_msvc2017_64</QtInstall>
+    <QtInstall>5.15.2_msvc2019_64</QtInstall>
     <QtModules>core;gui;widgets</QtModules>
     <QtBuildConfig>debug</QtBuildConfig>
   </PropertyGroup>
@@ -96,17 +96,7 @@
     <QtRcc Include="ViewerSample.qrc" />
     <QtUic Include="ViewerSample.ui" />
     <QtMoc Include="ViewerSample.h" />
-    <ClCompile Include="CameraClass.cpp" />
-    <ClCompile Include="ColorShader.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-    </ClCompile>
-    <ClCompile Include="D3DClass.cpp" />
-    <ClCompile Include="GraphicsClass.cpp" />
-    <ClCompile Include="InputClass.cpp" />
-    <ClCompile Include="ModelClass.cpp" />
     <ClCompile Include="QDirect3D11Widget.cpp" />
-    <ClCompile Include="SystemClass.cpp" />
     <ClCompile Include="ViewerSample.cpp" />
     <ClCompile Include="main.cpp" />
   </ItemGroup>
@@ -114,20 +104,9 @@
     <QtMoc Include="QDirect3D11Widget.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="AlignedAllocationPolicy.h" />
-    <ClInclude Include="CameraClass.h" />
-    <ClInclude Include="ColorShader.h">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-    </ClInclude>
-    <ClInclude Include="D3DClass.h" />
     <ClInclude Include="DxDefine.h" />
-    <ClInclude Include="GraphicsClass.h" />
-    <ClInclude Include="InputClass.h" />
-    <ClInclude Include="ModelClass.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="stdafx.h" />
-    <ClInclude Include="SystemClass.h" />
     <ClInclude Include="targetver.h" />
   </ItemGroup>
   <ItemGroup>
