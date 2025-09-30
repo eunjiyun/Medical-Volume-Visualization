@@ -1137,6 +1137,23 @@ void QDirect3D11Widget::RenderAllQuads()
 
     ImGui::BeginChild("AxialScrollable", ImVec2(0, 0), true, ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_AlwaysVerticalScrollbar);
 
+
+    if (
+        ImGui::IsItemHovered() && ImGui::IsMouseClicked(ImGuiMouseButton_Left)) {
+        // if (ImGui::IsWindowFocused()) { // 또는 ImGui::IsWindowHovered()
+
+        isDraggingAxial = true;
+        dragStartAxial = io.MousePos;
+
+        qDebug() << "[Axial] drag start";
+        qDebug() << "isDraggingAxial:" << isDraggingAxial;
+        qDebug() << "dragStartAxial:" << dragStartAxial.x << "," << dragStartAxial.y;
+        //  }
+
+    }
+
+
+
     //ImGui::BeginChild("AxialScrollable", ImVec2(520, 300), true, ImGuiWindowFlags_HorizontalScrollbar);
 
   //  ImGui::GetStyle().ScrollbarSize = 10.0f;
@@ -1145,54 +1162,74 @@ void QDirect3D11Widget::RenderAllQuads()
 
 
 
-    //if (ImGui::IsItemHovered() && ImGui::IsMouseClicked(ImGuiMouseButton_Left)) {
-    //    isDragging = true;
-    //    dragStart = io.MousePos;
-    //}
-
-    //if (isDragging && ImGui::IsMouseDown(ImGuiMouseButton_Left)) {
-    //    ImVec2 dragDelta = ImVec2(io.MousePos.x - dragStart.x, io.MousePos.y - dragStart.y);
-    //    imageOffset.x += dragDelta.x;
-    //    imageOffset.y += dragDelta.y;
-    //    dragStart = io.MousePos;
-    //}
-
-    //if (ImGui::IsMouseReleased(ImGuiMouseButton_Left)) {
-    //    isDragging = false;
-    //}
 
 
 
-// 드래그 이벤트를 Child 영역 전체에 적용
-    if (ImGui::IsWindowHovered() && ImGui::IsMouseClicked(ImGuiMouseButton_Left)) {
-        isDraggingAxial = true;
-        dragStartAxial = io.MousePos;
-    }
-    if (isDraggingAxial && ImGui::IsMouseDown(ImGuiMouseButton_Left)) {
-        ImVec2 dragDelta = ImVec2(io.MousePos.x - dragStartAxial.x, io.MousePos.y - dragStartAxial.y);
-        imageOffsetAxial.x += dragDelta.x;
-        imageOffsetAxial.y += dragDelta.y;
-        dragStartAxial = io.MousePos;
-    }
-    if (ImGui::IsMouseReleased(ImGuiMouseButton_Left)) {
-        isDraggingAxial = false;
-    }
 
+//// 드래그 이벤트를 Child 영역 전체에 적용
+//    if (ImGui::IsWindowHovered() && ImGui::IsMouseClicked(ImGuiMouseButton_Left)) {
+//        isDraggingAxial = true;
+//        dragStartAxial = io.MousePos;
+//    }
+//    if (isDraggingAxial && ImGui::IsMouseDown(ImGuiMouseButton_Left)) {
+//        ImVec2 dragDelta = ImVec2(io.MousePos.x - dragStartAxial.x, io.MousePos.y - dragStartAxial.y);
+//        imageOffsetAxial.x += dragDelta.x;
+//        imageOffsetAxial.y += dragDelta.y;
+//        dragStartAxial = io.MousePos;
+//    }
+//    if (ImGui::IsMouseReleased(ImGuiMouseButton_Left)) {
+//        isDraggingAxial = false;
+//    }
+//
 
 
 
     // if (ImGui::IsWindowHovered()) {
 
 
-         // ImGui::SetCursorPos(ImVec2(viewWidth * 2 - 30, viewY + imageOffset.y));
-        // 1. 커서 위치 먼저 설정
-    ImGui::SetCursorPos(imageOffsetAxial); // imageOffset는 드래그로 바뀌는 값
+    //     // ImGui::SetCursorPos(ImVec2(viewWidth * 2 - 30, viewY + imageOffset.y));
+    //    // 1. 커서 위치 먼저 설정
+    //ImGui::SetCursorPos(imageOffsetAxial); // imageOffset는 드래그로 바뀌는 값
+
+
+    //// ✅ 대신 이미지 크기를 키워서 스크롤이 생기게 하고, 드래그로 스크롤 위치를 조정
+    if (isDraggingAxial) {
+        float scrollY = ImGui::GetScrollY();
+        ImVec2 dragDelta = ImVec2(io.MousePos.x - dragStartAxial.x, io.MousePos.y - dragStartAxial.y);
+        ImGui::SetScrollY(scrollY - dragDelta.y);
+    }
+
 
 
     //// 여기에 텍스처 렌더링 또는 UI 요소 삽입
     //ImGui::Text("Axial 뷰 내용");
     ImGui::Image((void*)m_SRViews[1], ImVec2(512, fileReader->m_depth * 7)); // 예시
 //  }
+
+
+       
+
+    if (isDraggingAxial && ImGui::IsMouseDown(ImGuiMouseButton_Left)) {
+        ImVec2 dragDelta = ImVec2(io.MousePos.x - dragStartAxial.x, io.MousePos.y - dragStartAxial.y);
+        imageOffsetAxial.x += dragDelta.x;
+        imageOffsetAxial.y += dragDelta.y;
+        dragStartAxial = io.MousePos;
+
+
+        qDebug() << "[Axial] drag ing";
+        qDebug() << "dragDelta:" << dragDelta.x << "," << dragDelta.y;
+        qDebug() << "imageOffsetAxial:" << imageOffsetAxial.x << "," << imageOffsetAxial.y;
+        qDebug() << "dragStartAxial updated:" << dragStartAxial.x << "," << dragStartAxial.y;
+
+    }
+
+    if (ImGui::IsMouseReleased(ImGuiMouseButton_Left)) {
+        isDraggingAxial = false;
+
+        qDebug() << "[Axial] drag end";
+        qDebug() << "isDraggingAxial:" << isDraggingAxial;
+
+    }
 
 
     ImGui::EndChild();
@@ -1207,7 +1244,7 @@ void QDirect3D11Widget::RenderAllQuads()
     static ImVec2 dragStartSagittal;
 
     //sagittal
-    ImGui::SetNextWindowPos(ImVec2(viewWidth * 2 - 30, viewHeight));
+    ImGui::SetNextWindowPos(ImVec2(viewWidth * 2 - 30, viewHeight+10));
     ImGui::SetNextWindowSize(ImVec2(20, viewHeight));
 
 
@@ -1217,6 +1254,21 @@ void QDirect3D11Widget::RenderAllQuads()
 
     ImGui::BeginChild("SagittalScrollable", ImVec2(0, 0), true, ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_AlwaysVerticalScrollbar);
 
+
+
+    if (ImGui::IsItemHovered() && ImGui::IsMouseClicked(ImGuiMouseButton_Left)) {
+        if (ImGui::IsWindowFocused()) { // 또는 ImGui::IsWindowHovered()
+            isDraggingSagittal = true;
+            dragStartSagittal = io.MousePos;
+
+            qDebug() << "[Sagittal] drag start";
+            qDebug() << "isDraggingSagittal:" << isDraggingSagittal;
+            qDebug() << "dragStartSagittal:" << dragStartSagittal.x << "," << dragStartSagittal.y;
+        }
+
+    }
+
+
     //ImGui::BeginChild("AxialScrollable", ImVec2(520, 300), true, ImGuiWindowFlags_HorizontalScrollbar);
 
   //  ImGui::GetStyle().ScrollbarSize = 10.0f;
@@ -1225,50 +1277,68 @@ void QDirect3D11Widget::RenderAllQuads()
 
 
 
-    //if (ImGui::IsItemHovered() && ImGui::IsMouseClicked(ImGuiMouseButton_Left)) {
-    //    isDragging = true;
-    //    dragStart = io.MousePos;
-    //}
-
-    //if (isDragging && ImGui::IsMouseDown(ImGuiMouseButton_Left)) {
-    //    ImVec2 dragDelta = ImVec2(io.MousePos.x - dragStart.x, io.MousePos.y - dragStart.y);
-    //    imageOffset.x += dragDelta.x;
-    //    imageOffset.y += dragDelta.y;
-    //    dragStart = io.MousePos;
-    //}
-
-    //if (ImGui::IsMouseReleased(ImGuiMouseButton_Left)) {
-    //    isDragging = false;
-    //}
 
 
 
-// 드래그 이벤트를 Child 영역 전체에 적용
-    if (ImGui::IsWindowHovered() && ImGui::IsMouseClicked(ImGuiMouseButton_Left)) {
-        isDraggingSagittal = true;
-        dragStartSagittal = io.MousePos;
-    }
-    if (isDraggingSagittal && ImGui::IsMouseDown(ImGuiMouseButton_Left)) {
-        ImVec2 dragDelta = ImVec2(io.MousePos.x - dragStartSagittal.x, io.MousePos.y - dragStartSagittal.y);
-        imageOffsetSagittal.x += dragDelta.x;
-        imageOffsetSagittal.y += dragDelta.y;
-        dragStartSagittal = io.MousePos;
-    }
-    if (ImGui::IsMouseReleased(ImGuiMouseButton_Left)) {
-        isDraggingSagittal = false;
-    }
+//// 드래그 이벤트를 Child 영역 전체에 적용
+//    if (ImGui::IsWindowHovered() && ImGui::IsMouseClicked(ImGuiMouseButton_Left)) {
+//        isDraggingSagittal = true;
+//        dragStartSagittal = io.MousePos;
+//    }
+//    if (isDraggingSagittal && ImGui::IsMouseDown(ImGuiMouseButton_Left)) {
+//        ImVec2 dragDelta = ImVec2(io.MousePos.x - dragStartSagittal.x, io.MousePos.y - dragStartSagittal.y);
+//        imageOffsetSagittal.x += dragDelta.x;
+//        imageOffsetSagittal.y += dragDelta.y;
+//        dragStartSagittal = io.MousePos;
+//    }
+//    if (ImGui::IsMouseReleased(ImGuiMouseButton_Left)) {
+//        isDraggingSagittal = false;
+//    }
 
 
 
     // ImGui::SetCursorPos(ImVec2(viewWidth * 2 - 30, viewY + imageOffset.y));
    // 1. 커서 위치 먼저 설정
-    ImGui::SetCursorPos(imageOffsetSagittal); // imageOffset는 드래그로 바뀌는 값
+    //ImGui::SetCursorPos(imageOffsetSagittal); // imageOffset는 드래그로 바뀌는 값
+
+    // ✅ 대신 이미지 크기를 키워서 스크롤이 생기게 하고, 드래그로 스크롤 위치를 조정
+    if (isDraggingSagittal) {
+        float scrollY = ImGui::GetScrollY();
+        ImVec2 dragDelta = ImVec2(io.MousePos.x - dragStartSagittal.x, io.MousePos.y - dragStartSagittal.y);
+        ImGui::SetScrollY(scrollY - dragDelta.y);
+    }
+
 
 
     //// 여기에 텍스처 렌더링 또는 UI 요소 삽입
     //ImGui::Text("Axial 뷰 내용");
     ImGui::Image((void*)m_SRViews[3], ImVec2(512, fileReader->m_depth * 7)); // 예시
 
+
+
+ 
+
+    if (isDraggingSagittal && ImGui::IsMouseDown(ImGuiMouseButton_Left)) {
+        ImVec2 dragDelta = ImVec2(io.MousePos.x - dragStartSagittal.x, io.MousePos.y - dragStartSagittal.y);
+        imageOffsetSagittal.x += dragDelta.x;
+        imageOffsetSagittal.y += dragDelta.y;
+        dragStartSagittal = io.MousePos;
+
+
+        qDebug() << "[Sagittal] drag ing";
+        qDebug() << "dragDelta:" << dragDelta.x << "," << dragDelta.y;
+        qDebug() << "imageOffsetSagittal:" << imageOffsetSagittal.x << "," << imageOffsetSagittal.y;
+        qDebug() << "dragStartSagittal updated:" << dragStartSagittal.x << "," << dragStartSagittal.y;
+
+    }
+
+    if (ImGui::IsMouseReleased(ImGuiMouseButton_Left)) {
+        isDraggingSagittal = false;
+
+        qDebug() << "[Sagittal] drag end";
+        qDebug() << "isDraggingSagittal:" << isDraggingSagittal;
+
+    }
 
 
     ImGui::EndChild();
@@ -1285,7 +1355,7 @@ void QDirect3D11Widget::RenderAllQuads()
 
 
     //coronal
-    ImGui::SetNextWindowPos(ImVec2(viewWidth - 30, viewHeight));
+    ImGui::SetNextWindowPos(ImVec2(viewWidth - 35, viewHeight));
     ImGui::SetNextWindowSize(ImVec2(20, viewHeight));
 
 
@@ -1295,6 +1365,19 @@ void QDirect3D11Widget::RenderAllQuads()
 
     ImGui::BeginChild("CoronalScrollable", ImVec2(0, 0), true, ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_AlwaysVerticalScrollbar);
 
+    if (ImGui::IsItemHovered() && ImGui::IsMouseClicked(ImGuiMouseButton_Left)) {
+        if (ImGui::IsWindowFocused()) { // 또는 ImGui::IsWindowHovered()
+
+            isDraggingCoronal = true;
+            dragStartCoronal = io.MousePos;
+
+            qDebug() << "Hovered and clicked!" << endl;
+            qDebug() << "isDraggingCoronal: " << isDraggingCoronal << endl;
+            qDebug() << "dragStartCoronal: (" << dragStartCoronal.x << ", " << dragStartCoronal.y << ")" << endl;
+        }
+    }
+
+
     //ImGui::BeginChild("AxialScrollable", ImVec2(520, 300), true, ImGuiWindowFlags_HorizontalScrollbar);
 
   //  ImGui::GetStyle().ScrollbarSize = 10.0f;
@@ -1303,49 +1386,68 @@ void QDirect3D11Widget::RenderAllQuads()
 
 
 
-    //if (ImGui::IsItemHovered() && ImGui::IsMouseClicked(ImGuiMouseButton_Left)) {
-    //    isDragging = true;
-    //    dragStart = io.MousePos;
-    //}
-
-    //if (isDragging && ImGui::IsMouseDown(ImGuiMouseButton_Left)) {
-    //    ImVec2 dragDelta = ImVec2(io.MousePos.x - dragStart.x, io.MousePos.y - dragStart.y);
-    //    imageOffset.x += dragDelta.x;
-    //    imageOffset.y += dragDelta.y;
-    //    dragStart = io.MousePos;
-    //}
-
-    //if (ImGui::IsMouseReleased(ImGuiMouseButton_Left)) {
-    //    isDragging = false;
-    //}
 
 
 
-// 드래그 이벤트를 Child 영역 전체에 적용
-    if (ImGui::IsWindowHovered() && ImGui::IsMouseClicked(ImGuiMouseButton_Left)) {
-        isDraggingCoronal = true;
-        dragStartCoronal = io.MousePos;
-    }
-    if (isDraggingCoronal && ImGui::IsMouseDown(ImGuiMouseButton_Left)) {
-        ImVec2 dragDelta = ImVec2(io.MousePos.x - dragStartCoronal.x, io.MousePos.y - dragStartCoronal.y);
-        imageOffsetCoronal.x += dragDelta.x;
-        imageOffsetCoronal.y += dragDelta.y;
-        dragStartCoronal = io.MousePos;
-    }
-    if (ImGui::IsMouseReleased(ImGuiMouseButton_Left)) {
-        isDraggingCoronal = false;
-    }
-
+//// 드래그 이벤트를 Child 영역 전체에 적용
+//    if (ImGui::IsWindowHovered() && ImGui::IsMouseClicked(ImGuiMouseButton_Left)) {
+//        isDraggingCoronal = true;
+//        dragStartCoronal = io.MousePos;
+//    }
+//    if (isDraggingCoronal && ImGui::IsMouseDown(ImGuiMouseButton_Left)) {
+//        ImVec2 dragDelta = ImVec2(io.MousePos.x - dragStartCoronal.x, io.MousePos.y - dragStartCoronal.y);
+//        imageOffsetCoronal.x += dragDelta.x;
+//        imageOffsetCoronal.y += dragDelta.y;
+//        dragStartCoronal = io.MousePos;
+//    }
+//    if (ImGui::IsMouseReleased(ImGuiMouseButton_Left)) {
+//        isDraggingCoronal = false;
+//    }
+//
 
 
     // ImGui::SetCursorPos(ImVec2(viewWidth * 2 - 30, viewY + imageOffset.y));
    // 1. 커서 위치 먼저 설정
-    ImGui::SetCursorPos(imageOffsetCoronal); // imageOffset는 드래그로 바뀌는 값
+   // ImGui::SetCursorPos(imageOffsetCoronal); // imageOffset는 드래그로 바뀌는 값
+
+    // ✅ 대신 이미지 크기를 키워서 스크롤이 생기게 하고, 드래그로 스크롤 위치를 조정
+    if (isDraggingCoronal) {
+        float scrollY = ImGui::GetScrollY();
+        ImVec2 dragDelta = ImVec2(io.MousePos.x - dragStartCoronal.x, io.MousePos.y - dragStartCoronal.y);
+        ImGui::SetScrollY(scrollY - dragDelta.y);
+    }
+
 
 
     //// 여기에 텍스처 렌더링 또는 UI 요소 삽입
     //ImGui::Text("Axial 뷰 내용");
     ImGui::Image((void*)m_SRViews[2], ImVec2(512, fileReader->m_depth * 7)); // 예시
+
+
+
+
+    
+
+    if (isDraggingCoronal && ImGui::IsMouseDown(ImGuiMouseButton_Left)) {
+        ImVec2 dragDelta = ImVec2(io.MousePos.x - dragStartCoronal.x, io.MousePos.y - dragStartCoronal.y);
+        imageOffsetCoronal.x += dragDelta.x;
+        imageOffsetCoronal.y += dragDelta.y;
+        dragStartCoronal = io.MousePos;
+
+        qDebug() << "Dragging..." <<endl;
+        qDebug() << "dragDelta: (" << dragDelta.x << ", " << dragDelta.y << ")" << endl;
+        qDebug() << "imageOffsetCoronal: (" << imageOffsetCoronal.x << ", " << imageOffsetCoronal.y << ")" << endl;
+        qDebug() << "Updated dragStartCoronal: (" << dragStartCoronal.x << ", " << dragStartCoronal.y << ")" << endl;
+
+    }
+
+    if (ImGui::IsMouseReleased(ImGuiMouseButton_Left)) {
+        isDraggingCoronal = false;
+
+        qDebug() << "Mouse released!" << endl;
+        qDebug() << "isDraggingCoronal: " << isDraggingCoronal << endl;
+
+    }
 
 
 
