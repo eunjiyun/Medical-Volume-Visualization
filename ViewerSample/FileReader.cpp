@@ -91,17 +91,24 @@ bool FileReader::LoadDICOMSeries(std::string folderPath, ID3D11Device* g_pd3dDev
 
     ComputeGlobalMinMax(); // 로딩 직후 전체 min/max 계산
 
-    int zIndex = m_depth / 2; // 가운데 슬라이스
-    std::vector<uint8_t> axialSlice = GenerateAxialSlice(zIndex);
-    axialTexture = CreateTextureFromSlice(axialSlice, m_width, m_height, g_pd3dDevice);
 
-    int zIndexC = m_depth / 2; // 가운데 슬라이스
-    std::vector<uint8_t> coronalSlice = GenerateCoronalSlice(zIndexC);
-    coronalTexture = CreateTextureFromSlice(coronalSlice, m_width, m_depth, g_pd3dDevice);
+    for (int z{}; z < m_depth; ++z) {
+        std::vector<uint8_t> axialSlice = GenerateAxialSlice(z);
+        ID3D11Texture2D* texture = CreateTextureFromSlice(axialSlice, m_width, m_height, g_pd3dDevice);
+        axialTexture.push_back(texture);
+    }
 
-    int zIndexS = m_depth / 2; // 가운데 슬라이스
-    std::vector<uint8_t> sagittalSlice = GenerateSagittalSlice(zIndexS);
-    sagittalTexture = CreateTextureFromSlice(sagittalSlice, m_height, m_depth, g_pd3dDevice);
+    for (int z{}; z < m_height; ++z) {
+        std::vector<uint8_t> coronalSlice = GenerateCoronalSlice(z);
+        ID3D11Texture2D* texture = CreateTextureFromSlice(coronalSlice, m_width, m_depth, g_pd3dDevice);
+        coronalTexture.push_back(texture);
+    }
+
+    for (int z{}; z < m_width; ++z) {
+        std::vector<uint8_t> sagittalSlice = GenerateSagittalSlice(z);
+        ID3D11Texture2D* texture = CreateTextureFromSlice(sagittalSlice, m_height, m_depth, g_pd3dDevice);
+        sagittalTexture.push_back(texture);
+    }
 
     return true;
 }
@@ -499,6 +506,7 @@ ID3D11Texture2D* FileReader::CreateTextureFromSlice(const std::vector<uint8_t>& 
     initData.pSysMem = slice.data();
     initData.SysMemPitch = 4 * width * sizeof(uint8_t);
     //initData.SysMemPitch = width * sizeof(uint8_t);
+    //initData.SysMemPitch = 4 * width * height;
 
     ID3D11Texture2D* texture = nullptr;
     HRESULT hr = g_pd3dDevice->CreateTexture2D(&texDesc, &initData, &texture);

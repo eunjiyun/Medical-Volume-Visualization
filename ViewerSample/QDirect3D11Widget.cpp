@@ -43,7 +43,7 @@ QDirect3D11Widget::QDirect3D11Widget(QWidget* parent)
     , m_pDevice(Q_NULLPTR)
     , m_pDeviceContext(Q_NULLPTR)
     , m_pSwapChain(Q_NULLPTR)
-    , m_RTViews(4, Q_NULLPTR)
+   /* , m_RTViews(4, Q_NULLPTR)*/
     , m_hWnd(reinterpret_cast<HWND>(winId()))
     , m_bDeviceInitialized(false)
     , m_bRenderActive(false)
@@ -80,8 +80,18 @@ void QDirect3D11Widget::release()
     disconnect(&m_qTimer, &QTimer::timeout, this, &QDirect3D11Widget::onFrame);
     m_qTimer.stop();
 
-    for (auto& view : m_RTViews)
-        ReleaseObject(view);
+    for (auto& view : m_RTViews.slices)
+        //for (int i{};i< view.slices.size();++i)
+            ReleaseObject(view);
+
+    for (auto& view : m_SRViews.slices)
+       // for (int i{}; i < view.slices.size(); ++i)
+            ReleaseObject(view);
+
+  
+
+
+
 
     ReleaseObject(m_pSwapChain);
     ReleaseObject(m_pDeviceContext);
@@ -241,61 +251,61 @@ void QDirect3D11Widget::onFrame()
 
 void QDirect3D11Widget::beginScene()
 {
-    //???????濡ろ뜑?? ???類??袁?맪????源놁젳
-    //DX11?? 癲ル슔?됭짆? 8??좊즵獒?????????濡ろ뜑???????덈빰???袁⑸즴?????됰씭彛??????源낆쓱
+    ////???????濡ろ뜑?? ???類??袁?맪????源놁젳
+    ////DX11?? 癲ル슔?됭짆? 8??좊즵獒?????????濡ろ뜑???????덈빰???袁⑸즴?????됰씭彛??????源낆쓱
 
 
-    /*m_pDeviceContext->OMSetRenderTargets
-    (static_cast<UINT>(m_RTViews.size()), m_RTViews.data(), NULL);*/
+    ///*m_pDeviceContext->OMSetRenderTargets
+    //(static_cast<UINT>(m_RTViews.size()), m_RTViews.data(), NULL);*/
 
-    for (int i{}; i < m_RTViews.size(); ++i) {
-
-
-        D3D11_VIEWPORT vp = {};
-        vp.Width = width() / 2.0f;
-        vp.Height = height() / 2.0f;
-        vp.MinDepth = 0.0f;
-        vp.MaxDepth = 1.0f;
-
-        if (0 == i) {
-            vp.TopLeftX = 0;
-            vp.TopLeftY = 0;
-
-            m_BackColor.r = 1.0f; m_BackColor.g = 0.0f; m_BackColor.b = 0.0f; m_BackColor.a = 1.0f;  // ??몿而?
-
-        }
-        else if (1 == i) {
-            vp.TopLeftX = width() / 2;
-            vp.TopLeftY = 0;
-
-            m_BackColor.r = 0.0f; m_BackColor.g = 1.0f; m_BackColor.b = 0.0f; m_BackColor.a = 1.0f;  // ?λ뜄以?
+    //for (int i{}; i < m_RTViews.size(); ++i) {
 
 
-        }
-        else if (2 == i) {
-            vp.TopLeftX = 0;
-            vp.TopLeftY = height() / 2;
+    //    D3D11_VIEWPORT vp = {};
+    //    vp.Width = width() / 2.0f;
+    //    vp.Height = height() / 2.0f;
+    //    vp.MinDepth = 0.0f;
+    //    vp.MaxDepth = 1.0f;
 
-            m_BackColor.r = 0.0f; m_BackColor.g = 0.0f; m_BackColor.b = 1.0f; m_BackColor.a = 1.0f; // ???삂
+    //    if (0 == i) {
+    //        vp.TopLeftX = 0;
+    //        vp.TopLeftY = 0;
 
-        }
-        else if (3 == i) {
-            vp.TopLeftX = width() / 2;
-            vp.TopLeftY = height() / 2;
+    //        m_BackColor.r = 1.0f; m_BackColor.g = 0.0f; m_BackColor.b = 0.0f; m_BackColor.a = 1.0f;  // ??몿而?
 
-            m_BackColor.r = 1.0f; m_BackColor.g = 1.0f; m_BackColor.b = 0.0f; m_BackColor.a = 1.0f; // ?紐껋삂
+    //    }
+    //    else if (1 == i) {
+    //        vp.TopLeftX = width() / 2;
+    //        vp.TopLeftY = 0;
 
-        }
-
-
-        m_pDeviceContext->OMSetRenderTargets(1, &m_RTViews[i], nullptr); // 揶쏆뮆????쇱젟
+    //        m_BackColor.r = 0.0f; m_BackColor.g = 1.0f; m_BackColor.b = 0.0f; m_BackColor.a = 1.0f;  // ?λ뜄以?
 
 
-        m_pDeviceContext->RSSetViewports(1, &vp);
+    //    }
+    //    else if (2 == i) {
+    //        vp.TopLeftX = 0;
+    //        vp.TopLeftY = height() / 2;
 
-        m_pDeviceContext->ClearRenderTargetView(m_RTViews[i],
-            reinterpret_cast<const float*>(&m_BackColor));
-    }
+    //        m_BackColor.r = 0.0f; m_BackColor.g = 0.0f; m_BackColor.b = 1.0f; m_BackColor.a = 1.0f; // ???삂
+
+    //    }
+    //    else if (3 == i) {
+    //        vp.TopLeftX = width() / 2;
+    //        vp.TopLeftY = height() / 2;
+
+    //        m_BackColor.r = 1.0f; m_BackColor.g = 1.0f; m_BackColor.b = 0.0f; m_BackColor.a = 1.0f; // ?紐껋삂
+
+    //    }
+
+
+    //    m_pDeviceContext->OMSetRenderTargets(1, &m_RTViews[i], nullptr); // 揶쏆뮆????쇱젟
+
+
+    //    m_pDeviceContext->RSSetViewports(1, &vp);
+
+    //    m_pDeviceContext->ClearRenderTargetView(m_RTViews[i],
+    //        reinterpret_cast<const float*>(&m_BackColor));
+    //}
 }
 
 void QDirect3D11Widget::endScene()
@@ -317,8 +327,11 @@ void QDirect3D11Widget::tick()
 
 void QDirect3D11Widget::initializeRenderTargets()
 {
-    m_RTViews.clear();
-    m_SRViews.clear();
+
+    m_RTViews.slices.clear();
+    m_SRViews.slices.clear();
+
+
     m_samplerState.clear();
 
 
@@ -351,49 +364,67 @@ void QDirect3D11Widget::initializeRenderTargets()
             // 2. RenderTargetView ??밴쉐
             ID3D11RenderTargetView* pRTV = nullptr;
             DXCall(m_pDevice->CreateRenderTargetView(pTexture, nullptr, &pRTV));
-            m_RTViews.push_back(pRTV);
+            m_RTViews.slices.push_back(pRTV);
 
 
             // 3. ShaderResourceView ??밴쉐
             ID3D11ShaderResourceView* pSRV = nullptr;
             DXCall(m_pDevice->CreateShaderResourceView(pTexture, nullptr, &pSRV));
-            m_SRViews.push_back(pSRV);
+            m_SRViews.slices.push_back(pSRV);
+
+            m_SRViews.flagIndex[0] = m_SRViews.slices.size();
+
+
         }
         else if (1 == i) {
 
-            // 2. RenderTargetView ??밴쉐
-            ID3D11RenderTargetView* pRTV = nullptr;
-            DXCall(m_pDevice->CreateRenderTargetView(fileReader->axialTexture, nullptr, &pRTV));
-            m_RTViews.push_back(pRTV);
+         
+            for (const auto& t : fileReader->axialTexture) {
+                // 2. RenderTargetView ??밴쉐
+                ID3D11RenderTargetView* pRTV = nullptr;
+                DXCall(m_pDevice->CreateRenderTargetView(t, nullptr, &pRTV));
+                m_RTViews.slices.push_back(pRTV);
+          
 
+                // 3. ShaderResourceView ??밴쉐
+                ID3D11ShaderResourceView* pSRV = nullptr;
+                DXCall(m_pDevice->CreateShaderResourceView(t, nullptr, &pSRV));
+                m_SRViews.slices.push_back(pSRV);
+            }
 
-            // 3. ShaderResourceView ??밴쉐
-            ID3D11ShaderResourceView* pSRV = nullptr;
-            DXCall(m_pDevice->CreateShaderResourceView(fileReader->axialTexture, nullptr, &pSRV));
-            m_SRViews.push_back(pSRV);
+            m_SRViews.flagIndex[1] = m_SRViews.slices.size();
 
         }
         else if (2 == i) {
-            // 2. RenderTargetView ??밴쉐
-            ID3D11RenderTargetView* pRTV = nullptr;
-            DXCall(m_pDevice->CreateRenderTargetView(fileReader->coronalTexture, nullptr, &pRTV));
-            m_RTViews.push_back(pRTV);
+            for (const auto& t : fileReader->coronalTexture) {
+                // 2. RenderTargetView ??밴쉐
+                ID3D11RenderTargetView* pRTV = nullptr;
+                DXCall(m_pDevice->CreateRenderTargetView(t, nullptr, &pRTV));
+                m_RTViews.slices.push_back(pRTV);
 
-            // 3. ShaderResourceView ??밴쉐
-            ID3D11ShaderResourceView* pSRV = nullptr;
-            DXCall(m_pDevice->CreateShaderResourceView(fileReader->coronalTexture, nullptr, &pSRV));
-            m_SRViews.push_back(pSRV);
+
+                // 3. ShaderResourceView ??밴쉐
+                ID3D11ShaderResourceView* pSRV = nullptr;
+                DXCall(m_pDevice->CreateShaderResourceView(t, nullptr, &pSRV));
+                m_SRViews.slices.push_back(pSRV);
+            }
+
+            m_SRViews.flagIndex[2] = m_SRViews.slices.size();
         }
         else if (3 == i) {
-            // 2. RenderTargetView ??밴쉐
-            ID3D11RenderTargetView* pRTV = nullptr;
-            DXCall(m_pDevice->CreateRenderTargetView(fileReader->sagittalTexture, nullptr, &pRTV));
-            m_RTViews.push_back(pRTV);
+            for (const auto& t : fileReader->sagittalTexture) {
+                // 2. RenderTargetView ??밴쉐
+                ID3D11RenderTargetView* pRTV = nullptr;
+                DXCall(m_pDevice->CreateRenderTargetView(t, nullptr, &pRTV));
+                m_RTViews.slices.push_back(pRTV);
 
-            // 3. ShaderResourceView ??밴쉐
-            ID3D11ShaderResourceView* pSRV = nullptr;
-            DXCall(m_pDevice->CreateShaderResourceView(fileReader->sagittalTexture, nullptr, &pSRV));
-            m_SRViews.push_back(pSRV);
+                // 3. ShaderResourceView ??밴쉐
+                ID3D11ShaderResourceView* pSRV = nullptr;
+                DXCall(m_pDevice->CreateShaderResourceView(t, nullptr, &pSRV));
+                m_SRViews.slices.push_back(pSRV);
+            }
+
+            m_SRViews.flagIndex[3] = m_SRViews.slices.size();
         }
 
 
@@ -430,70 +461,70 @@ void QDirect3D11Widget::createSwapChainRTV()
 
 void QDirect3D11Widget::render()
 {
-    // TODO: Present your scene here. For aesthetics reasons, only do it here if it's an
-    // important component, otherwise do it in the MainWindow.
-    // m_pCamera->Apply();
+    //// TODO: Present your scene here. For aesthetics reasons, only do it here if it's an
+    //// important component, otherwise do it in the MainWindow.
+    //// m_pCamera->Apply();
 
 
 
 
-    //m_pDeviceContext->OMSetRenderTargets(static_cast<UINT>(m_RTViews.size()), m_RTViews.data(), nullptr);
-    m_pDeviceContext->OMSetRenderTargets(1, &m_pSwapChainRTV, nullptr);
+    ////m_pDeviceContext->OMSetRenderTargets(static_cast<UINT>(m_RTViews.size()), m_RTViews.data(), nullptr);
+    //m_pDeviceContext->OMSetRenderTargets(1, &m_pSwapChainRTV, nullptr);
 
 
-    // ?됯퀬猷????쇱젟 (?袁⑷퍥 ?遺얇늺)
-    D3D11_VIEWPORT vp = {};
-    vp.TopLeftX = 0;
-    vp.TopLeftY = 0;
-    vp.Width = static_cast<float>(width());
-    vp.Height = static_cast<float>(height());
-    vp.MinDepth = 0.0f;
-    vp.MaxDepth = 1.0f;
-    m_pDeviceContext->RSSetViewports(1, &vp);
+    //// ?됯퀬猷????쇱젟 (?袁⑷퍥 ?遺얇늺)
+    //D3D11_VIEWPORT vp = {};
+    //vp.TopLeftX = 0;
+    //vp.TopLeftY = 0;
+    //vp.Width = static_cast<float>(width());
+    //vp.Height = static_cast<float>(height());
+    //vp.MinDepth = 0.0f;
+    //vp.MaxDepth = 1.0f;
+    //m_pDeviceContext->RSSetViewports(1, &vp);
 
-    // 揶????쐭 ??野껋옕??ShaderResourceView嚥??遺얇늺???곗뮆??
-    for (int i{}; i < m_SRViews.size(); ++i) {
-        // ?? DrawQuadWithTexture(m_SRViews[i], viewport[i]);
-        // ???봔?브쑴? ?怨쀬뵠?遺? ?類ㅼ젎 甕곌쑵?곫에??닌뗭겱??곷튊 ??곸뒄
-
-
-        if (0 == i) {
-            vp.TopLeftX = 0;
-            vp.TopLeftY = 0;
-
-            m_BackColor.r = 1.0f; m_BackColor.g = 0.0f; m_BackColor.b = 0.0f; m_BackColor.a = 1.0f;  // ??몿而?
-        }
-        else if (1 == i) {
-            vp.TopLeftX = width() / 2;
-            vp.TopLeftY = 0;
-
-            m_BackColor.r = 0.0f; m_BackColor.g = 1.0f; m_BackColor.b = 0.0f; m_BackColor.a = 1.0f;  // ?λ뜄以?
-        }
-        else if (2 == i) {
-            vp.TopLeftX = 0;
-            vp.TopLeftY = height() / 2;
-
-            m_BackColor.r = 0.0f; m_BackColor.g = 0.0f; m_BackColor.b = 1.0f; m_BackColor.a = 1.0f; // ???삂
-        }
-        else if (3 == i) {
-            vp.TopLeftX = width() / 2;
-            vp.TopLeftY = height() / 2;
-
-            m_BackColor.r = 1.0f; m_BackColor.g = 1.0f; m_BackColor.b = 0.0f; m_BackColor.a = 1.0f; // ?紐껋삂
-        }
+    //// 揶????쐭 ??野껋옕??ShaderResourceView嚥??遺얇늺???곗뮆??
+    //for (int i{}; i < m_SRViews.size(); ++i) {
+    //    // ?? DrawQuadWithTexture(m_SRViews[i], viewport[i]);
+    //    // ???봔?브쑴? ?怨쀬뵠?遺? ?類ㅼ젎 甕곌쑵?곫에??닌뗭겱??곷튊 ??곸뒄
 
 
+    //    if (0 == i) {
+    //        vp.TopLeftX = 0;
+    //        vp.TopLeftY = 0;
+
+    //        m_BackColor.r = 1.0f; m_BackColor.g = 0.0f; m_BackColor.b = 0.0f; m_BackColor.a = 1.0f;  // ??몿而?
+    //    }
+    //    else if (1 == i) {
+    //        vp.TopLeftX = width() / 2;
+    //        vp.TopLeftY = 0;
+
+    //        m_BackColor.r = 0.0f; m_BackColor.g = 1.0f; m_BackColor.b = 0.0f; m_BackColor.a = 1.0f;  // ?λ뜄以?
+    //    }
+    //    else if (2 == i) {
+    //        vp.TopLeftX = 0;
+    //        vp.TopLeftY = height() / 2;
+
+    //        m_BackColor.r = 0.0f; m_BackColor.g = 0.0f; m_BackColor.b = 1.0f; m_BackColor.a = 1.0f; // ???삂
+    //    }
+    //    else if (3 == i) {
+    //        vp.TopLeftX = width() / 2;
+    //        vp.TopLeftY = height() / 2;
+
+    //        m_BackColor.r = 1.0f; m_BackColor.g = 1.0f; m_BackColor.b = 0.0f; m_BackColor.a = 1.0f; // ?紐껋삂
+    //    }
 
 
-        m_pDeviceContext->RSSetViewports(1, &vp); // ?됯퀬猷????쇱젟
-
-        DrawQuadWithTexture(m_SRViews[i], vp); // viewport[i]???袁⑺뒄 ?類ｋ궖
 
 
-    }
+    //    m_pDeviceContext->RSSetViewports(1, &vp); // ?됯퀬猷????쇱젟
+
+    //    DrawQuadWithTexture(m_SRViews[i], vp); // viewport[i]???袁⑺뒄 ?類ｋ궖
 
 
-    emit rendered();
+    //}
+
+
+    //emit rendered();
 }
 void QDirect3D11Widget::UpdateColorBuffer()
 {
@@ -790,50 +821,50 @@ void QDirect3D11Widget::SetBackgroundColor(int index)
 
 void QDirect3D11Widget::RenderSceneToTarget(int i)
 {
-    m_pDeviceContext->OMSetRenderTargets(1, &m_RTViews[i], nullptr);
+    //m_pDeviceContext->OMSetRenderTargets(1, &m_RTViews[i], nullptr);
 
-    //float clearColor[4] = GetClearColorForIndex(i);
-
-
-    //for (int i{}; i < m_RTViews.size(); ++i)
-    SetBackgroundColor(i);
-
-    m_pDeviceContext->ClearRenderTargetView(m_RTViews[i], reinterpret_cast<const float*>(&m_BackColor));
-
-    //SetViewportForTarget(i);
-    //BindShadersForTarget(i);
-    //BindResourcesForTarget(i);
-
-    //m_pDeviceContext->Draw(...); // quad 또는 모델 출력
+    ////float clearColor[4] = GetClearColorForIndex(i);
 
 
+    ////for (int i{}; i < m_RTViews.size(); ++i)
+    //SetBackgroundColor(i);
 
-     // 3. 해당 뷰포트 설정 (사분할)
-    D3D11_VIEWPORT vp = CreateViewport(i);
-    m_pDeviceContext->RSSetViewports(1, &vp);
+    //m_pDeviceContext->ClearRenderTargetView(m_RTViews[i], reinterpret_cast<const float*>(&m_BackColor));
 
-    // 4. 셰이더 바인딩
-    m_pDeviceContext->IASetInputLayout(m_inputLayout);
-    m_pDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
-    m_pDeviceContext->VSSetShader(m_vertexShader, nullptr, 0);
-    m_pDeviceContext->PSSetShader(m_pixelShader, nullptr, 0);
+    ////SetViewportForTarget(i);
+    ////BindShadersForTarget(i);
+    ////BindResourcesForTarget(i);
 
-    // 5. 버텍스 버퍼 설정
-    UINT stride = sizeof(Vertex);
-    UINT offset = 0;
-    m_pDeviceContext->IASetVertexBuffers(0, 1, &m_vertexBuffer, &stride, &offset);
-    m_pDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
+    ////m_pDeviceContext->Draw(...); // quad 또는 모델 출력
 
-    // 6. 텍스처/샘플러 바인딩 (MPR 볼륨 or 현재 더미 텍스처)
-    /*if (m_textureSRV) {
-        m_pDeviceContext->PSSetShaderResources(0, 1, &m_textureSRV);
-    }*/
-    if (m_samplerState[0]) {
-        m_pDeviceContext->PSSetSamplers(0, 1, &m_samplerState[0]);
-    }
 
-    // 7. 드로우콜 (quad 출력)
-    m_pDeviceContext->Draw(4, 0);
+
+    // // 3. 해당 뷰포트 설정 (사분할)
+    //D3D11_VIEWPORT vp = CreateViewport(i);
+    //m_pDeviceContext->RSSetViewports(1, &vp);
+
+    //// 4. 셰이더 바인딩
+    //m_pDeviceContext->IASetInputLayout(m_inputLayout);
+    //m_pDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
+    //m_pDeviceContext->VSSetShader(m_vertexShader, nullptr, 0);
+    //m_pDeviceContext->PSSetShader(m_pixelShader, nullptr, 0);
+
+    //// 5. 버텍스 버퍼 설정
+    //UINT stride = sizeof(Vertex);
+    //UINT offset = 0;
+    //m_pDeviceContext->IASetVertexBuffers(0, 1, &m_vertexBuffer, &stride, &offset);
+    //m_pDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
+
+    //// 6. 텍스처/샘플러 바인딩 (MPR 볼륨 or 현재 더미 텍스처)
+    ///*if (m_textureSRV) {
+    //    m_pDeviceContext->PSSetShaderResources(0, 1, &m_textureSRV);
+    //}*/
+    //if (m_samplerState[0]) {
+    //    m_pDeviceContext->PSSetSamplers(0, 1, &m_samplerState[0]);
+    //}
+
+    //// 7. 드로우콜 (quad 출력)
+    //m_pDeviceContext->Draw(4, 0);
 }
 
 void QDirect3D11Widget::mousePressEvent(QMouseEvent* event)
@@ -895,7 +926,10 @@ void QDirect3D11Widget::RenderAllQuads()
     //    fileReader->m_width, fileReader->m_height, m_pDevice);
 
 
-    m_pDeviceContext->OMSetRenderTargets(4, m_RTViews.data(), nullptr);
+
+    m_pDeviceContext->OMSetRenderTargets(4, m_RTViews.slices.data(), nullptr);
+
+
 
     //// 1. 각 렌더 타겟에 개별 콘텐츠 렌더링
     //for (int i = 0; i < 4; ++i)
@@ -957,10 +991,12 @@ void QDirect3D11Widget::RenderAllQuads()
     // 3. 셰이더에 바인딩
     m_pDeviceContext->PSSetConstantBuffers(0, 1, &fileReader->m_crosshairBuffer);
 
-    m_pDeviceContext->PSSetShaderResources(0, 4, m_SRViews.data());     // tex0~tex3
+    m_pDeviceContext->PSSetShaderResources(0, 4, m_SRViews.slices.data());     // tex0~tex3
+    //m_pDeviceContext->PSSetShaderResources(0, 1, m_SRViewsCoronal.data());     // tex0~tex3
+    //m_pDeviceContext->PSSetShaderResources(0, 1, m_SRViewsSagittal.data());     // tex0~tex3
 
 
-  //  m_pDeviceContext->PSSetShaderResources(0, 4, axialTextureSRV.data());     // tex0~tex3
+    //m_pDeviceContext->PSSetShaderResources(0, 4, axialTextureSRV.data());     // tex0~tex3
     m_pDeviceContext->PSSetSamplers(0, 4, m_samplerState.data());       // samp0~samp3
 
 
@@ -991,16 +1027,18 @@ void QDirect3D11Widget::RenderAllQuads()
 
 
 
-    //// 2. 백버퍼에 출력할 준비
-    m_pDeviceContext->OMSetRenderTargets(1, &m_pSwapChainRTV, nullptr);
-    ////m_pDeviceContext->ClearRenderTargetView(m_pSwapChainRTV, reinterpret_cast<float*>(&m_BackColor));
+    ////// 2. 백버퍼에 출력할 준비
+    //m_pDeviceContext->OMSetRenderTargets(1, &m_pSwapChainRTV, nullptr);
+    //////m_pDeviceContext->ClearRenderTargetView(m_pSwapChainRTV, reinterpret_cast<float*>(&m_BackColor));
 
-    // 3. 각 렌더 타겟 텍스처를 quad로 출력
-    for (int i{}; i < 4; ++i)
-    {
-        D3D11_VIEWPORT vp = CreateViewport(i); // ← 4분할 뷰포트 계산
-        DrawQuadWithTexture(m_SRViews[i], vp);      // ← 여기서 호출!
-    }
+    //// 3. 각 렌더 타겟 텍스처를 quad로 출력
+    //for (int i{}; i < 4; ++i)
+    //{
+    //    D3D11_VIEWPORT vp = CreateViewport(i); // ← 4분할 뷰포트 계산
+
+    //    for(int j{};j< m_SRViews.flagIndex[i];++j)
+    //        DrawQuadWithTexture(m_SRViews.slices[j], vp);      // ← 여기서 호출!
+    //}
 
 
 
@@ -1090,12 +1128,12 @@ void QDirect3D11Widget::RenderAllQuads()
     }
 
 
-
-    //// 여기에 텍스처 렌더링 또는 UI 요소 삽입
-    //ImGui::Text("Axial 뷰 내용");
-    ImGui::Image((void*)m_SRViews[1], ImVec2(512, fileReader->m_depth * 7)); // 예시
-//  }
-
+//
+//    //// 여기에 텍스처 렌더링 또는 UI 요소 삽입
+//    //ImGui::Text("Axial 뷰 내용");
+//    ImGui::Image((void*)m_SRViews.slices.front(), ImVec2(512, fileReader->m_depth * 7)); // 예시
+////  }
+//
 
 
 
@@ -1224,9 +1262,9 @@ void QDirect3D11Widget::RenderAllQuads()
 
 
 
-    //// 여기에 텍스처 렌더링 또는 UI 요소 삽입
-    //ImGui::Text("Axial 뷰 내용");
-    ImGui::Image((void*)m_SRViews[3], ImVec2(512, fileReader->m_depth * 7)); // 예시
+    ////// 여기에 텍스처 렌더링 또는 UI 요소 삽입
+    ////ImGui::Text("Axial 뷰 내용");
+    //ImGui::Image((void*)m_SRViews.slices.front(), ImVec2(512, fileReader->m_depth * 7)); // 예시
 
 
 
@@ -1303,9 +1341,9 @@ void QDirect3D11Widget::RenderAllQuads()
 
 
 
-    //// 여기에 텍스처 렌더링 또는 UI 요소 삽입
-    //ImGui::Text("Axial 뷰 내용");
-    ImGui::Image((void*)m_SRViews[2], ImVec2(512, fileReader->m_depth * 7)); // 예시
+    ////// 여기에 텍스처 렌더링 또는 UI 요소 삽입
+    ////ImGui::Text("Axial 뷰 내용");
+    //ImGui::Image((void*)m_SRViews.slices.front(), ImVec2(512, fileReader->m_depth * 7)); // 예시
 
 
 
@@ -1420,9 +1458,9 @@ void QDirect3D11Widget::mouseReleaseEvent(QMouseEvent* event) {
 void QDirect3D11Widget::onReset()
 {
     // 1. 疫꿸퀣???귐딅꺖????곸젫
-    for (auto& view : m_RTViews)
+    for (auto& view : m_SRViews.slices)
         ReleaseObject(view);
-    m_RTViews.clear();
+    m_SRViews.slices.clear();
 
     //	ReleaseObject(m_pSwapChainRTV);
 

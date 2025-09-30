@@ -43,7 +43,7 @@ public:
     OFString patientName, birthDate, studyDate, kvp;
     OFString patientID, patientMF, patientAge;
     std::vector<uint8_t> axialSlice;
-    ID3D11Texture2D* axialTexture, *coronalTexture, *sagittalTexture;
+    std::vector < ID3D11Texture2D*> axialTexture, coronalTexture, sagittalTexture;
     int windowCenter, windowWidth;
 
     ID3D11Buffer* m_crosshairBuffer = nullptr;
