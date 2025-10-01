@@ -23,10 +23,7 @@ using namespace DirectX;
 #include "AlignedAllocationPolicy.h"
 
 
-class D3DClass;
-class CameraClass;
-class ModelClass;
-class ColorShader;
+
 class FileReader;
 
 

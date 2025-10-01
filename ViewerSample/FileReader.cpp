@@ -4,11 +4,10 @@
 #include <dcmtk/ofstd/ofcond.h>
 
 #include <dcmtk/dcmdata/dctypes.h>
-#include <dcmtk/config/osconfig.h>  // 플랫폼별 타입 정의
+//#include <dcmtk/config/osconfig.h>  // 플랫폼별 타입 정의
 #include <filesystem>
 #include<iterator>
 #include<algorithm>
-#include<iterator>
 #include<numeric>
 
 
@@ -119,7 +118,7 @@ bool FileReader::ParseSlice(const std::string path, int sliceIndex) {
     OFCondition status = file.loadFile(path.c_str());
 
     if (!status.good()) {
-        std::cerr << "❌ Failed to load DICOM file: " << path << std::endl;
+        std::cerr << " Failed to load DICOM file: " << path << std::endl;
         return false;
     }
 
@@ -129,7 +128,7 @@ bool FileReader::ParseSlice(const std::string path, int sliceIndex) {
     const Uint16* pixelData = nullptr;
     status = dataset->findAndGetUint16Array(DCM_PixelData, pixelData);
     if (!status.good() || nullptr == pixelData) {
-        std::cerr << "❌ Failed to get pixel data from: " << path << std::endl;
+        std::cerr << " Failed to get pixel data from: " << path << std::endl;
         return false;
     }
 

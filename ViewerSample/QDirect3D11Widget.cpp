@@ -1,7 +1,7 @@
 ﻿/*
  *
  */
-#pragma comment(lib, "d3d11.lib")
+//#pragma comment(lib, "d3d11.lib")
 
 
 
@@ -17,12 +17,8 @@
 
 
 
-#include "stdafx.h"
-#include "d3dclass.h"
-#include "cameraclass.h"
-#include "modelclass.h"
-#include "colorshader.h"
-#include "graphicsclass.h"
+//#include "stdafx.h"
+
 #include <wrl/client.h>
 #include <vector>
 #include "FileReader.h"
@@ -31,12 +27,16 @@
 #include "imgui_impl_dx11.h"
 #include "imgui_impl_win32.h"
 
+
+
 using Microsoft::WRL::ComPtr;
 
 
 
 constexpr int FPS_LIMIT = 60.0f;
 constexpr int MS_PER_FRAME = (int)((1.0f / FPS_LIMIT) * 1000.0f);
+
+//class FileReader;
 
 QDirect3D11Widget::QDirect3D11Widget(QWidget* parent)
     : QWidget(parent)
