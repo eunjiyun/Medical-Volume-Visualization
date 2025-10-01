@@ -1,23 +1,9 @@
-﻿/*
- *
- */
-//#pragma comment(lib, "d3d11.lib")
-
-
-
+﻿
 #include "QDirect3D11Widget.h"
-
 #include <QDebug>
-
- //Qt?????濚????룸Ŧ爾???????袁⑸즵獒뺣뎾???嚥▲꺂痢????濚?嶺? ????猿??嚥▲꺂痢???좊즵??꼯??
 #include <QEvent>
-
-//Qt?????癲ル슢????????モ섌???嶺뚮ㅎ??????곕뜤 ???袁⑹뵫????筌?痢⑼┼?논맋?? 癲ル슪?ｇ몭??????????嚥▲꺂痢?????밸쭬
 #include <QWheelEvent>
 
-
-
-//#include "stdafx.h"
 
 #include <wrl/client.h>
 #include <vector>
@@ -36,7 +22,7 @@ using Microsoft::WRL::ComPtr;
 constexpr int FPS_LIMIT = 60.0f;
 constexpr int MS_PER_FRAME = (int)((1.0f / FPS_LIMIT) * 1000.0f);
 
-//class FileReader;
+
 
 QDirect3D11Widget::QDirect3D11Widget(QWidget* parent)
     : QWidget(parent)
@@ -81,18 +67,12 @@ void QDirect3D11Widget::release()
     m_qTimer.stop();
 
     for (auto& view : m_RTViews.slices)
-        //for (int i{};i< view.slices.size();++i)
             ReleaseObject(view);
 
     for (auto& view : m_SRViews.slices)
-       // for (int i{}; i < view.slices.size(); ++i)
             ReleaseObject(view);
 
   
-
-
-
-
     ReleaseObject(m_pSwapChain);
     ReleaseObject(m_pDeviceContext);
     ReleaseObject(m_pDevice);
@@ -198,6 +178,9 @@ bool QDirect3D11Widget::init()
 
 
     LoadDICOMSeries();  // 최초 표시 시 DICOM 로드
+
+    int sliceIndex{};// = fileReader->axialTexture.size() / 2;
+
     initializeRenderTargets();
 
     createSwapChainRTV();
@@ -327,39 +310,68 @@ void QDirect3D11Widget::tick()
 
 void QDirect3D11Widget::initializeRenderTargets()
 {
-
     m_RTViews.slices.clear();
     m_SRViews.slices.clear();
-
-
     m_samplerState.clear();
 
-
-
-
     for (int i{}; i < 4; ++i) {
-        // 1. ??용뮞筌???밴쉐
-        D3D11_TEXTURE2D_DESC texDesc = {};
-        texDesc.Width = width() / 2;
-        texDesc.Height = height() / 2;
-        texDesc.MipLevels = 1;
-        texDesc.ArraySize = 1;
-        texDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-        texDesc.SampleDesc.Count = 1;
-        texDesc.Usage = D3D11_USAGE_DEFAULT;
-        texDesc.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
-
-        ID3D11Texture2D* pTexture = nullptr;
-
-        //250922  texture
-        DXCall(m_pDevice->CreateTexture2D(&texDesc, nullptr, &pTexture));
-
-        //// 2. RenderTargetView ??밴쉐
-        //ID3D11RenderTargetView* pRTV = nullptr;
-        //DXCall(m_pDevice->CreateRenderTargetView(pTexture, nullptr, &pRTV));
-        //m_RTViews.push_back(pRTV);
+       
 
         if (0 == i) {
+
+            // 1. ??용뮞筌???밴쉐
+            D3D11_TEXTURE2D_DESC texDesc = {};
+
+            //fileReader->axialTexture
+            /*texDesc.Width = width() / 2;
+            texDesc.Height = height() / 2;*/
+
+            D3D11_TEXTURE2D_DESC desc;
+            fileReader->axialTexture[0]->GetDesc(&desc);
+            texDesc.Width = desc.Width;
+            texDesc.Height = desc.Height;
+
+
+            texDesc.MipLevels = 1;
+            texDesc.ArraySize = 1;
+            texDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+            texDesc.SampleDesc.Count = 1;
+            texDesc.Usage = D3D11_USAGE_DEFAULT;
+            texDesc.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
+
+            ID3D11Texture2D* pTexture = nullptr;
+
+            //250922  texture
+            DXCall(m_pDevice->CreateTexture2D(&texDesc, nullptr, &pTexture));
+
+            //// 2. RenderTargetView ??밴쉐
+            //ID3D11RenderTargetView* pRTV = nullptr;
+            //DXCall(m_pDevice->CreateRenderTargetView(pTexture, nullptr, &pRTV));
+            //m_RTViews.push_back(pRTV);
+
+
+
+
+
+
+
+
+
+
+            //// 2. RenderTargetView ??밴쉐
+            //ID3D11RenderTargetView* pRTV = nullptr;
+            //DXCall(m_pDevice->CreateRenderTargetView(pTexture, nullptr, &pRTV));
+            //m_RTViews.slices.push_back(pRTV);
+
+
+            //// 3. ShaderResourceView ??밴쉐
+            //ID3D11ShaderResourceView* pSRV = nullptr;
+            //DXCall(m_pDevice->CreateShaderResourceView(pTexture, nullptr, &pSRV));
+            //m_SRViews.slices.push_back(pSRV);
+
+            //m_SRViews.flagIndex[0] = m_SRViews.slices.size();
+
+
 
             // 2. RenderTargetView ??밴쉐
             ID3D11RenderTargetView* pRTV = nullptr;
@@ -373,7 +385,6 @@ void QDirect3D11Widget::initializeRenderTargets()
             m_SRViews.slices.push_back(pSRV);
 
             m_SRViews.flagIndex[0] = m_SRViews.slices.size();
-
 
         }
         else if (1 == i) {
@@ -428,25 +439,28 @@ void QDirect3D11Widget::initializeRenderTargets()
         }
 
 
-        // 4. 샘플러 상태 생성
-        D3D11_SAMPLER_DESC sampDesc = {};
-        sampDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
-        sampDesc.AddressU = D3D11_TEXTURE_ADDRESS_CLAMP;
-        sampDesc.AddressV = D3D11_TEXTURE_ADDRESS_CLAMP;
-        sampDesc.AddressW = D3D11_TEXTURE_ADDRESS_CLAMP;
-        sampDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
-        sampDesc.MinLOD = 0;
-        sampDesc.MaxLOD = D3D11_FLOAT32_MAX;
 
-        ID3D11SamplerState* pSampler = nullptr;
-        DXCall(m_pDevice->CreateSamplerState(&sampDesc, &pSampler));
-        m_samplerState.push_back(pSampler);
 
 
 
         // 4. ??용뮞筌???곸젫
-        pTexture->Release();
+      //  pTexture->Release();
     }
+
+
+    // 4. 샘플러 상태 생성
+    D3D11_SAMPLER_DESC sampDesc = {};
+    sampDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+    sampDesc.AddressU = D3D11_TEXTURE_ADDRESS_CLAMP;
+    sampDesc.AddressV = D3D11_TEXTURE_ADDRESS_CLAMP;
+    sampDesc.AddressW = D3D11_TEXTURE_ADDRESS_CLAMP;
+    sampDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
+    sampDesc.MinLOD = 0;
+    sampDesc.MaxLOD = D3D11_FLOAT32_MAX;
+
+    ID3D11SamplerState* pSampler = nullptr;
+    DXCall(m_pDevice->CreateSamplerState(&sampDesc, &pSampler));
+    m_samplerState.push_back(pSampler);
 }
 
 void QDirect3D11Widget::createSwapChainRTV()
@@ -903,55 +917,16 @@ int QDirect3D11Widget::GetClickedViewIndex(int px, int py, int width, int height
 
 void QDirect3D11Widget::RenderAllQuads()
 {
-    //// 1. ???쐭 ??野???쇱젟
-    //m_pDeviceContext->OMSetRenderTargets(1, &m_pSwapChainRTV, nullptr);
-
-    //// 2. ?袁⑷퍥 ?遺얇늺 ?λ뜃由??(野꺜??獄쏄퀗瑗?
-    //m_BackColor = { 0.0f, 0.0f, 0.0f, 1.0f };
-    //m_pDeviceContext->ClearRenderTargetView(m_pSwapChainRTV, reinterpret_cast<float*>(&m_BackColor));
-
-    //// 3. ????醫딆쨮 ??깃맒 quad ?곗뮆??
-    //for (int i = 0; i < 4; ++i) {
-    //	D3D11_VIEWPORT vp = CreateViewport(i);  // ?됯퀬猷????쇱젟
-    //	SetBackgroundColor(i);                  // ??깃맒 ??쇱젟
-    //	UpdateColorBuffer();                    // ConstantBuffer????깃맒 ?袁⑤뼎
-    //	DrawColoredQuad(vp);                    // ??깃맒 quad ?곗뮆??
-    //}
+    std::vector<ID3D11RenderTargetView*> activeRTVs;
 
 
-    //250926
-    //int currentZ = fileReader->m_depth / 2;
-    //std::vector<uint8_t> axialSlice = fileReader->GenerateAxialSlice(currentZ);
-    //axialTextureSRV = fileReader->CreateTextureFromSlice(axialSlice,
-    //    fileReader->m_width, fileReader->m_height, m_pDevice);
+    activeRTVs.push_back(getRTVForTexture(fileReader->axialTexture[sliceIndex]));
 
+
+    m_pDeviceContext->OMSetRenderTargets(activeRTVs.size(), activeRTVs.data(), nullptr);
 
 
     m_pDeviceContext->OMSetRenderTargets(4, m_RTViews.slices.data(), nullptr);
-
-
-
-    //// 1. 각 렌더 타겟에 개별 콘텐츠 렌더링
-    //for (int i = 0; i < 4; ++i)
-    //{
-    ////	m_pDeviceContext->OMSetRenderTargets(1, &m_RTViews[i], m_pDepthStencilView);
-    //	
-
-    //	float clearColor[4] = { 0,0,1.0f,1.0f };
-    //	m_pDeviceContext->ClearRenderTargetView(m_RTViews[i], clearColor);
-    //	RenderSceneToTarget(i); // ← 각 타겟에 그릴 내용
-    //}
-
-
-    //250926
-    //axial texture 바인딩
-    //
-
-
-
-    //m_pDeviceContext->PSSetShaderResources(0, 1, &axialTextureSRV);
-    //m_pDeviceContext->PSSetSamplers(0, 1, &m_samplerState[0]);
-
 
 
    // 1. 십자선 위치 계산
@@ -990,29 +965,11 @@ void QDirect3D11Widget::RenderAllQuads()
 
     // 3. 셰이더에 바인딩
     m_pDeviceContext->PSSetConstantBuffers(0, 1, &fileReader->m_crosshairBuffer);
-
     m_pDeviceContext->PSSetShaderResources(0, 4, m_SRViews.slices.data());     // tex0~tex3
-    //m_pDeviceContext->PSSetShaderResources(0, 1, m_SRViewsCoronal.data());     // tex0~tex3
-    //m_pDeviceContext->PSSetShaderResources(0, 1, m_SRViewsSagittal.data());     // tex0~tex3
-
-
-    //m_pDeviceContext->PSSetShaderResources(0, 4, axialTextureSRV.data());     // tex0~tex3
     m_pDeviceContext->PSSetSamplers(0, 4, m_samplerState.data());       // samp0~samp3
 
 
-    //m_pDeviceContext->PSSetShaderResources(0, 1, &axialTextureSRV);
-
-
-
-    //m_pDeviceContext->OMSetRenderTargets(1, &m_pSwapChainRTV, nullptr);
-
-    //for (int i = 0; i < 4; ++i)
-    //{
-    //	D3D11_VIEWPORT vp = CreateViewport(i); // 사분할 영역
-    //	DrawQuadWithTexture(m_SRViews[i], vp); // RTV 결과를 quad로 출력
-    //}
-
-
+    //rtv 너무 많이 생성해서 생기는 오류//251001
     UINT stride = sizeof(Vertex);
     UINT offset = 0;
 
@@ -1026,28 +983,25 @@ void QDirect3D11Widget::RenderAllQuads()
     m_pDeviceContext->Draw(4, 0); // 4개의 정점으로 quad 출력
 
 
+    //======
 
-    ////// 2. 백버퍼에 출력할 준비
-    //m_pDeviceContext->OMSetRenderTargets(1, &m_pSwapChainRTV, nullptr);
-    //////m_pDeviceContext->ClearRenderTargetView(m_pSwapChainRTV, reinterpret_cast<float*>(&m_BackColor));
+     //// 2. 백버퍼에 출력할 준비
+    m_pDeviceContext->OMSetRenderTargets(1, &m_pSwapChainRTV, nullptr);
+    ////m_pDeviceContext->ClearRenderTargetView(m_pSwapChainRTV, reinterpret_cast<float*>(&m_BackColor));
 
-    //// 3. 각 렌더 타겟 텍스처를 quad로 출력
-    //for (int i{}; i < 4; ++i)
-    //{
-    //    D3D11_VIEWPORT vp = CreateViewport(i); // ← 4분할 뷰포트 계산
+    // 3. 각 렌더 타겟 텍스처를 quad로 출력
+    for (int i{}; i < 4; ++i)
+    {
+        D3D11_VIEWPORT vp = CreateViewport(i); // ← 4분할 뷰포트 계산
 
-    //    for(int j{};j< m_SRViews.flagIndex[i];++j)
-    //        DrawQuadWithTexture(m_SRViews.slices[j], vp);      // ← 여기서 호출!
-    //}
+        //여기서 벡터 오류251001
+        for(int j{};j< m_SRViews.flagIndex[i];++j)
+            DrawQuadWithTexture(m_SRViews.slices[j], vp);      // ← 여기서 호출!
+    }
 
 
-
-
+    //======
     ImGuiIO& io = ImGui::GetIO();
-
-
-
-
 
 
     // 폰트 등록은 여기서!
@@ -1071,7 +1025,6 @@ void QDirect3D11Widget::RenderAllQuads()
     }
 
 
-
     // ✅ 여기에 ImGui 렌더링 추가!
     ImGui_ImplDX11_NewFrame();
     ImGui_ImplWin32_NewFrame();
@@ -1082,42 +1035,20 @@ void QDirect3D11Widget::RenderAllQuads()
     static ImVec2 dragStartAxial;
 
 
-    //640   380
-
     ImGui::SetNextWindowPos(ImVec2(640*2-32 , 3));
-
-   /* qDebug() << "viewWidth : " << viewWidth << endl;
-    qDebug() << "viewHeight : " << viewHeight << endl;*/
-     ImGui::SetNextWindowSize(ImVec2(20, 380-3));
-    //ImGui::SetNextWindowSize(ImVec2(130, 150));
-
-    //ImGui::SetNextWindowPos(ImVec2(viewWidth * 2 - 30, viewY)); // 좌측 상단 위치
-    //ImGui::SetNextWindowSize(ImVec2(20, viewHeight));
-
-    //ImGui::SetNextWindowPos(ImVec2(viewWidth, 0)); // 좌측 상단 위치
-    //ImGui::SetNextWindowSize(ImVec2(20, viewHeight));
-    //ImGui::Begin((QString::fromLocal8Bit("환자")).toUtf8().constData(), nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
-    //ImGui::BeginChild("SagittalScrollable", ImVec2(0, 0), true, ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_AlwaysVerticalScrollbar);
-
+    ImGui::SetNextWindowSize(ImVec2(20, 380-3));
     ImGui::Begin("Axial View", nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
-
     ImGui::BeginChild("AxialScrollable", ImVec2(0, 0), true, ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_AlwaysVerticalScrollbar);
 
 
-    if (
-        ImGui::IsItemHovered() && ImGui::IsMouseClicked(ImGuiMouseButton_Left)) {
-
-
+    if (ImGui::IsItemHovered() && ImGui::IsMouseClicked(ImGuiMouseButton_Left)) {
         isDraggingAxial = true;
         dragStartAxial = io.MousePos;
 
         qDebug() << "[Axial] drag start";
         qDebug() << "isDraggingAxial:" << isDraggingAxial;
         qDebug() << "dragStartAxial:" << dragStartAxial.x << "," << dragStartAxial.y;
-
-
     }
-
 
 
     //// ✅ 대신 이미지 크기를 키워서 스크롤이 생기게 하고, 드래그로 스크롤 위치를 조정
@@ -1126,15 +1057,6 @@ void QDirect3D11Widget::RenderAllQuads()
         ImVec2 dragDelta = ImVec2(io.MousePos.x - dragStartAxial.x, io.MousePos.y - dragStartAxial.y);
         ImGui::SetScrollY(scrollY - dragDelta.y);
     }
-
-
-//
-//    //// 여기에 텍스처 렌더링 또는 UI 요소 삽입
-//    //ImGui::Text("Axial 뷰 내용");
-//    ImGui::Image((void*)m_SRViews.slices.front(), ImVec2(512, fileReader->m_depth * 7)); // 예시
-////  }
-//
-
 
 
     if (isDraggingAxial && ImGui::IsMouseDown(ImGuiMouseButton_Left)) {
@@ -1156,21 +1078,12 @@ void QDirect3D11Widget::RenderAllQuads()
 
         qDebug() << "[Axial] drag end";
         qDebug() << "isDraggingAxial:" << isDraggingAxial;
-
     }
-
-
-   // ImGui::EndChild();
-   //ImGui::End();
-
-
 
 
     ImGui::SetNextWindowPos(ImVec2(0, 0)); // 좌측 상단 위치
     ImGui::SetNextWindowSize(ImVec2(130, 150));
     ImGui::Begin((QString::fromLocal8Bit("환자 정보")).toUtf8().constData(), nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
-
-
 
 
 
@@ -1201,7 +1114,6 @@ void QDirect3D11Widget::RenderAllQuads()
 
 
 
-
     ImDrawList* drawList = ImGui::GetBackgroundDrawList();
 
     ImVec2 screenSize = ImGui::GetIO().DisplaySize;
@@ -1212,11 +1124,6 @@ void QDirect3D11Widget::RenderAllQuads()
     drawList->AddLine(ImVec2(cx, 0), ImVec2(cx, screenSize.y), IM_COL32(255, 255, 0, 255), 1.0f);
     // 수평선
     drawList->AddLine(ImVec2(0, cy), ImVec2(screenSize.x, cy), IM_COL32(0, 128, 255, 255), 1.0f);
-
-
-
-    
-
 
 
 
@@ -1231,13 +1138,8 @@ void QDirect3D11Widget::RenderAllQuads()
     ImGui::SetNextWindowSize(ImVec2(20, 380));
 
 
-
-
     ImGui::Begin("Sagittal View", nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
-
     ImGui::BeginChild("SagittalScrollable", ImVec2(0, 0), true, ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_AlwaysVerticalScrollbar);
-
-
 
     if (ImGui::IsItemHovered() && ImGui::IsMouseClicked(ImGuiMouseButton_Left)) {
         if (ImGui::IsWindowFocused()) { // 또는 ImGui::IsWindowHovered()
@@ -1260,15 +1162,6 @@ void QDirect3D11Widget::RenderAllQuads()
         ImGui::SetScrollY(scrollY - dragDelta.y);
     }
 
-
-
-    ////// 여기에 텍스처 렌더링 또는 UI 요소 삽입
-    ////ImGui::Text("Axial 뷰 내용");
-    //ImGui::Image((void*)m_SRViews.slices.front(), ImVec2(512, fileReader->m_depth * 7)); // 예시
-
-
-
- 
 
     if (isDraggingSagittal && ImGui::IsMouseDown(ImGuiMouseButton_Left)) {
         ImVec2 dragDelta = ImVec2(io.MousePos.x - dragStartSagittal.x, io.MousePos.y - dragStartSagittal.y);
@@ -1341,15 +1234,6 @@ void QDirect3D11Widget::RenderAllQuads()
 
 
 
-    ////// 여기에 텍스처 렌더링 또는 UI 요소 삽입
-    ////ImGui::Text("Axial 뷰 내용");
-    //ImGui::Image((void*)m_SRViews.slices.front(), ImVec2(512, fileReader->m_depth * 7)); // 예시
-
-
-
-
-    
-
     if (isDraggingCoronal && ImGui::IsMouseDown(ImGuiMouseButton_Left)) {
         ImVec2 dragDelta = ImVec2(io.MousePos.x - dragStartCoronal.x, io.MousePos.y - dragStartCoronal.y);
         imageOffsetCoronal.x += dragDelta.x;
@@ -1389,22 +1273,7 @@ void QDirect3D11Widget::RenderAllQuads()
 
 
 
-
-
-    //// 4. 스왑체인 Present
-
-
-
     m_pSwapChain->Present(1, 0);
-
-
-
-
-    //m_pDeviceContext->OMSetRenderTargets(1, &m_pSwapChainRTV, nullptr);
-
-
-    //DrawFullScreenQuad();
-
 
     emit rendered(); // Qt ??볥젃??
 }
@@ -1440,6 +1309,18 @@ void QDirect3D11Widget::DrawQuadWithTexture(ID3D11ShaderResourceView* pSRV, cons
     m_pDeviceContext->Draw(4, 0);
 }
 
+ID3D11RenderTargetView* QDirect3D11Widget::getRTVForTexture(ID3D11Texture2D* texture)
+{
+    // 이미 캐싱된 RTV가 있으면 반환
+    if (rtvCache.contains(texture)) return rtvCache[texture];
+
+    // 없으면 새로 생성하고 캐시에 저장
+    ID3D11RenderTargetView* rtv = nullptr;
+    DXCall(device->CreateRenderTargetView(texture, nullptr, &rtv));
+    rtvCache[texture] = rtv;
+    return rtv;
+
+}
 void QDirect3D11Widget::mouseMoveEvent(QMouseEvent* event) {
     ImGuiIO& io = ImGui::GetIO();
     io.MousePos = ImVec2(event->pos().x(), event->pos().y());

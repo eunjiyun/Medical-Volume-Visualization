@@ -27,11 +27,16 @@ FileReader::FileReader()
 bool FileReader::LoadDICOMSeries(std::string folderPath, ID3D11Device* g_pd3dDevice)
 {
     cout << "this : " << this << endl;
+    d3dDevice = g_pd3dDevice;
 
-
-    if (!m_filePaths.empty())
+    if (!m_filePaths.empty()) {
         //if(0<m_filePaths.size())
         m_filePaths.clear();
+
+        axialTextureCache.clear();
+        coronalTextureCache.clear();
+        sagittalTextureCache.clear();
+    }
 
 
     for (const auto& entry : std::filesystem::directory_iterator(folderPath)) {
@@ -88,28 +93,59 @@ bool FileReader::LoadDICOMSeries(std::string folderPath, ID3D11Device* g_pd3dDev
         }
     }
 
-    ComputeGlobalMinMax(); // 로딩 직후 전체 min/max 계산
+    //ComputeGlobalMinMax(); // 로딩 직후 전체 min/max 계산
 
 
-    for (int z{}; z < m_depth; ++z) {
-        std::vector<uint8_t> axialSlice = GenerateAxialSlice(z);
-        ID3D11Texture2D* texture = CreateTextureFromSlice(axialSlice, m_width, m_height, g_pd3dDevice);
-        axialTexture.push_back(texture);
-    }
+    //for (int z{}; z < m_depth; ++z) {
+    //    std::vector<uint8_t> axialSlice = GenerateAxialSlice(z);
+    //    ID3D11Texture2D* texture = CreateTextureFromSlice(axialSlice, m_width, m_height, g_pd3dDevice);
+    //    axialTexture.push_back(texture);
+    //}
 
-    for (int z{}; z < m_height; ++z) {
-        std::vector<uint8_t> coronalSlice = GenerateCoronalSlice(z);
-        ID3D11Texture2D* texture = CreateTextureFromSlice(coronalSlice, m_width, m_depth, g_pd3dDevice);
-        coronalTexture.push_back(texture);
-    }
+    //for (int z{}; z < m_height; ++z) {
+    //    std::vector<uint8_t> coronalSlice = GenerateCoronalSlice(z);
+    //    ID3D11Texture2D* texture = CreateTextureFromSlice(coronalSlice, m_width, m_depth, g_pd3dDevice);
+    //    coronalTexture.push_back(texture);
+    //}
 
-    for (int z{}; z < m_width; ++z) {
-        std::vector<uint8_t> sagittalSlice = GenerateSagittalSlice(z);
-        ID3D11Texture2D* texture = CreateTextureFromSlice(sagittalSlice, m_height, m_depth, g_pd3dDevice);
-        sagittalTexture.push_back(texture);
-    }
+    //for (int z{}; z < m_width; ++z) {
+    //    std::vector<uint8_t> sagittalSlice = GenerateSagittalSlice(z);
+    //    ID3D11Texture2D* texture = CreateTextureFromSlice(sagittalSlice, m_height, m_depth, g_pd3dDevice);
+    //    sagittalTexture.push_back(texture);
+    //}
+
+   /* axialTextureCache.clear();
+    coronalTextureCache.clear();
+    sagittalTextureCache.clear();*/
 
     return true;
+}
+
+ID3D11Texture2D* FileReader::getOrCreateAxialTexture(int z) {
+    if (axialTextureCache.find(z)!= axialTextureCache.end()) return axialTextureCache[z];
+
+    std::vector<uint8_t> slice = GenerateAxialSlice(z);
+    ID3D11Texture2D* texture = CreateTextureFromSlice(slice, m_width, m_height, d3dDevice);
+    axialTextureCache[z] = texture;
+    return texture;
+}
+
+ID3D11Texture2D* FileReader::getOrCreateCoronalTexture(int y) {
+    if (coronalTextureCache.find(y) != coronalTextureCache.end()) return coronalTextureCache[y];
+
+    std::vector<uint8_t> slice = GenerateCoronalSlice(y);
+    ID3D11Texture2D* texture = CreateTextureFromSlice(slice, m_width, m_depth, d3dDevice);
+    coronalTextureCache[y] = texture;
+    return texture;
+}
+
+ID3D11Texture2D* FileReader::getOrCreateSagittalTexture(int x) {
+    if (sagittalTextureCache.find(x) != sagittalTextureCache.end()) return sagittalTextureCache[x];
+
+    std::vector<uint8_t> slice = GenerateSagittalSlice(x);
+    ID3D11Texture2D* texture = CreateTextureFromSlice(slice, m_height, m_depth, d3dDevice);
+    sagittalTextureCache[x] = texture;
+    return texture;
 }
 
 
@@ -162,11 +198,11 @@ bool FileReader::ParseSlice(const std::string path, int sliceIndex) {
     //std::string birthYear = birthDate.substr(0, 4);
 
     std::cout << " DICOM Metadata for slice " << sliceIndex << std::endl;
-    std::cout << " Patient Name: " << patientName << std::endl;
-    std::cout << " Birth Date:   " << birthDate << std::endl;
-    std::cout << " Study Date:  " << studyDate << std::endl;
-    std::cout << " DCM_PatientAge:          " << patientAge << std::endl;
-    std::cout << " DCM_PatientBirthDate:          " << birthDate << std::endl;
+    //std::cout << " Patient Name: " << patientName << std::endl;
+    //std::cout << " Birth Date:   " << birthDate << std::endl;
+    //std::cout << " Study Date:  " << studyDate << std::endl;
+    //std::cout << " DCM_PatientAge:          " << patientAge << std::endl;
+    //std::cout << " DCM_PatientBirthDate:          " << birthDate << std::endl;
 
     return true;
 }
@@ -480,6 +516,52 @@ bool FileReader::NormalizeSlice(const std::vector<uint16_t>& rawSlice,
     return true;
 }
 
+void FileReader::SliceIdxManage()
+{
+    sliceIndex[1] = m_depth / 2;//a
+    sliceIndex[2] = m_height / 2;//c
+    sliceIndex[3] = m_width / 2;//s
+}
+
+void FileReader::SetAxialSlice(int index)
+{
+    currentIndex[1] = std::clamp(index, 0, m_depth - 1);
+    UpdateAxialTexture(currentIndex[1]);
+}
+void FileReader::SetCoronalSlice(int index)
+{
+    currentIndex[2] = std::clamp(index, 0, m_height - 1);
+    UpdateCoronalTexture(currentIndex[2]);
+}
+void FileReader::SetSagittalSlice(int index)
+{
+    currentIndex[3] = std::clamp(index, 0, m_width - 1);
+    UpdateSagittalTexture(currentIndex[3]);
+}
+
+
+void FileReader::UpdateAxialTexture(int z)
+{
+    std::vector<uint8_t> slice = GenerateAxialSlice(z);
+    ID3D11Texture2D* texture = CreateTextureFromSlice(slice, m_width, m_height, d3dDevice);
+    axialTexture[z] = texture; // 또는 캐싱 구조에 따라 교체
+}
+
+void FileReader::UpdateCoronalTexture(int y)
+{
+    std::vector<uint8_t> slice = GenerateCoronalSlice(y);
+    ID3D11Texture2D* texture = CreateTextureFromSlice(slice, m_width, m_depth, d3dDevice);
+    coronalTexture[y] = texture;
+}
+
+void FileReader::UpdateSagittalTexture(int x)
+{
+    std::vector<uint8_t> slice = GenerateSagittalSlice(x);
+    ID3D11Texture2D* texture = CreateTextureFromSlice(slice, m_height, m_depth, d3dDevice);
+    sagittalTexture[x] = texture;
+}
+
+
 ID3D11Texture2D* FileReader::CreateTextureFromSlice(const std::vector<uint8_t>& slice, int width, int height, ID3D11Device* g_pd3dDevice)
 {
     if (slice.empty()) return nullptr;
@@ -542,16 +624,16 @@ ID3D11Texture2D* FileReader::CreateTextureFromSlice(const std::vector<uint8_t>& 
     return texture;
 }
 
-void FileReader::ComputeGlobalMinMax() {
-    if (m_volumeData.empty()) return;
-
-    /*auto[minIt, maxIt] = std::minmax_element(m_volumeData.begin(), m_volumeData.end());
-    m_globalMin = *minIt;
-    m_globalMax = *maxIt;*/
-
-
-    m_globalMin = windowCenter - windowWidth / 2;
-    m_globalMax = windowCenter + windowWidth / 2;
-}
+//void FileReader::ComputeGlobalMinMax() {
+//    if (m_volumeData.empty()) return;
+//
+//    /*auto[minIt, maxIt] = std::minmax_element(m_volumeData.begin(), m_volumeData.end());
+//    m_globalMin = *minIt;
+//    m_globalMax = *maxIt;*/
+//
+//
+//    m_globalMin = windowCenter - windowWidth / 2;
+//    m_globalMax = windowCenter + windowWidth / 2;
+//}
 
 

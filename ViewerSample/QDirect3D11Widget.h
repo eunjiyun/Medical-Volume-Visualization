@@ -101,11 +101,11 @@ private:
     void InitSampler();
     void InitializeGraphics();
 
+    ID3D11RenderTargetView* getRTVForTexture(ID3D11Texture2D* texture);
+
 public:
 
     void mouseMoveEvent(QMouseEvent* event);
-
-
     void mouseReleaseEvent(QMouseEvent* event);
 
 
@@ -165,6 +165,13 @@ public:
 
     SliceSeriesSrv m_SRViews;// Volume, m_SRViewsAxial, m_SRViewsCoronal, m_SRViewsSagittal;
     ID3D11Buffer* m_colorBuffer = nullptr;
+
+    std::vector<ID3D11RenderTargetView*> rtvPool, activeRTVs;
+    std::unordered_map<ID3D11Texture2D*, ID3D11RenderTargetView*> rtvCache;
+   
+
+    // = fileReader->axialTexture.size() / 2;
+
 private:
 
     ID3D11DeviceContext *    m_pDeviceContext;
