@@ -1,4 +1,4 @@
-// dear imgui, v1.92.4 WIP
+ï»¿// dear imgui, v1.92.4 WIP
 // (widgets code)
 
 /*
@@ -4918,7 +4918,7 @@ bool ImGui::InputTextEx(const char* label, const char* hint, char* buf, int buf_
 
 
 
-                // ¼öÁ¤µÈ ÄÚµå (Á¤»ó ÀÛµ¿)
+                // ìˆ˜ì •ëœ ì½”ë“œ (ì •ìƒ ìž‘ë™)
                 if (IMSTB_TEXT_HAS_SELECTION(state->Stb) || !is_bol)
                     state->OnKeyPressed(STB_TEXTEDIT_K_WORDLEFT);
                 //state->OnKeyPressed(STB_TEXTEDIT_K_WORDRIGHT | STB_TEXTEDIT_K_SHIFT);

@@ -1,4 +1,4 @@
-﻿#include "FileReader.h"
+#include "FileReader.h"
 #include <dcmtk/dcmdata/dcfilefo.h>
 #include <dcmtk/dcmdata/dcdeftag.h>
 #include <dcmtk/ofstd/ofcond.h>

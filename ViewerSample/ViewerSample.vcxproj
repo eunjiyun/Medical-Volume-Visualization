@@ -14,7 +14,7 @@
     <ProjectGuid>{CECAEE7B-4466-46F7-AD63-DB82C1122DD9}</ProjectGuid>
     <Keyword>QtVS_v304</Keyword>
     <QtMsBuild Condition="'$(QtMsBuild)'=='' OR !Exists('$(QtMsBuild)\qt.targets')">$(MSBuildProjectDirectory)\QtMsBuild</QtMsBuild>
-    <WindowsTargetPlatformVersion>10.0.22621.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0.26100.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'" Label="Configuration">
@@ -61,9 +61,9 @@
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>C:\Qt\Qt5.10.1\5.10.1\msvc2017_64\include;C:\Projects\sample\Q3DViewer\SDK\Debug\include;C:\Projects\sample\imgui-master\imgui-master;C:\Projects\sample\imgui-master\imgui-master\backends;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Qt\Qt5.10.1\5.10.1\msvc2017_64\include;C:\Projects\sample\Q3DViewer\SDK\Debug\include;C:\Projects\sample\imgui-master\imgui-master;C:\Projects\sample\imgui-master\imgui-master\backends;C:\projects\vcpkg\installed\x64-windows\include;C:\Projects\vcpkg\vcpkg\installed\x64-windows\include\dcmtk;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
-      <LanguageStandard>stdcpp17</LanguageStandard>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
       <PreprocessorDefinitions>%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <CompileAs>Default</CompileAs>
       <SupportJustMyCode>false</SupportJustMyCode>

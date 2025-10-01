@@ -1086,8 +1086,8 @@ void QDirect3D11Widget::RenderAllQuads()
 
     ImGui::SetNextWindowPos(ImVec2(640*2-32 , 3));
 
-    qDebug() << "viewWidth : " << viewWidth << endl;
-    qDebug() << "viewHeight : " << viewHeight << endl;
+   /* qDebug() << "viewWidth : " << viewWidth << endl;
+    qDebug() << "viewHeight : " << viewHeight << endl;*/
      ImGui::SetNextWindowSize(ImVec2(20, 380-3));
     //ImGui::SetNextWindowSize(ImVec2(130, 150));
 

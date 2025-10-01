@@ -1,6 +1,6 @@
 #pragma once
 
-// warning C4316 Ã³¸®¿ë
+// warning C4316 ì²˜ë¦¬ìš©
 template<size_t Alignment>
 class AlignedAllocationPolicy
 {

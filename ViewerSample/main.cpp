@@ -1,18 +1,18 @@
-#include "ViewerSample.h"
+ï»¿#include "ViewerSample.h"
 
-//Qt ¾ÖÇÃ¸®ÄÉÀÌ¼ÇÀÇ ½ÃÀÛÁ¡
+//Qt ì• í”Œë¦¬ì¼€ì´ì…˜ì˜ ì‹œìž‘ì 
 #include <QtWidgets/QApplication>
 
-//±â´ÉÀÌ ¸¹Àº ±âº» Ã¢ Å¬·¡½º
+//ê¸°ëŠ¥ì´ ë§Žì€ ê¸°ë³¸ ì°½ í´ëž˜ìŠ¤
 #include <QtWidgets/QMainWindow>
 
-//¸ðµç QtÀ§Á¬ÀÇ ±âº» Å¬·¡½º
+//ëª¨ë“  Qtìœ„ì ¯ì˜ ê¸°ë³¸ í´ëž˜ìŠ¤
 #include <QtWidgets/QWidget>
 
-//À§Á¬À» °ÝÀÚ ÇüÅÂ·Î ¹èÄ¡ÇÏ´Â ·¹ÀÌ¾Æ¿ô Å¬·¡½º
+//ìœ„ì ¯ì„ ê²©ìž í˜•íƒœë¡œ ë°°ì¹˜í•˜ëŠ” ë ˆì´ì•„ì›ƒ í´ëž˜ìŠ¤
 #include <QtWidgets/QGridLayout>
 
-//ÅØ½ºÆ®, ÀÌ¹ÌÁö, ¶Ç´Â HTMLÀ» Ç¥½ÃÇÒ ¼ö ÀÖ´Â Á¤ÀûÀÎ Ç¥½Ã¿ë À§Á¬
+//í…ìŠ¤íŠ¸, ì´ë¯¸ì§€, ë˜ëŠ” HTMLì„ í‘œì‹œí•  ìˆ˜ ìžˆëŠ” ì •ì ì¸ í‘œì‹œìš© ìœ„ì ¯
 #include <QtWidgets/QLabel>
 
 
@@ -21,31 +21,31 @@ public:
 	FourViewWindow(QWidget* parent = nullptr) :QMainWindow(parent) {
 		QWidget* central = new QWidget(this);
 
-		//QGridLayoutÀº Qt¿¡¼­ À§Á¬À» °ÝÀÚ ÇüÅÂ·Î ¹èÄ¡ÇÏ´Â ·¹ÀÌ¾Æ¿ô ½Ã½ºÅÛ
-		//centralÀÌ¶ó´Â ºÎ¸ð À§Á¬¿¡ ºÙÀÌ´Â ÀÛ¾÷
+		//QGridLayoutì€ Qtì—ì„œ ìœ„ì ¯ì„ ê²©ìž í˜•íƒœë¡œ ë°°ì¹˜í•˜ëŠ” ë ˆì´ì•„ì›ƒ ì‹œìŠ¤í…œ
+		//centralì´ë¼ëŠ” ë¶€ëª¨ ìœ„ì ¯ì— ë¶™ì´ëŠ” ìž‘ì—…
 		QGridLayout* layout = new QGridLayout(central);
 
 
-		//4°³ÀÇ ºÐÇÒ ¿µ¿ª »ý¼º
+		//4ê°œì˜ ë¶„í•  ì˜ì—­ ìƒì„±
 		for (int i{}; i < 4; ++i) {
 			QWidget* view = new QWidget();
 			view->setStyleSheet("background-color: lightgray; border: 1px solid black;");
 			QStringList viewNames = { "Volume", "Axial", "Coronal", "Sagittal" };
 
-			//labelÀº ÅØ½ºÆ®³ª ÀÌ¹ÌÁö¸¦ Ç¥½ÃÇÏ´Â À§Á¬
-			//view´Â QWidget °´Ã¼ => Á÷Á¢ ¸¸µç È¸»ö ¹è°æÀÇ ÄÁÅ×ÀÌ³Ê
-			//view¸¦ labelÀÇ ºÎ¸ð·Î ÁöÁ¤
+			//labelì€ í…ìŠ¤íŠ¸ë‚˜ ì´ë¯¸ì§€ë¥¼ í‘œì‹œí•˜ëŠ” ìœ„ì ¯
+			//viewëŠ” QWidget ê°ì²´ => ì§ì ‘ ë§Œë“  íšŒìƒ‰ ë°°ê²½ì˜ ì»¨í…Œì´ë„ˆ
+			//viewë¥¼ labelì˜ ë¶€ëª¨ë¡œ ì§€ì •
 			QLabel* label = new QLabel(view);
 			label->setText(viewNames[i]);
 
-			//label À§Ä¡ Á¤·Ä
+			//label ìœ„ì¹˜ ì •ë ¬
 			label->setAlignment(Qt::AlignCenter);
 
-			//Grid À§Ä¡ °è»ê
-			//¼¼·Î : row
+			//Grid ìœ„ì¹˜ ê³„ì‚°
+			//ì„¸ë¡œ : row
 			int row = i / 2;
 
-			//°¡·Î : col
+			//ê°€ë¡œ : col
 			int col = i % 2;
 			layout->addWidget(view, row, col);
 		}
@@ -57,22 +57,22 @@ public:
 };
 
 
-//QtÀÇ ÀÌº¥Æ® ·çÇÁ¸¦ ½ÃÀÛÇÏ´Â ÇÔ¼ö
-//¸¶¿ì½º Å¬¸¯, Å° ÀÔ·Â, À©µµ¿ì ¸®»çÀÌÁî °°Àº ÀÌº¥Æ®¸¦ Ã³¸®ÇÏ¸é¼­ ¾ÛÀÌ °è¼Ó ½ÇÇàµÊ
-//a.exec()ÀÌ ³¡³ª¸é ¾ÛÀÌ Á¾·áµÊ=>main() ÇÔ¼ö°¡ ¹ÝÈ¯µÊ
-//QApplication »ý¼º => FourViewWindow »ý¼º => show() È£Ãâ->Ã¢ ¶ç¿ò
-//=> a.exec() -> ÀÌº¥Æ® ·çÇÁ ½ÃÀÛ => »ç¿ëÀÚ ÀÌº¥Æ® Ã³¸® => Ã¢ ´ÝÈû->exec() Á¾·á 
-//=> return->ÇÁ·Î±×·¥ Á¾·á
+//Qtì˜ ì´ë²¤íŠ¸ ë£¨í”„ë¥¼ ì‹œìž‘í•˜ëŠ” í•¨ìˆ˜
+//ë§ˆìš°ìŠ¤ í´ë¦­, í‚¤ ìž…ë ¥, ìœˆë„ìš° ë¦¬ì‚¬ì´ì¦ˆ ê°™ì€ ì´ë²¤íŠ¸ë¥¼ ì²˜ë¦¬í•˜ë©´ì„œ ì•±ì´ ê³„ì† ì‹¤í–‰ë¨
+//a.exec()ì´ ëë‚˜ë©´ ì•±ì´ ì¢…ë£Œë¨=>main() í•¨ìˆ˜ê°€ ë°˜í™˜ë¨
+//QApplication ìƒì„± => FourViewWindow ìƒì„± => show() í˜¸ì¶œ->ì°½ ë„ì›€
+//=> a.exec() -> ì´ë²¤íŠ¸ ë£¨í”„ ì‹œìž‘ => ì‚¬ìš©ìž ì´ë²¤íŠ¸ ì²˜ë¦¬ => ì°½ ë‹«íž˜->exec() ì¢…ë£Œ 
+//=> return->í”„ë¡œê·¸ëž¨ ì¢…ë£Œ
 int main(int argc, char *argv[])
 {
-	//qt gui ¾ÖÇÃ¸®ÄÉÀÌ¼ÇÀ» ÃÊ±âÈ­ÇÏ´Â °´Ã¼
-	//ÀÌº¥Æ® ·çÇÁ °ü¸® ¹× ¸ðµç À§Á¬ÀÇ »ý¸íÁÖ±â¸¦ ÅëÁ¦ÇÔ
+	//qt gui ì• í”Œë¦¬ì¼€ì´ì…˜ì„ ì´ˆê¸°í™”í•˜ëŠ” ê°ì²´
+	//ì´ë²¤íŠ¸ ë£¨í”„ ê´€ë¦¬ ë° ëª¨ë“  ìœ„ì ¯ì˜ ìƒëª…ì£¼ê¸°ë¥¼ í†µì œí•¨
     QApplication a(argc, argv);
 
     ViewerSample w;
     w.show();
 
-	////QMainWindow¸¦ »ó¼ÛÇÑ Å¬·¡½º
+	////QMainWindowë¥¼ ìƒì†¡í•œ í´ëž˜ìŠ¤
 	//FourViewWindow w;
 	//w.show();
 
