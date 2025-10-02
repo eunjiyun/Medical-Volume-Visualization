@@ -583,16 +583,43 @@ void FileReader::UpdateAxialTexture(int z)
 
 void FileReader::UpdateCoronalTexture(int y)
 {
+    //std::vector<uint8_t> slice = GenerateCoronalSlice(y);
+    //ID3D11Texture2D* texture = CreateTextureFromSlice(slice, m_width, m_depth, d3dDevice);
+    //coronalTexture[y] = texture;
+
+
+
     std::vector<uint8_t> slice = GenerateCoronalSlice(y);
     ID3D11Texture2D* texture = CreateTextureFromSlice(slice, m_width, m_depth, d3dDevice);
-    coronalTexture[y] = texture;
+
+    // 기존 텍스처가 있으면 Release
+    auto it = coronalTextureCache.find(y);
+    if (it != coronalTextureCache.end()) {
+        if (it->second) it->second->Release();
+    }
+
+    coronalTextureCache[y] = texture;
 }
 
 void FileReader::UpdateSagittalTexture(int x)
 {
+    /*std::vector<uint8_t> slice = GenerateSagittalSlice(x);
+    ID3D11Texture2D* texture = CreateTextureFromSlice(slice, m_height, m_depth, d3dDevice);
+    sagittalTexture[x] = texture;*/
+
+
+
+
     std::vector<uint8_t> slice = GenerateSagittalSlice(x);
     ID3D11Texture2D* texture = CreateTextureFromSlice(slice, m_height, m_depth, d3dDevice);
-    sagittalTexture[x] = texture;
+
+    // 기존 텍스처가 있으면 Release
+    auto it = sagittalTextureCache.find(x);
+    if (it != sagittalTextureCache.end()) {
+        if (it->second) it->second->Release();
+    }
+
+    sagittalTextureCache[x] = texture;
 }
 
 

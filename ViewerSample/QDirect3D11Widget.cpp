@@ -1224,33 +1224,37 @@ void QDirect3D11Widget::RenderAllQuads()
     //    ImGui::SetScrollY(scrollY - dragDelta.y);
     //}
 
-    //static float lastScrollY = 0.0f;
-    //float scrollY = ImGui::GetScrollY();
+    static float lastScrollYCoronal = 0.0f;
+    float scrollYCoronal = ImGui::GetScrollY();
 
 
-    //if (scrollY != lastScrollY) {
-    //    int newIndex = static_cast<int>(scrollY / 7); // sliceHeight는 슬라이스당 픽셀 높이
-    //    newIndex = std::clamp(newIndex, 0, fileReader->m_depth - 1);
-
-    //    if (newIndex != fileReader->currentIndex[1]) {
-    //        fileReader->currentIndex[1] = newIndex;
-    //        fileReader->UpdateAxialTexture(newIndex);
+    if (scrollYCoronal != lastScrollYCoronal) {
+        //int newIndex = static_cast<int>(scrollYCoronal / 7); // sliceHeight는 슬라이스당 픽셀 높이
+        int newIndex = static_cast<int>((fileReader->m_height * 7.f - scrollYCoronal) / 7.f);
 
 
-    //        ID3D11Texture2D* tex = fileReader->axialTextureCache[newIndex];
-    //        ID3D11ShaderResourceView* srv = getSRVForTexture(tex);
-    //        m_SRViews.slices[1] = srv;
 
-    //        ID3D11RenderTargetView* rtv = getRTVForTexture(tex);
-    //        m_RTViews.slices[1] = rtv;
+        newIndex = std::clamp(newIndex, 0, fileReader->m_height - 1);
 
-
-    //    }
-
-    //    lastScrollY = scrollY;
+        if (newIndex != fileReader->currentIndex[2]) {
+            fileReader->currentIndex[2] = newIndex;
+            fileReader->UpdateCoronalTexture(newIndex);
 
 
-    //}
+            ID3D11Texture2D* tex = fileReader->coronalTextureCache[newIndex];
+            ID3D11ShaderResourceView* srv = getSRVForTexture(tex);
+            m_SRViews.slices[2] = srv;
+
+            ID3D11RenderTargetView* rtv = getRTVForTexture(tex);
+            m_RTViews.slices[2] = rtv;
+
+
+        }
+
+        lastScrollYCoronal = scrollYCoronal;
+
+
+    }
 
 
 
