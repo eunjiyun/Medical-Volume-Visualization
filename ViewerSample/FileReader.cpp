@@ -67,13 +67,32 @@ bool FileReader::LoadDICOMSeries(std::string folderPath, ID3D11Device* g_pd3dDev
                 std::cout << "Width: " << m_width << ", Height: " << m_height << std::endl;
 
 
+
+
+
+
                 // ?ˆë„???¼í„° / ?ˆë„????
                 OFString wcStr, wwStr;
                 if (dataset->findAndGetOFString(DCM_WindowCenter, wcStr).good() &&
-                    dataset->findAndGetOFString(DCM_WindowWidth, wwStr).good()) {
+                    dataset->findAndGetOFString(DCM_WindowWidth, wwStr).good() &&
+
+                    dataset->findAndGetOFString(DCM_PatientName, patientName).good() &&
+                    dataset->findAndGetOFString(DCM_PatientBirthDate, birthDate).good() &&
+                    dataset->findAndGetOFString(DCM_StudyDate, studyDate).good() &&
+                    dataset->findAndGetOFString(DCM_PatientID, patientID).good() &&
+                    dataset->findAndGetOFString(DCM_PatientSex, patientMF).good() 
+                    ) {
 
                     windowCenter = std::stof(wcStr.c_str());
                     windowWidth = std::stof(wwStr.c_str());
+
+
+                   /* patientName = std::stof(wcStr.c_str());
+                    birthDate = std::stof(wwStr.c_str());
+                    studyDate = std::stof(wcStr.c_str());
+                    patientID = std::stof(wwStr.c_str());
+                    patientMF = std::stof(wcStr.c_str());*/
+           
 
                     std::cout << "Window Center: " << windowCenter << ", Window Width: " << windowWidth << std::endl;
                 }
@@ -177,6 +196,8 @@ bool FileReader::ParseSlice(const std::string path, int sliceIndex) {
         m_volumeData[offset + i] = pixelData[i];
     }
 
+
+    //251002
 
 
 
