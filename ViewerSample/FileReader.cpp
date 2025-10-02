@@ -4,7 +4,7 @@
 #include <dcmtk/ofstd/ofcond.h>
 
 #include <dcmtk/dcmdata/dctypes.h>
-//#include <dcmtk/config/osconfig.h>  // 플랫폼별 타입 정의
+//#include <dcmtk/config/osconfig.h>  // ?�랫?�별 ?�???�의
 #include <filesystem>
 #include<iterator>
 #include<algorithm>
@@ -19,7 +19,7 @@ FileReader::FileReader()
     m_volumeData()/*,
     m_filePaths()*/
 {
-    // ??獄쏅똻????????棺??짆?????獒??縕?猿녿뎨????ㅺ컼????⑥レ툓????좊읈???	
+    // ???�쏅?????????�??�????????�??�녿??????�컼?????�?�툓????좊읈???	
     std::cout << "[FileReader] Initialized with empty volume and file list." << std::endl;
 }
 
@@ -46,7 +46,7 @@ bool FileReader::LoadDICOMSeries(std::string folderPath, ID3D11Device* g_pd3dDev
             m_filePaths.push_back(entry.path().string());
 
 
-            // width, height는 첫 번째 파일에서만 읽기
+            // width, height??�?번째 ?�일?�서�??�기
             if (entry.path().string() == m_filePaths.front())
             {
 
@@ -55,7 +55,7 @@ bool FileReader::LoadDICOMSeries(std::string folderPath, ID3D11Device* g_pd3dDev
 
                 DcmDataset* dataset = file.getDataset();
 
-                // 메타데이터 출력 (선택 사항)
+                // 메�??�이??출력 (?�택 ?�항)
                 OFString widthStr, heightStr;
                 dataset->findAndGetOFString(DCM_Columns, widthStr);   // (0028,0011)
                 dataset->findAndGetOFString(DCM_Rows, heightStr);      // (0028,0010)
@@ -67,7 +67,7 @@ bool FileReader::LoadDICOMSeries(std::string folderPath, ID3D11Device* g_pd3dDev
                 std::cout << "Width: " << m_width << ", Height: " << m_height << std::endl;
 
 
-                // 윈도우 센터 / 윈도우 폭
+                // ?�도???�터 / ?�도????
                 OFString wcStr, wwStr;
                 if (dataset->findAndGetOFString(DCM_WindowCenter, wcStr).good() &&
                     dataset->findAndGetOFString(DCM_WindowWidth, wwStr).good()) {
@@ -93,7 +93,7 @@ bool FileReader::LoadDICOMSeries(std::string folderPath, ID3D11Device* g_pd3dDev
         }
     }
 
-    //ComputeGlobalMinMax(); // 로딩 직후 전체 min/max 계산
+    //ComputeGlobalMinMax(); // 로딩 직후 ?�체 min/max 계산
 
 
     //for (int z{}; z < m_depth; ++z) {
@@ -151,7 +151,7 @@ ID3D11Texture2D* FileReader::getOrCreateSagittalTexture(int x) {
 
 bool FileReader::ParseSlice(const std::string path, int sliceIndex) {
     DcmFileFormat file;
-    OFCondition status = file.loadFile(path.c_str());
+    OFCondition status = file.loadFile(path.c_str(), EXS_Unknown, EGL_noChange);
 
     if (!status.good()) {
         std::cerr << " Failed to load DICOM file: " << path << std::endl;
@@ -160,7 +160,7 @@ bool FileReader::ParseSlice(const std::string path, int sliceIndex) {
 
     DcmDataset* dataset = file.getDataset();
 
-    // 픽셀 데이터 가져오기
+    // ?��? ?�이??가?�오�?
     const Uint16* pixelData = nullptr;
     status = dataset->findAndGetUint16Array(DCM_PixelData, pixelData);
     if (!status.good() || nullptr == pixelData) {
@@ -168,11 +168,11 @@ bool FileReader::ParseSlice(const std::string path, int sliceIndex) {
         return false;
     }
 
-    // 슬라이스 위치 계산
+    // ?�라?�스 ?�치 계산
     int sliceSize = m_width * m_height;
     int offset = sliceIndex * sliceSize;
 
-    // 픽셀 복사
+    // ?��? 복사
     for (int i{}; i < sliceSize; ++i) {
         m_volumeData[offset + i] = pixelData[i];
     }
@@ -180,19 +180,19 @@ bool FileReader::ParseSlice(const std::string path, int sliceIndex) {
 
 
 
-    // 메타데이터 출력 (선택 사항)
-    //OFString patientName, birthDate, studyDate, kvp;
-    dataset->findAndGetOFString(DCM_PatientName, patientName);
-    dataset->findAndGetOFString(DCM_PatientBirthDate, birthDate);
-    dataset->findAndGetOFString(DCM_StudyDate, studyDate);
-    //	dataset->findAndGetOFString(DCM_KVP, kvp);
+   // // 메�??�이??출력 (?�택 ?�항)
+   // //OFString patientName, birthDate, studyDate, kvp;
+   // dataset->findAndGetOFString(DCM_PatientName, patientName);
+   // dataset->findAndGetOFString(DCM_PatientBirthDate, birthDate);
+   // dataset->findAndGetOFString(DCM_StudyDate, studyDate);
+   // //	dataset->findAndGetOFString(DCM_KVP, kvp);
 
 
 
-        // 추가 정보
-    dataset->findAndGetOFString(DCM_PatientID, patientID);       // 환자 ID
-    dataset->findAndGetOFString(DCM_PatientSex, patientMF);     // 성별 (M/F/O)
-   // dataset->findAndGetOFString(DCM_PatientAge, patientAge);     // 나이 (예: "032Y")
+   //     // 추�? ?�보
+   // dataset->findAndGetOFString(DCM_PatientID, patientID);       // ?�자 ID
+   // dataset->findAndGetOFString(DCM_PatientSex, patientMF);     // ?�별 (M/F/O)
+   //// dataset->findAndGetOFString(DCM_PatientAge, patientAge);     // ?�이 (?? "032Y")
 
 
     //std::string birthYear = birthDate.substr(0, 4);
@@ -218,13 +218,13 @@ bool FileReader::BuildVolume()
     }
     return true;
 }
-void FileReader::PrintMetadata()// ???쒓낯寃??嶺뚮㉡?€쾮? modality ??
+void FileReader::PrintMetadata()// ????�낯�??嶺뚮???�쾮? modality ??
 {
-    //??ш끽維쀩??	//???쒓낮??	//?濡ろ떟?????
+    //????�維?�??	//????�낮??	//?濡ろ??????
 
 
     DcmFileFormat file;
-    OFCondition status = file.loadFile(m_filePaths[0].c_str()); // 癲??類???????????れ삀??
+    OFCondition status = file.loadFile(m_filePaths[0].c_str()); // ???�?????????????��???
     if (!status.good()) {
         std::cerr << "PrintMetadata : Failed to load DICOM file: " << m_filePaths[0] << std::endl;
         return;
@@ -233,25 +233,25 @@ void FileReader::PrintMetadata()// ???쒓낯寃??嶺뚮㉡?€쾮? modality ??
     DcmDataset* dataset = file.getDataset();
     OFString patientID, patientAge, studyDate;
 
-    // ???쒓낯寃?ID
+    // ????�낯�?ID
     if (dataset->findAndGetOFString(DCM_PatientID, patientID).good())
         std::cout << "Patient ID: " << patientID << std::endl;
 
-    // ???쒓낮??	if (dataset->findAndGetOFString(DCM_PatientAge, patientAge).good())
+    // ????�낮??	if (dataset->findAndGetOFString(DCM_PatientAge, patientAge).good())
     std::cout << "Patient Age: " << patientAge << std::endl;
 
-    // ?濡ろ떟?????	if (dataset->findAndGetOFString(DCM_StudyDate, studyDate).good())
+    // ?濡ろ??????	if (dataset->findAndGetOFString(DCM_StudyDate, studyDate).good())
     std::cout << "Study Date: " << studyDate << std::endl;
 }
 
 
 //std::vector<uint8_t> FileReader::GenerateAxialSlice(int zIndex)
 //{
-//	// ??????⑤８痢???????節뚮쳮雅?	int sliceSize = m_width * m_height;
+//	// ???????�８�???????節??��??	int sliceSize = m_width * m_height;
 //
-//	// ???亦????Β????? ???⑤챶援??類?뺨??щ빝????モ닪??	std::vector<uint16_t> rawSlice(sliceSize);
+//	// ???�??????????? ????�챶???�?�???�??????��??	std::vector<uint16_t> rawSlice(sliceSize);
 //
-//    rawSlice.resize(m_width * m_height); // 먼저 크기 확보
+//    rawSlice.resize(m_width * m_height); // 먼�? ?�기 ?�보
 //	std::copy(
 //		m_volumeData.begin() + zIndex * m_width * m_height,
 //		m_volumeData.begin() + (zIndex + 1) * m_width * m_height,
@@ -267,7 +267,7 @@ std::vector<uint8_t> FileReader::GenerateAxialSlice(int zIndex)
 {
     const size_t sliceSize = static_cast<size_t>(m_width) * m_height;
 
-    // 16비트 원본 슬라이스 추출
+    // 16비트 ?�본 ?�라?�스 추출
     std::vector<uint16_t> rawSlice(sliceSize);
     const size_t offset = static_cast<size_t>(zIndex) * sliceSize;
 
@@ -282,12 +282,12 @@ std::vector<uint8_t> FileReader::GenerateAxialSlice(int zIndex)
         rawSlice.begin()
     );
 
-    // 8비트 정규화
+    // 8비트 ?�규??
     std::vector<uint8_t> normalized;
     //NormalizeSlice(rawSlice, normalized, m_globalMin, m_globalMax);
     NormalizeSlice(rawSlice, normalized, windowCenter, windowWidth);
 
-    // RGBA 변환: 픽셀당 4바이트
+    // RGBA 변?? ?��???4바이??
     std::vector<uint8_t> rgbaSlice(sliceSize * 4);
     for (size_t i = 0; i < sliceSize; ++i) {
         uint8_t gray = normalized[i];
@@ -374,7 +374,7 @@ std::vector<uint8_t> FileReader::GenerateCoronalSlice(int yIndex)
     //NormalizeSlice(rawSlice, normalized, m_globalMin, m_globalMax);
     NormalizeSlice(rawSlice, normalized, windowCenter, windowWidth);
 
-    // RGBA 변환: 픽셀당 4바이트
+    // RGBA 변?? ?��???4바이??
     std::vector<uint8_t> rgbaSlice(sliceSize * 4);
     for (size_t i = 0; i < sliceSize; ++i) {
         uint8_t gray = normalized[i];
@@ -455,7 +455,7 @@ std::vector<uint8_t> FileReader::GenerateSagittalSlice(int xIndex)
     //NormalizeSlice(rawSlice, normalized, m_globalMin, m_globalMax);
     NormalizeSlice(rawSlice, normalized, windowCenter, windowWidth);
 
-    // RGBA 변환: 픽셀당 4바이트
+    // RGBA 변?? ?��???4바이??
     std::vector<uint8_t> rgbaSlice(sliceSize * 4);
     for (size_t i = 0; i < sliceSize; ++i) {
         uint8_t gray = normalized[i];
@@ -502,10 +502,10 @@ bool FileReader::NormalizeSlice(const std::vector<uint16_t>& rawSlice,
 
     for (size_t i = 0; i < rawSlice.size(); ++i) {
         //float val = static_cast<float>(rawSlice[i]);
-        // 원래 HU 값이 음수일 수 있으므로 int16_t로 처리해야 함
+        // ?�래 HU 값이 ?�수?????�으므�?int16_t�?처리?�야 ??
         float val = static_cast<float>(static_cast<int16_t>(rawSlice[i]));
 
-        // 클램핑
+        // ?�램??
         if (val < minHU) val = minHU;
         if (val > maxHU) val = maxHU;
 
@@ -518,9 +518,9 @@ bool FileReader::NormalizeSlice(const std::vector<uint16_t>& rawSlice,
 
 void FileReader::SliceIdxManage()
 {
-    sliceIndex[1] = m_depth / 2;//a
-    sliceIndex[2] = m_height / 2;//c
-    sliceIndex[3] = m_width / 2;//s
+    currentIndex[1] = m_depth / 2;//a
+    currentIndex[2] = m_height / 2;//c
+    currentIndex[3] = m_width / 2;//s
 }
 
 void FileReader::SetAxialSlice(int index)
@@ -544,7 +544,7 @@ void FileReader::UpdateAxialTexture(int z)
 {
     std::vector<uint8_t> slice = GenerateAxialSlice(z);
     ID3D11Texture2D* texture = CreateTextureFromSlice(slice, m_width, m_height, d3dDevice);
-    axialTexture[z] = texture; // 또는 캐싱 구조에 따라 교체
+    axialTexture[z] = texture; // ?�는 캐싱 구조???�라 교체
 }
 
 void FileReader::UpdateCoronalTexture(int y)
@@ -566,16 +566,16 @@ ID3D11Texture2D* FileReader::CreateTextureFromSlice(const std::vector<uint8_t>& 
 {
     if (slice.empty()) return nullptr;
 
-    // Direct3D ?붾컮?댁뒪媛 ?꾩슂?⑸땲?? ?몃??먯꽌 ?꾨떖諛쏄굅???대옒??硫ㅻ쾭濡??덉뼱???⑸땲??
-    //extern ID3D11Device* g_pd3dDevice; // ?먮뒗 this->m_device ?깆쑝濡?泥섎━
+    // Direct3D ?붾컮??�뒪媛 ?꾩슂??�땲?? ?�??�?�� ?꾨떖諛쏄�????�???硫ㅻ�?��???�뼱????�땲??
+    //extern ID3D11Device* g_pd3dDevice; // ?�?�� this->m_device ?깆쑝�?泥섎??
 
     D3D11_TEXTURE2D_DESC texDesc = {};
     texDesc.Width = width;
     texDesc.Height = height;
     texDesc.MipLevels = 1;
     texDesc.ArraySize = 1;
-    texDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM; //8鍮꾪듃 grayscale
-    //texDesc.Format = DXGI_FORMAT_R8_UNORM; //8鍮꾪듃 grayscale
+    texDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM; //8??��??grayscale
+    //texDesc.Format = DXGI_FORMAT_R8_UNORM; //8??��??grayscale
 
     texDesc.SampleDesc.Count = 1;
     texDesc.Usage = D3D11_USAGE_DEFAULT;
@@ -607,14 +607,14 @@ ID3D11Texture2D* FileReader::CreateTextureFromSlice(const std::vector<uint8_t>& 
 
     hr = g_pd3dDevice->CreateBuffer(&cbDesc, nullptr, &m_crosshairBuffer);
     if (FAILED(hr)) {
-        cerr << "[에러] Crosshair ConstantBuffer 생성 실패!";
+        cerr << "[?�러] Crosshair ConstantBuffer ?�성 ?�패!";
     }
 
 
 
     //ID3D11ShaderResourceView* textureView = nullptr;
     //hr = g_pd3dDevice->CreateShaderResourceView(texture, nullptr, &textureView);
-    //texture->Release(); // 酉곌? 李몄“?섎?濡??먮낯? ?댁젣
+    //texture->Release(); // ?�곌? 李몄????�??�?��?? ??�젣
 
     //if (FAILED(hr)) {
     //	std::cerr << "Failed to create shader resource view." << std::endl;

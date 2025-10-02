@@ -68,10 +68,14 @@ void QDirect3D11Widget::release()
 
     for (auto& view : m_RTViews.slices)
             ReleaseObject(view);
+   //// for (auto& view : m_RTViews.slices)
+   //     ReleaseObject(m_RTViews.slices);
+
 
     for (auto& view : m_SRViews.slices)
             ReleaseObject(view);
-
+        ////for (auto& view : m_SRViews.slices)
+        //    ReleaseObject(m_SRViews.slices);
   
     ReleaseObject(m_pSwapChain);
     ReleaseObject(m_pDeviceContext);
@@ -314,6 +318,13 @@ void QDirect3D11Widget::initializeRenderTargets()
     m_SRViews.slices.clear();
     m_samplerState.clear();
 
+    //fileReader->currentIndex[0] = fileReader->m_depth / 2;   // Axial (Z 방향)
+    //fileReader->currentIndex[1] = fileReader->m_height / 2;  // Coronal (Y 방향)
+    //fileReader->currentIndex[2] = fileReader->m_width / 2;   // Sagittal (X 방향)
+
+    fileReader->SliceIdxManage();
+
+
     for (int i{}; i < 4; ++i) {
        
 
@@ -327,7 +338,8 @@ void QDirect3D11Widget::initializeRenderTargets()
             texDesc.Height = height() / 2;*/
 
             D3D11_TEXTURE2D_DESC desc;
-            fileReader->axialTexture[0]->GetDesc(&desc);
+            ID3D11Texture2D* axialTex = fileReader->getOrCreateAxialTexture(fileReader->currentIndex[1]);
+            axialTex->GetDesc(&desc);
             texDesc.Width = desc.Width;
             texDesc.Height = desc.Height;
 
@@ -344,34 +356,7 @@ void QDirect3D11Widget::initializeRenderTargets()
             //250922  texture
             DXCall(m_pDevice->CreateTexture2D(&texDesc, nullptr, &pTexture));
 
-            //// 2. RenderTargetView ??밴쉐
-            //ID3D11RenderTargetView* pRTV = nullptr;
-            //DXCall(m_pDevice->CreateRenderTargetView(pTexture, nullptr, &pRTV));
-            //m_RTViews.push_back(pRTV);
-
-
-
-
-
-
-
-
-
-
-            //// 2. RenderTargetView ??밴쉐
-            //ID3D11RenderTargetView* pRTV = nullptr;
-            //DXCall(m_pDevice->CreateRenderTargetView(pTexture, nullptr, &pRTV));
-            //m_RTViews.slices.push_back(pRTV);
-
-
-            //// 3. ShaderResourceView ??밴쉐
-            //ID3D11ShaderResourceView* pSRV = nullptr;
-            //DXCall(m_pDevice->CreateShaderResourceView(pTexture, nullptr, &pSRV));
-            //m_SRViews.slices.push_back(pSRV);
-
-            //m_SRViews.flagIndex[0] = m_SRViews.slices.size();
-
-
+         
 
             // 2. RenderTargetView ??밴쉐
             ID3D11RenderTargetView* pRTV = nullptr;
@@ -384,58 +369,43 @@ void QDirect3D11Widget::initializeRenderTargets()
             DXCall(m_pDevice->CreateShaderResourceView(pTexture, nullptr, &pSRV));
             m_SRViews.slices.push_back(pSRV);
 
-            m_SRViews.flagIndex[0] = m_SRViews.slices.size();
+            m_SRViews.flagIndex[0] = m_SRViews.slices.size()-1;
 
         }
         else if (1 == i) {
 
-         
-            for (const auto& t : fileReader->axialTexture) {
-                // 2. RenderTargetView ??밴쉐
-                ID3D11RenderTargetView* pRTV = nullptr;
-                DXCall(m_pDevice->CreateRenderTargetView(t, nullptr, &pRTV));
-                m_RTViews.slices.push_back(pRTV);
-          
+   
+            ID3D11Texture2D* axialTex = fileReader->getOrCreateAxialTexture(fileReader->currentIndex[1]);
+            ID3D11RenderTargetView* axialRTV = getRTVForTexture(axialTex);
+            m_RTViews.slices.push_back(axialRTV);
+            ID3D11ShaderResourceView* axialSRV = getSRVForTexture(axialTex);
+            m_SRViews.slices.push_back(axialSRV);
+        
 
-                // 3. ShaderResourceView ??밴쉐
-                ID3D11ShaderResourceView* pSRV = nullptr;
-                DXCall(m_pDevice->CreateShaderResourceView(t, nullptr, &pSRV));
-                m_SRViews.slices.push_back(pSRV);
-            }
-
-            m_SRViews.flagIndex[1] = m_SRViews.slices.size();
+            m_SRViews.flagIndex[1] = m_SRViews.flagIndex[0] +fileReader->m_depth - 1;
 
         }
         else if (2 == i) {
-            for (const auto& t : fileReader->coronalTexture) {
-                // 2. RenderTargetView ??밴쉐
-                ID3D11RenderTargetView* pRTV = nullptr;
-                DXCall(m_pDevice->CreateRenderTargetView(t, nullptr, &pRTV));
-                m_RTViews.slices.push_back(pRTV);
+        
+            ID3D11Texture2D* coronalTex = fileReader->getOrCreateCoronalTexture(fileReader->currentIndex[2]);
+            ID3D11RenderTargetView* coronalRTV = getRTVForTexture(coronalTex);
+            m_RTViews.slices.push_back(coronalRTV);
+            ID3D11ShaderResourceView* coronalSRV = getSRVForTexture(coronalTex);
+            m_SRViews.slices.push_back(coronalSRV);
 
+            m_SRViews.flagIndex[2] = m_SRViews.flagIndex[1]+fileReader->m_height - 1;
 
-                // 3. ShaderResourceView ??밴쉐
-                ID3D11ShaderResourceView* pSRV = nullptr;
-                DXCall(m_pDevice->CreateShaderResourceView(t, nullptr, &pSRV));
-                m_SRViews.slices.push_back(pSRV);
-            }
-
-            m_SRViews.flagIndex[2] = m_SRViews.slices.size();
         }
         else if (3 == i) {
-            for (const auto& t : fileReader->sagittalTexture) {
-                // 2. RenderTargetView ??밴쉐
-                ID3D11RenderTargetView* pRTV = nullptr;
-                DXCall(m_pDevice->CreateRenderTargetView(t, nullptr, &pRTV));
-                m_RTViews.slices.push_back(pRTV);
+  
+            ID3D11Texture2D* sagittalTex = fileReader->getOrCreateSagittalTexture(fileReader->currentIndex[3]);
+            ID3D11RenderTargetView* sagittalRTV = getRTVForTexture(sagittalTex);
+            m_RTViews.slices.push_back(sagittalRTV);
+            ID3D11ShaderResourceView* sagittalSRV = getSRVForTexture(sagittalTex);
+            m_SRViews.slices.push_back(sagittalSRV);
 
-                // 3. ShaderResourceView ??밴쉐
-                ID3D11ShaderResourceView* pSRV = nullptr;
-                DXCall(m_pDevice->CreateShaderResourceView(t, nullptr, &pSRV));
-                m_SRViews.slices.push_back(pSRV);
-            }
+            m_SRViews.flagIndex[3] = m_SRViews.flagIndex[2]+fileReader->m_width - 1;
 
-            m_SRViews.flagIndex[3] = m_SRViews.slices.size();
         }
 
 
@@ -917,13 +887,9 @@ int QDirect3D11Widget::GetClickedViewIndex(int px, int py, int width, int height
 
 void QDirect3D11Widget::RenderAllQuads()
 {
-    std::vector<ID3D11RenderTargetView*> activeRTVs;
-
-
-    activeRTVs.push_back(getRTVForTexture(fileReader->axialTexture[sliceIndex]));
-
-
-    m_pDeviceContext->OMSetRenderTargets(activeRTVs.size(), activeRTVs.data(), nullptr);
+    //std::vector<ID3D11RenderTargetView*> activeRTVs;
+    //activeRTVs.push_back(getRTVForTexture(fileReader->axialTexture[fileReader->sliceIndex[1]]));
+    //m_pDeviceContext->OMSetRenderTargets(activeRTVs.size(), activeRTVs.data(), nullptr);
 
 
     m_pDeviceContext->OMSetRenderTargets(4, m_RTViews.slices.data(), nullptr);
@@ -966,7 +932,7 @@ void QDirect3D11Widget::RenderAllQuads()
     // 3. 셰이더에 바인딩
     m_pDeviceContext->PSSetConstantBuffers(0, 1, &fileReader->m_crosshairBuffer);
     m_pDeviceContext->PSSetShaderResources(0, 4, m_SRViews.slices.data());     // tex0~tex3
-    m_pDeviceContext->PSSetSamplers(0, 4, m_samplerState.data());       // samp0~samp3
+    m_pDeviceContext->PSSetSamplers(0, 1, m_samplerState.data());       // samp0~samp3
 
 
     //rtv 너무 많이 생성해서 생기는 오류//251001
@@ -994,9 +960,11 @@ void QDirect3D11Widget::RenderAllQuads()
     {
         D3D11_VIEWPORT vp = CreateViewport(i); // ← 4분할 뷰포트 계산
 
-        //여기서 벡터 오류251001
-        for(int j{};j< m_SRViews.flagIndex[i];++j)
-            DrawQuadWithTexture(m_SRViews.slices[j], vp);      // ← 여기서 호출!
+        ////여기서 벡터 오류251001
+        //for(int j{};j< m_SRViews.flagIndex[i];++j)
+        //    DrawQuadWithTexture(m_SRViews.slices[j], vp);      // ← 여기서 호출!
+
+        DrawQuadWithTexture(m_SRViews.slices[i], vp);      // ← 여기서 호출!
     }
 
 
@@ -1081,6 +1049,9 @@ void QDirect3D11Widget::RenderAllQuads()
     }
 
 
+    ImGui::EndChild();
+    ImGui::End();
+
     ImGui::SetNextWindowPos(ImVec2(0, 0)); // 좌측 상단 위치
     ImGui::SetNextWindowSize(ImVec2(130, 150));
     ImGui::Begin((QString::fromLocal8Bit("환자 정보")).toUtf8().constData(), nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
@@ -1125,7 +1096,7 @@ void QDirect3D11Widget::RenderAllQuads()
     // 수평선
     drawList->AddLine(ImVec2(0, cy), ImVec2(screenSize.x, cy), IM_COL32(0, 128, 255, 255), 1.0f);
 
-
+    ImGui::End();
 
 
     static ImVec2 imageOffsetSagittal = ImVec2(0, 0); // 이미지 위치 오프셋
@@ -1263,10 +1234,9 @@ void QDirect3D11Widget::RenderAllQuads()
 
 
 
-    ImGui::End();
 
-    ImGui::EndChild();
-    ImGui::End();
+
+   
 
     ImGui::Render();
     ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
@@ -1312,15 +1282,35 @@ void QDirect3D11Widget::DrawQuadWithTexture(ID3D11ShaderResourceView* pSRV, cons
 ID3D11RenderTargetView* QDirect3D11Widget::getRTVForTexture(ID3D11Texture2D* texture)
 {
     // 이미 캐싱된 RTV가 있으면 반환
-    if (rtvCache.contains(texture)) return rtvCache[texture];
+    auto it = rtvCache.find(texture);
+    if (it != rtvCache.end())
+        return it->second;
 
     // 없으면 새로 생성하고 캐시에 저장
     ID3D11RenderTargetView* rtv = nullptr;
-    DXCall(device->CreateRenderTargetView(texture, nullptr, &rtv));
+    DXCall(device()->CreateRenderTargetView(texture, nullptr, &rtv));
     rtvCache[texture] = rtv;
     return rtv;
 
 }
+
+ID3D11ShaderResourceView* QDirect3D11Widget::getSRVForTexture(ID3D11Texture2D* texture)
+{
+    // 이미 캐싱된 SRV가 있으면 반환
+    auto it = srvCache.find(texture);
+    if (it != srvCache.end())
+        return it->second;
+
+    // 새로 생성
+    ID3D11ShaderResourceView* srv = nullptr;
+    DXCall(m_pDevice->CreateShaderResourceView(texture, nullptr, &srv));
+
+    // 캐시에 저장
+    srvCache[texture] = srv;
+    return srv;
+}
+
+
 void QDirect3D11Widget::mouseMoveEvent(QMouseEvent* event) {
     ImGuiIO& io = ImGui::GetIO();
     io.MousePos = ImVec2(event->pos().x(), event->pos().y());
@@ -1339,9 +1329,9 @@ void QDirect3D11Widget::mouseReleaseEvent(QMouseEvent* event) {
 void QDirect3D11Widget::onReset()
 {
     // 1. 疫꿸퀣???귐딅꺖????곸젫
-    for (auto& view : m_SRViews.slices)
+   /* for (auto& view : m_SRViews.slices)
         ReleaseObject(view);
-    m_SRViews.slices.clear();
+    m_SRViews.slices.clear();*/
 
     //	ReleaseObject(m_pSwapChainRTV);
 

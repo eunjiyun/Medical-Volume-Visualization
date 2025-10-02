@@ -8,7 +8,7 @@
 
 
 #include<QTimer>
-
+#include<unordered_map>
 
 
 
@@ -34,12 +34,14 @@ struct Vertex {
 
 struct SliceSeriesSrv {
     std::vector<ID3D11ShaderResourceView*> slices;
+    //ID3D11ShaderResourceView* slices;
     int flagIndex[4];
     int currentIndex{};
 };
 
 struct SliceSeriesRtv {
     std::vector<ID3D11RenderTargetView*> slices;
+    //ID3D11RenderTargetView* slices;
     int flagIndex[4];
     int currentIndex{};
 };
@@ -102,6 +104,7 @@ private:
     void InitializeGraphics();
 
     ID3D11RenderTargetView* getRTVForTexture(ID3D11Texture2D* texture);
+    ID3D11ShaderResourceView* getSRVForTexture(ID3D11Texture2D* texture);
 
 public:
 
@@ -168,6 +171,7 @@ public:
 
     std::vector<ID3D11RenderTargetView*> rtvPool, activeRTVs;
     std::unordered_map<ID3D11Texture2D*, ID3D11RenderTargetView*> rtvCache;
+    std::unordered_map<ID3D11Texture2D*, ID3D11ShaderResourceView*> srvCache;
    
 
     // = fileReader->axialTexture.size() / 2;
