@@ -57,10 +57,10 @@ SamplerState samp3 : register(s3);
 
 
 struct PSOutput {
-	float4 color0 : SV_Target0;
-	float4 color1 : SV_Target1;
-	float4 color2 : SV_Target2;
-	float4 color3 : SV_Target3;
+    float4 color0 : SV_Target0;
+    float4 color1 : SV_Target1;
+    float4 color2 : SV_Target2;
+    float4 color3 : SV_Target3;
 };
 
 
@@ -68,19 +68,19 @@ struct PSOutput {
 
 struct VSOutput
 {
-	float4 position : SV_POSITION;
-	float2 texcoord : TEXCOORD;
+    float4 position : SV_POSITION;
+    float2 texcoord : TEXCOORD;
 };
 
 PSOutput PSMain(VSOutput input)
 {
-	//PSOutput o;
+    //PSOutput o;
 
 
-	//o.color0 = tex0.Sample(samp0, input.texcoord);
-	//o.color1 = tex1.Sample(samp1, input.texcoord);
-	//o.color2 = tex2.Sample(samp2, input.texcoord);
-	//o.color3 = tex3.Sample(samp3, input.texcoord);
+    //o.color0 = tex0.Sample(samp0, input.texcoord);
+    //o.color1 = tex1.Sample(samp1, input.texcoord);
+    //o.color2 = tex2.Sample(samp2, input.texcoord);
+    //o.color3 = tex3.Sample(samp3, input.texcoord);
 
 
 
@@ -96,7 +96,7 @@ PSOutput PSMain(VSOutput input)
 
 
 
-	//return o;
+    //return o;
 
 
 

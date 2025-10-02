@@ -887,7 +887,7 @@ int QDirect3D11Widget::GetClickedViewIndex(int px, int py, int width, int height
 
 void QDirect3D11Widget::RenderAllQuads()
 {
-   
+
     m_pDeviceContext->OMSetRenderTargets(4, m_RTViews.slices.data(), nullptr);
 
 

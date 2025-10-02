@@ -1,7 +1,5 @@
 ﻿#pragma once
 
-
-
 #include<stdexcept>
 
 #include<QWidget>
@@ -34,14 +32,12 @@ struct Vertex {
 
 struct SliceSeriesSrv {
     std::vector<ID3D11ShaderResourceView*> slices;
-    //ID3D11ShaderResourceView* slices;
     int flagIndex[4];
     int currentIndex{};
 };
 
 struct SliceSeriesRtv {
     std::vector<ID3D11RenderTargetView*> slices;
-    //ID3D11RenderTargetView* slices;
     int flagIndex[4];
     int currentIndex{};
 };
@@ -174,8 +170,6 @@ public:
     std::unordered_map<ID3D11Texture2D*, ID3D11ShaderResourceView*> srvCache;
    
 
-    // = fileReader->axialTexture.size() / 2;
-
 private:
 
     ID3D11DeviceContext *    m_pDeviceContext;
@@ -200,14 +194,11 @@ public:
     ID3D11VertexShader*       m_vertexShader = nullptr;
     ID3D11PixelShader*        m_pixelShader = nullptr;
 
-    // ??轅붽틓???????癲?????
     ID3D11Buffer*             m_vertexBuffer = nullptr;
 
-    // ??????ㅼ굣塋????嚥싲갭큔?댁옃紐?????諛몃마??(??轅붽틓??????????濚????轅붽틓?????????
     ID3D11InputLayout*        m_inputLayout = nullptr;
     //ID3D11Buffer* m_vertexBuffer = nullptr;
 
-    // Direct3D ???⑸츩嶺?????⑥щ턄???洹먮봾爰????	
     ID3D11Texture2D* m_texture = nullptr;
     std::vector<ID3D11ShaderResourceView*> m_textureSRV;
     std::vector < ID3D11SamplerState*> m_samplerState;

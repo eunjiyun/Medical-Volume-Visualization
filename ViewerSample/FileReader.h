@@ -30,15 +30,9 @@ public:
     UINT16 m_width;
     UINT16 m_height;
     int m_depth = 0;
-    //Uint16* m_pixelData = nullptr;
-
-    //uint16_t m_globalMin = 0;
-    //uint16_t m_globalMax = 0;
-
-
 
     uint16_t sliceSize = m_width * m_height;
-    std::vector<uint16_t> rawSlice; // ?꾩룇瑗띈キ?????곗꽑????
+    std::vector<uint16_t> rawSlice;
 
 
     OFString patientName, birthDate, studyDate, kvp;
@@ -88,12 +82,6 @@ public:
         float windowWidth);
 
 
-
-
     ID3D11Texture2D* CreateTextureFromSlice(const std::vector<uint8_t>& slice, int width, int height, ID3D11Device* g_pd3dDevice);
-
-    //void ComputeGlobalMinMax();
-
-
 };
 

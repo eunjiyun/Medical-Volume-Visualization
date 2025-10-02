@@ -4,7 +4,7 @@
 #include <dcmtk/ofstd/ofcond.h>
 
 #include <dcmtk/dcmdata/dctypes.h>
-//#include <dcmtk/config/osconfig.h>  // ?åÎû´?ºÎ≥Ñ ?Ä???ïÏùò
+//#include <dcmtk/config/osconfig.h>  
 #include <filesystem>
 #include<iterator>
 #include<algorithm>
@@ -19,7 +19,7 @@ FileReader::FileReader()
     m_volumeData()/*,
     m_filePaths()*/
 {
-    // ???ÑÏèÖ?????????Ê£??Ïß????????Á∏??øÎÖø??????∫Ïªº?????•¬Ä?¨Ìàì????Ï¢äÏùà???	
+
     std::cout << "[FileReader] Initialized with empty volume and file list." << std::endl;
 }
 
@@ -45,8 +45,6 @@ bool FileReader::LoadDICOMSeries(std::string folderPath, ID3D11Device* g_pd3dDev
         {
             m_filePaths.push_back(entry.path().string());
 
-
-            // width, height??Ï≤?Î≤àÏß∏ ?åÏùº?êÏÑúÎß??ΩÍ∏∞
             if (entry.path().string() == m_filePaths.front())
             {
 
@@ -55,7 +53,6 @@ bool FileReader::LoadDICOMSeries(std::string folderPath, ID3D11Device* g_pd3dDev
 
                 DcmDataset* dataset = file.getDataset();
 
-                // Î©îÌ??∞Ïù¥??Ï∂úÎ†• (?†ÌÉù ?¨Ìï≠)
                 OFString widthStr, heightStr;
                 dataset->findAndGetOFString(DCM_Columns, widthStr);   // (0028,0011)
                 dataset->findAndGetOFString(DCM_Rows, heightStr);      // (0028,0010)
@@ -67,11 +64,6 @@ bool FileReader::LoadDICOMSeries(std::string folderPath, ID3D11Device* g_pd3dDev
                 std::cout << "Width: " << m_width << ", Height: " << m_height << std::endl;
 
 
-
-
-
-
-                // ?àÎèÑ???ºÌÑ∞ / ?àÎèÑ????
                 OFString wcStr, wwStr;
                 if (dataset->findAndGetOFString(DCM_WindowCenter, wcStr).good() &&
                     dataset->findAndGetOFString(DCM_WindowWidth, wwStr).good() &&
@@ -112,30 +104,6 @@ bool FileReader::LoadDICOMSeries(std::string folderPath, ID3D11Device* g_pd3dDev
         }
     }
 
-    //ComputeGlobalMinMax(); // Î°úÎî© ÏßÅÌõÑ ?ÑÏ≤¥ min/max Í≥ÑÏÇ∞
-
-
-    //for (int z{}; z < m_depth; ++z) {
-    //    std::vector<uint8_t> axialSlice = GenerateAxialSlice(z);
-    //    ID3D11Texture2D* texture = CreateTextureFromSlice(axialSlice, m_width, m_height, g_pd3dDevice);
-    //    axialTexture.push_back(texture);
-    //}
-
-    //for (int z{}; z < m_height; ++z) {
-    //    std::vector<uint8_t> coronalSlice = GenerateCoronalSlice(z);
-    //    ID3D11Texture2D* texture = CreateTextureFromSlice(coronalSlice, m_width, m_depth, g_pd3dDevice);
-    //    coronalTexture.push_back(texture);
-    //}
-
-    //for (int z{}; z < m_width; ++z) {
-    //    std::vector<uint8_t> sagittalSlice = GenerateSagittalSlice(z);
-    //    ID3D11Texture2D* texture = CreateTextureFromSlice(sagittalSlice, m_height, m_depth, g_pd3dDevice);
-    //    sagittalTexture.push_back(texture);
-    //}
-
-   /* axialTextureCache.clear();
-    coronalTextureCache.clear();
-    sagittalTextureCache.clear();*/
 
     return true;
 }
@@ -179,7 +147,7 @@ bool FileReader::ParseSlice(const std::string path, int sliceIndex) {
 
     DcmDataset* dataset = file.getDataset();
 
-    // ?ΩÏ? ?∞Ïù¥??Í∞Ä?∏Ïò§Í∏?
+
     const Uint16* pixelData = nullptr;
     status = dataset->findAndGetUint16Array(DCM_PixelData, pixelData);
     if (!status.good() || nullptr == pixelData) {
@@ -187,43 +155,18 @@ bool FileReader::ParseSlice(const std::string path, int sliceIndex) {
         return false;
     }
 
-    // ?¨Îùº?¥Ïä§ ?ÑÏπò Í≥ÑÏÇ∞
+
     int sliceSize = m_width * m_height;
     int offset = sliceIndex * sliceSize;
 
-    // ?ΩÏ? Î≥µÏÇ¨
+
     for (int i{}; i < sliceSize; ++i) {
         m_volumeData[offset + i] = pixelData[i];
     }
 
 
-    //251002
-
-
-
-   // // Î©îÌ??∞Ïù¥??Ï∂úÎ†• (?†ÌÉù ?¨Ìï≠)
-   // //OFString patientName, birthDate, studyDate, kvp;
-   // dataset->findAndGetOFString(DCM_PatientName, patientName);
-   // dataset->findAndGetOFString(DCM_PatientBirthDate, birthDate);
-   // dataset->findAndGetOFString(DCM_StudyDate, studyDate);
-   // //	dataset->findAndGetOFString(DCM_KVP, kvp);
-
-
-
-   //     // Ï∂îÍ? ?ïÎ≥¥
-   // dataset->findAndGetOFString(DCM_PatientID, patientID);       // ?òÏûê ID
-   // dataset->findAndGetOFString(DCM_PatientSex, patientMF);     // ?±Î≥Ñ (M/F/O)
-   //// dataset->findAndGetOFString(DCM_PatientAge, patientAge);     // ?òÏù¥ (?? "032Y")
-
-
-    //std::string birthYear = birthDate.substr(0, 4);
-
     std::cout << " DICOM Metadata for slice " << sliceIndex << std::endl;
-    //std::cout << " Patient Name: " << patientName << std::endl;
-    //std::cout << " Birth Date:   " << birthDate << std::endl;
-    //std::cout << " Study Date:  " << studyDate << std::endl;
-    //std::cout << " DCM_PatientAge:          " << patientAge << std::endl;
-    //std::cout << " DCM_PatientBirthDate:          " << birthDate << std::endl;
+
 
     return true;
 }
@@ -239,13 +182,10 @@ bool FileReader::BuildVolume()
     }
     return true;
 }
-void FileReader::PrintMetadata()// ????ìÎÇØÂØ??Ô¶´ÎöÆ???¨ÏæÆ? modality ??
+void FileReader::PrintMetadata()
 {
-    //????ΩÁ∂≠?©¬Ä??	//????ìÎÇÆ??	//?Êø°„Çç??????
-
-
     DcmFileFormat file;
-    OFCondition status = file.loadFile(m_filePaths[0].c_str()); // ???Ôß?????????????åÏ???
+    OFCondition status = file.loadFile(m_filePaths[0].c_str()); 
     if (!status.good()) {
         std::cerr << "PrintMetadata : Failed to load DICOM file: " << m_filePaths[0] << std::endl;
         return;
@@ -254,41 +194,20 @@ void FileReader::PrintMetadata()// ????ìÎÇØÂØ??Ô¶´ÎöÆ???¨ÏæÆ? modality ??
     DcmDataset* dataset = file.getDataset();
     OFString patientID, patientAge, studyDate;
 
-    // ????ìÎÇØÂØ?ID
     if (dataset->findAndGetOFString(DCM_PatientID, patientID).good())
         std::cout << "Patient ID: " << patientID << std::endl;
 
-    // ????ìÎÇÆ??	if (dataset->findAndGetOFString(DCM_PatientAge, patientAge).good())
-    std::cout << "Patient Age: " << patientAge << std::endl;
+    if (dataset->findAndGetOFString(DCM_PatientAge, patientAge).good())
+        std::cout << "Patient Age: " << patientAge << std::endl;
 
-    // ?Êø°„Çç??????	if (dataset->findAndGetOFString(DCM_StudyDate, studyDate).good())
-    std::cout << "Study Date: " << studyDate << std::endl;
+    if (dataset->findAndGetOFString(DCM_StudyDate, studyDate).good())
+        std::cout << "Study Date: " << studyDate << std::endl;
 }
 
-
-//std::vector<uint8_t> FileReader::GenerateAxialSlice(int zIndex)
-//{
-//	// ???????§ÔºòÔß???????ÁØÄ??≥Æ??	int sliceSize = m_width * m_height;
-//
-//	// ???‰∫??????????? ????§Ï±∂???Ôß?Î∫???Îπ??????ã™??	std::vector<uint16_t> rawSlice(sliceSize);
-//
-//    rawSlice.resize(m_width * m_height); // Î®ºÏ? ?¨Í∏∞ ?ïÎ≥¥
-//	std::copy(
-//		m_volumeData.begin() + zIndex * m_width * m_height,
-//		m_volumeData.begin() + (zIndex + 1) * m_width * m_height,
-//		rawSlice.begin()
-//	);
-//
-//	std::vector<uint8_t> normalized;
-//	NormalizeSlice(rawSlice, normalized, m_globalMin, m_globalMax);
-//	return normalized;
-//
-//}
 std::vector<uint8_t> FileReader::GenerateAxialSlice(int zIndex)
 {
     const size_t sliceSize = static_cast<size_t>(m_width) * m_height;
 
-    // 16ÎπÑÌä∏ ?êÎ≥∏ ?¨Îùº?¥Ïä§ Ï∂îÏ∂ú
     std::vector<uint16_t> rawSlice(sliceSize);
     const size_t offset = static_cast<size_t>(zIndex) * sliceSize;
 
@@ -303,12 +222,10 @@ std::vector<uint8_t> FileReader::GenerateAxialSlice(int zIndex)
         rawSlice.begin()
     );
 
-    // 8ÎπÑÌä∏ ?ïÍ∑ú??
     std::vector<uint8_t> normalized;
-    //NormalizeSlice(rawSlice, normalized, m_globalMin, m_globalMax);
     NormalizeSlice(rawSlice, normalized, windowCenter, windowWidth);
 
-    // RGBA Î≥Ä?? ?ΩÏ???4Î∞îÏù¥??
+
     std::vector<uint8_t> rgbaSlice(sliceSize * 4);
     for (size_t i = 0; i < sliceSize; ++i) {
         uint8_t gray = normalized[i];
@@ -320,59 +237,6 @@ std::vector<uint8_t> FileReader::GenerateAxialSlice(int zIndex)
 
     return rgbaSlice;
 }
-
-
-
-
-
-
-//std::vector<uint8_t> FileReader::GenerateCoronalSlice(int yIndex)
-//{
-//
-//	/*std::vector<uint16_t> rawSlice(m_width * m_depth);
-//	for (int z = 0; z < m_depth; ++z) {
-//		for (int x = 0; x < m_width; ++x) {
-//			rawSlice[z * m_width + x] = m_volumeData[z * m_width * m_height + yIndex * m_width + x];
-//		}
-//	}
-//
-//	std::vector<uint8_t> normalized;
-//	NormalizeSlice(rawSlice, normalized);
-//	return normalized;*/
-//
-//
-//    std::vector<uint16_t> rawSlice(m_width * m_depth);
-//
-//   // for (int z = 0; z < m_depth; ++z) {
-//        std::copy(
-//            m_volumeData.begin() + yIndex * m_width * m_height + yIndex * m_width,
-//            m_volumeData.begin() + yIndex * m_width * m_height + (yIndex + 1) * m_width,
-//            rawSlice.begin() + yIndex * m_width
-//        );
-//   // }
-//
-//    std::vector<uint8_t> normalized;
-//    NormalizeSlice(rawSlice, normalized);
-//    return normalized;
-//
-//}
-
-//std::vector<uint8_t> FileReader::GenerateCoronalSlice(int yIndex) {
-//    int sliceSize = m_width * m_depth;
-//    std::vector<uint16_t> rawSlice(sliceSize);
-//
-//    for (int z{}; z < m_depth; ++z) {
-//        for (int x{}; x < m_width; ++x) {
-//            size_t srcIndex = z * (m_width * m_height) + yIndex * m_width + x;
-//            size_t dstIndex = z * m_width + x;
-//            rawSlice[dstIndex] = m_volumeData[srcIndex];
-//        }
-//    }
-//
-//    std::vector<uint8_t> normalized;
-//    NormalizeSlice(rawSlice, normalized, m_globalMin, m_globalMax);
-//    return normalized;
-//}
 
 
 std::vector<uint8_t> FileReader::GenerateCoronalSlice(int yIndex)
@@ -392,10 +256,8 @@ std::vector<uint8_t> FileReader::GenerateCoronalSlice(int yIndex)
     }
 
     std::vector<uint8_t> normalized;
-    //NormalizeSlice(rawSlice, normalized, m_globalMin, m_globalMax);
     NormalizeSlice(rawSlice, normalized, windowCenter, windowWidth);
 
-    // RGBA Î≥Ä?? ?ΩÏ???4Î∞îÏù¥??
     std::vector<uint8_t> rgbaSlice(sliceSize * 4);
     for (size_t i = 0; i < sliceSize; ++i) {
         uint8_t gray = normalized[i];
@@ -407,54 +269,6 @@ std::vector<uint8_t> FileReader::GenerateCoronalSlice(int yIndex)
 
     return rgbaSlice;
 }
-
-
-
-//std::vector<uint8_t> FileReader::GenerateSagittalSlice(int xIndex)
-//{
-//	//std::vector<uint16_t> rawSlice(m_height * m_depth);
-//	//for (int z = 0; z < m_depth; ++z) {
-//	//	for (int y = 0; y < m_height; ++y) {
-//	//		rawSlice[z * m_height + y] = m_volumeData[z * m_width * m_height + y * m_width + xIndex];
-//	//	}
-//	//}
-//
-//	//std::vector<uint8_t> normalized;
-//	//NormalizeSlice(rawSlice, normalized);
-//	//return normalized;
-//
-//
-//
-//    std::vector<uint16_t> rawSlice(m_height * m_depth);
-//
-//   // for (int z = 0; z < m_depth; ++z) {
-//        for (int y = 0; y < m_height; ++y) {
-//            rawSlice[z * m_height + y] = m_volumeData[z * m_width * m_height + y * m_width + xIndex];
-//        }
-//    //}
-//
-//    std::vector<uint8_t> normalized;
-//    NormalizeSlice(rawSlice, normalized);
-//    return normalized;
-//}
-
-//std::vector<uint8_t> FileReader::GenerateSagittalSlice(int xIndex) {
-//    int sliceSize = m_height * m_depth;
-//    std::vector<uint16_t> rawSlice(sliceSize);
-//
-//    for (int z{}; z < m_depth; ++z) {
-//        for (int y{}; y < m_height; ++y) {
-//            size_t srcIndex = z * (m_width * m_height) + y * m_width + xIndex;
-//            size_t dstIndex = z * m_height + y;
-//            rawSlice[dstIndex] = m_volumeData[srcIndex];
-//        }
-//    }
-//
-//    std::vector<uint8_t> normalized;
-//    NormalizeSlice(rawSlice, normalized, m_globalMin, m_globalMax);
-//    return normalized;
-//}
-
 
 std::vector<uint8_t> FileReader::GenerateSagittalSlice(int xIndex)
 {
@@ -473,10 +287,8 @@ std::vector<uint8_t> FileReader::GenerateSagittalSlice(int xIndex)
     }
 
     std::vector<uint8_t> normalized;
-    //NormalizeSlice(rawSlice, normalized, m_globalMin, m_globalMax);
     NormalizeSlice(rawSlice, normalized, windowCenter, windowWidth);
 
-    // RGBA Î≥Ä?? ?ΩÏ???4Î∞îÏù¥??
     std::vector<uint8_t> rgbaSlice(sliceSize * 4);
     for (size_t i = 0; i < sliceSize; ++i) {
         uint8_t gray = normalized[i];
@@ -489,25 +301,6 @@ std::vector<uint8_t> FileReader::GenerateSagittalSlice(int xIndex)
     return rgbaSlice;
 }
 
-
-//bool FileReader::NormalizeSlice(const std::vector<uint16_t>& rawSlice, std::vector<uint8_t>& outSlice, uint16_t globalMin, uint16_t globalMax)
-//{
-//	if (rawSlice.empty()) return false;
-//
-//
-//	/*uint16_t minVal = *std::min_element(rawSlice.begin(), rawSlice.end());
-//	uint16_t maxVal = *std::max_element(rawSlice.begin(), rawSlice.end());*/
-//
-//	outSlice.resize(rawSlice.size());
-//
-//	for (size_t i = 0; i < rawSlice.size(); ++i) {
-//		outSlice[i] = static_cast<uint8_t>(
-//			255.0 * (rawSlice[i] - globalMin) / (globalMax - globalMin + 1e-5)
-//			);
-//	}
-//
-//	return true;
-//}
 
 bool FileReader::NormalizeSlice(const std::vector<uint16_t>& rawSlice,
     std::vector<uint8_t>& outSlice,
@@ -523,10 +316,8 @@ bool FileReader::NormalizeSlice(const std::vector<uint16_t>& rawSlice,
 
     for (size_t i = 0; i < rawSlice.size(); ++i) {
         //float val = static_cast<float>(rawSlice[i]);
-        // ?êÎûò HU Í∞íÏù¥ ?åÏàò?????àÏúºÎØÄÎ°?int16_tÎ°?Ï≤òÎ¶¨?¥Ïïº ??
         float val = static_cast<float>(static_cast<int16_t>(rawSlice[i]));
 
-        // ?¥Îû®??
         if (val < minHU) val = minHU;
         if (val > maxHU) val = maxHU;
 
@@ -563,11 +354,6 @@ void FileReader::SetSagittalSlice(int index)
 
 void FileReader::UpdateAxialTexture(int z)
 {
-    //std::vector<uint8_t> slice = GenerateAxialSlice(z);
-    //ID3D11Texture2D* texture = CreateTextureFromSlice(slice, m_width, m_height, d3dDevice);
-    //axialTexture[z] = texture; // ?êÎäî Ï∫êÏã± Íµ¨Ï°∞???∞Îùº ÍµêÏ≤¥
-
-
     std::vector<uint8_t> slice = GenerateAxialSlice(z);
     ID3D11Texture2D* texture = CreateTextureFromSlice(slice, m_width, m_height, d3dDevice);
 
@@ -578,17 +364,10 @@ void FileReader::UpdateAxialTexture(int z)
     }
 
     axialTextureCache[z] = texture;
-
 }
 
 void FileReader::UpdateCoronalTexture(int y)
 {
-    //std::vector<uint8_t> slice = GenerateCoronalSlice(y);
-    //ID3D11Texture2D* texture = CreateTextureFromSlice(slice, m_width, m_depth, d3dDevice);
-    //coronalTexture[y] = texture;
-
-
-
     std::vector<uint8_t> slice = GenerateCoronalSlice(y);
     ID3D11Texture2D* texture = CreateTextureFromSlice(slice, m_width, m_depth, d3dDevice);
 
@@ -603,12 +382,6 @@ void FileReader::UpdateCoronalTexture(int y)
 
 void FileReader::UpdateSagittalTexture(int x)
 {
-    /*std::vector<uint8_t> slice = GenerateSagittalSlice(x);
-    ID3D11Texture2D* texture = CreateTextureFromSlice(slice, m_height, m_depth, d3dDevice);
-    sagittalTexture[x] = texture;*/
-
-
-
 
     std::vector<uint8_t> slice = GenerateSagittalSlice(x);
     ID3D11Texture2D* texture = CreateTextureFromSlice(slice, m_height, m_depth, d3dDevice);
@@ -627,16 +400,13 @@ ID3D11Texture2D* FileReader::CreateTextureFromSlice(const std::vector<uint8_t>& 
 {
     if (slice.empty()) return nullptr;
 
-    // Direct3D ?Î∂æÏªÆ??ÅÎí™Â™õ¬Ä ?Íæ©ÏäÇ??∏Îï≤?? ?Î™??Î®?Ωå ?Íæ®ÎññË´õÏèÑÍµ????Ä???Ôßé„ÖªÏæ?ø°???âÎº±????∏Îï≤??
-    //extern ID3D11Device* g_pd3dDevice; // ?Î®?íó this->m_device ?ÍπÜÏëùÊø?Ôß£ÏÑé??
-
     D3D11_TEXTURE2D_DESC texDesc = {};
     texDesc.Width = width;
     texDesc.Height = height;
     texDesc.MipLevels = 1;
     texDesc.ArraySize = 1;
-    texDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM; //8??æ™??grayscale
-    //texDesc.Format = DXGI_FORMAT_R8_UNORM; //8??æ™??grayscale
+    texDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM; 
+    //texDesc.Format = DXGI_FORMAT_R8_UNORM; 
 
     texDesc.SampleDesc.Count = 1;
     texDesc.Usage = D3D11_USAGE_DEFAULT;
@@ -671,30 +441,7 @@ ID3D11Texture2D* FileReader::CreateTextureFromSlice(const std::vector<uint8_t>& 
         cerr << "[?êÎü¨] Crosshair ConstantBuffer ?ùÏÑ± ?§Ìå®!";
     }
 
-
-
-    //ID3D11ShaderResourceView* textureView = nullptr;
-    //hr = g_pd3dDevice->CreateShaderResourceView(texture, nullptr, &textureView);
-    //texture->Release(); // ?âÍ≥å? Ôß°Î™Ñ????Êø??Î®?ÇØ?? ??ÅÏ†£
-
-    //if (FAILED(hr)) {
-    //	std::cerr << "Failed to create shader resource view." << std::endl;
-    //	return nullptr;
-    //}
-
     return texture;
 }
-
-//void FileReader::ComputeGlobalMinMax() {
-//    if (m_volumeData.empty()) return;
-//
-//    /*auto[minIt, maxIt] = std::minmax_element(m_volumeData.begin(), m_volumeData.end());
-//    m_globalMin = *minIt;
-//    m_globalMax = *maxIt;*/
-//
-//
-//    m_globalMin = windowCenter - windowWidth / 2;
-//    m_globalMax = windowCenter + windowWidth / 2;
-//}
 
 

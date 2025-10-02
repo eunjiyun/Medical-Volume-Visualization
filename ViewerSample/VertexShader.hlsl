@@ -1,19 +1,19 @@
 struct VSInput
 {
-	float3 position : POSITION;
-	float2 texcoord : TEXCOORD;
+    float3 position : POSITION;
+    float2 texcoord : TEXCOORD;
 };
 
 struct VSOutput
 {
-	float4 position : SV_POSITION;
-	float2 texcoord : TEXCOORD;
+    float4 position : SV_POSITION;
+    float2 texcoord : TEXCOORD;
 };
 
 VSOutput VSMain(VSInput input)
 {
-	VSOutput output;
-	output.position = float4(input.position, 1.0f);
-	output.texcoord = input.texcoord;
-	return output;
+    VSOutput output;
+    output.position = float4(input.position, 1.0f);
+    output.texcoord = input.texcoord;
+    return output;
 }
