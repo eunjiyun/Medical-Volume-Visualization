@@ -29,7 +29,7 @@ QDirect3D11Widget::QDirect3D11Widget(QWidget* parent)
     , m_pDevice(Q_NULLPTR)
     , m_pDeviceContext(Q_NULLPTR)
     , m_pSwapChain(Q_NULLPTR)
-   /* , m_RTViews(4, Q_NULLPTR)*/
+    /* , m_RTViews(4, Q_NULLPTR)*/
     , m_hWnd(reinterpret_cast<HWND>(winId()))
     , m_bDeviceInitialized(false)
     , m_bRenderActive(false)
@@ -67,16 +67,16 @@ void QDirect3D11Widget::release()
     m_qTimer.stop();
 
     for (auto& view : m_RTViews.slices)
-            ReleaseObject(view);
-   //// for (auto& view : m_RTViews.slices)
-   //     ReleaseObject(m_RTViews.slices);
+        ReleaseObject(view);
+    //// for (auto& view : m_RTViews.slices)
+    //     ReleaseObject(m_RTViews.slices);
 
 
     for (auto& view : m_SRViews.slices)
-            ReleaseObject(view);
-        ////for (auto& view : m_SRViews.slices)
-        //    ReleaseObject(m_SRViews.slices);
-  
+        ReleaseObject(view);
+    ////for (auto& view : m_SRViews.slices)
+    //    ReleaseObject(m_SRViews.slices);
+
     ReleaseObject(m_pSwapChain);
     ReleaseObject(m_pDeviceContext);
     ReleaseObject(m_pDevice);
@@ -326,7 +326,7 @@ void QDirect3D11Widget::initializeRenderTargets()
 
 
     for (int i{}; i < 4; ++i) {
-       
+
 
         if (0 == i) {
 
@@ -356,7 +356,7 @@ void QDirect3D11Widget::initializeRenderTargets()
             //250922  texture
             DXCall(m_pDevice->CreateTexture2D(&texDesc, nullptr, &pTexture));
 
-         
+
 
             // 2. RenderTargetView ??밴쉐
             ID3D11RenderTargetView* pRTV = nullptr;
@@ -369,42 +369,42 @@ void QDirect3D11Widget::initializeRenderTargets()
             DXCall(m_pDevice->CreateShaderResourceView(pTexture, nullptr, &pSRV));
             m_SRViews.slices.push_back(pSRV);
 
-            m_SRViews.flagIndex[0] = m_SRViews.slices.size()-1;
+            m_SRViews.flagIndex[0] = m_SRViews.slices.size() - 1;
 
         }
         else if (1 == i) {
 
-   
+
             ID3D11Texture2D* axialTex = fileReader->getOrCreateAxialTexture(fileReader->currentIndex[1]);
             ID3D11RenderTargetView* axialRTV = getRTVForTexture(axialTex);
             m_RTViews.slices.push_back(axialRTV);
             ID3D11ShaderResourceView* axialSRV = getSRVForTexture(axialTex);
             m_SRViews.slices.push_back(axialSRV);
-        
 
-            m_SRViews.flagIndex[1] = m_SRViews.flagIndex[0] +fileReader->m_depth - 1;
+
+            m_SRViews.flagIndex[1] = m_SRViews.flagIndex[0] + fileReader->m_depth - 1;
 
         }
         else if (2 == i) {
-        
+
             ID3D11Texture2D* coronalTex = fileReader->getOrCreateCoronalTexture(fileReader->currentIndex[2]);
             ID3D11RenderTargetView* coronalRTV = getRTVForTexture(coronalTex);
             m_RTViews.slices.push_back(coronalRTV);
             ID3D11ShaderResourceView* coronalSRV = getSRVForTexture(coronalTex);
             m_SRViews.slices.push_back(coronalSRV);
 
-            m_SRViews.flagIndex[2] = m_SRViews.flagIndex[1]+fileReader->m_height - 1;
+            m_SRViews.flagIndex[2] = m_SRViews.flagIndex[1] + fileReader->m_height - 1;
 
         }
         else if (3 == i) {
-  
+
             ID3D11Texture2D* sagittalTex = fileReader->getOrCreateSagittalTexture(fileReader->currentIndex[3]);
             ID3D11RenderTargetView* sagittalRTV = getRTVForTexture(sagittalTex);
             m_RTViews.slices.push_back(sagittalRTV);
             ID3D11ShaderResourceView* sagittalSRV = getSRVForTexture(sagittalTex);
             m_SRViews.slices.push_back(sagittalSRV);
 
-            m_SRViews.flagIndex[3] = m_SRViews.flagIndex[2]+fileReader->m_width - 1;
+            m_SRViews.flagIndex[3] = m_SRViews.flagIndex[2] + fileReader->m_width - 1;
 
         }
 
@@ -895,7 +895,7 @@ void QDirect3D11Widget::RenderAllQuads()
     m_pDeviceContext->OMSetRenderTargets(4, m_RTViews.slices.data(), nullptr);
 
 
-   // 1. 십자선 위치 계산
+    // 1. 십자선 위치 계산
     CrosshairData crosshair = {};
 
     // 예: 클릭된 뷰가 i번째 뷰라고 가정
@@ -1055,8 +1055,8 @@ void QDirect3D11Widget::RenderAllQuads()
     static ImVec2 dragStartAxial;
 
 
-    ImGui::SetNextWindowPos(ImVec2(640*2-32 , 3));
-    ImGui::SetNextWindowSize(ImVec2(20, 380-3));
+    ImGui::SetNextWindowPos(ImVec2(640 * 2 - 32, 3));
+    ImGui::SetNextWindowSize(ImVec2(20, 380 - 3));
     ImGui::Begin("Axial View", nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
 
     static bool scrollInitialized = false;
@@ -1080,35 +1080,35 @@ void QDirect3D11Widget::RenderAllQuads()
     }
 
 
-   // // ✅ 대신 이미지 크기를 키워서 스크롤이 생기게 하고, 드래그로 스크롤 위치를 조정
-   //// if (isDraggingAxial) {
-        static float lastScrollY = 0.0f;
-        float scrollY = ImGui::GetScrollY();
+    // // ✅ 대신 이미지 크기를 키워서 스크롤이 생기게 하고, 드래그로 스크롤 위치를 조정
+    //// if (isDraggingAxial) {
+    static float lastScrollY = 0.0f;
+    float scrollY = ImGui::GetScrollY();
 
 
-        if (scrollY != lastScrollY) {
-            int newIndex = static_cast<int>(scrollY / 7); // sliceHeight는 슬라이스당 픽셀 높이
-            newIndex = std::clamp(newIndex, 0, fileReader->m_depth - 1);
+    if (scrollY != lastScrollY) {
+        int newIndex = static_cast<int>(scrollY / 7); // sliceHeight는 슬라이스당 픽셀 높이
+        newIndex = std::clamp(newIndex, 0, fileReader->m_depth - 1);
 
-            if (newIndex != fileReader->currentIndex[1]) {
-                fileReader->currentIndex[1] = newIndex;
-                fileReader->UpdateAxialTexture(newIndex);
-
-
-                ID3D11Texture2D* tex = fileReader->axialTextureCache[newIndex];
-                ID3D11ShaderResourceView* srv = getSRVForTexture(tex);
-                m_SRViews.slices[1] = srv;
-
-                ID3D11RenderTargetView* rtv = getRTVForTexture(tex);
-                m_RTViews.slices[1] = rtv;
+        if (newIndex != fileReader->currentIndex[1]) {
+            fileReader->currentIndex[1] = newIndex;
+            fileReader->UpdateAxialTexture(newIndex);
 
 
-            }
+            ID3D11Texture2D* tex = fileReader->axialTextureCache[newIndex];
+            ID3D11ShaderResourceView* srv = getSRVForTexture(tex);
+            m_SRViews.slices[1] = srv;
 
-            lastScrollY = scrollY;
+            ID3D11RenderTargetView* rtv = getRTVForTexture(tex);
+            m_RTViews.slices[1] = rtv;
 
 
         }
+
+        lastScrollY = scrollY;
+
+
+    }
 
 
     //static float lastScrollY = 0.0f;
@@ -1148,22 +1148,22 @@ void QDirect3D11Widget::RenderAllQuads()
 
   /*      ImVec2 dragDelta = ImVec2(io.MousePos.x - dragStartAxial.x, io.MousePos.y - dragStartAxial.y);
         ImGui::SetScrollY(scrollY - dragDelta.y);*/
-   // }
+        // }
 
 
-    //if (isDraggingAxial && ImGui::IsMouseDown(ImGuiMouseButton_Left)) {
-    //    ImVec2 dragDelta = ImVec2(io.MousePos.x - dragStartAxial.x, io.MousePos.y - dragStartAxial.y);
-    //    imageOffsetAxial.x += dragDelta.x;
-    //    imageOffsetAxial.y += dragDelta.y;
-    //    dragStartAxial = io.MousePos;
+         //if (isDraggingAxial && ImGui::IsMouseDown(ImGuiMouseButton_Left)) {
+         //    ImVec2 dragDelta = ImVec2(io.MousePos.x - dragStartAxial.x, io.MousePos.y - dragStartAxial.y);
+         //    imageOffsetAxial.x += dragDelta.x;
+         //    imageOffsetAxial.y += dragDelta.y;
+         //    dragStartAxial = io.MousePos;
 
 
-    //    qDebug() << "[Axial] drag ing";
-    //    qDebug() << "dragDelta:" << dragDelta.x << "," << dragDelta.y;
-    //    qDebug() << "imageOffsetAxial:" << imageOffsetAxial.x << "," << imageOffsetAxial.y;
-    //    qDebug() << "dragStartAxial updated:" << dragStartAxial.x << "," << dragStartAxial.y;
+         //    qDebug() << "[Axial] drag ing";
+         //    qDebug() << "dragDelta:" << dragDelta.x << "," << dragDelta.y;
+         //    qDebug() << "imageOffsetAxial:" << imageOffsetAxial.x << "," << imageOffsetAxial.y;
+         //    qDebug() << "dragStartAxial updated:" << dragStartAxial.x << "," << dragStartAxial.y;
 
-    //}
+         //}
 
     if (ImGui::IsMouseReleased(ImGuiMouseButton_Left)) {
         isDraggingAxial = false;
@@ -1294,7 +1294,7 @@ void QDirect3D11Widget::RenderAllQuads()
 
     //sagittal
   //  ImGui::SetNextWindowPos(ImVec2(viewWidth * 2 - 30, viewHeight+10));
-    ImGui::SetNextWindowPos(ImVec2(640*2-32 , 380+3 ));
+    ImGui::SetNextWindowPos(ImVec2(640 * 2 - 32, 380 + 3));
     ImGui::SetNextWindowSize(ImVec2(20, 380));
 
 
@@ -1352,7 +1352,7 @@ void QDirect3D11Widget::RenderAllQuads()
 
     }
 
-  
+
     ImGui::Image((void*)m_SRViews.slices[1], ImVec2(512, fileReader->m_width * 7)); // 예시
 
 
@@ -1363,13 +1363,13 @@ void QDirect3D11Widget::RenderAllQuads()
 
 
 
-    
 
 
 
 
 
-   
+
+
 
     ImGui::Render();
     ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());

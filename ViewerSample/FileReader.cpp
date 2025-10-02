@@ -80,19 +80,19 @@ bool FileReader::LoadDICOMSeries(std::string folderPath, ID3D11Device* g_pd3dDev
                     dataset->findAndGetOFString(DCM_PatientBirthDate, birthDate).good() &&
                     dataset->findAndGetOFString(DCM_StudyDate, studyDate).good() &&
                     dataset->findAndGetOFString(DCM_PatientID, patientID).good() &&
-                    dataset->findAndGetOFString(DCM_PatientSex, patientMF).good() 
+                    dataset->findAndGetOFString(DCM_PatientSex, patientMF).good()
                     ) {
 
                     windowCenter = std::stof(wcStr.c_str());
                     windowWidth = std::stof(wwStr.c_str());
 
 
-                   /* patientName = std::stof(wcStr.c_str());
-                    birthDate = std::stof(wwStr.c_str());
-                    studyDate = std::stof(wcStr.c_str());
-                    patientID = std::stof(wwStr.c_str());
-                    patientMF = std::stof(wcStr.c_str());*/
-           
+                    /* patientName = std::stof(wcStr.c_str());
+                     birthDate = std::stof(wwStr.c_str());
+                     studyDate = std::stof(wcStr.c_str());
+                     patientID = std::stof(wwStr.c_str());
+                     patientMF = std::stof(wcStr.c_str());*/
+
 
                     std::cout << "Window Center: " << windowCenter << ", Window Width: " << windowWidth << std::endl;
                 }
@@ -141,7 +141,7 @@ bool FileReader::LoadDICOMSeries(std::string folderPath, ID3D11Device* g_pd3dDev
 }
 
 ID3D11Texture2D* FileReader::getOrCreateAxialTexture(int z) {
-    if (axialTextureCache.find(z)!= axialTextureCache.end()) return axialTextureCache[z];
+    if (axialTextureCache.find(z) != axialTextureCache.end()) return axialTextureCache[z];
 
     std::vector<uint8_t> slice = GenerateAxialSlice(z);
     ID3D11Texture2D* texture = CreateTextureFromSlice(slice, m_width, m_height, d3dDevice);
