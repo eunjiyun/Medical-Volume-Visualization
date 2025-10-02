@@ -1322,15 +1322,49 @@ void QDirect3D11Widget::RenderAllQuads()
     }
 
 
-    // ✅ 대신 이미지 크기를 키워서 스크롤이 생기게 하고, 드래그로 스크롤 위치를 조정
-    if (isDraggingSagittal) {
-        float scrollY = ImGui::GetScrollY();
-        ImVec2 dragDelta = ImVec2(io.MousePos.x - dragStartSagittal.x, io.MousePos.y - dragStartSagittal.y);
-        ImGui::SetScrollY(scrollY - dragDelta.y);
+    //// ✅ 대신 이미지 크기를 키워서 스크롤이 생기게 하고, 드래그로 스크롤 위치를 조정
+    //if (isDraggingSagittal) {
+    //    float scrollY = ImGui::GetScrollY();
+    //    ImVec2 dragDelta = ImVec2(io.MousePos.x - dragStartSagittal.x, io.MousePos.y - dragStartSagittal.y);
+    //    ImGui::SetScrollY(scrollY - dragDelta.y);
+    //}
+
+    static float lastScrollYSagittal = 0.0f;
+    float scrollYSagittal = ImGui::GetScrollY();
+
+
+    if (scrollYSagittal != lastScrollYSagittal) {
+        //int newIndex = static_cast<int>(scrollYCoronal / 7); // sliceHeight는 슬라이스당 픽셀 높이
+        int newIndex = static_cast<int>((fileReader->m_width * 7.f - scrollYSagittal) / 7.f);
+
+
+
+        newIndex = std::clamp(newIndex, 0, fileReader->m_width - 1);
+
+        if (newIndex != fileReader->currentIndex[3]) {
+            fileReader->currentIndex[3] = newIndex;
+            fileReader->UpdateSagittalTexture(newIndex);
+
+
+            ID3D11Texture2D* tex = fileReader->sagittalTextureCache[newIndex];
+            ID3D11ShaderResourceView* srv = getSRVForTexture(tex);
+            m_SRViews.slices[3] = srv;
+
+            ID3D11RenderTargetView* rtv = getRTVForTexture(tex);
+            m_RTViews.slices[3] = rtv;
+
+
+        }
+
+        lastScrollYSagittal = scrollYSagittal;
+
+
     }
 
 
-    if (isDraggingSagittal && ImGui::IsMouseDown(ImGuiMouseButton_Left)) {
+
+
+    /*if (isDraggingSagittal && ImGui::IsMouseDown(ImGuiMouseButton_Left)) {
         ImVec2 dragDelta = ImVec2(io.MousePos.x - dragStartSagittal.x, io.MousePos.y - dragStartSagittal.y);
         imageOffsetSagittal.x += dragDelta.x;
         imageOffsetSagittal.y += dragDelta.y;
@@ -1350,7 +1384,7 @@ void QDirect3D11Widget::RenderAllQuads()
         qDebug() << "[Sagittal] drag end";
         qDebug() << "isDraggingSagittal:" << isDraggingSagittal;
 
-    }
+    }*/
 
 
     ImGui::Image((void*)m_SRViews.slices[1], ImVec2(512, fileReader->m_width * 7)); // 예시
