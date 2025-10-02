@@ -1058,7 +1058,16 @@ void QDirect3D11Widget::RenderAllQuads()
     ImGui::SetNextWindowPos(ImVec2(640*2-32 , 3));
     ImGui::SetNextWindowSize(ImVec2(20, 380-3));
     ImGui::Begin("Axial View", nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
+
+    static bool scrollInitialized = false;
+
     ImGui::BeginChild("AxialScrollable", ImVec2(0, 0), true, ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_AlwaysVerticalScrollbar);
+    //// 최초 1회만 중앙으로 스크롤 이동
+    //if (!scrollInitialized) {
+    //    float centerY = (fileReader->m_depth * 7 - ImGui::GetWindowHeight()) * 0.5f;
+    //    ImGui::SetScrollY(centerY);
+    //    scrollInitialized = true;
+    //}
 
 
     if (ImGui::IsItemHovered() && ImGui::IsMouseClicked(ImGuiMouseButton_Left)) {
@@ -1071,27 +1080,80 @@ void QDirect3D11Widget::RenderAllQuads()
     }
 
 
-    //// ✅ 대신 이미지 크기를 키워서 스크롤이 생기게 하고, 드래그로 스크롤 위치를 조정
-    if (isDraggingAxial) {
+    // ✅ 대신 이미지 크기를 키워서 스크롤이 생기게 하고, 드래그로 스크롤 위치를 조정
+   // if (isDraggingAxial) {
+        static float lastScrollY = 0.0f;
         float scrollY = ImGui::GetScrollY();
-        ImVec2 dragDelta = ImVec2(io.MousePos.x - dragStartAxial.x, io.MousePos.y - dragStartAxial.y);
-        ImGui::SetScrollY(scrollY - dragDelta.y);
-    }
 
 
-    if (isDraggingAxial && ImGui::IsMouseDown(ImGuiMouseButton_Left)) {
-        ImVec2 dragDelta = ImVec2(io.MousePos.x - dragStartAxial.x, io.MousePos.y - dragStartAxial.y);
-        imageOffsetAxial.x += dragDelta.x;
-        imageOffsetAxial.y += dragDelta.y;
-        dragStartAxial = io.MousePos;
+        if (scrollY != lastScrollY) {
+            int newIndex = static_cast<int>(scrollY / 7); // sliceHeight는 슬라이스당 픽셀 높이
+            newIndex = std::clamp(newIndex, 0, fileReader->m_depth - 1);
+
+            if (newIndex != fileReader->currentIndex[1]) {
+                fileReader->currentIndex[1] = newIndex;
+                fileReader->UpdateAxialTexture(newIndex);
 
 
-        qDebug() << "[Axial] drag ing";
-        qDebug() << "dragDelta:" << dragDelta.x << "," << dragDelta.y;
-        qDebug() << "imageOffsetAxial:" << imageOffsetAxial.x << "," << imageOffsetAxial.y;
-        qDebug() << "dragStartAxial updated:" << dragStartAxial.x << "," << dragStartAxial.y;
+                ID3D11Texture2D* tex = fileReader->axialTextureCache[newIndex];
+                ID3D11ShaderResourceView* srv = getSRVForTexture(tex);
+                m_SRViews.slices[1] = srv;
 
-    }
+                ID3D11RenderTargetView* rtv = getRTVForTexture(tex);
+                m_RTViews.slices[1] = rtv;
+
+
+            }
+
+            lastScrollY = scrollY;
+
+
+        }
+
+
+    //static float lastScrollY = 0.0f;
+    //float scrollY = ImGui::GetScrollY();
+
+    //float deltaY = scrollY - lastScrollY;
+    //if (deltaY != 0.0f) {
+    //    int deltaIndex = static_cast<int>(deltaY / 7.0f); // 7은 슬라이스당 픽셀 높이
+    //    if (deltaIndex != 0) {
+    //        int newIndex = fileReader->currentIndex[0] + deltaIndex;
+    //        newIndex = std::clamp(newIndex, 0, fileReader->m_depth - 1);
+
+    //        if (newIndex != fileReader->currentIndex[0]) {
+    //            fileReader->currentIndex[0] = newIndex;
+    //            fileReader->UpdateAxialTexture(newIndex);
+    //        }
+    //    }
+
+    //    lastScrollY = scrollY;
+    //}
+
+
+
+
+
+
+
+  /*      ImVec2 dragDelta = ImVec2(io.MousePos.x - dragStartAxial.x, io.MousePos.y - dragStartAxial.y);
+        ImGui::SetScrollY(scrollY - dragDelta.y);*/
+   // }
+
+
+    //if (isDraggingAxial && ImGui::IsMouseDown(ImGuiMouseButton_Left)) {
+    //    ImVec2 dragDelta = ImVec2(io.MousePos.x - dragStartAxial.x, io.MousePos.y - dragStartAxial.y);
+    //    imageOffsetAxial.x += dragDelta.x;
+    //    imageOffsetAxial.y += dragDelta.y;
+    //    dragStartAxial = io.MousePos;
+
+
+    //    qDebug() << "[Axial] drag ing";
+    //    qDebug() << "dragDelta:" << dragDelta.x << "," << dragDelta.y;
+    //    qDebug() << "imageOffsetAxial:" << imageOffsetAxial.x << "," << imageOffsetAxial.y;
+    //    qDebug() << "dragStartAxial updated:" << dragStartAxial.x << "," << dragStartAxial.y;
+
+    //}
 
     if (ImGui::IsMouseReleased(ImGuiMouseButton_Left)) {
         isDraggingAxial = false;
@@ -1169,7 +1231,7 @@ void QDirect3D11Widget::RenderAllQuads()
     }
 
 
-    ImGui::Image((void*)m_SRViews.slices[1], ImVec2(512, fileReader->m_depth * 7)); // 예시
+    ImGui::Image((void*)m_SRViews.slices[1], ImVec2(512, fileReader->m_height * 7)); // 예시
     ImGui::EndChild();
     ImGui::End();
     //==
@@ -1234,7 +1296,7 @@ void QDirect3D11Widget::RenderAllQuads()
     }
 
   
-    ImGui::Image((void*)m_SRViews.slices[1], ImVec2(512, fileReader->m_depth * 7)); // 예시
+    ImGui::Image((void*)m_SRViews.slices[1], ImVec2(512, fileReader->m_width * 7)); // 예시
 
 
     ImGui::EndChild();

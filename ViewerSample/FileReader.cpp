@@ -563,9 +563,22 @@ void FileReader::SetSagittalSlice(int index)
 
 void FileReader::UpdateAxialTexture(int z)
 {
+    //std::vector<uint8_t> slice = GenerateAxialSlice(z);
+    //ID3D11Texture2D* texture = CreateTextureFromSlice(slice, m_width, m_height, d3dDevice);
+    //axialTexture[z] = texture; // ?ëŠ” ìºì‹± êµ¬ì¡°???°ë¼ êµì²´
+
+
     std::vector<uint8_t> slice = GenerateAxialSlice(z);
     ID3D11Texture2D* texture = CreateTextureFromSlice(slice, m_width, m_height, d3dDevice);
-    axialTexture[z] = texture; // ?ëŠ” ìºì‹± êµ¬ì¡°???°ë¼ êµì²´
+
+    // ±âÁ¸ ÅØ½ºÃ³°¡ ÀÖÀ¸¸é Release
+    auto it = axialTextureCache.find(z);
+    if (it != axialTextureCache.end()) {
+        if (it->second) it->second->Release();
+    }
+
+    axialTextureCache[z] = texture;
+
 }
 
 void FileReader::UpdateCoronalTexture(int y)
