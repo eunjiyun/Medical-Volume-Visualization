@@ -1062,12 +1062,12 @@ void QDirect3D11Widget::RenderAllQuads()
     static bool scrollInitialized = false;
 
     ImGui::BeginChild("AxialScrollable", ImVec2(0, 0), true, ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_AlwaysVerticalScrollbar);
-    //// 최초 1회만 중앙으로 스크롤 이동
-    //if (!scrollInitialized) {
-    //    float centerY = (fileReader->m_depth * 7 - ImGui::GetWindowHeight()) * 0.5f;
-    //    ImGui::SetScrollY(centerY);
-    //    scrollInitialized = true;
-    //}
+    // 최초 1회만 중앙으로 스크롤 이동
+    if (!scrollInitialized) {
+        float centerY = (fileReader->m_depth * 7 - ImGui::GetWindowHeight()) * 0.5f;
+        ImGui::SetScrollY(centerY);
+        scrollInitialized = true;
+    }
 
 
     if (ImGui::IsItemHovered() && ImGui::IsMouseClicked(ImGuiMouseButton_Left)) {
@@ -1080,8 +1080,8 @@ void QDirect3D11Widget::RenderAllQuads()
     }
 
 
-    // ✅ 대신 이미지 크기를 키워서 스크롤이 생기게 하고, 드래그로 스크롤 위치를 조정
-   // if (isDraggingAxial) {
+   // // ✅ 대신 이미지 크기를 키워서 스크롤이 생기게 하고, 드래그로 스크롤 위치를 조정
+   //// if (isDraggingAxial) {
         static float lastScrollY = 0.0f;
         float scrollY = ImGui::GetScrollY();
 
@@ -1122,8 +1122,18 @@ void QDirect3D11Widget::RenderAllQuads()
     //        newIndex = std::clamp(newIndex, 0, fileReader->m_depth - 1);
 
     //        if (newIndex != fileReader->currentIndex[0]) {
-    //            fileReader->currentIndex[0] = newIndex;
+    //            
+
+    //            fileReader->currentIndex[1] = newIndex;
     //            fileReader->UpdateAxialTexture(newIndex);
+
+
+    //            ID3D11Texture2D* tex = fileReader->axialTextureCache[newIndex];
+    //            ID3D11ShaderResourceView* srv = getSRVForTexture(tex);
+    //            m_SRViews.slices[1] = srv;
+
+    //            ID3D11RenderTargetView* rtv = getRTVForTexture(tex);
+    //            m_RTViews.slices[1] = rtv;
     //        }
     //    }
 
@@ -1183,7 +1193,14 @@ void QDirect3D11Widget::RenderAllQuads()
 
     ImGui::Begin("Coronal View", nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
 
+    static bool scrollInitializedCoronal = false;
     ImGui::BeginChild("CoronalScrollable", ImVec2(0, 0), true, ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_AlwaysVerticalScrollbar);
+    // 최초 1회만 중앙으로 스크롤 이동
+    if (!scrollInitializedCoronal) {
+        float centerY = (fileReader->m_height * 7 - ImGui::GetWindowHeight()) * 0.5f;
+        ImGui::SetScrollY(centerY);
+        scrollInitializedCoronal = true;
+    }
 
     if (ImGui::IsItemHovered() && ImGui::IsMouseClicked(ImGuiMouseButton_Left)) {
         if (ImGui::IsWindowFocused()) { // 또는 ImGui::IsWindowHovered()
@@ -1200,35 +1217,63 @@ void QDirect3D11Widget::RenderAllQuads()
 
 
 
-    // ✅ 대신 이미지 크기를 키워서 스크롤이 생기게 하고, 드래그로 스크롤 위치를 조정
-    if (isDraggingCoronal) {
-        float scrollY = ImGui::GetScrollY();
-        ImVec2 dragDelta = ImVec2(io.MousePos.x - dragStartCoronal.x, io.MousePos.y - dragStartCoronal.y);
-        ImGui::SetScrollY(scrollY - dragDelta.y);
-    }
+    //// ✅ 대신 이미지 크기를 키워서 스크롤이 생기게 하고, 드래그로 스크롤 위치를 조정
+    //if (isDraggingCoronal) {
+    //    float scrollY = ImGui::GetScrollY();
+    //    ImVec2 dragDelta = ImVec2(io.MousePos.x - dragStartCoronal.x, io.MousePos.y - dragStartCoronal.y);
+    //    ImGui::SetScrollY(scrollY - dragDelta.y);
+    //}
+
+    //static float lastScrollY = 0.0f;
+    //float scrollY = ImGui::GetScrollY();
+
+
+    //if (scrollY != lastScrollY) {
+    //    int newIndex = static_cast<int>(scrollY / 7); // sliceHeight는 슬라이스당 픽셀 높이
+    //    newIndex = std::clamp(newIndex, 0, fileReader->m_depth - 1);
+
+    //    if (newIndex != fileReader->currentIndex[1]) {
+    //        fileReader->currentIndex[1] = newIndex;
+    //        fileReader->UpdateAxialTexture(newIndex);
+
+
+    //        ID3D11Texture2D* tex = fileReader->axialTextureCache[newIndex];
+    //        ID3D11ShaderResourceView* srv = getSRVForTexture(tex);
+    //        m_SRViews.slices[1] = srv;
+
+    //        ID3D11RenderTargetView* rtv = getRTVForTexture(tex);
+    //        m_RTViews.slices[1] = rtv;
+
+
+    //    }
+
+    //    lastScrollY = scrollY;
+
+
+    //}
 
 
 
-    if (isDraggingCoronal && ImGui::IsMouseDown(ImGuiMouseButton_Left)) {
-        ImVec2 dragDelta = ImVec2(io.MousePos.x - dragStartCoronal.x, io.MousePos.y - dragStartCoronal.y);
-        imageOffsetCoronal.x += dragDelta.x;
-        imageOffsetCoronal.y += dragDelta.y;
-        dragStartCoronal = io.MousePos;
+    //if (isDraggingCoronal && ImGui::IsMouseDown(ImGuiMouseButton_Left)) {
+    //    ImVec2 dragDelta = ImVec2(io.MousePos.x - dragStartCoronal.x, io.MousePos.y - dragStartCoronal.y);
+    //    imageOffsetCoronal.x += dragDelta.x;
+    //    imageOffsetCoronal.y += dragDelta.y;
+    //    dragStartCoronal = io.MousePos;
 
-        qDebug() << "Dragging..." << endl;
-        qDebug() << "dragDelta: (" << dragDelta.x << ", " << dragDelta.y << ")" << endl;
-        qDebug() << "imageOffsetCoronal: (" << imageOffsetCoronal.x << ", " << imageOffsetCoronal.y << ")" << endl;
-        qDebug() << "Updated dragStartCoronal: (" << dragStartCoronal.x << ", " << dragStartCoronal.y << ")" << endl;
+    //    qDebug() << "Dragging..." << endl;
+    //    qDebug() << "dragDelta: (" << dragDelta.x << ", " << dragDelta.y << ")" << endl;
+    //    qDebug() << "imageOffsetCoronal: (" << imageOffsetCoronal.x << ", " << imageOffsetCoronal.y << ")" << endl;
+    //    qDebug() << "Updated dragStartCoronal: (" << dragStartCoronal.x << ", " << dragStartCoronal.y << ")" << endl;
 
-    }
+    //}
 
-    if (ImGui::IsMouseReleased(ImGuiMouseButton_Left)) {
-        isDraggingCoronal = false;
+    //if (ImGui::IsMouseReleased(ImGuiMouseButton_Left)) {
+    //    isDraggingCoronal = false;
 
-        qDebug() << "Mouse released!" << endl;
-        qDebug() << "isDraggingCoronal: " << isDraggingCoronal << endl;
+    //    qDebug() << "Mouse released!" << endl;
+    //    qDebug() << "isDraggingCoronal: " << isDraggingCoronal << endl;
 
-    }
+    //}
 
 
     ImGui::Image((void*)m_SRViews.slices[1], ImVec2(512, fileReader->m_height * 7)); // 예시
@@ -1250,7 +1295,15 @@ void QDirect3D11Widget::RenderAllQuads()
 
 
     ImGui::Begin("Sagittal View", nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
+
+    static bool scrollInitializedSagittal = false;
     ImGui::BeginChild("SagittalScrollable", ImVec2(0, 0), true, ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_AlwaysVerticalScrollbar);
+
+    if (!scrollInitializedSagittal) {
+        float centerY = (fileReader->m_width * 7 - ImGui::GetWindowHeight()) * 0.5f;
+        ImGui::SetScrollY(centerY);
+        scrollInitializedSagittal = true;
+    }
 
     if (ImGui::IsItemHovered() && ImGui::IsMouseClicked(ImGuiMouseButton_Left)) {
         if (ImGui::IsWindowFocused()) { // 또는 ImGui::IsWindowHovered()
