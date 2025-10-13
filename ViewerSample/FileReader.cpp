@@ -68,6 +68,9 @@ bool FileReader::LoadDICOMSeries(std::string folderPath, ID3D11Device* g_pd3dDev
                 if (dataset->findAndGetOFString(DCM_WindowCenter, wcStr).good() &&
                     dataset->findAndGetOFString(DCM_WindowWidth, wwStr).good() &&
 
+                   
+
+
                     dataset->findAndGetOFString(DCM_PatientName, patientName).good() &&
                     dataset->findAndGetOFString(DCM_PatientBirthDate, birthDate).good() &&
                     dataset->findAndGetOFString(DCM_StudyDate, studyDate).good() &&
@@ -89,12 +92,100 @@ bool FileReader::LoadDICOMSeries(std::string folderPath, ID3D11Device* g_pd3dDev
                     std::cout << "Window Center: " << windowCenter << ", Window Width: " << windowWidth << std::endl;
                 }
 
+
+
+                OFString pixelSpacingStr, sliceThicknessStr, imagePositionStr;
+
+               
+                // Pixel Spacing (0028,0030)
+                if (dataset->findAndGetOFString(DCM_PixelSpacing, pixelSpacingStr).good()) {
+                    std::stringstream ss(pixelSpacingStr.c_str());
+                    std::string sx, sy;
+                    std::getline(ss, sx, '\\');
+                    if (!std::getline(ss, sy, '\\')) {
+                        sy = sx; // fallback: 둘 다 같은 값으로 설정
+                    }
+
+                    /*views[1].spacing.x = std::stof(sx);
+                    views[1].spacing.y = std::stof(sy);
+                    std::cout << "Pixel Spacing: " << views[1].spacing.x << " x " << views[1].spacing.y << std::endl;*/
+
+                    views.spacing.x = std::stof(sx);
+                    views.spacing.y = std::stof(sy);
+                    std::cout << "Pixel Spacing: " << views.spacing.x << " x " << views.spacing.y << std::endl;
+                }
+
+                //// Slice Thickness (0018,0050)
+                //if (dataset->findAndGetOFString(DCM_SliceThickness, sliceThicknessStr).good()) {
+                //    views[1].spacing.z = std::stof(sliceThicknessStr.c_str());
+                //    std::cout << "Slice Thickness: " << views[1].spacing.z << std::endl;
+                //}
+
+                 // Slice Thickness (0018,0050)
+                if (dataset->findAndGetOFString(DCM_SliceThickness, sliceThicknessStr).good()) {
+                    views.spacing.z = std::stof(sliceThicknessStr.c_str());
+                    std::cout << "Slice Thickness: " << views.spacing.z << std::endl;
+                }
+
+                //// Image Position (Patient) (0020,0032)
+                //if (dataset->findAndGetOFString(DCM_ImagePositionPatient, imagePositionStr).good()) {
+                //    std::stringstream ss(imagePositionStr.c_str());
+                //    std::string ox, oy, oz;
+                //    std::getline(ss, ox, '\\');
+                //    std::getline(ss, oy, '\\');
+                //    std::getline(ss, oz, '\\');
+                //    views[0].origin.x = std::stof(ox);
+                //    views[0].origin.y = std::stof(oy);
+                //    views[0].origin.z = std::stof(oz);
+                //    std::cout << "Image Origin: (" << views[0].origin.x << ", " << views[0].origin.y << ", " << views[0].origin.z << ")" << std::endl;
+                //}
+                if (dataset->findAndGetOFString(DCM_ImagePositionPatient, imagePositionStr).good()) {
+                    std::stringstream ss(imagePositionStr.c_str());
+                    std::string ox, oy, oz;
+
+                    std::getline(ss, ox, '\\');
+
+                    if (!std::getline(ss, oy, '\\')) {
+                        oy = "0.0"; // fallback 또는 ox와 동일하게 설정해도 됨
+                        std::cerr << "Warning: Missing Y value in ImagePositionPatient" << std::endl;
+                    }
+
+                    if (!std::getline(ss, oz, '\\')) {
+                        oz = "0.0"; // fallback 또는 ox와 동일하게 설정해도 됨
+                        std::cerr << "Warning: Missing Z value in ImagePositionPatient" << std::endl;
+                    }
+
+                    try {
+                       /* views[1].origin.x = std::stof(ox);
+                        views[1].origin.y = std::stof(oy);
+                        views[1].origin.z = std::stof(oz);*/
+
+                        views.origin.x = std::stof(ox);
+                        views.origin.y = std::stof(oy);
+                        views.origin.z = std::stof(oz);
+                    }
+                    catch (const std::exception& e) {
+                        std::cerr << "Error parsing ImagePositionPatient: " << e.what() << std::endl;
+                    }
+
+                   // std::cout << "Image Origin: (" << views[1].origin.x << ", " << views[1].origin.y << ", " << views[1].origin.z << ")" << std::endl;
+                    std::cout << "Image Origin: (" << views.origin.x << ", " << views.origin.y << ", " << views.origin.z << ")" << std::endl;
+
+                }
+
             }
         }
     }
 
     m_depth = static_cast<int>(m_filePaths.size());
     m_volumeData.resize(m_width * m_height * m_depth);
+
+    //views[1].imageSize = DirectX::XMFLOAT3(m_width, m_height, m_depth);
+    //views[1].sliceIndex = 0; // 초기 슬라이스 인덱스 (축상 뷰 기준)
+
+    views.imageSize = DirectX::XMFLOAT3(m_width, m_height, m_depth);
+   // views.sliceIndex = 0; // 초기 슬라이스 인덱스 (축상 뷰 기준)
+
 
     for (int i{}; i < m_depth; ++i) {
         std::string path = m_filePaths[i];
@@ -183,7 +274,7 @@ bool FileReader::BuildVolume()
     return true;
 }
 void FileReader::PrintMetadata()
-{
+{ 
     DcmFileFormat file;
     OFCondition status = file.loadFile(m_filePaths[0].c_str()); 
     if (!status.good()) {

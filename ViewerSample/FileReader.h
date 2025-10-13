@@ -10,13 +10,27 @@ using namespace std;
 
 struct CrosshairData
 {
-    DirectX::XMFLOAT2 cross0;       // tex0용 십자선 위치 (정규화된 UV 좌표)
-    DirectX::XMFLOAT2 cross1;       // tex1용
-    DirectX::XMFLOAT2 cross2;       // tex2용
-    DirectX::XMFLOAT2 cross3;       // tex3용
+    //DirectX::XMFLOAT2 cross0;       // tex0용 십자선 위치 (정규화된 UV 좌표)
+    //DirectX::XMFLOAT2 cross1;       // tex1용
+    //DirectX::XMFLOAT2 cross2;       // tex2용
+    //DirectX::XMFLOAT2 cross3;       // tex3용
 
-    float crossThickness;           // 십자선 두께 (예: 0.002f)
-    DirectX::XMFLOAT4 crossColor;   // 십자선 색상 (예: 빨강 float4(1,0,0,1))
+    //float crossThickness;           // 십자선 두께 (예: 0.002f)
+    //DirectX::XMFLOAT4 crossColor;   // 십자선 색상 (예: 빨강 float4(1,0,0,1))
+
+    DirectX::XMFLOAT2 crossUV;
+    float crossThickness;
+    DirectX::XMFLOAT4 crossColor;
+
+};
+
+struct ViewInfo {
+    DirectX::XMFLOAT3 origin;
+    DirectX::XMFLOAT3 spacing;
+    DirectX::XMFLOAT3 imageSize;
+    /*int sliceIndex;*/
+
+    DirectX::XMFLOAT3 centerPatientCoord[4];
 };
 
 
@@ -49,6 +63,8 @@ public:
     std::unordered_map<int, ID3D11Texture2D*> axialTextureCache, coronalTextureCache, sagittalTextureCache;
 
 
+    //ViewInfo views[4]; // viewIndex로 접근
+    ViewInfo views; // viewIndex로 접근
 public:
     //bool LoadDICOMSeries(const std::string& folderPath);
     bool LoadDICOMSeries(std::string folderPath, ID3D11Device* g_pd3dDevice);

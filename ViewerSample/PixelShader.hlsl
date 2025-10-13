@@ -32,28 +32,42 @@
 //}
 
 
+//cbuffer Crosshair : register(b0)
+//{
+//    float2 cross0;         // tex0용 십자선 위치
+//    float2 cross1;         // tex1용
+//    float2 cross2;
+//    float2 cross3;
+//    float crossThickness;  // 선 두께 (예: 0.002)
+//    float4 crossColor;     // 십자선 색상 (예: 빨강 float4(1,0,0,1))
+//}
+
 cbuffer Crosshair : register(b0)
 {
-    float2 cross0;         // tex0용 십자선 위치
-    float2 cross1;         // tex1용
-    float2 cross2;
-    float2 cross3;
-    float crossThickness;  // 선 두께 (예: 0.002)
-    float4 crossColor;     // 십자선 색상 (예: 빨강 float4(1,0,0,1))
+    float2 crossUV;         // 십자선 위치 (0~1)
+    float crossThickness;   // 선 두께
+    float4 crossColor;      // 십자선 색상
+}
+
+cbuffer ViewInfo : register(b1)
+{
+    int viewIndex;          // 0: Axial, 1: Coronal, 2: Sagittal
 }
 
 
-Texture2D tex0 : register(t0);
-Texture2D tex1 : register(t1);
-Texture2D tex2 : register(t2);
-Texture2D tex3 : register(t3);
 
+//Texture2D tex0 : register(t0);
+//Texture2D tex1 : register(t1);
+//Texture2D tex2 : register(t2);
+//Texture2D tex3 : register(t3);
+//
 SamplerState samp0 : register(s0);
 SamplerState samp1 : register(s1);
 SamplerState samp2 : register(s2);
 SamplerState samp3 : register(s3);
 
-
+Texture2D tex[4] : register(t0);       // tex[0] = Axial, tex[1] = Coronal, tex[2] = Sagittal
+//SamplerState samp[3] : register(s0);   // samp[0] = Axial, samp[1] = Coronal, samp[2] = Sagittal
 
 
 struct PSOutput {
@@ -104,28 +118,153 @@ PSOutput PSMain(VSOutput input)
 
     float2 uv = input.texcoord;
 
-    // 각 텍스처 샘플링
-    float4 base0 = tex0.Sample(samp0, uv);
-    float4 base1 = tex1.Sample(samp1, uv);
-    float4 base2 = tex2.Sample(samp2, uv);
-    float4 base3 = tex3.Sample(samp3, uv);
+    //// 각 텍스처 샘플링
+    //float4 base0 = tex0.Sample(samp0, uv);
+    //float4 base1 = tex1.Sample(samp1, uv);
+    //float4 base2 = tex2.Sample(samp2, uv);
+    //float4 base3 = tex3.Sample(samp3, uv);
 
-    // 십자선 조건
-    bool isCross0 = abs(uv.x - cross0.x) < crossThickness || abs(uv.y - cross0.y) < crossThickness;
-    bool isCross1 = abs(uv.x - cross1.x) < crossThickness || abs(uv.y - cross1.y) < crossThickness;
-    bool isCross2 = abs(uv.x - cross2.x) < crossThickness || abs(uv.y - cross2.y) < crossThickness;
-    bool isCross3 = abs(uv.x - cross3.x) < crossThickness || abs(uv.y - cross3.y) < crossThickness;
+    //// 각 텍스처 샘플링
+    //float4 base0 = tex[0].Sample(samp0, uv);
+    //float4 base1 = tex[1].Sample(samp1, uv);
+    //float4 base2 = tex[2].Sample(samp2, uv);
+    //float4 base3 = tex[3].Sample(samp3, uv);
 
-    // 십자선 포함 색상 출력
-    o.color0 = isCross0 ? crossColor : base0;
-    o.color1 = isCross1 ? crossColor : base1;
-    o.color2 = isCross2 ? crossColor : base2;
-    o.color3 = isCross3 ? crossColor : base3;
+    float4 base;
+    switch (viewIndex)
+    {
+    case 0: base = tex[0].Sample(samp0, uv); break;
+    case 1: base = tex[1].Sample(samp1, uv); break;
+    case 2: base = tex[2].Sample(samp2, uv); break;
+    case 3: base = tex[3].Sample(samp3, uv); break;
+    }
+
+
+    //// 십자선 조건
+    //bool isCross0 = abs(uv.x - cross0.x) < crossThickness || abs(uv.y - cross0.y) < crossThickness;
+    //bool isCross1 = abs(uv.x - cross1.x) < crossThickness || abs(uv.y - cross1.y) < crossThickness;
+    //bool isCross2 = abs(uv.x - cross2.x) < crossThickness || abs(uv.y - cross2.y) < crossThickness;
+    //bool isCross3 = abs(uv.x - cross3.x) < crossThickness || abs(uv.y - cross3.y) < crossThickness;
+
+    //bool isCross = false;
+    //if (viewIndex == 0)
+    //    isCross = abs(uv.x - crossUV.x) < crossThickness || abs(uv.y - crossUV.y) < crossThickness;
+    //else if (viewIndex == 1)
+    //    isCross = abs(uv.x - cross1.x) < crossThickness || abs(uv.y - cross1.y) < crossThickness;
+    //else if (viewIndex == 2)
+    //    isCross = abs(uv.x - cross1.x) < crossThickness || abs(uv.y - cross1.y) < crossThickness;
+    //else if (viewIndex == 3)
+    //    isCross = abs(uv.x - cross1.x) < crossThickness || abs(uv.y - cross1.y) < crossThickness;
+
+
+  //  float2 crossUV = ... // viewIndex에 따라 선택
+    //bool isCross = abs(uv.x - crossUV.x) < crossThickness || abs(uv.y - crossUV.y) < crossThickness;
+    bool isCross = abs(uv.x - 0.5f) < crossThickness || abs(uv.y - 0.5f) < crossThickness;
+
+    switch (viewIndex)
+    {
+
+
+        // 십자선 포함 색상 출력
+    case 0: o.color0 = isCross ? crossColor : base; break;
+    case 1:   o.color1 = isCross ? crossColor : base; break;
+    case 2:    o.color2 = isCross ? crossColor : base; break;
+    case 3:   o.color3 = isCross ? crossColor : base; break;
+    }
 
     return o;
 
 }
 
+
+//PSOutput PSMain(VSOutput input)
+//{
+//    float2 uv = input.texcoord;
+//
+//    // 현재 뷰의 텍스처 샘플링
+//    float4 base;
+//    //switch (viewIndex)
+//    //{
+//    //case 0:
+//    //    base = tex[0].Sample(samp0, uv);
+//    //    break;
+//    //case 1:
+//    //    base = tex[1].Sample(samp1, uv);
+//    //    break;
+//    //case 2:
+//    //    base = tex[2].Sample(samp2, uv);
+//    //    break;
+//    //case 3:
+//    //    base = tex[3].Sample(samp3, uv);
+//    //    break;
+//    //default:
+//    //    base = tex[0].Sample(samp0, uv); // fallback
+//    //    break;
+//    //}
+//
+//
+//
+//    switch (viewIndex)
+//    {
+//    case 0:
+//        base = tex[0].Sample(samp0, uv);
+//        break;
+//    case 1:
+//        base = tex[0].Sample(samp0, uv);
+//        break;
+//    case 2:
+//        base = tex[0].Sample(samp0, uv);
+//        break;
+//    case 3:
+//        base = tex[0].Sample(samp0, uv);
+//        break;
+//    default:
+//        base = tex[0].Sample(samp0, uv); // fallback
+//        break;
+//    }
+//
+//
+//    // 십자선 조건
+//    bool isCross = abs(uv.x - crossUV.x) < crossThickness || abs(uv.y - crossUV.y) < crossThickness;
+//
+//        PSOutput o;
+//   // o.color0= isCross ? crossColor : base;
+//
+//
+//    /*switch (viewIndex)
+//    {
+//    case 1:
+//        o.color0 = isCross ? crossColor : base;
+//        break;
+//    case 2:
+//        o.color1 = isCross ? crossColor : base;
+//        break;
+//    case 3:
+//        o.color2 = isCross ? crossColor : base;
+//        break;
+//    default:
+//        o.color3 = isCross ? crossColor : base;
+//        break;
+//    }*/
+//
+//    switch (viewIndex)
+//    {
+//    case 1:
+//        o.color0 = isCross ? crossColor : base;
+//        break;
+//    case 2:
+//        o.color1 = isCross ? crossColor : base;
+//        break;
+//    case 3:
+//        o.color2 = isCross ? crossColor : base;
+//        break;
+//    default:
+//        o.color3 = isCross ? crossColor : base;
+//        break;
+//    }
+//
+//    return o;
+//}
 
 
 //float box(float2 uv, float2 center, float2 size)

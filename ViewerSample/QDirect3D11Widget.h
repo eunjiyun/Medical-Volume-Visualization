@@ -42,6 +42,11 @@ struct SliceSeriesRtv {
     int currentIndex{};
 };
 
+struct ViewInfoCB {
+    int viewIndex;
+    int padding[3]; // 16바이트 정렬을 맞추기 위해
+};
+
 
 
 
@@ -82,11 +87,16 @@ private:
     //void DrawQuadWithTexture(ID3D11ShaderResourceView* pSRV, const D3D11_VIEWPORT& vp);
     void render();
     void UpdateColorBuffer();
+    void UpdateViewIndexBuffer(int viewIndex);
     void DrawColoredQuad(const D3D11_VIEWPORT& vp);
     void InitShaders();
     D3D11_VIEWPORT CreateViewport(int index);
     void SetBackgroundColor(int index);
     void RenderSceneToTarget(int i);
+
+    void UpdateCrosshairFromPatientCoord(DirectX::XMFLOAT3 patientCoord);
+    DirectX::XMFLOAT3 GetDefaultPatientCenter();
+    void InitializeCrosshair();
     void RenderAllQuads();
     void DrawFullScreenQuad();
     void DrawQuadWithTexture(ID3D11ShaderResourceView* pSRV, const D3D11_VIEWPORT& vp);
@@ -101,6 +111,11 @@ private:
 
     ID3D11RenderTargetView* getRTVForTexture(ID3D11Texture2D* texture);
     ID3D11ShaderResourceView* getSRVForTexture(ID3D11Texture2D* texture);
+
+    int ComputeSliceIndexFromPatientCoord(int viewIndex, XMFLOAT3 patientCoord);
+    XMFLOAT3 GetPatientCoordFromClick(int viewIndex, XMFLOAT2 uv);
+    XMFLOAT2 GetCrossUVFromPatientCoord(int viewIndex, XMFLOAT3 patientCoord);
+
 
 public:
 
@@ -163,7 +178,8 @@ public:
 
 
     SliceSeriesSrv m_SRViews;// Volume, m_SRViewsAxial, m_SRViewsCoronal, m_SRViewsSagittal;
-    ID3D11Buffer* m_colorBuffer = nullptr;
+    ID3D11Buffer* m_colorBuffer = nullptr;//m_viewIndexBuffer
+    ID3D11Buffer* m_viewIndexBuffer = nullptr;//m_viewIndexBuffer
 
     std::vector<ID3D11RenderTargetView*> rtvPool, activeRTVs;
     std::unordered_map<ID3D11Texture2D*, ID3D11RenderTargetView*> rtvCache;
@@ -193,6 +209,7 @@ public:
 
     ID3D11VertexShader*       m_vertexShader = nullptr;
     ID3D11PixelShader*        m_pixelShader = nullptr;
+    ID3D11PixelShader*        m_pixelShaderAxial, *m_pixelShaderCoronal, *m_pixelShaderSagittal;
 
     ID3D11Buffer*             m_vertexBuffer = nullptr;
 
@@ -215,8 +232,8 @@ public:
     float viewY;
     float viewWidth;
     float viewHeight;
-
-
+    DirectX::XMFLOAT3 patientCoord;
+    int clickedViewIndex;
 };
 
 

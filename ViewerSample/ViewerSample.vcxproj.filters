@@ -120,6 +120,9 @@
   <ItemGroup>
     <FxCompile Include="PixelShader.hlsl" />
     <FxCompile Include="VertexShader.hlsl" />
+    <FxCompile Include="PsAxial.hlsl" />
+    <FxCompile Include="PsCoronal.hlsl" />
+    <FxCompile Include="PsSagittal.hlsl" />
   </ItemGroup>
   <ItemGroup>
     <None Include=".editorconfig" />
