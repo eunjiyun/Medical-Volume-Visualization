@@ -1729,9 +1729,9 @@ int QDirect3D11Widget::ComputeSliceIndexFromPatientCoord(int viewIndex, XMFLOAT3
 
     switch (viewIndex)
     {
-    case 0: return round((patientCoord.z - origin.z) / spacing.z); // Axial
-    case 1: return round((patientCoord.y - origin.y) / spacing.y); // Coronal
-    case 2: return round((patientCoord.x - origin.x) / spacing.x); // Sagittal
+    case 1: return round((patientCoord.z - origin.z) / spacing.z); // Axial
+    case 2: return round((patientCoord.y - origin.y) / spacing.y); // Coronal
+    case 3: return round((patientCoord.x - origin.x) / spacing.x); // Sagittal
     }
 
     return 0;
