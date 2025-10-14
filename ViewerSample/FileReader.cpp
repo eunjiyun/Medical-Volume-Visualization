@@ -429,6 +429,10 @@ void FileReader::SliceIdxManage()
     sliceIndex[1] = m_depth;
     sliceIndex[2] = m_height;
     sliceIndex[3] = m_width;
+
+    cout << "1st idx a : " << currentIndex[1] << endl;
+    cout << "1st idx c : " << currentIndex[2] << endl;
+    cout << "1st idx s : " << currentIndex[3] << endl;
 }
 
 void FileReader::SetAxialSlice(int index)

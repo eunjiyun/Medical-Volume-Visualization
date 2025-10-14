@@ -113,6 +113,17 @@ private:
     ID3D11ShaderResourceView* getSRVForTexture(ID3D11Texture2D* texture);
 
     int ComputeSliceIndexFromPatientCoord(int viewIndex, XMFLOAT3 patientCoord);
+    int ComputeSliceIndexFromPatientCoord_Robust(
+        const XMFLOAT3& patientCoord,    // world/patient coordinate
+        int viewIndex,                   // 1: Axial (Z), 2: Coronal (Y), 3: Sagittal (X)
+        const XMFLOAT3& origin,          // ImagePositionPatient of reference slice (slice 0)
+        const XMFLOAT3& rowDir,          // ImageOrientationPatient[0..2]
+        const XMFLOAT3& colDir,          // ImageOrientationPatient[3..5]
+        float pixelSpacingX,             // (mm) usually second value in (0028,0030)
+        float pixelSpacingY,             // (mm) usually first value in (0028,0030)
+        float sliceSpacing,              // (mm) spacing between slices (0018,0088) or SliceThickness
+        const XMUINT3& dims              // width, height, depth (voxels)
+    );
     XMFLOAT3 GetPatientCoordFromClick(int viewIndex, XMFLOAT2 uv);
     XMFLOAT2 GetCrossUVFromPatientCoord(int viewIndex, XMFLOAT3 patientCoord);
 

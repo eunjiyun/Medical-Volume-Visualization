@@ -951,12 +951,42 @@ void QDirect3D11Widget::mousePressEvent(QMouseEvent* event)
     if (event->button() == Qt::LeftButton)
         io.MouseDown[0] = true;
 
+    // 예: 클릭된 뷰가 i번째 뷰라고 가정
+    //int clickedViewIndex = i; // 0: Axial, 1: Coronal, 2: Sagittal, 3: Volume
+    int clickedViewIndex = GetClickedViewIndex(px, py, this->width(), this->height());
+
+
+    D3D11_VIEWPORT vp = CreateViewport(clickedViewIndex); // i = 0~3
+    viewX = vp.TopLeftX;
+    viewY = vp.TopLeftY;
+    viewWidth = vp.Width;
+    viewHeight = vp.Height;
+
+
+    // 마우스 클릭 좌표 정규화
+    float normX = static_cast<float>(px - viewX) / viewWidth;
+    float normY = static_cast<float>(py - viewY) / viewHeight;
+
+
+    // 모든 뷰에 동일한 십자선 위치 적용
+    DirectX::XMFLOAT2 crossUV = { normX, normY };
+
+    // 클릭된 위치 → 환자 좌표
+    patientCoord = GetPatientCoordFromClick(clickedViewIndex, crossUV);
+
 
 
     for (int i{ 1 }; i <= 3; ++i) {
         fileReader->views.centerPatientCoord[i] = patientCoord;
 
-        fileReader->currentIndex[i] = ComputeSliceIndexFromPatientCoord(i, patientCoord);
+
+        //ComputeSliceIndexFromPatientCoord_Robust
+       // fileReader->currentIndex[i] = ComputeSliceIndexFromPatientCoord(i, patientCoord);
+        fileReader->currentIndex[i] = ComputeSliceIndexFromPatientCoord_Robust(patientCoord,i,
+            fileReader->views.origin,XMFLOAT3(1,0,0),XMFLOAT3(0,1,0),
+            fileReader->views.spacing.x, fileReader->views.spacing.y,0.15f, XMUINT3(632, 794, 794));
+
+      
         ID3D11RenderTargetView* rtvA, *rtvC, *rtvS;
         ID3D11ShaderResourceView* srvA, *srvC, *srvS;
         ID3D11Texture2D* texA, *texC, *texS;
@@ -996,6 +1026,10 @@ void QDirect3D11Widget::mousePressEvent(QMouseEvent* event)
         }
 
     }
+
+    qDebug() << "a cur slice : " << 631-fileReader->currentIndex[1] << endl;
+    qDebug() << "c cur slice : " << fileReader->currentIndex[2] << endl;
+    qDebug() << "s cur slice : " << fileReader->currentIndex[3] << endl;
 }
 
 int QDirect3D11Widget::GetClickedViewIndex(int px, int py, int width, int height)
@@ -1428,7 +1462,9 @@ void QDirect3D11Widget::RenderAllQuads()
 
     // // ✅ 대신 이미지 크기를 키워서 스크롤이 생기게 하고, 드래그로 스크롤 위치를 조정
     //// if (isDraggingAxial) {
-    static float lastScrollY = (fileReader->m_depth * 7) * 0.5f;
+   // static float lastScrollY = (fileReader->m_depth * 7) * 0.5f;
+    static float lastScrollY = 0.0f;
+
     float scrollY = ImGui::GetScrollY();
 
 
@@ -1514,7 +1550,8 @@ void QDirect3D11Widget::RenderAllQuads()
 
 
 
-    static float lastScrollYCoronal = fileReader->m_height * 7;
+  //  static float lastScrollYCoronal = fileReader->m_height * 7;
+    static float lastScrollYCoronal = 0.0f;
     float scrollYCoronal = ImGui::GetScrollY();
 
 
@@ -1608,7 +1645,9 @@ void QDirect3D11Widget::RenderAllQuads()
     //    ImGui::SetScrollY(scrollY - dragDelta.y);
     //}
 
-    static float lastScrollYSagittal = fileReader->m_width * 7;
+   // static float lastScrollYSagittal = fileReader->m_width * 7;
+
+    static float lastScrollYSagittal = 0.0f;
     float scrollYSagittal = ImGui::GetScrollY();
 
 
@@ -1725,6 +1764,128 @@ ID3D11ShaderResourceView* QDirect3D11Widget::getSRVForTexture(ID3D11Texture2D* t
     return srv;
 }
 
+
+
+// helper: dot, cross, subtract convert XMFLOAT3 -> XMVECTOR
+static XMVECTOR V(const XMFLOAT3& a) { return XMLoadFloat3(&a); }
+static XMFLOAT3 ToXMF3(XMVECTOR v) { XMFLOAT3 r; XMStoreFloat3(&r, v); return r; }
+
+int QDirect3D11Widget::ComputeSliceIndexFromPatientCoord_Robust(
+    const XMFLOAT3& patientCoord,    // world/patient coordinate
+    int viewIndex,                   // 1: Axial (Z), 2: Coronal (Y), 3: Sagittal (X)
+    const XMFLOAT3& origin,          // ImagePositionPatient of reference slice (slice 0)
+    const XMFLOAT3& rowDir,          // ImageOrientationPatient[0..2]
+    const XMFLOAT3& colDir,          // ImageOrientationPatient[3..5]
+    float pixelSpacingX,             // (mm) usually second value in (0028,0030)
+    float pixelSpacingY,             // (mm) usually first value in (0028,0030)
+    float sliceSpacing,              // (mm) spacing between slices (0018,0088) or SliceThickness
+    const XMUINT3& dims              // width, height, depth (voxels)
+)
+{
+    // Build orthonormal-ish basis (rowDir, colDir, normal)
+    XMVECTOR vr = XMVector3Normalize(V(rowDir));
+    XMVECTOR vc = XMVector3Normalize(V(colDir));
+    XMVECTOR vn = XMVector3Normalize(XMVector3Cross(vr, vc)); // slice normal
+
+    // form scaled basis vectors in mm-per-index
+    XMVECTOR basisX = vr * pixelSpacingX;   // step for i (image column direction)
+    XMVECTOR basisY = vc * pixelSpacingY;   // step for j (image row direction)
+    XMVECTOR basisZ = vn * sliceSpacing;    // step for k (slice index)
+
+    // vector from origin to patientCoord
+    XMVECTOR vOrigin = V(origin);
+    XMVECTOR vPt = V(patientCoord);
+    XMVECTOR d = vPt - vOrigin;
+
+    // Solve linear system [basisX basisY basisZ] * [i j k]^T = d
+    // Use linear algebra: invert 3x3 matrix or solve via Cramer's rule.
+    // We'll compute inverse of 3x3 matrix M = [bx by bz]
+    XMFLOAT3 bx = ToXMF3(basisX);
+    XMFLOAT3 by = ToXMF3(basisY);
+    XMFLOAT3 bz = ToXMF3(basisZ);
+
+    // Build matrix M (column-major)
+    // M = [ bx.x by.x bz.x
+    //       bx.y by.y bz.y
+    //       bx.z by.z bz.z ]
+    float m00 = bx.x, m01 = by.x, m02 = bz.x;
+    float m10 = bx.y, m11 = by.y, m12 = bz.y;
+    float m20 = bx.z, m21 = by.z, m22 = bz.z;
+
+    // determinant
+    float det = m00 * (m11*m22 - m12 * m21)
+        - m01 * (m10*m22 - m12 * m20)
+        + m02 * (m10*m21 - m11 * m20);
+
+    if (fabs(det) < 1e-8f) {
+        // degenerate basis; fallback to axis-aligned approximate
+        // Choose axis based on viewIndex
+        int idx = 0;
+        switch (viewIndex) {
+        case 1: // Axial -> use Z
+            idx = static_cast<int>(round((patientCoord.z - origin.z) / sliceSpacing));
+            idx = std::clamp(idx, 0, static_cast<int>(dims.z) - 1);
+            return idx;
+        case 2: // Coronal -> Y
+            idx = static_cast<int>(round((patientCoord.y - origin.y) / pixelSpacingY));
+            idx = std::clamp(idx, 0, static_cast<int>(dims.y) - 1);
+            return idx;
+        case 3: // Sagittal -> X
+            idx = static_cast<int>(round((patientCoord.x - origin.x) / pixelSpacingX));
+            idx = std::clamp(idx, 0, static_cast<int>(dims.x) - 1);
+            return idx;
+        default:
+            return 0;
+        }
+    }
+
+    // inverse matrix M^-1 (compute adjugate / det)
+    float invDet = 1.0f / det;
+    float i00 = (m11*m22 - m12 * m21) * invDet;
+    float i01 = -(m01*m22 - m02 * m21) * invDet;
+    float i02 = (m01*m12 - m02 * m11) * invDet;
+    float i10 = -(m10*m22 - m12 * m20) * invDet;
+    float i11 = (m00*m22 - m02 * m20) * invDet;
+    float i12 = -(m00*m12 - m02 * m10) * invDet;
+    float i20 = (m10*m21 - m11 * m20) * invDet;
+    float i21 = -(m00*m21 - m01 * m20) * invDet;
+    float i22 = (m00*m11 - m01 * m10) * invDet;
+
+    XMFLOAT3 dv; XMStoreFloat3(&dv, d);
+    // multiply M^-1 * d to get (i, j, k) in floating
+    float fi = i00 * dv.x + i01 * dv.y + i02 * dv.z;
+    float fj = i10 * dv.x + i11 * dv.y + i12 * dv.z;
+    float fk = i20 * dv.x + i21 * dv.y + i22 * dv.z;
+
+    // Round to nearest integer voxel indices
+    int ii = static_cast<int>(std::lround(fi));
+    int jj = static_cast<int>(std::lround(fj));
+    int kk = static_cast<int>(std::lround(fk));
+
+    // clamp to valid range
+    ii = std::clamp(ii, 0, static_cast<int>(dims.x) - 1);
+    jj = std::clamp(jj, 0, static_cast<int>(dims.y) - 1);
+    kk = std::clamp(kk, 0, static_cast<int>(dims.z) - 1);
+
+    // depending on requested viewIndex, return correct slice index:
+    switch (viewIndex)
+    {
+    case 1:
+        kk = std::clamp(kk, 0, static_cast<int>(fileReader->sliceIndex[viewIndex]) - 1);
+        return kk; // axial -> k (slice along normal)
+    case 2:
+        jj = std::clamp(jj, 0, static_cast<int>(fileReader->sliceIndex[viewIndex]) - 1);
+        return jj; // coronal -> j
+    case 3:
+        ii = std::clamp(ii, 0, static_cast<int>(fileReader->sliceIndex[viewIndex]) - 1);
+        return ii; // sagittal -> i
+    default:
+        kk = std::clamp(kk, 0, static_cast<int>(fileReader->sliceIndex[viewIndex]) - 1);
+        return kk;
+    }
+}
+
+
 int QDirect3D11Widget::ComputeSliceIndexFromPatientCoord(int viewIndex, XMFLOAT3 patientCoord)
 {
     XMFLOAT3 origin = fileReader->views.origin;
@@ -1736,12 +1897,26 @@ int QDirect3D11Widget::ComputeSliceIndexFromPatientCoord(int viewIndex, XMFLOAT3
 
 
     int index = 0;
+    float dz;
 
     switch (viewIndex)
     {
     case 1: // Axial (Z축 기준)
-        index = round((patientCoord.z - origin.z) / spacing.z);
+        /*index = round((patientCoord.z - origin.z) / spacing.z);
       
+        break;*/
+
+        dz = patientCoord.z - origin.z;
+        if (spacing.z < 0)  // Z축 반전되어 있으면
+            dz = -dz;
+
+        index = round(dz / abs(spacing.z));
+
+
+     //   index = round((origin.z - patientCoord.z) / spacing.z);
+     //  index = round((patientCoord.z - origin.z) / (-spacing.z));
+
+
         break;
 
     case 2: // Coronal (Y축 기준)
