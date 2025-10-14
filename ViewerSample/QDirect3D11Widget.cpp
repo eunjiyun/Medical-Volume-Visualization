@@ -1405,7 +1405,8 @@ void QDirect3D11Widget::RenderAllQuads()
     ImGui::BeginChild("AxialScrollable", ImVec2(0, 0), true, ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_AlwaysVerticalScrollbar);
     // 최초 1회만 중앙으로 스크롤 이동
     if (!scrollInitialized) {
-        float centerY = (fileReader->m_depth * 7 - ImGui::GetWindowHeight()) * 0.5f;
+       // float centerY = (fileReader->m_depth * 7 - ImGui::GetWindowHeight()) * 0.5f;
+        float centerY = (fileReader->m_depth * 7 ) * 0.5f;
         ImGui::SetScrollY(centerY);
         scrollInitialized = true;
     }
@@ -1427,7 +1428,7 @@ void QDirect3D11Widget::RenderAllQuads()
 
     // // ✅ 대신 이미지 크기를 키워서 스크롤이 생기게 하고, 드래그로 스크롤 위치를 조정
     //// if (isDraggingAxial) {
-    static float lastScrollY = 0.0f;
+    static float lastScrollY = (fileReader->m_depth * 7) * 0.5f;
     float scrollY = ImGui::GetScrollY();
 
 
@@ -1437,6 +1438,7 @@ void QDirect3D11Widget::RenderAllQuads()
 
         if (newIndex != fileReader->currentIndex[1]) {
             fileReader->currentIndex[1] = newIndex;
+            qDebug() << "[Axial] slice index : " << newIndex << endl;
             fileReader->UpdateAxialTexture(newIndex);
 
 
@@ -1451,14 +1453,7 @@ void QDirect3D11Widget::RenderAllQuads()
         }
 
         lastScrollY = scrollY;
-
-
     }
-
-
-
-
-
 
 
     if (ImGui::IsMouseReleased(ImGuiMouseButton_Left)) {
@@ -1493,7 +1488,8 @@ void QDirect3D11Widget::RenderAllQuads()
     ImGui::BeginChild("CoronalScrollable", ImVec2(0, 0), true, ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_AlwaysVerticalScrollbar);
     // 최초 1회만 중앙으로 스크롤 이동
     if (!scrollInitializedCoronal) {
-        float centerY = (fileReader->m_height * 7 - ImGui::GetWindowHeight()) * 0.5f;
+       // float centerY = (fileReader->m_height * 7 - ImGui::GetWindowHeight()) * 0.5f;
+        float centerY = (fileReader->m_height * 7 ) * 0.5f;
         ImGui::SetScrollY(centerY);
         scrollInitializedCoronal = true;
     }
@@ -1518,7 +1514,7 @@ void QDirect3D11Widget::RenderAllQuads()
 
 
 
-    static float lastScrollYCoronal = 0.0f;
+    static float lastScrollYCoronal = fileReader->m_height * 7;
     float scrollYCoronal = ImGui::GetScrollY();
 
 
@@ -1532,6 +1528,7 @@ void QDirect3D11Widget::RenderAllQuads()
 
         if (newIndex != fileReader->currentIndex[2]) {
             fileReader->currentIndex[2] = newIndex;
+            qDebug() << "[Coronal] slice index : " << newIndex << endl;
             fileReader->UpdateCoronalTexture(newIndex);
 
 
@@ -1578,7 +1575,7 @@ void QDirect3D11Widget::RenderAllQuads()
 
     if (!scrollInitializedSagittal) {
        // float centerY = (fileReader->m_width * 7 - ImGui::GetWindowHeight()) * 0.5f;
-        float centerY = (fileReader->m_width * 7 - ImGui::GetWindowHeight()) * 0.5f;
+        float centerY = (fileReader->m_width * 7 ) * 0.5f;
 
         ImGui::SetScrollY(centerY);
         scrollInitializedSagittal = true;
@@ -1611,7 +1608,7 @@ void QDirect3D11Widget::RenderAllQuads()
     //    ImGui::SetScrollY(scrollY - dragDelta.y);
     //}
 
-    static float lastScrollYSagittal = 0.0f;
+    static float lastScrollYSagittal = fileReader->m_width * 7;
     float scrollYSagittal = ImGui::GetScrollY();
 
 
@@ -1626,6 +1623,7 @@ void QDirect3D11Widget::RenderAllQuads()
 
         if (newIndex != fileReader->currentIndex[3]) {
             fileReader->currentIndex[3] = newIndex;
+            qDebug() << "[Sagittal] slice index : " << newIndex << endl;
             fileReader->UpdateSagittalTexture(newIndex);
 
 
