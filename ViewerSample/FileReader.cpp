@@ -199,29 +199,29 @@ bool FileReader::LoadDICOMSeries(std::string folderPath, ID3D11Device* g_pd3dDev
     return true;
 }
 
-ID3D11Texture2D* FileReader::getOrCreateAxialTexture(int z) {
+ID3D11Texture2D* FileReader::getOrCreateAxialTexture(int z, int w, int h) {
     if (axialTextureCache.find(z) != axialTextureCache.end()) return axialTextureCache[z];
 
     std::vector<uint8_t> slice = GenerateAxialSlice(z);
-    ID3D11Texture2D* texture = CreateTextureFromSlice(slice, m_width, m_height, d3dDevice);
+    ID3D11Texture2D* texture = CreateTextureFromSlice(slice, w, h, d3dDevice);
     axialTextureCache[z] = texture;
     return texture;
 }
 
-ID3D11Texture2D* FileReader::getOrCreateCoronalTexture(int y) {
+ID3D11Texture2D* FileReader::getOrCreateCoronalTexture(int y, int w, int h) {
     if (coronalTextureCache.find(y) != coronalTextureCache.end()) return coronalTextureCache[y];
 
     std::vector<uint8_t> slice = GenerateCoronalSlice(y);
-    ID3D11Texture2D* texture = CreateTextureFromSlice(slice, m_width, m_depth, d3dDevice);
+    ID3D11Texture2D* texture = CreateTextureFromSlice(slice, w, h, d3dDevice);
     coronalTextureCache[y] = texture;
     return texture;
 }
 
-ID3D11Texture2D* FileReader::getOrCreateSagittalTexture(int x) {
+ID3D11Texture2D* FileReader::getOrCreateSagittalTexture(int x, int w, int h) {
     if (sagittalTextureCache.find(x) != sagittalTextureCache.end()) return sagittalTextureCache[x];
 
     std::vector<uint8_t> slice = GenerateSagittalSlice(x);
-    ID3D11Texture2D* texture = CreateTextureFromSlice(slice, m_height, m_depth, d3dDevice);
+    ID3D11Texture2D* texture = CreateTextureFromSlice(slice, w, h, d3dDevice);
     sagittalTextureCache[x] = texture;
     return texture;
 }
@@ -429,6 +429,10 @@ void FileReader::SliceIdxManage()
     sliceIndex[1] = m_depth;
     sliceIndex[2] = m_height;
     sliceIndex[3] = m_width;
+
+    cout << "1st idx a : " << currentIndex[1] << endl;
+    cout << "1st idx c : " << currentIndex[2] << endl;
+    cout << "1st idx s : " << currentIndex[3] << endl;
 }
 
 void FileReader::SetAxialSlice(int index)

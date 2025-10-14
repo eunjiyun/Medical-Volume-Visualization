@@ -73,6 +73,7 @@ public:
     int GetClickedViewIndex(int px, int py, int width, int height);
 
     int px, py;
+    bool firstFrame{ true };
 private:
 
 
@@ -193,7 +194,8 @@ private:
     //ID3D11RenderTargetView * m_pRTView;
     SliceSeriesRtv m_RTViews;// m_RTViewsVolume, m_RTViewsAxial, m_RTViewsCoronal, m_RTViewsSagittal;
     ID3D11RenderTargetView* m_pSwapChainRTV = nullptr;
-
+   /* ID3D11RenderTargetView* rtvs[4];
+    ID3D11ShaderResourceView* srvs[4];*/
     QTimer m_qTimer;
 
     HWND m_hWnd;
@@ -234,6 +236,8 @@ public:
     float viewHeight;
     DirectX::XMFLOAT3 patientCoord;
     int clickedViewIndex;
+
+    int unifiedWidth, unifiedHeight; 
 };
 
 

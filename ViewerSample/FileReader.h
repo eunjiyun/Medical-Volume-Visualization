@@ -10,15 +10,7 @@ using namespace std;
 
 struct CrosshairData
 {
-    //DirectX::XMFLOAT2 cross0;       // tex0용 십자선 위치 (정규화된 UV 좌표)
-    //DirectX::XMFLOAT2 cross1;       // tex1용
-    //DirectX::XMFLOAT2 cross2;       // tex2용
-    //DirectX::XMFLOAT2 cross3;       // tex3용
-
-    //float crossThickness;           // 십자선 두께 (예: 0.002f)
-    //DirectX::XMFLOAT4 crossColor;   // 십자선 색상 (예: 빨강 float4(1,0,0,1))
-
-    DirectX::XMFLOAT2 crossUV;
+    DirectX::XMFLOAT2 crossUVs[4];  // 각 뷰의 십자선 위치
     float crossThickness;
     DirectX::XMFLOAT4 crossColor;
 
@@ -55,7 +47,7 @@ public:
     std::vector < ID3D11Texture2D*> axialTexture, coronalTexture, sagittalTexture;
     int windowCenter, windowWidth;
 
-    ID3D11Buffer* m_crosshairBuffer = nullptr;
+    ID3D11Buffer* m_crosshairBuffer,*m_quadBuffer;
 
     int sliceIndex[4], currentIndex[4];
 
@@ -70,9 +62,9 @@ public:
     bool LoadDICOMSeries(std::string folderPath, ID3D11Device* g_pd3dDevice);
 
     bool ParseSlice(std::string filePath, int sliceIndex);
-    ID3D11Texture2D* getOrCreateAxialTexture(int z);
-    ID3D11Texture2D* getOrCreateCoronalTexture(int y);
-    ID3D11Texture2D* getOrCreateSagittalTexture(int x);
+    ID3D11Texture2D* getOrCreateAxialTexture(int z,int w=632,int h =632 );
+    ID3D11Texture2D* getOrCreateCoronalTexture(int y, int w = 632, int h = 632);
+    ID3D11Texture2D* getOrCreateSagittalTexture(int x, int w = 632, int h = 632);
 
     bool BuildVolume();
     void PrintMetadata();

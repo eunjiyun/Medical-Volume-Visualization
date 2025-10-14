@@ -318,12 +318,16 @@ void QDirect3D11Widget::initializeRenderTargets()
     m_SRViews.slices.clear();
     m_samplerState.clear();
 
-    //fileReader->currentIndex[0] = fileReader->m_depth / 2;   // Axial (Z 방향)
-    //fileReader->currentIndex[1] = fileReader->m_height / 2;  // Coronal (Y 방향)
-    //fileReader->currentIndex[2] = fileReader->m_width / 2;   // Sagittal (X 방향)
+
 
     fileReader->SliceIdxManage();
 
+    D3D11_TEXTURE2D_DESC desc;
+    ID3D11Texture2D* axialTex = fileReader->getOrCreateAxialTexture(fileReader->currentIndex[1]);
+    axialTex->GetDesc(&desc);
+
+    unifiedWidth = desc.Width;
+    unifiedHeight = desc.Height;
 
     for (int i{}; i < 4; ++i) {
 
@@ -337,11 +341,11 @@ void QDirect3D11Widget::initializeRenderTargets()
             /*texDesc.Width = width() / 2;
             texDesc.Height = height() / 2;*/
 
-            D3D11_TEXTURE2D_DESC desc;
-            ID3D11Texture2D* axialTex = fileReader->getOrCreateAxialTexture(fileReader->currentIndex[1]);
-            axialTex->GetDesc(&desc);
-            texDesc.Width = desc.Width;
-            texDesc.Height = desc.Height;
+            /*   D3D11_TEXTURE2D_DESC desc;
+               ID3D11Texture2D* axialTex = fileReader->getOrCreateAxialTexture(fileReader->currentIndex[1]);
+               axialTex->GetDesc(&desc);*/
+            texDesc.Width = unifiedWidth;
+            texDesc.Height = unifiedHeight;
 
 
             texDesc.MipLevels = 1;
@@ -375,7 +379,7 @@ void QDirect3D11Widget::initializeRenderTargets()
         else if (1 == i) {
 
 
-            ID3D11Texture2D* axialTex = fileReader->getOrCreateAxialTexture(fileReader->currentIndex[1]);
+            ID3D11Texture2D* axialTex = fileReader->getOrCreateAxialTexture(fileReader->currentIndex[1], unifiedWidth, unifiedHeight);
             ID3D11RenderTargetView* axialRTV = getRTVForTexture(axialTex);
             m_RTViews.slices.push_back(axialRTV);
             ID3D11ShaderResourceView* axialSRV = getSRVForTexture(axialTex);
@@ -387,7 +391,7 @@ void QDirect3D11Widget::initializeRenderTargets()
         }
         else if (2 == i) {
 
-            ID3D11Texture2D* coronalTex = fileReader->getOrCreateCoronalTexture(fileReader->currentIndex[2]);
+            ID3D11Texture2D* coronalTex = fileReader->getOrCreateCoronalTexture(fileReader->currentIndex[2], unifiedWidth, unifiedHeight);
             ID3D11RenderTargetView* coronalRTV = getRTVForTexture(coronalTex);
             m_RTViews.slices.push_back(coronalRTV);
             ID3D11ShaderResourceView* coronalSRV = getSRVForTexture(coronalTex);
@@ -398,7 +402,7 @@ void QDirect3D11Widget::initializeRenderTargets()
         }
         else if (3 == i) {
 
-            ID3D11Texture2D* sagittalTex = fileReader->getOrCreateSagittalTexture(fileReader->currentIndex[3]);
+            ID3D11Texture2D* sagittalTex = fileReader->getOrCreateSagittalTexture(fileReader->currentIndex[3], unifiedWidth, unifiedHeight);
             ID3D11RenderTargetView* sagittalRTV = getRTVForTexture(sagittalTex);
             m_RTViews.slices.push_back(sagittalRTV);
             ID3D11ShaderResourceView* sagittalSRV = getSRVForTexture(sagittalTex);
@@ -741,7 +745,7 @@ void QDirect3D11Widget::InitShaders()
         throw std::runtime_error("Pixel Shader ?뚮똾?????쎈솭");
     }
 
-        DXCall(m_pDevice->CreatePixelShader(
+    DXCall(m_pDevice->CreatePixelShader(
         psBlob->GetBufferPointer(), psBlob->GetBufferSize(),
         nullptr, &m_pixelShader));
 
@@ -935,6 +939,7 @@ void QDirect3D11Widget::RenderSceneToTarget(int i)
 
 void QDirect3D11Widget::mousePressEvent(QMouseEvent* event)
 {
+    firstFrame = false;
     px = event->pos().x(); // 클릭된 x 좌표
     py = event->pos().y(); // 클릭된 y 좌표
 
@@ -1061,7 +1066,7 @@ void QDirect3D11Widget::InitializeCrosshair()
     DirectX::XMFLOAT3 patientCoord = GetDefaultPatientCenter(); // 환자 좌표계 기준 중심점
 
     CrosshairData crosshair = {};
-    crosshair.crossUV = GetCrossUVFromPatientCoord(viewIndex, patientCoord); // 현재 뷰에 맞는 UV 좌표
+  //  crosshair.crossUV = GetCrossUVFromPatientCoord(viewIndex, patientCoord); // 현재 뷰에 맞는 UV 좌표
     crosshair.crossThickness = 0.002f;
     crosshair.crossColor = { 1.0f, 0.0f, 0.0f, 1.0f }; // 빨강
 
@@ -1096,7 +1101,7 @@ void QDirect3D11Widget::UpdateCrosshairFromPatientCoord(DirectX::XMFLOAT3 patien
     int viewIndex = GetClickedViewIndex(px, py, this->width(), this->height()); // 현재 뷰 인덱스 (0: Axial, 1: Coronal, 2: Sagittal, 3: 기타)
 
     // 현재 뷰에 맞는 십자선 위치 계산
-    crosshair.crossUV = GetCrossUVFromPatientCoord(viewIndex, patientCoord);
+  //  crosshair.crossUV = GetCrossUVFromPatientCoord(viewIndex, patientCoord);
 
     // 십자선 스타일 설정
     crosshair.crossThickness = 0.002f;
@@ -1112,15 +1117,8 @@ void QDirect3D11Widget::UpdateCrosshairFromPatientCoord(DirectX::XMFLOAT3 patien
 
 void QDirect3D11Widget::RenderAllQuads()
 {
+    //// 예: 클릭된 뷰가 i번째 뷰라고 가정
 
-    m_pDeviceContext->OMSetRenderTargets(4, m_RTViews.slices.data(), nullptr);
-
-
-    // 1. 십자선 위치 계산
-    CrosshairData crosshair = {};
-
-    // 예: 클릭된 뷰가 i번째 뷰라고 가정
-    //int clickedViewIndex = i; // 0: Axial, 1: Coronal, 2: Sagittal, 3: Volume
     int clickedViewIndex = GetClickedViewIndex(px, py, this->width(), this->height());
 
 
@@ -1132,8 +1130,9 @@ void QDirect3D11Widget::RenderAllQuads()
 
 
     // 마우스 클릭 좌표 정규화
-    float normX = static_cast<float>(px - viewX) / viewWidth;
-    float normY = static_cast<float>(py - viewY) / viewHeight;
+
+    float normX = static_cast<float>(px - 0) / width();
+    float normY = static_cast<float>(py - 0) / height();
 
 
     // 모든 뷰에 동일한 십자선 위치 적용
@@ -1142,174 +1141,159 @@ void QDirect3D11Widget::RenderAllQuads()
     // 클릭된 위치 → 환자 좌표
     patientCoord = GetPatientCoordFromClick(clickedViewIndex, crossUV);
 
-    //for (int i{ 1 }; i <= 3; ++i) {
-    //    fileReader->views.centerPatientCoord[i] = patientCoord;
 
-    //    fileReader->currentIndex[i] = ComputeSliceIndexFromPatientCoord(i, patientCoord);
-    //    ID3D11RenderTargetView* rtvA, *rtvC, *rtvS;
-    //    ID3D11ShaderResourceView* srvA, *srvC, *srvS;
-    //    ID3D11Texture2D* texA, *texC, *texS;
-    //    if (clickedViewIndex != i) {
+    // 6. 십자선 및 뷰 정보 상수버퍼 업데이트
+    CrosshairData cb{};
+    for (int i = 0; i < 4; ++i)
+    {
+        D3D11_VIEWPORT vp = CreateViewport(i);
 
-    //        switch (i) {
-    //        case 1:
-    //            fileReader->UpdateAxialTexture(fileReader->currentIndex[1]);
-    //             texA = fileReader->axialTextureCache[fileReader->currentIndex[1]];
-    //       srvA = getSRVForTexture(texA);
-    //            m_SRViews.slices[1] = srvA;
+        float uvx = (px - vp.TopLeftX) / vp.Width;
+        float uvy = (py - vp.TopLeftY) / vp.Height;
 
-    //            rtvA = getRTVForTexture(texA);
-    //            m_RTViews.slices[1] = rtvA;
-    //            break;
-    //        case 2 :
-    //            fileReader->UpdateCoronalTexture(fileReader->currentIndex[2]);
-    //            texC = fileReader->coronalTextureCache[fileReader->currentIndex[2]];
-    //            srvC = getSRVForTexture(texC);
-    //            m_SRViews.slices[2] = srvC;
+        uvx = std::clamp(uvx, 0.0f, 1.0f);
+        uvy = std::clamp(uvy, 0.0f, 1.0f);
 
-    //             rtvC = getRTVForTexture(texC);
-    //            m_RTViews.slices[2] = rtvC;
-    //            break;
-    //        case 3:
-    //            fileReader->UpdateSagittalTexture(fileReader->currentIndex[3]);
-    //            texS = fileReader->sagittalTextureCache[fileReader->currentIndex[3]];
-    //            srvS = getSRVForTexture(texS);
-    //            m_SRViews.slices[3] = srvS;
+        cb.crossUVs[i] = XMFLOAT2(uvx, uvy);
 
-    //             rtvS = getRTVForTexture(texS);
-    //            m_RTViews.slices[3] = rtvS;
-    //            break;
-    //        }
-    //    }
-    //   
-    //}
+        qDebug() << "View" << i
+            << "TopLeft(" << vp.TopLeftX << "," << vp.TopLeftY << ")"
+            << "Size(" << vp.Width << "," << vp.Height << ")"
+            << "crossUV(" << uvx << "," << uvy << ")";
+    }
 
+    cb.crossThickness = 0.005f;
+    cb.crossColor = XMFLOAT4(1, 0, 0, 1);
 
-
-
-
- /*   qDebug() << "Patient Coord: ("
-        << patientCoord.x << ", "
-        << patientCoord.y << ", "
-        << patientCoord.z << ")";*/
-
-    //qDebug() << "Spacing: (" << fileReader->views[clickedViewIndex].spacing.x << ", " << fileReader->views[clickedViewIndex].spacing.y << ", " << fileReader->views[clickedViewIndex].spacing.z << ")";
-
-  /*  qDebug() << "UV: (" << crossUV.x << ", " << crossUV.y << ")";
-
-    qDebug() << "Origin: (" << fileReader->views[clickedViewIndex].origin.x << ", " << fileReader->views[clickedViewIndex].origin.y << ", " << fileReader->views[clickedViewIndex].origin.z << ")";*/
-
-    //crosshair.cross0 = crossUV;
-    //crosshair.cross1 = crossUV;
-    //crosshair.cross2 = crossUV;
-    //crosshair.cross3 = crossUV;
-
-    //// 환자 좌표 → 각 뷰의 텍스처 좌표로 변환
-    //crosshair.cross0 = GetCrossUVFromPatientCoord(0, patientCoord);
-    //crosshair.cross1 = GetCrossUVFromPatientCoord(1, patientCoord);
-    //crosshair.cross2 = GetCrossUVFromPatientCoord(2, patientCoord);
-    //crosshair.cross3 = GetCrossUVFromPatientCoord(3, patientCoord); // Volume 뷰가 있다면
-
-
-    //for (int i = 0; i < 4; ++i)
-    //{
-    //    DirectX::XMFLOAT2 uv = GetCrossUVFromPatientCoord(i, patientCoord);
-
-    //    // 콘솔 출력
-    //    //qDebug() << "cross" << i << " UV: (" << uv.x << ", " << uv.y << ")" <<endl;
-
-    //    // 십자선 위치 저장
-    //    switch (i)
-    //    {
-    //    case 0: crosshair.cross0 = uv; break;
-    //    case 1: crosshair.cross1 = uv; break;
-    //    case 2: crosshair.cross2 = uv; break;
-    //    case 3: crosshair.cross3 = uv; break;
-    //    }
-    //}
-
-
-
-
-
-    //crosshair.crossThickness = 0.002f;
-    //crosshair.crossColor = { 1.0f, 0.0f, 0.0f, 1.0f }; // 빨강
-
-
-    //// 2. UpdateSubresource로 GPU에 전달
-    //m_pDeviceContext->UpdateSubresource(fileReader->m_crosshairBuffer, 0, nullptr, &crosshair, 0, 0);
-
-
-    //QPoint pos = event->pos(); // 마우스 클릭 위치
-    //XMFLOAT2 uv = ConvertScreenToUV(pos); // 화면 좌표 → 텍스처 좌표
-    //int clickedViewIndex = GetViewIndexFromMouse(pos); // 클릭한 뷰 판별
-
-    //// 텍스처 좌표 → 환자 좌표
-    //XMFLOAT3 patientCoord = GetPatientCoordFromClick(clickedViewIndex, uv);
-
-    // 십자선 업데이트
-    //UpdateCrosshairFromPatientCoord(patientCoord);
-
-
-    //InitializeCrosshair();
-    UpdateCrosshairFromPatientCoord(patientCoord);
-
-    // 3. 셰이더에 바인딩
+    m_pDeviceContext->UpdateSubresource(fileReader->m_crosshairBuffer, 0, nullptr, &cb, 0, 0);
     m_pDeviceContext->PSSetConstantBuffers(0, 1, &fileReader->m_crosshairBuffer);
-    m_pDeviceContext->PSSetShaderResources(0, 4, m_SRViews.slices.data());     // tex0~tex3
-    m_pDeviceContext->PSSetSamplers(0, 1, m_samplerState.data());       // samp0~samp3
+
+  //  // 1. MRT 렌더 타겟 설정
+  //  ID3D11RenderTargetView* rtvs[4] = {
+  //      m_RTViews.slices[0],
+  //      m_RTViews.slices[1],
+  //      m_RTViews.slices[2],
+  //      m_RTViews.slices[3]
+  //  };
+  //  m_pDeviceContext->OMSetRenderTargets(4, rtvs, nullptr);
+
+  //  // 2. 전체 화면 뷰포트 (MRT Draw 한 번)
+  //  D3D11_VIEWPORT viewport{};
+  //  viewport.TopLeftX = 0;
+  //  viewport.TopLeftY = 0;
+  //  viewport.Width = static_cast<float>(width());
+  //  viewport.Height = static_cast<float>(height());
+  //  viewport.MinDepth = 0.0f;
+  //  viewport.MaxDepth = 1.0f;
+  ////  m_pDeviceContext->RSSetViewports(1, &viewport);
+
+  //  // 3. 셰이더 세팅
+  //  m_pDeviceContext->VSSetShader(m_vertexShader, nullptr, 0);
+  //  m_pDeviceContext->PSSetShader(m_pixelShader, nullptr, 0);
+
+  //  // 4. 입력 텍스처 + 샘플러
+  //  ID3D11ShaderResourceView* srvs[4] = {
+  //      m_SRViews.slices[0],
+  //      m_SRViews.slices[1],
+  //      m_SRViews.slices[2],
+  //      m_SRViews.slices[3]
+  //  };
+  //  m_pDeviceContext->PSSetShaderResources(0, 4, srvs);
+  //  m_pDeviceContext->PSSetSamplers(0, 1, &m_samplerState[0]);
+
+  //  // 5. 정점 버퍼/레이아웃/톱올로지
+  //  UINT stride = sizeof(Vertex);
+  //  UINT offset = 0;
+  //  m_pDeviceContext->IASetInputLayout(m_inputLayout);
+  //  m_pDeviceContext->IASetVertexBuffers(0, 1, &m_vertexBuffer, &stride, &offset);
+  //  m_pDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
+
+  //  // 6. Draw — 단 한 번
+  //  m_pDeviceContext->Draw(4, 0);
 
 
-    //rtv 너무 많이 생성해서 생기는 오류//251001
-    UINT stride = sizeof(Vertex);
-    UINT offset = 0;
+  //   //// 2. 백버퍼에 출력할 준비
+  //  m_pDeviceContext->OMSetRenderTargets(1, &m_pSwapChainRTV, nullptr);
 
-    m_pDeviceContext->IASetInputLayout(m_inputLayout);
-    m_pDeviceContext->IASetVertexBuffers(0, 1, &m_vertexBuffer, &stride, &offset);
-    m_pDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
+  //  //// 3. 각 렌더 타겟 텍스처를 quad로 출력
+  //  for (int i{}; i < 4; ++i)
+  //  {
+  //      D3D11_VIEWPORT vp = CreateViewport(i); // ← 4분할 뷰포트 계산
 
+  //    DrawQuadWithTexture(m_SRViews.slices[i], vp);      // ← 여기서 호출!
+  //  }
+
+
+    // 1. MRT 렌더 타겟 설정
+    ID3D11RenderTargetView* mrt[4] = {
+        m_RTViews.slices[0],
+        m_RTViews.slices[1],
+        m_RTViews.slices[2],
+        m_RTViews.slices[3]
+    };
+    m_pDeviceContext->OMSetRenderTargets(4, mrt, nullptr);
+
+      ID3D11ShaderResourceView* srvs[4] = {
+      m_SRViews.slices[0],
+      m_SRViews.slices[1],
+      m_SRViews.slices[2],
+      m_SRViews.slices[3]
+  };
+
+    // 2. 전체 화면 뷰포트
+    D3D11_VIEWPORT fullVP{};
+    fullVP.TopLeftX = 0;
+    fullVP.TopLeftY = 0;
+    fullVP.Width = static_cast<float>(width());
+    fullVP.Height = static_cast<float>(height());
+    fullVP.MinDepth = 0.0f;
+    fullVP.MaxDepth = 1.0f;
+    m_pDeviceContext->RSSetViewports(1, &fullVP);
+
+    // 3. 셰이더 세팅
     m_pDeviceContext->VSSetShader(m_vertexShader, nullptr, 0);
     m_pDeviceContext->PSSetShader(m_pixelShader, nullptr, 0);
 
-    //switch (clickedViewIndex) {
-    //case 1: // Axial
-    //    m_pDeviceContext->PSSetShader(m_pixelShaderAxial, nullptr, 0);
-    //    break;
-    //case 2: // Coronal
-    //    m_pDeviceContext->PSSetShader(m_pixelShaderCoronal, nullptr, 0);
-    //    break;
-    //case 3: // Sagittal
-    //    m_pDeviceContext->PSSetShader(m_pixelShaderSagittal, nullptr, 0);
-    //    break;
-    //default:
-    //    m_pDeviceContext->PSSetShader(m_pixelShaderAxial, nullptr, 0); // fallback
-    //    break;
-    //}
 
 
-    m_pDeviceContext->Draw(4, 0); // 4개의 정점으로 quad 출력
+    // 4. 텍스처, 샘플러, 상수버퍼
+    m_pDeviceContext->PSSetShaderResources(0, 4, srvs);
+    m_pDeviceContext->PSSetSamplers(0, 1, &m_samplerState[0]);
+  //  m_pDeviceContext->PSSetConstantBuffers(0, 1, &m_crosshairBuffer);
+    m_pDeviceContext->PSSetConstantBuffers(0, 1, &fileReader->m_crosshairBuffer);
 
+    // 5. Draw
+    // 5. 정점 버퍼/레이아웃/톱올로지
+    UINT stride = sizeof(Vertex);
+    UINT offset = 0;
+  //  m_pDeviceContext->IASetInputLayout(m_inputLayout);
+    m_pDeviceContext->IASetVertexBuffers(0, 1, &m_vertexBuffer, &stride, &offset);
+    m_pDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
+    m_pDeviceContext->Draw(4, 0);
 
-    //======
-
-     //// 2. 백버퍼에 출력할 준비
+    // 6. 백버퍼 출력: Quad Draw
     m_pDeviceContext->OMSetRenderTargets(1, &m_pSwapChainRTV, nullptr);
-    ////m_pDeviceContext->ClearRenderTargetView(m_pSwapChainRTV, reinterpret_cast<float*>(&m_BackColor));
 
-    // 3. 각 렌더 타겟 텍스처를 quad로 출력
-    for (int i{}; i < 4; ++i)
+    struct QuadInfo {
+        DirectX::XMFLOAT2 offset;
+        DirectX::XMFLOAT2 scale;
+    };
+
+
+
+    for (int i = 0; i < 4; ++i)
     {
-        D3D11_VIEWPORT vp = CreateViewport(i); // ← 4분할 뷰포트 계산
+        QuadInfo quad;
+        quad.scale = { 0.5f, 0.5f };
+        quad.offset = { (i % 2) * 0.5f, (i / 2) * 0.5f };
 
-        ////여기서 벡터 오류251001
-        //for(int j{};j< m_SRViews.flagIndex[i];++j)
-        //    DrawQuadWithTexture(m_SRViews.slices[j], vp);      // ← 여기서 호출!
+        m_pDeviceContext->UpdateSubresource(fileReader->m_quadBuffer, 0, nullptr, &quad, 0, 0);
+        m_pDeviceContext->PSSetShaderResources(0, 1, &srvs[i]);
 
-        DrawQuadWithTexture(m_SRViews.slices[i], vp);      // ← 여기서 호출!
+        m_pDeviceContext->Draw(4, 0);
     }
 
 
-    //======
     ImGuiIO& io = ImGui::GetIO();
 
 
@@ -1400,12 +1384,13 @@ void QDirect3D11Widget::RenderAllQuads()
     ImGui::SetNextWindowSize(ImVec2(20, 380 - 3));
     ImGui::Begin("Axial View", nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
 
-    static bool scrollInitialized = false;
-
+    static bool scrollInitialized{ false };
+    float centerY;
     ImGui::BeginChild("AxialScrollable", ImVec2(0, 0), true, ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_AlwaysVerticalScrollbar);
     // 최초 1회만 중앙으로 스크롤 이동
     if (!scrollInitialized) {
-        float centerY = (fileReader->m_depth * 7 - ImGui::GetWindowHeight()) * 0.5f;
+        //  centerY = (fileReader->m_depth * 7 - ImGui::GetWindowHeight()) * 0.5f;
+        centerY = (fileReader->m_depth * 7) * 0.5f;
         ImGui::SetScrollY(centerY);
         scrollInitialized = true;
     }
@@ -1427,39 +1412,32 @@ void QDirect3D11Widget::RenderAllQuads()
 
     // // ✅ 대신 이미지 크기를 키워서 스크롤이 생기게 하고, 드래그로 스크롤 위치를 조정
     //// if (isDraggingAxial) {
-    static float lastScrollY = 0.0f;
+   // static bool firstFrame = true;
+    static float lastScrollY = centerY;
     float scrollY = ImGui::GetScrollY();
 
+    /* if (!scrollInitialized[1]) {
+         scrollInitialized[1] = true;
+     }
+     else*/ if (scrollY != lastScrollY /*&&false==firstFrame*/) {
+         int newIndex = static_cast<int>(scrollY / 7); // sliceHeight는 슬라이스당 픽셀 높이
+         newIndex = std::clamp(newIndex, 0, fileReader->m_depth - 1);
 
-    if (scrollY != lastScrollY) {
-        int newIndex = static_cast<int>(scrollY / 7); // sliceHeight는 슬라이스당 픽셀 높이
-        newIndex = std::clamp(newIndex, 0, fileReader->m_depth - 1);
+         if (newIndex != fileReader->currentIndex[1]) {
+             fileReader->currentIndex[1] = newIndex;
+             qDebug() << "[Axial] slice index : " << newIndex << endl;
+             fileReader->UpdateAxialTexture(newIndex);
 
-        if (newIndex != fileReader->currentIndex[1]) {
-            fileReader->currentIndex[1] = newIndex;
-            fileReader->UpdateAxialTexture(newIndex);
+             ID3D11Texture2D* tex = fileReader->axialTextureCache[newIndex];
+             ID3D11ShaderResourceView* srv = getSRVForTexture(tex);
+             m_SRViews.slices[1] = srv;
 
+             ID3D11RenderTargetView* rtv = getRTVForTexture(tex);
+             m_RTViews.slices[1] = rtv;
+         }
 
-            ID3D11Texture2D* tex = fileReader->axialTextureCache[newIndex];
-            ID3D11ShaderResourceView* srv = getSRVForTexture(tex);
-            m_SRViews.slices[1] = srv;
-
-            ID3D11RenderTargetView* rtv = getRTVForTexture(tex);
-            m_RTViews.slices[1] = rtv;
-
-
-        }
-
-        lastScrollY = scrollY;
-
-
-    }
-
-
-
-
-
-
+         lastScrollY = scrollY;
+     }
 
     if (ImGui::IsMouseReleased(ImGuiMouseButton_Left)) {
         isDraggingAxial = false;
@@ -1472,19 +1450,13 @@ void QDirect3D11Widget::RenderAllQuads()
     ImGui::EndChild();
     ImGui::End();
 
-
-
     static ImVec2 imageOffsetCoronal = ImVec2(0, 0); // 이미지 위치 오프셋
     static bool isDraggingCoronal = false;
     static ImVec2 dragStartCoronal;
 
-
-
     //coronal
     ImGui::SetNextWindowPos(ImVec2(640 - 32, 380 + 3));
     ImGui::SetNextWindowSize(ImVec2(20, 380));
-
-
 
 
     ImGui::Begin("Coronal View", nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
@@ -1493,7 +1465,7 @@ void QDirect3D11Widget::RenderAllQuads()
     ImGui::BeginChild("CoronalScrollable", ImVec2(0, 0), true, ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_AlwaysVerticalScrollbar);
     // 최초 1회만 중앙으로 스크롤 이동
     if (!scrollInitializedCoronal) {
-        float centerY = (fileReader->m_height * 7 - ImGui::GetWindowHeight()) * 0.5f;
+        float centerY = (fileReader->m_height * 7 /*- ImGui::GetWindowHeight()*/) * 0.5f;
         ImGui::SetScrollY(centerY);
         scrollInitializedCoronal = true;
     }
@@ -1518,7 +1490,7 @@ void QDirect3D11Widget::RenderAllQuads()
 
 
 
-    static float lastScrollYCoronal = 0.0f;
+    static float lastScrollYCoronal = centerY;
     float scrollYCoronal = ImGui::GetScrollY();
 
 
@@ -1532,6 +1504,7 @@ void QDirect3D11Widget::RenderAllQuads()
 
         if (newIndex != fileReader->currentIndex[2]) {
             fileReader->currentIndex[2] = newIndex;
+            qDebug() << "[Coronal] slice index : " << newIndex << endl;
             fileReader->UpdateCoronalTexture(newIndex);
 
 
@@ -1577,8 +1550,8 @@ void QDirect3D11Widget::RenderAllQuads()
     ImGui::BeginChild("SagittalScrollable", ImVec2(0, 0), true, ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_AlwaysVerticalScrollbar);
 
     if (!scrollInitializedSagittal) {
-       // float centerY = (fileReader->m_width * 7 - ImGui::GetWindowHeight()) * 0.5f;
-        float centerY = (fileReader->m_width * 7 - ImGui::GetWindowHeight()) * 0.5f;
+        // float centerY = (fileReader->m_width * 7 - ImGui::GetWindowHeight()) * 0.5f;
+        float centerY = (fileReader->m_width * 7 /*- ImGui::GetWindowHeight()*/) * 0.5f;
 
         ImGui::SetScrollY(centerY);
         scrollInitializedSagittal = true;
@@ -1611,12 +1584,12 @@ void QDirect3D11Widget::RenderAllQuads()
     //    ImGui::SetScrollY(scrollY - dragDelta.y);
     //}
 
-    static float lastScrollYSagittal = 0.0f;
+    static float lastScrollYSagittal = centerY;
     float scrollYSagittal = ImGui::GetScrollY();
 
 
     if (scrollYSagittal != lastScrollYSagittal) {
-       // int newIndex = static_cast<int>(scrollYCoronal / 7); // sliceHeight는 슬라이스당 픽셀 높이
+        // int newIndex = static_cast<int>(scrollYCoronal / 7); // sliceHeight는 슬라이스당 픽셀 높이
         int newIndex = static_cast<int>(scrollYSagittal / 7); // sliceHeight는 슬라이스당 픽셀 높이
         //int newIndex = static_cast<int>((fileReader->m_width * 7.f - scrollYSagittal) / 7.f);
 
@@ -1626,6 +1599,7 @@ void QDirect3D11Widget::RenderAllQuads()
 
         if (newIndex != fileReader->currentIndex[3]) {
             fileReader->currentIndex[3] = newIndex;
+            qDebug() << "[Sagittal] slice index : " << newIndex << endl;
             fileReader->UpdateSagittalTexture(newIndex);
 
 
@@ -1682,17 +1656,38 @@ void QDirect3D11Widget::DrawFullScreenQuad()
 
 void QDirect3D11Widget::DrawQuadWithTexture(ID3D11ShaderResourceView* pSRV, const D3D11_VIEWPORT& vp)
 {
+    //m_pDeviceContext->RSSetViewports(1, &vp);
+    //m_pDeviceContext->VSSetShader(m_vertexShader, nullptr, 0);
+    //m_pDeviceContext->PSSetShader(m_pixelShader, nullptr, 0);
+    //m_pDeviceContext->PSSetShaderResources(0, 1, &pSRV);
+    //m_pDeviceContext->IASetInputLayout(m_inputLayout);
+
+    //UINT stride = sizeof(Vertex);
+    //UINT offset = 0;
+    //m_pDeviceContext->IASetVertexBuffers(0, 1, &m_vertexBuffer, &stride, &offset);
+    //m_pDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
+
+    //m_pDeviceContext->Draw(4, 0);
+
+     // 1. 뷰포트 적용
     m_pDeviceContext->RSSetViewports(1, &vp);
+
+    // 2. 셰이더 세팅 (이미 바뀌었으면 생략 가능)
     m_pDeviceContext->VSSetShader(m_vertexShader, nullptr, 0);
     m_pDeviceContext->PSSetShader(m_pixelShader, nullptr, 0);
-    m_pDeviceContext->PSSetShaderResources(0, 1, &pSRV);
-    m_pDeviceContext->IASetInputLayout(m_inputLayout);
 
+    // 3. 텍스처와 샘플러
+    m_pDeviceContext->PSSetShaderResources(0, 1, &pSRV);
+    m_pDeviceContext->PSSetSamplers(0, 1, &m_samplerState[0]);
+
+    // 4. 정점 버퍼/레이아웃/톱올로지
     UINT stride = sizeof(Vertex);
     UINT offset = 0;
+    m_pDeviceContext->IASetInputLayout(m_inputLayout);
     m_pDeviceContext->IASetVertexBuffers(0, 1, &m_vertexBuffer, &stride, &offset);
     m_pDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
 
+    // 5. Draw quad (4 vertex)
     m_pDeviceContext->Draw(4, 0);
 }
 
@@ -1743,17 +1738,17 @@ int QDirect3D11Widget::ComputeSliceIndexFromPatientCoord(int viewIndex, XMFLOAT3
     {
     case 1: // Axial (Z축 기준)
         index = round((patientCoord.z - origin.z) / spacing.z);
-      
+
         break;
 
     case 2: // Coronal (Y축 기준)
         index = round((patientCoord.y - origin.y) / spacing.y);
-     
+
         break;
 
     case 3: // Sagittal (X축 기준)
         index = round((patientCoord.x - origin.x) / spacing.x);
-  
+
         break;
 
     default:
@@ -1839,9 +1834,9 @@ XMFLOAT2 QDirect3D11Widget::GetCrossUVFromPatientCoord(int viewIndex, XMFLOAT3 p
     XMFLOAT3 spacing = fileReader->views.spacing;
     XMFLOAT3 imageSize = fileReader->views.imageSize;
 
-  /*  qDebug() << "View " << viewIndex << " origin: (" << origin.x << ", " << origin.y << ", " << origin.z << ")" << endl;
-    qDebug() << "View " << viewIndex << " spacing: (" << spacing.x << ", " << spacing.y << ", " << spacing.z << ")" << endl;
-    qDebug() << "View " << viewIndex << " imageSize: (" << imageSize.x << ", " << imageSize.y << ", " << imageSize.z << ")" << endl;*/
+    /*  qDebug() << "View " << viewIndex << " origin: (" << origin.x << ", " << origin.y << ", " << origin.z << ")" << endl;
+      qDebug() << "View " << viewIndex << " spacing: (" << spacing.x << ", " << spacing.y << ", " << spacing.z << ")" << endl;
+      qDebug() << "View " << viewIndex << " imageSize: (" << imageSize.x << ", " << imageSize.y << ", " << imageSize.z << ")" << endl;*/
 
     float px = 0.0f, py = 0.0f;
 
@@ -1865,21 +1860,21 @@ XMFLOAT2 QDirect3D11Widget::GetCrossUVFromPatientCoord(int viewIndex, XMFLOAT3 p
         break;
     }
 
-  /*  px = std::clamp(px, 0.0f, imageSize.x);
-    py = std::clamp(py, 0.0f, imageSize.y);*/
+    /*  px = std::clamp(px, 0.0f, imageSize.x);
+      py = std::clamp(py, 0.0f, imageSize.y);*/
 
     XMFLOAT2 uv;
     uv.x = px / imageSize.x;
     uv.y = py / imageSize.y;
 
-   /* uv.x = std::clamp(px / imageSize.x, 0.0f, 1.0f);
-    uv.y = std::clamp(py / imageSize.y, 0.0f, 1.0f);*/
+    /* uv.x = std::clamp(px / imageSize.x, 0.0f, 1.0f);
+     uv.y = std::clamp(py / imageSize.y, 0.0f, 1.0f);*/
 
-    //qDebug() << "View " << viewIndex << " UV: (" << uv.x << ", " << uv.y << ")" << endl;
+     //qDebug() << "View " << viewIndex << " UV: (" << uv.x << ", " << uv.y << ")" << endl;
 
     if (spacing.x <= 0 || spacing.y <= 0 || spacing.z <= 0 ||
         imageSize.x <= 0 || imageSize.y <= 0) {
-       // qDebug() << "Invalid spacing or imageSize in view" << viewIndex;
+        // qDebug() << "Invalid spacing or imageSize in view" << viewIndex;
         return XMFLOAT2(0.5f, 0.5f); // fallback 중앙값
     }
 
