@@ -158,8 +158,8 @@ PSOutput PSMain(VSOutput input)
 
 
   //  float2 crossUV = ... // viewIndex에 따라 선택
-    //bool isCross = abs(uv.x - crossUV.x) < crossThickness || abs(uv.y - crossUV.y) < crossThickness;
-    bool isCross = abs(uv.x - 0.5f) < crossThickness || abs(uv.y - 0.5f) < crossThickness;
+    bool isCross = abs(uv.x - crossUV.x) < crossThickness || abs(uv.y - crossUV.y) < crossThickness;
+    //bool isCross = abs(uv.x - 0.5f) < crossThickness || abs(uv.y - 0.5f) < crossThickness;
 
     switch (viewIndex)
     {

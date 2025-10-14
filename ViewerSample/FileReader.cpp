@@ -304,6 +304,7 @@ std::vector<uint8_t> FileReader::GenerateAxialSlice(int zIndex)
 
     if (offset + sliceSize > m_volumeData.size()) {
         std::cerr << "Invalid zIndex: out of bounds." << std::endl;
+        std::cout << "zIndex : "<<zIndex << endl;
         return {};
     }
 
@@ -424,6 +425,10 @@ void FileReader::SliceIdxManage()
     currentIndex[1] = m_depth / 2;//a
     currentIndex[2] = m_height / 2;//c
     currentIndex[3] = m_width / 2;//s
+
+    sliceIndex[1] = m_depth;
+    sliceIndex[2] = m_height;
+    sliceIndex[3] = m_width;
 }
 
 void FileReader::SetAxialSlice(int index)

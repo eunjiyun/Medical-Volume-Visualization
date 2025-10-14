@@ -960,7 +960,9 @@ void QDirect3D11Widget::mousePressEvent(QMouseEvent* event)
         ID3D11RenderTargetView* rtvA, *rtvC, *rtvS;
         ID3D11ShaderResourceView* srvA, *srvC, *srvS;
         ID3D11Texture2D* texA, *texC, *texS;
-        if (clickedViewIndex != i) {
+
+        int viewIndex = GetClickedViewIndex(px, py, this->width(), this->height()); // 현재 뷰 인덱스 (0: Axial, 1: Coronal, 2: Sagittal, 3: 기타)
+        if (viewIndex != i) {
 
             switch (i) {
             case 1:
@@ -1575,7 +1577,9 @@ void QDirect3D11Widget::RenderAllQuads()
     ImGui::BeginChild("SagittalScrollable", ImVec2(0, 0), true, ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_AlwaysVerticalScrollbar);
 
     if (!scrollInitializedSagittal) {
+       // float centerY = (fileReader->m_width * 7 - ImGui::GetWindowHeight()) * 0.5f;
         float centerY = (fileReader->m_width * 7 - ImGui::GetWindowHeight()) * 0.5f;
+
         ImGui::SetScrollY(centerY);
         scrollInitializedSagittal = true;
     }
@@ -1612,8 +1616,9 @@ void QDirect3D11Widget::RenderAllQuads()
 
 
     if (scrollYSagittal != lastScrollYSagittal) {
-        //int newIndex = static_cast<int>(scrollYCoronal / 7); // sliceHeight는 슬라이스당 픽셀 높이
-        int newIndex = static_cast<int>((fileReader->m_width * 7.f - scrollYSagittal) / 7.f);
+       // int newIndex = static_cast<int>(scrollYCoronal / 7); // sliceHeight는 슬라이스당 픽셀 높이
+        int newIndex = static_cast<int>(scrollYSagittal / 7); // sliceHeight는 슬라이스당 픽셀 높이
+        //int newIndex = static_cast<int>((fileReader->m_width * 7.f - scrollYSagittal) / 7.f);
 
 
 
@@ -1726,23 +1731,48 @@ int QDirect3D11Widget::ComputeSliceIndexFromPatientCoord(int viewIndex, XMFLOAT3
 {
     XMFLOAT3 origin = fileReader->views.origin;
     XMFLOAT3 spacing = fileReader->views.spacing;
+    int imageSize = fileReader->sliceIndex[viewIndex]; // 각 축의 슬라이스 개수
+
+    //if (imageSize <= 0 || spacing.x <= 0 || spacing.y <= 0 || spacing.z <= 0)
+    //    return 0; // 또는 -1로 에러 표시
+
+
+    int index = 0;
 
     switch (viewIndex)
     {
-    case 1: return round((patientCoord.z - origin.z) / spacing.z); // Axial
-    case 2: return round((patientCoord.y - origin.y) / spacing.y); // Coronal
-    case 3: return round((patientCoord.x - origin.x) / spacing.x); // Sagittal
+    case 1: // Axial (Z축 기준)
+        index = round((patientCoord.z - origin.z) / spacing.z);
+      
+        break;
+
+    case 2: // Coronal (Y축 기준)
+        index = round((patientCoord.y - origin.y) / spacing.y);
+     
+        break;
+
+    case 3: // Sagittal (X축 기준)
+        index = round((patientCoord.x - origin.x) / spacing.x);
+  
+        break;
+
+    default:
+        index = 0;
+        break;
     }
 
-    return 0;
+    index = std::clamp(index, 0, static_cast<int>(imageSize) - 1);
+
+    return index;
 }
+
 
 XMFLOAT3 QDirect3D11Widget::GetPatientCoordFromClick(int viewIndex, XMFLOAT2 uv)
 {
-    if (2 == viewIndex)
+    /*if (2 == viewIndex)
     {
         qDebug() << "a" << endl;
-    }
+    }*/
     //// 영상 정보
     //XMFLOAT3 origin = fileReader->views[viewIndex].origin;     // 환자 좌표계 시작점
     //XMFLOAT3 spacing = fileReader->views[viewIndex].spacing;   // 픽셀 간격
@@ -1789,10 +1819,10 @@ XMFLOAT3 QDirect3D11Widget::GetPatientCoordFromClick(int viewIndex, XMFLOAT2 uv)
     }
 
 
-    qDebug() << "Origin: (" << origin.x << ", " << origin.y << ", " << origin.z << ")";
+    /*qDebug() << "Origin: (" << origin.x << ", " << origin.y << ", " << origin.z << ")";
     qDebug() << "Spacing: (" << spacing.x << ", " << spacing.y << ", " << spacing.z << ")";
     qDebug() << "SliceIndex: " << sliceIndex;
-    qDebug() << "PatientCoord: (" << patientCoord.x << ", " << patientCoord.y << ", " << patientCoord.z << ")";
+    qDebug() << "PatientCoord: (" << patientCoord.x << ", " << patientCoord.y << ", " << patientCoord.z << ")";*/
 
     return patientCoord;
 
