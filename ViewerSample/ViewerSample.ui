@@ -123,6 +123,21 @@
        </size>
       </property>
       <layout class="QVBoxLayout" name="verticalLayout_1_1">
+       <property name="spacing">
+        <number>0</number>
+       </property>
+       <property name="leftMargin">
+        <number>0</number>
+       </property>
+       <property name="topMargin">
+        <number>0</number>
+       </property>
+       <property name="rightMargin">
+        <number>0</number>
+       </property>
+       <property name="bottomMargin">
+        <number>0</number>
+       </property>
        <item>
         <widget class="QLabel" name="label_patientImage">
          <property name="minimumSize">
@@ -141,27 +156,54 @@
           <pixmap>:/images/leftPatientInfoBar.png</pixmap>
          </property>
          <property name="scaledContents">
-          <bool>true</bool>
+          <bool>false</bool>
          </property>
-         <property name="alignment">
-          <set>Qt::AlignCenter</set>
+         <property name="indent">
+          <number>0</number>
          </property>
         </widget>
        </item>
        <item>
         <layout class="QFormLayout" name="formLayout_info">
+	
          <item row="0" column="0">
           <widget class="QLabel" name="label_name">
+		  <property name="font">
+    <font>
+      <pointsize>14</pointsize> <!-- 글씨 크기 -->
+      <bold>true</bold>          <!-- 굵게 (선택사항) -->
+      <italic>false</italic>     <!-- 기울임 여부 -->
+    </font>
+  </property>
+
            <property name="text">
             <string>이름:</string>
            </property>
+		   
+		<property name="styleSheet">
+  <string notr="true">background-color: rgb(108, 122, 144); color: white;</string>
+</property>
+
           </widget>
          </item>
          <item row="0" column="1">
           <widget class="QLabel" name="value_name">
+		  <property name="font">
+    <font>
+      <pointsize>14</pointsize> <!-- 글씨 크기 -->
+      <bold>true</bold>          <!-- 굵게 (선택사항) -->
+      <italic>false</italic>     <!-- 기울임 여부 -->
+    </font>
+  </property>
+
            <property name="text">
             <string>윤은지</string>
            </property>
+		   
+<property name="styleSheet">
+  <string notr="true">background-color: rgb(108, 122, 144); color: white;</string>
+</property>
+
           </widget>
          </item>
         </layout>
