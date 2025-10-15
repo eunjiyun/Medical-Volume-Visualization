@@ -26,9 +26,16 @@ ViewerSample::ViewerSample(QWidget* parent)
 
     ui->setupUi(this);
 
+    //251015
+    m_pScene = ui->view;
+    m_pScene = ui->view;
 
-    m_pScene = ui->view;
-    m_pScene = ui->view;
+
+    //dataset->findAndGetOFString(DCM_PatientName, patientName).good() &&
+    //    dataset->findAndGetOFString(DCM_PatientBirthDate, birthDate).good() &&
+    //    dataset->findAndGetOFString(DCM_StudyDate, studyDate).good() &&
+    //    dataset->findAndGetOFString(DCM_PatientID, patientID).good() &&
+    //    dataset->findAndGetOFString(DCM_PatientSex, patientMF).good()
 
     adjustWindowSize();
     addToolbarWidgets();
