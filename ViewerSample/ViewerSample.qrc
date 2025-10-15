@@ -1,4 +1,7 @@
 <RCC>
-    <qresource prefix="ViewerSample">
+    <qresource prefix="/ViewerSample"/>
+    <qresource prefix="/">
+        <file>images/mainTopBar.png</file>
+        <file>images/left1Bar.png</file>
     </qresource>
 </RCC>
