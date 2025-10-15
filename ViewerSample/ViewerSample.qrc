@@ -3,5 +3,7 @@
     <qresource prefix="/">
         <file>images/mainTopBar.png</file>
         <file>images/left1Bar.png</file>
+        <file>images/left2Bar.png</file>
+        <file>images/leftPatientInfoBar.png</file>
     </qresource>
 </RCC>
