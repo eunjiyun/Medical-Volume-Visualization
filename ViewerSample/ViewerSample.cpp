@@ -13,6 +13,7 @@
 #include <QCloseEvent>
 
 #include <QDesktopWidget>
+#include"FileReader.h"
 
 ViewerSample::ViewerSample(QWidget* parent)
     : QMainWindow(parent)
@@ -27,19 +28,22 @@ ViewerSample::ViewerSample(QWidget* parent)
     ui->setupUi(this);
 
     //251015
-    m_pScene = ui->view;
+
     m_pScene = ui->view;
 
 
-    //dataset->findAndGetOFString(DCM_PatientName, patientName).good() &&
-    //    dataset->findAndGetOFString(DCM_PatientBirthDate, birthDate).good() &&
-    //    dataset->findAndGetOFString(DCM_StudyDate, studyDate).good() &&
-    //    dataset->findAndGetOFString(DCM_PatientID, patientID).good() &&
-    //    dataset->findAndGetOFString(DCM_PatientSex, patientMF).good()
+  
 
     adjustWindowSize();
     addToolbarWidgets();
+
+
+
+
     connectSlots();
+
+
+
 }
 
 ViewerSample::~ViewerSample() = default;
@@ -104,6 +108,52 @@ void ViewerSample::init(bool success)
 
 
     QTimer::singleShot(500, this, [&] { m_pScene->run(); });
+
+
+
+
+
+    QString name = QString::fromLocal8Bit(m_pScene->fileReader->patientName.c_str());
+    QString label = QString::fromLocal8Bit("  ") + name;
+    ui->label_name->setText(label.toUtf8().constData());
+
+    QString patientMF = QString::fromLocal8Bit(m_pScene->fileReader->patientMF.c_str());
+    QString patientMFLabel = QString::fromLocal8Bit("    ") + patientMF;
+    ui->label_gender->setText(patientMFLabel.toUtf8().constData());
+
+
+
+    QString patientID = QString::fromLocal8Bit(m_pScene->fileReader->patientID.c_str());
+    QString patientIDLabel = ui->label_id->text(); // 기존 텍스트
+
+    QString richTextpatientID = "&nbsp;&nbsp;" + patientIDLabel  +
+        "&nbsp;&nbsp;&nbsp;" +
+        "<b>" + patientID + "</b>";
+    ui->label_id->setTextFormat(Qt::RichText);
+    ui->label_id->setText(richTextpatientID);
+
+
+    QString patientBirth = QString::fromLocal8Bit(m_pScene->fileReader->birthDate.c_str());
+    QString labelText = ui->label_age->text(); // 기존 텍스트
+
+    QString richText = "&nbsp;&nbsp;" + labelText +
+        "&nbsp;&nbsp;&nbsp;" +
+        "<b>" + patientBirth + "</b>";
+    ui->label_age->setTextFormat(Qt::RichText);
+    ui->label_age->setText(richText);
+
+
+
+    QString studyDate = QString::fromLocal8Bit(m_pScene->fileReader->studyDate.c_str());
+    QString studyDateLabel = ui->label_examDate->text(); // 기존 텍스트
+
+    QString richTextstudyDate = "&nbsp;&nbsp;" + studyDateLabel +
+        "&nbsp;&nbsp;&nbsp;" +
+        "<b>" + studyDate + "</b>";
+    ui->label_examDate->setTextFormat(Qt::RichText);
+    ui->label_examDate->setText(richTextstudyDate);
+
+
     disconnect(m_pScene, &QDirect3D11Widget::deviceInitialized, this, &ViewerSample::init);
 
 

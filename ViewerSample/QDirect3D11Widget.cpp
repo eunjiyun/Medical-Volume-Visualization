@@ -224,6 +224,8 @@ void QDirect3D11Widget::LoadDICOMSeries()
     //LoadDICOMSeries
     //fileReader->ParseSlice((std::string)"D:\\Data\\sez\\DICOM",0);
     fileReader->LoadDICOMSeries((std::string)"D:\\Data\\sez\\DICOM", m_pDevice);
+
+
 }
 
 void QDirect3D11Widget::onFrame()

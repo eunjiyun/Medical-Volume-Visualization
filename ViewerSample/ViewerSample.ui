@@ -16,12 +16,23 @@
     <height>770</height>
    </size>
   </property>
-  <property name="maximumSize">
-   <size>
-    <width>1530</width>
-    <height>770</height>
-   </size>
-  </property>
+
+  
+  
+   <property name="minimumSize">
+    <size>
+        <width>1530</width>
+        <height>770</height>
+       </size>
+      </property>
+      <property name="maximumSize">
+       <size>
+        <width>1530</width>
+        <height>770</height>
+       </size>
+      </property>
+	  
+
   <property name="windowTitle">
    <string>bright CT</string>
   </property>
@@ -192,7 +203,7 @@
             <string notr="true">
     background-color: rgb(108, 122, 144);
     color: white;
-    padding-top: 10px;
+    padding-top: 17px;
   </string>
            </property>
            <property name="text">
@@ -217,17 +228,17 @@
            <property name="font">
             <font>
              <family>NanumSquare</family>
-             <pointsize>11</pointsize>
-             <weight>75</weight>
+             <pointsize>8</pointsize>
+             <weight>55</weight>
              <italic>false</italic>
-             <bold>true</bold>
+             <bold>false</bold>
             </font>
            </property>
            <property name="styleSheet">
             <string notr="true">
     background-color: rgb(108, 122, 144);
     color: white;
-    padding-top: 10px;
+    padding-top: 3px;
   </string>
            </property>
            <property name="text">
@@ -253,20 +264,20 @@
             <font>
              <family>NanumSquare</family>
              <pointsize>11</pointsize>
-             <weight>75</weight>
+             <weight>55</weight>
              <italic>false</italic>
-             <bold>true</bold>
+             <bold>false</bold>
             </font>
            </property>
            <property name="styleSheet">
             <string notr="true">
     background-color: rgb(108, 122, 144);
     color: white;
-    padding-top: 10px;
+  padding-top: 12px;
   </string>
            </property>
            <property name="text">
-            <string>아이디:</string>
+            <string>아이디</string>
            </property>
           </widget>
          </item>
@@ -288,20 +299,20 @@
             <font>
              <family>NanumSquare</family>
              <pointsize>11</pointsize>
-             <weight>75</weight>
+             <weight>55</weight>
              <italic>false</italic>
-             <bold>true</bold>
+             <bold>false</bold>
             </font>
            </property>
            <property name="styleSheet">
             <string notr="true">
     background-color: rgb(108, 122, 144);
     color: white;
-    padding-top: 10px;
+    padding-top: 12px;
   </string>
            </property>
            <property name="text">
-            <string>나이:</string>
+            <string>생년월일</string>
            </property>
           </widget>
          </item>
@@ -322,28 +333,28 @@
            <property name="maximumSize">
             <size>
              <width>190</width>
-             <height>30</height>
+             <height>40</height>
             </size>
            </property>
            <property name="font">
             <font>
              <family>NanumSquare</family>
              <pointsize>11</pointsize>
-             <weight>75</weight>
+             <weight>55</weight>
              <italic>false</italic>
-             <bold>true</bold>
+             <bold>false</bold>
             </font>
            </property>
            <property name="styleSheet">
             <string notr="true">
     background-color: rgb(108, 122, 144);
     color: white;
-    padding-top: 5px;
-	 padding-bottom: 10px;
+    padding-top: 12px;
+	 padding-bottom: 5px;
   </string>
            </property>
            <property name="text">
-            <string>검사일:</string>
+            <string>검사일</string>
            </property>
           </widget>
          </item>
