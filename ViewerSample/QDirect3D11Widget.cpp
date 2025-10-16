@@ -22,31 +22,6 @@ using Microsoft::WRL::ComPtr;
 constexpr int FPS_LIMIT = 60.0f;
 constexpr int MS_PER_FRAME = (int)((1.0f / FPS_LIMIT) * 1000.0f);
 
-
-class CrosshairWidget : public QWidget {
-public:
-    CrosshairWidget(QWidget* parent) : QWidget(parent) {
-        setAttribute(Qt::WA_TransparentForMouseEvents);  // 마우스 이벤트 통과
-        setAttribute(Qt::WA_TranslucentBackground);      // 투명 배경
-    }
-
-protected:
-    void paintEvent(QPaintEvent* event) override {
-        QPainter painter(this);
-        painter.setRenderHint(QPainter::Antialiasing);
-
-        int w = width();
-        int h = height();
-
-        QPen pen(QColor(220, 50, 50), 2);
-        painter.setPen(pen);
-        painter.drawLine(w / 2, 0, w / 2, h);
-        painter.drawLine(0, h / 2, w, h / 2);
-    }
-};
-
-
-
 QDirect3D11Widget::QDirect3D11Widget(QWidget* parent)
     : QWidget(parent)
     , m_pDevice(Q_NULLPTR)
@@ -509,6 +484,9 @@ void QDirect3D11Widget::release()
 
 void QDirect3D11Widget::run()
 {
+	//qt 타이머 객체
+	//MS_PER_FRAME 간격마다 timeout() 시그널을 발생시킴
+	//timeout() 시그널은 내부적으로 pauseFrames, continueFrames 같은 슬롯에 연결되어 있음
     m_qTimer.start(MS_PER_FRAME);
     m_bRenderActive = m_bStarted = true;
 }
@@ -526,6 +504,7 @@ void QDirect3D11Widget::continueFrames()
 {
     if (m_qTimer.isActive() || !m_bStarted) return;
 
+	//
     connect(&m_qTimer, &QTimer::timeout, this, &QDirect3D11Widget::onFrame);
     m_qTimer.start(MS_PER_FRAME);
     m_bRenderActive = true;
@@ -648,9 +627,6 @@ bool QDirect3D11Widget::init()
     sliceInfoSagittal->adjustSize();
 
 
-
-
-
     connect(&m_qTimer, &QTimer::timeout, this, &QDirect3D11Widget::onFrame);
 
     return true;
@@ -738,6 +714,7 @@ void QDirect3D11Widget::endScene()
 }
 
 
+//렌더링 루프 중 씬을 갱신하거나 애니메이션, 카메라, UI 상태 등을 업데이트하는 역할
 void QDirect3D11Widget::tick()
 {
     // TODO: Update your scene here. For aesthetics reasons, only do it here if it's an

@@ -23,9 +23,6 @@
 #include <D3Dcompiler.h>
 #include <directxmath.h>
 using namespace DirectX;
-#include "AlignedAllocationPolicy.h"
-
-
 
 class FileReader;
 
@@ -52,8 +49,6 @@ struct ViewInfoCB {
     int padding[3]; // 16바이트 정렬을 맞추기 위해
 };
 
-
-class CrosshairWidget;
 
 class QDirect3D11Widget : public QWidget
 {

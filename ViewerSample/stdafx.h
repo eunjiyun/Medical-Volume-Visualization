@@ -45,7 +45,3 @@
 #include <directxmath.h>
 //using namespace DirectX;
 
-///////////////////////////
-//  warning C4316 처리용  //
-///////////////////////////
-#include "AlignedAllocationPolicy.h"

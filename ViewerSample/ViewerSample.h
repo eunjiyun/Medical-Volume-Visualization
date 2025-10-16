@@ -1,7 +1,5 @@
 ﻿#pragma once
-
 #include <QtWidgets/QMainWindow>
-#include <QCheckBox>
 #include "ui_ViewerSample.h"
 
 class ViewerSample : public QMainWindow
@@ -13,7 +11,6 @@ public:
     ~ViewerSample();
 
     void adjustWindowSize();
-    void addToolbarWidgets();
     void connectSlots();
 
 private:
@@ -25,9 +22,6 @@ public slots:
 
 private:
     Ui::ViewerSampleClass* ui;
-
     QDirect3D11Widget * m_pScene;
     QSize               m_WindowSize;
-    QCheckBox *         m_pCbxDoFrames;
-
 };
