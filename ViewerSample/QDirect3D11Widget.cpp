@@ -1476,10 +1476,11 @@ void QDirect3D11Widget::mousePressEvent(QMouseEvent* event)
                 m_RTViews.slices[1] = rtvA;
 
   
-
+                sliceInfoAxial->hide();
                 sliceInfoAxial->setText(QString("Image %1/%2").arg(fileReader->currentIndex[1] + 1).arg(fileReader->m_depth));
                 //sliceInfoAxial->adjustSize();
-                sliceInfoAxial->repaint();  // 강제로 다시 그리기
+              //  sliceInfoAxial->repaint();  // 강제로 다시 그리기
+                sliceInfoAxial->show();
                 break;
             case 2:
                 fileReader->UpdateCoronalTexture(fileReader->currentIndex[2]);
@@ -1490,9 +1491,12 @@ void QDirect3D11Widget::mousePressEvent(QMouseEvent* event)
                 rtvC = getRTVForTexture(texC);
                 m_RTViews.slices[2] = rtvC;
 
+
+                sliceInfoCoronal->hide();
                 sliceInfoCoronal->setText(QString("Image %1/%2").arg(fileReader->currentIndex[2] + 1).arg(fileReader->m_height));
                 //sliceInfoCoronal->adjustSize();
-                sliceInfoCoronal->repaint();  // 강제로 다시 그리기
+              //  sliceInfoCoronal->repaint();  // 강제로 다시 그리기
+                sliceInfoCoronal->show();
                 break;
             case 3:
                 fileReader->UpdateSagittalTexture(fileReader->currentIndex[3]);
@@ -1503,9 +1507,11 @@ void QDirect3D11Widget::mousePressEvent(QMouseEvent* event)
                 rtvS = getRTVForTexture(texS);
                 m_RTViews.slices[3] = rtvS;
 
+                sliceInfoSagittal->hide();
                 sliceInfoSagittal->setText(QString("Image %1/%2").arg(fileReader->currentIndex[3] + 1).arg(fileReader->m_width));
                 //sliceInfoSagittal->adjustSize();
-                sliceInfoSagittal->repaint();  // 강제로 다시 그리기
+                //sliceInfoSagittal->repaint();  // 강제로 다시 그리기
+                sliceInfoSagittal->show();
                 break;
             }
         }
@@ -2681,10 +2687,12 @@ void QDirect3D11Widget::onAxialScroll(int value) {
         update();
     }
 
+    sliceInfoAxial->hide();
     // 슬라이스 정보 업데이트
     sliceInfoAxial->setText(QString("Image %1/%2").arg(newIndex + 1).arg(fileReader->m_depth));
     //sliceInfoAxial->adjustSize();
-    sliceInfoAxial->repaint();  // 강제로 다시 그리기
+    //sliceInfoAxial->repaint();  // 강제로 다시 그리기
+    sliceInfoAxial->show();
 }
 
 void QDirect3D11Widget::onCoronalScroll(int value) {
@@ -2715,9 +2723,11 @@ void QDirect3D11Widget::onCoronalScroll(int value) {
         update();
     }
 
+    sliceInfoCoronal->hide();
     sliceInfoCoronal->setText(QString("Image %1/%2").arg(newIndex + 1).arg(fileReader->m_height));
    // sliceInfoCoronal->adjustSize();
-    sliceInfoCoronal->repaint();  // 강제로 다시 그리기
+    //sliceInfoCoronal->repaint();  // 강제로 다시 그리기
+    sliceInfoCoronal->show();
 }
 
 void QDirect3D11Widget::onSagittalScroll(int value) {
@@ -2746,9 +2756,11 @@ void QDirect3D11Widget::onSagittalScroll(int value) {
         update();
     }
 
+    sliceInfoSagittal->hide();
     sliceInfoSagittal->setText(QString("Image %1/%2").arg(newIndex + 1).arg(fileReader->m_width));
     //sliceInfoSagittal->adjustSize();
-    sliceInfoSagittal->repaint();  // 강제로 다시 그리기
+   // sliceInfoSagittal->repaint();  // 강제로 다시 그리기
+    sliceInfoSagittal->show();
 }
 
 
