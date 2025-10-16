@@ -1641,11 +1641,12 @@ void QDirect3D11Widget::RenderAllQuads()
      float cx = screenSize.x * 0.5f;
      float cy = screenSize.y * 0.5f;
 
-     // 수직선 (빨간색)
-     drawList->AddLine(ImVec2(cx, 0), ImVec2(cx, screenSize.y), IM_COL32(220, 50, 50, 255), 2.0f);
+     // 수직선 (연한 회색)
+     drawList->AddLine(ImVec2(cx, 0), ImVec2(cx, screenSize.y), IM_COL32(211, 211, 211, 255), 2.0f);
 
-     // 수평선 (빨간색)
-     drawList->AddLine(ImVec2(0, cy), ImVec2(screenSize.x, cy), IM_COL32(220, 50, 50, 255), 2.0f);
+     // 수평선 (연한 회색)
+     drawList->AddLine(ImVec2(0, cy), ImVec2(screenSize.x, cy), IM_COL32(211, 211, 211, 255), 2.0f);
+
 
      // ImGui 렌더링 마무리
      ImGui::Render();
