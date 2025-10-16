@@ -2262,9 +2262,9 @@ void QDirect3D11Widget::onCoronalScroll(int value) {
     if (!fileReader) return;
 
     // ImGui 로직: Coronal은 역방향으로 계산
-    // int newIndex = fileReader->m_height - 1 - value;
+     int newIndex = fileReader->m_height - 1 - value;
     // 또는 정방향으로 하려면:
-    int newIndex = value;
+    //int newIndex = value;
     newIndex = std::clamp(newIndex, 0, fileReader->m_height - 1);
 
     if (newIndex != fileReader->currentIndex[2]) {
