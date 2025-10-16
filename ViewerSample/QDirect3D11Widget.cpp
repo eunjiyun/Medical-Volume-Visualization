@@ -56,6 +56,47 @@ QDirect3D11Widget::QDirect3D11Widget(QWidget* parent)
 
 
 
+    scrollAxial = new QScrollBar(Qt::Vertical, this);
+    scrollCoronal = new QScrollBar(Qt::Vertical, this);
+    scrollSagittal = new QScrollBar(Qt::Vertical, this);
+
+
+
+    // 스크롤바에 테두리 스타일 적용
+    QString scrollBarStyle =
+        "QScrollBar:vertical {"
+        "   border: 2px solid #4078B4;"  // 파란색 테두리
+        "   background: #2b2b2b;"
+        "   width: 16px;"
+        "   margin: 0px;"
+        "}"
+        "QScrollBar::handle:vertical {"
+        "   background: #606060;"
+        "   min-height: 20px;"
+        "   border-radius: 4px;"
+        "}"
+        "QScrollBar::handle:vertical:hover {"
+        "   background: #707070;"
+        "}"
+        "QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {"
+        "   height: 0px;"
+        "}";
+
+    scrollAxial->setStyleSheet(scrollBarStyle);
+    scrollCoronal->setStyleSheet(scrollBarStyle);
+    scrollSagittal->setStyleSheet(scrollBarStyle);
+
+    //// 스크롤바 설정
+    //scrollAxial->setRange(0, 100);
+    //scrollCoronal->setRange(0, 100);
+    //scrollSagittal->setRange(0, 100);
+
+    // 시그널 연결
+    connect(scrollAxial, &QScrollBar::valueChanged, this, &QDirect3D11Widget::onAxialScroll);
+    connect(scrollCoronal, &QScrollBar::valueChanged, this, &QDirect3D11Widget::onCoronalScroll);
+    connect(scrollSagittal, &QScrollBar::valueChanged, this, &QDirect3D11Widget::onSagittalScroll);
+
+
 }
 
 QDirect3D11Widget::~QDirect3D11Widget() {}
@@ -190,6 +231,39 @@ bool QDirect3D11Widget::init()
     createSwapChainRTV();
     // ???怨쀬뵠???λ뜃由??
     InitShaders();
+
+
+
+
+
+    scrollAxial->setRange(0, fileReader->m_depth - 1);
+    scrollAxial->setValue(fileReader->m_depth / 2); // 중앙으로 초기화
+    scrollAxial->setPageStep(1);
+    scrollAxial->setSingleStep(1);
+
+    // Coronal 스크롤바 설정 (height 기준)
+    scrollCoronal->setRange(0, fileReader->m_height - 1);
+    scrollCoronal->setValue(fileReader->m_height / 2); // 중앙으로 초기화
+    scrollCoronal->setPageStep(1);
+    scrollCoronal->setSingleStep(1);
+
+    // Sagittal 스크롤바 설정 (width 기준)
+    scrollSagittal->setRange(0, fileReader->m_width - 1);
+    scrollSagittal->setValue(fileReader->m_width / 2); // 중앙으로 초기화
+    scrollSagittal->setPageStep(1);
+    scrollSagittal->setSingleStep(1);
+
+    // 초기 슬라이스 업데이트
+    onAxialScroll(scrollAxial->value());
+    onCoronalScroll(scrollCoronal->value());
+    onSagittalScroll(scrollSagittal->value());
+
+
+
+
+
+
+
 
     connect(&m_qTimer, &QTimer::timeout, this, &QDirect3D11Widget::onFrame);
 
@@ -1378,35 +1452,21 @@ void QDirect3D11Widget::RenderAllQuads()
 
 
     ImGui::SetNextWindowPos(ImVec2(0, 0)); // 좌측 상단 위치
-    ImGui::SetNextWindowSize(ImVec2(130, 150));
-    ImGui::Begin((QString::fromLocal8Bit("환자 정보")).toUtf8().constData(), nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
+    ImGui::SetNextWindowSize(ImVec2(90, 20));
 
+    ImGui::Begin("##VolumeNoTitle", nullptr,
+        ImGuiWindowFlags_NoTitleBar |   // 👈 제목줄 제거
+        ImGuiWindowFlags_NoResize |
+        ImGuiWindowFlags_NoMove |
+        ImGuiWindowFlags_NoScrollbar |
+        ImGuiWindowFlags_NoScrollWithMouse
+    );
 
+    ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(0, 255, 0, 255)); // 글자색 초록
+    ImGui::SetWindowFontScale(1.3f); // 글씨 크기 키움
+    ImGui::Text("Volume");
+    ImGui::PopStyleColor();
 
-    QString name = QString::fromLocal8Bit(fileReader->patientName.c_str());
-
-
-    QString label = QString::fromLocal8Bit("이름 : ") + name;
-    ImGui::Text("%s", label.toUtf8().constData());
-
-
-    QString patientMF = QString::fromLocal8Bit(fileReader->patientMF.c_str());
-    QString patientMFLabel = QString::fromLocal8Bit("성별 : ") + patientMF;
-    ImGui::Text("%s", patientMFLabel.toUtf8().constData());
-
-    QString patientID = QString::fromLocal8Bit(fileReader->patientID.c_str());
-    QString patientIDLabel = QString::fromLocal8Bit("아이디 : ") + patientID;
-    ImGui::Text("%s", patientIDLabel.toUtf8().constData());
-
-
-
-    QString patientBirth = QString::fromLocal8Bit(fileReader->birthDate.c_str());
-    QString patientBirthDate = QString::fromLocal8Bit("생년월일 : ") + patientBirth;
-    ImGui::Text("%s", patientBirthDate.toUtf8().constData());
-
-    QString studyDate = QString::fromLocal8Bit(fileReader->studyDate.c_str());
-    QString studyDateLabel = QString::fromLocal8Bit("검사일 : ") + studyDate;
-    ImGui::Text("%s", studyDateLabel.toUtf8().constData());
 
 
 
@@ -1424,273 +1484,343 @@ void QDirect3D11Widget::RenderAllQuads()
     ImGui::End();
 
 
+    ImGui::SetNextWindowPos(ImVec2(width()/2+10, 0)); // 좌측 상단 위치
+    ImGui::SetNextWindowSize(ImVec2(90, 20));
 
+    ImGui::Begin("##AxialNoTitle", nullptr,
+        ImGuiWindowFlags_NoTitleBar |   // 👈 제목줄 제거
+        ImGuiWindowFlags_NoResize |
+        ImGuiWindowFlags_NoMove |
+        ImGuiWindowFlags_NoScrollbar |
+        ImGuiWindowFlags_NoScrollWithMouse
+    );
 
+    ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(142, 124, 249, 255)); // 글자색 초록
+    ImGui::SetWindowFontScale(1.3f); // 글씨 크기 키움
+    ImGui::Text("Axial(A)");
+    ImGui::PopStyleColor();
 
-    static ImVec2 imageOffsetAxial = ImVec2(0, 0); // 이미지 위치 오프셋
-    static bool isDraggingAxial = false;
-    static ImVec2 dragStartAxial;
-
-
-    ImGui::SetNextWindowPos(ImVec2(640 * 2 - 32, 3));
-    ImGui::SetNextWindowSize(ImVec2(20, 380 - 3));
-    ImGui::Begin("Axial View", nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
-
-    static bool scrollInitialized = false;
-
-    ImGui::BeginChild("AxialScrollable", ImVec2(0, 0), true, ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_AlwaysVerticalScrollbar);
-    // 최초 1회만 중앙으로 스크롤 이동
-    if (!scrollInitialized) {
-       // float centerY = (fileReader->m_depth * 7 - ImGui::GetWindowHeight()) * 0.5f;
-        float centerY = (fileReader->m_depth * 7 ) * 0.5f;
-        ImGui::SetScrollY(centerY);
-        scrollInitialized = true;
-    }
-    //int sliceHeight = 7; // 한 슬라이스당 픽셀 높이
-    //int sliceIndex = static_cast<int>(ImGui::GetScrollY() / sliceHeight);
-
-    //sliceIndex = std::clamp(sliceIndex, 0, fileReader->m_depth - 1);
-    //fileReader->views[1].sliceIndex = sliceIndex;
-
-    if (ImGui::IsItemHovered() && ImGui::IsMouseClicked(ImGuiMouseButton_Left)) {
-        isDraggingAxial = true;
-        dragStartAxial = io.MousePos;
-
-        qDebug() << "[Axial] drag start";
-        qDebug() << "isDraggingAxial:" << isDraggingAxial;
-        qDebug() << "dragStartAxial:" << dragStartAxial.x << "," << dragStartAxial.y;
-    }
-
-
-    // // ✅ 대신 이미지 크기를 키워서 스크롤이 생기게 하고, 드래그로 스크롤 위치를 조정
-    //// if (isDraggingAxial) {
-   // static float lastScrollY = (fileReader->m_depth * 7) * 0.5f;
-    static float lastScrollY = 0.0f;
-
-    float scrollY = ImGui::GetScrollY();
-
-
-    if (scrollY != lastScrollY) {
-        int newIndex = static_cast<int>(scrollY / 7); // sliceHeight는 슬라이스당 픽셀 높이
-        newIndex = std::clamp(newIndex, 0, fileReader->m_depth - 1);
-
-        if (newIndex != fileReader->currentIndex[1]) {
-            fileReader->currentIndex[1] = newIndex;
-            qDebug() << "[Axial] slice index : " << newIndex << endl;
-            fileReader->UpdateAxialTexture(newIndex);
-
-
-            ID3D11Texture2D* tex = fileReader->axialTextureCache[newIndex];
-            ID3D11ShaderResourceView* srv = getSRVForTexture(tex);
-            m_SRViews.slices[1] = srv;
-
-            ID3D11RenderTargetView* rtv = getRTVForTexture(tex);
-            m_RTViews.slices[1] = rtv;
-
-
-        }
-
-        lastScrollY = scrollY;
-    }
-
-
-    if (ImGui::IsMouseReleased(ImGuiMouseButton_Left)) {
-        isDraggingAxial = false;
-
-        qDebug() << "[Axial] drag end";
-        qDebug() << "isDraggingAxial:" << isDraggingAxial;
-    }
-
-    ImGui::Image((void*)m_SRViews.slices[1], ImVec2(512, fileReader->m_depth * 7)); // 예시
-    ImGui::EndChild();
     ImGui::End();
 
 
 
-    static ImVec2 imageOffsetCoronal = ImVec2(0, 0); // 이미지 위치 오프셋
-    static bool isDraggingCoronal = false;
-    static ImVec2 dragStartCoronal;
 
+    ImGui::SetNextWindowPos(ImVec2(0, height()/2)); // 좌측 상단 위치
+    ImGui::SetNextWindowSize(ImVec2(90, 20));
 
+    ImGui::Begin("##CoronalNoTitle", nullptr,
+        ImGuiWindowFlags_NoTitleBar |   // 👈 제목줄 제거
+        ImGuiWindowFlags_NoResize |
+        ImGuiWindowFlags_NoMove |
+        ImGuiWindowFlags_NoScrollbar |
+        ImGuiWindowFlags_NoScrollWithMouse
+    );
 
-    //coronal
-    ImGui::SetNextWindowPos(ImVec2(640 - 32, 380 + 3));
-    ImGui::SetNextWindowSize(ImVec2(20, 380));
+    ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(48, 216, 198, 255)); // 글자색 초록
+    ImGui::SetWindowFontScale(1.3f); // 글씨 크기 키움
+    ImGui::Text("Coronal(C)");
+    ImGui::PopStyleColor();
 
-
-
-
-    ImGui::Begin("Coronal View", nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
-
-    static bool scrollInitializedCoronal = false;
-    ImGui::BeginChild("CoronalScrollable", ImVec2(0, 0), true, ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_AlwaysVerticalScrollbar);
-    // 최초 1회만 중앙으로 스크롤 이동
-    if (!scrollInitializedCoronal) {
-       // float centerY = (fileReader->m_height * 7 - ImGui::GetWindowHeight()) * 0.5f;
-        float centerY = (fileReader->m_height * 7 ) * 0.5f;
-        ImGui::SetScrollY(centerY);
-        scrollInitializedCoronal = true;
-    }
-
-    //int sliceHeightCoronal = 7; // 한 슬라이스당 픽셀 높이
-    //int sliceIndexCoronal = static_cast<int>(ImGui::GetScrollY() / sliceHeightCoronal);
-
-    //sliceIndexCoronal = std::clamp(sliceIndexCoronal, 0, fileReader->m_height - 1);
-    //fileReader->views[2].sliceIndex = sliceIndexCoronal;
-
-    if (ImGui::IsItemHovered() && ImGui::IsMouseClicked(ImGuiMouseButton_Left)) {
-        if (ImGui::IsWindowFocused()) { // 또는 ImGui::IsWindowHovered()
-
-            isDraggingCoronal = true;
-            dragStartCoronal = io.MousePos;
-
-            qDebug() << "Hovered and clicked!" << endl;
-            qDebug() << "isDraggingCoronal: " << isDraggingCoronal << endl;
-            qDebug() << "dragStartCoronal: (" << dragStartCoronal.x << ", " << dragStartCoronal.y << ")" << endl;
-        }
-    }
-
-
-
-  //  static float lastScrollYCoronal = fileReader->m_height * 7;
-    static float lastScrollYCoronal = 0.0f;
-    float scrollYCoronal = ImGui::GetScrollY();
-
-
-    if (scrollYCoronal != lastScrollYCoronal) {
-        //int newIndex = static_cast<int>(scrollYCoronal / 7); // sliceHeight는 슬라이스당 픽셀 높이
-        int newIndex = static_cast<int>((fileReader->m_height * 7.f - scrollYCoronal) / 7.f);
-
-
-
-        newIndex = std::clamp(newIndex, 0, fileReader->m_height - 1);
-
-        if (newIndex != fileReader->currentIndex[2]) {
-            fileReader->currentIndex[2] = newIndex;
-            qDebug() << "[Coronal] slice index : " << newIndex << endl;
-            fileReader->UpdateCoronalTexture(newIndex);
-
-
-            ID3D11Texture2D* tex = fileReader->coronalTextureCache[newIndex];
-            ID3D11ShaderResourceView* srv = getSRVForTexture(tex);
-            m_SRViews.slices[2] = srv;
-
-            ID3D11RenderTargetView* rtv = getRTVForTexture(tex);
-            m_RTViews.slices[2] = rtv;
-
-
-        }
-
-        lastScrollYCoronal = scrollYCoronal;
-
-
-    }
-
-
-
-
-    ImGui::Image((void*)m_SRViews.slices[1], ImVec2(512, fileReader->m_height * 7)); // 예시
-    ImGui::EndChild();
     ImGui::End();
-    //==
 
 
 
 
-    static ImVec2 imageOffsetSagittal = ImVec2(0, 0); // 이미지 위치 오프셋
-    static bool isDraggingSagittal = false;
-    static ImVec2 dragStartSagittal;
 
-    //sagittal
-  //  ImGui::SetNextWindowPos(ImVec2(viewWidth * 2 - 30, viewHeight+10));
-    ImGui::SetNextWindowPos(ImVec2(640 * 2 - 32, 380 + 3));
-    ImGui::SetNextWindowSize(ImVec2(20, 380));
+    ImGui::SetNextWindowPos(ImVec2(width() / 2 + 10, height() / 2)); // 좌측 상단 위치
+    ImGui::SetNextWindowSize(ImVec2(90, 20));
 
+    ImGui::Begin("##SagittalNoTitle", nullptr,
+        ImGuiWindowFlags_NoTitleBar |   // 👈 제목줄 제거
+        ImGuiWindowFlags_NoResize |
+        ImGuiWindowFlags_NoMove |
+        ImGuiWindowFlags_NoScrollbar |
+        ImGuiWindowFlags_NoScrollWithMouse
+    );
 
-    ImGui::Begin("Sagittal View", nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
+    ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(224, 239, 0, 255)); // 글자색 초록
+    ImGui::SetWindowFontScale(1.3f); // 글씨 크기 키움
+    ImGui::Text("Sagittal(S)");
+    ImGui::PopStyleColor();
 
-    static bool scrollInitializedSagittal = false;
-    ImGui::BeginChild("SagittalScrollable", ImVec2(0, 0), true, ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_AlwaysVerticalScrollbar);
-
-    if (!scrollInitializedSagittal) {
-       // float centerY = (fileReader->m_width * 7 - ImGui::GetWindowHeight()) * 0.5f;
-        float centerY = (fileReader->m_width * 7 ) * 0.5f;
-
-        ImGui::SetScrollY(centerY);
-        scrollInitializedSagittal = true;
-    }
-
-
-    //int sliceHeightSagittal = 7; // 한 슬라이스당 픽셀 높이
-    //int sliceIndexSagittal = static_cast<int>(ImGui::GetScrollY() / sliceHeightSagittal);
-
-    //sliceIndexSagittal = std::clamp(sliceIndexSagittal, 0, fileReader->m_width - 1);
-    //fileReader->views[3].sliceIndex = sliceIndexSagittal;
-
-    if (ImGui::IsItemHovered() && ImGui::IsMouseClicked(ImGuiMouseButton_Left)) {
-        if (ImGui::IsWindowFocused()) { // 또는 ImGui::IsWindowHovered()
-            isDraggingSagittal = true;
-            dragStartSagittal = io.MousePos;
-
-            qDebug() << "[Sagittal] drag start";
-            qDebug() << "isDraggingSagittal:" << isDraggingSagittal;
-            qDebug() << "dragStartSagittal:" << dragStartSagittal.x << "," << dragStartSagittal.y;
-        }
-
-    }
-
-
-    //// ✅ 대신 이미지 크기를 키워서 스크롤이 생기게 하고, 드래그로 스크롤 위치를 조정
-    //if (isDraggingSagittal) {
-    //    float scrollY = ImGui::GetScrollY();
-    //    ImVec2 dragDelta = ImVec2(io.MousePos.x - dragStartSagittal.x, io.MousePos.y - dragStartSagittal.y);
-    //    ImGui::SetScrollY(scrollY - dragDelta.y);
-    //}
-
-   // static float lastScrollYSagittal = fileReader->m_width * 7;
-
-    static float lastScrollYSagittal = 0.0f;
-    float scrollYSagittal = ImGui::GetScrollY();
-
-
-    if (scrollYSagittal != lastScrollYSagittal) {
-       // int newIndex = static_cast<int>(scrollYCoronal / 7); // sliceHeight는 슬라이스당 픽셀 높이
-        int newIndex = static_cast<int>(scrollYSagittal / 7); // sliceHeight는 슬라이스당 픽셀 높이
-        //int newIndex = static_cast<int>((fileReader->m_width * 7.f - scrollYSagittal) / 7.f);
-
-
-
-        newIndex = std::clamp(newIndex, 0, fileReader->m_width - 1);
-
-        if (newIndex != fileReader->currentIndex[3]) {
-            fileReader->currentIndex[3] = newIndex;
-            qDebug() << "[Sagittal] slice index : " << newIndex << endl;
-            fileReader->UpdateSagittalTexture(newIndex);
-
-
-            ID3D11Texture2D* tex = fileReader->sagittalTextureCache[newIndex];
-            ID3D11ShaderResourceView* srv = getSRVForTexture(tex);
-            m_SRViews.slices[3] = srv;
-
-            ID3D11RenderTargetView* rtv = getRTVForTexture(tex);
-            m_RTViews.slices[3] = rtv;
-
-
-        }
-
-        lastScrollYSagittal = scrollYSagittal;
-
-
-    }
-
-
-
-
-    ImGui::Image((void*)m_SRViews.slices[1], ImVec2(512, fileReader->m_width * 7)); // 예시
-
-
-    ImGui::EndChild();
     ImGui::End();
+
+
+
+
+
+
+
+
+
+
+
+
+
+  //  static ImVec2 imageOffsetAxial = ImVec2(0, 0); // 이미지 위치 오프셋
+  //  static bool isDraggingAxial = false;
+  //  static ImVec2 dragStartAxial;
+
+
+  //  ImGui::SetNextWindowPos(ImVec2(640 * 2 - 32, 3));
+  //  ImGui::SetNextWindowSize(ImVec2(20, 380 - 3));
+  //  ImGui::Begin("Axial View", nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
+
+  //  static bool scrollInitialized = false;
+
+  //  ImGui::BeginChild("AxialScrollable", ImVec2(0, 0), true, ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_AlwaysVerticalScrollbar);
+  //  // 최초 1회만 중앙으로 스크롤 이동
+  //  if (!scrollInitialized) {
+  //     // float centerY = (fileReader->m_depth * 7 - ImGui::GetWindowHeight()) * 0.5f;
+  //      float centerY = (fileReader->m_depth * 7 ) * 0.5f;
+  //      ImGui::SetScrollY(centerY);
+  //      scrollInitialized = true;
+  //  }
+  //  //int sliceHeight = 7; // 한 슬라이스당 픽셀 높이
+  //  //int sliceIndex = static_cast<int>(ImGui::GetScrollY() / sliceHeight);
+
+  //  //sliceIndex = std::clamp(sliceIndex, 0, fileReader->m_depth - 1);
+  //  //fileReader->views[1].sliceIndex = sliceIndex;
+
+  //  if (ImGui::IsItemHovered() && ImGui::IsMouseClicked(ImGuiMouseButton_Left)) {
+  //      isDraggingAxial = true;
+  //      dragStartAxial = io.MousePos;
+
+  //      qDebug() << "[Axial] drag start";
+  //      qDebug() << "isDraggingAxial:" << isDraggingAxial;
+  //      qDebug() << "dragStartAxial:" << dragStartAxial.x << "," << dragStartAxial.y;
+  //  }
+
+
+  //  // // ✅ 대신 이미지 크기를 키워서 스크롤이 생기게 하고, 드래그로 스크롤 위치를 조정
+  //  //// if (isDraggingAxial) {
+  // // static float lastScrollY = (fileReader->m_depth * 7) * 0.5f;
+  //  static float lastScrollY = 0.0f;
+
+  //  float scrollY = ImGui::GetScrollY();
+
+
+  //  if (scrollY != lastScrollY) {
+  //      int newIndex = static_cast<int>(scrollY / 7); // sliceHeight는 슬라이스당 픽셀 높이
+  //      newIndex = std::clamp(newIndex, 0, fileReader->m_depth - 1);
+
+  //      if (newIndex != fileReader->currentIndex[1]) {
+  //          fileReader->currentIndex[1] = newIndex;
+  //          qDebug() << "[Axial] slice index : " << newIndex << endl;
+  //          fileReader->UpdateAxialTexture(newIndex);
+
+
+  //          ID3D11Texture2D* tex = fileReader->axialTextureCache[newIndex];
+  //          ID3D11ShaderResourceView* srv = getSRVForTexture(tex);
+  //          m_SRViews.slices[1] = srv;
+
+  //          ID3D11RenderTargetView* rtv = getRTVForTexture(tex);
+  //          m_RTViews.slices[1] = rtv;
+
+
+  //      }
+
+  //      lastScrollY = scrollY;
+  //  }
+
+
+  //  if (ImGui::IsMouseReleased(ImGuiMouseButton_Left)) {
+  //      isDraggingAxial = false;
+
+  //      qDebug() << "[Axial] drag end";
+  //      qDebug() << "isDraggingAxial:" << isDraggingAxial;
+  //  }
+
+  //  ImGui::Image((void*)m_SRViews.slices[1], ImVec2(512, fileReader->m_depth * 7)); // 예시
+  //  ImGui::EndChild();
+  //  ImGui::End();
+
+
+
+  //  static ImVec2 imageOffsetCoronal = ImVec2(0, 0); // 이미지 위치 오프셋
+  //  static bool isDraggingCoronal = false;
+  //  static ImVec2 dragStartCoronal;
+
+
+
+  //  //coronal
+  //  ImGui::SetNextWindowPos(ImVec2(640 - 32, 380 + 3));
+  //  ImGui::SetNextWindowSize(ImVec2(20, 380));
+
+
+
+
+  //  ImGui::Begin("Coronal View", nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
+
+  //  static bool scrollInitializedCoronal = false;
+  //  ImGui::BeginChild("CoronalScrollable", ImVec2(0, 0), true, ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_AlwaysVerticalScrollbar);
+  //  // 최초 1회만 중앙으로 스크롤 이동
+  //  if (!scrollInitializedCoronal) {
+  //     // float centerY = (fileReader->m_height * 7 - ImGui::GetWindowHeight()) * 0.5f;
+  //      float centerY = (fileReader->m_height * 7 ) * 0.5f;
+  //      ImGui::SetScrollY(centerY);
+  //      scrollInitializedCoronal = true;
+  //  }
+
+  //  //int sliceHeightCoronal = 7; // 한 슬라이스당 픽셀 높이
+  //  //int sliceIndexCoronal = static_cast<int>(ImGui::GetScrollY() / sliceHeightCoronal);
+
+  //  //sliceIndexCoronal = std::clamp(sliceIndexCoronal, 0, fileReader->m_height - 1);
+  //  //fileReader->views[2].sliceIndex = sliceIndexCoronal;
+
+  //  if (ImGui::IsItemHovered() && ImGui::IsMouseClicked(ImGuiMouseButton_Left)) {
+  //      if (ImGui::IsWindowFocused()) { // 또는 ImGui::IsWindowHovered()
+
+  //          isDraggingCoronal = true;
+  //          dragStartCoronal = io.MousePos;
+
+  //          qDebug() << "Hovered and clicked!" << endl;
+  //          qDebug() << "isDraggingCoronal: " << isDraggingCoronal << endl;
+  //          qDebug() << "dragStartCoronal: (" << dragStartCoronal.x << ", " << dragStartCoronal.y << ")" << endl;
+  //      }
+  //  }
+
+
+
+  ////  static float lastScrollYCoronal = fileReader->m_height * 7;
+  //  static float lastScrollYCoronal = 0.0f;
+  //  float scrollYCoronal = ImGui::GetScrollY();
+
+
+  //  if (scrollYCoronal != lastScrollYCoronal) {
+  //      //int newIndex = static_cast<int>(scrollYCoronal / 7); // sliceHeight는 슬라이스당 픽셀 높이
+  //      int newIndex = static_cast<int>((fileReader->m_height * 7.f - scrollYCoronal) / 7.f);
+
+
+
+  //      newIndex = std::clamp(newIndex, 0, fileReader->m_height - 1);
+
+  //      if (newIndex != fileReader->currentIndex[2]) {
+  //          fileReader->currentIndex[2] = newIndex;
+  //          qDebug() << "[Coronal] slice index : " << newIndex << endl;
+  //          fileReader->UpdateCoronalTexture(newIndex);
+
+
+  //          ID3D11Texture2D* tex = fileReader->coronalTextureCache[newIndex];
+  //          ID3D11ShaderResourceView* srv = getSRVForTexture(tex);
+  //          m_SRViews.slices[2] = srv;
+
+  //          ID3D11RenderTargetView* rtv = getRTVForTexture(tex);
+  //          m_RTViews.slices[2] = rtv;
+
+
+  //      }
+
+  //      lastScrollYCoronal = scrollYCoronal;
+
+
+  //  }
+
+
+
+
+  //  ImGui::Image((void*)m_SRViews.slices[1], ImVec2(512, fileReader->m_height * 7)); // 예시
+  //  ImGui::EndChild();
+  //  ImGui::End();
+  //  //==
+
+
+
+
+  //  static ImVec2 imageOffsetSagittal = ImVec2(0, 0); // 이미지 위치 오프셋
+  //  static bool isDraggingSagittal = false;
+  //  static ImVec2 dragStartSagittal;
+
+  //  //sagittal
+  ////  ImGui::SetNextWindowPos(ImVec2(viewWidth * 2 - 30, viewHeight+10));
+  //  ImGui::SetNextWindowPos(ImVec2(640 * 2 - 32, 380 + 3));
+  //  ImGui::SetNextWindowSize(ImVec2(20, 380));
+
+
+  //  ImGui::Begin("Sagittal View", nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
+
+  //  static bool scrollInitializedSagittal = false;
+  //  ImGui::BeginChild("SagittalScrollable", ImVec2(0, 0), true, ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_AlwaysVerticalScrollbar);
+
+  //  if (!scrollInitializedSagittal) {
+  //     // float centerY = (fileReader->m_width * 7 - ImGui::GetWindowHeight()) * 0.5f;
+  //      float centerY = (fileReader->m_width * 7 ) * 0.5f;
+
+  //      ImGui::SetScrollY(centerY);
+  //      scrollInitializedSagittal = true;
+  //  }
+
+
+  //  //int sliceHeightSagittal = 7; // 한 슬라이스당 픽셀 높이
+  //  //int sliceIndexSagittal = static_cast<int>(ImGui::GetScrollY() / sliceHeightSagittal);
+
+  //  //sliceIndexSagittal = std::clamp(sliceIndexSagittal, 0, fileReader->m_width - 1);
+  //  //fileReader->views[3].sliceIndex = sliceIndexSagittal;
+
+  //  if (ImGui::IsItemHovered() && ImGui::IsMouseClicked(ImGuiMouseButton_Left)) {
+  //      if (ImGui::IsWindowFocused()) { // 또는 ImGui::IsWindowHovered()
+  //          isDraggingSagittal = true;
+  //          dragStartSagittal = io.MousePos;
+
+  //          qDebug() << "[Sagittal] drag start";
+  //          qDebug() << "isDraggingSagittal:" << isDraggingSagittal;
+  //          qDebug() << "dragStartSagittal:" << dragStartSagittal.x << "," << dragStartSagittal.y;
+  //      }
+
+  //  }
+
+
+  //  //// ✅ 대신 이미지 크기를 키워서 스크롤이 생기게 하고, 드래그로 스크롤 위치를 조정
+  //  //if (isDraggingSagittal) {
+  //  //    float scrollY = ImGui::GetScrollY();
+  //  //    ImVec2 dragDelta = ImVec2(io.MousePos.x - dragStartSagittal.x, io.MousePos.y - dragStartSagittal.y);
+  //  //    ImGui::SetScrollY(scrollY - dragDelta.y);
+  //  //}
+
+  // // static float lastScrollYSagittal = fileReader->m_width * 7;
+
+  //  static float lastScrollYSagittal = 0.0f;
+  //  float scrollYSagittal = ImGui::GetScrollY();
+
+
+  //  if (scrollYSagittal != lastScrollYSagittal) {
+  //     // int newIndex = static_cast<int>(scrollYCoronal / 7); // sliceHeight는 슬라이스당 픽셀 높이
+  //      int newIndex = static_cast<int>(scrollYSagittal / 7); // sliceHeight는 슬라이스당 픽셀 높이
+  //      //int newIndex = static_cast<int>((fileReader->m_width * 7.f - scrollYSagittal) / 7.f);
+
+
+
+  //      newIndex = std::clamp(newIndex, 0, fileReader->m_width - 1);
+
+  //      if (newIndex != fileReader->currentIndex[3]) {
+  //          fileReader->currentIndex[3] = newIndex;
+  //          qDebug() << "[Sagittal] slice index : " << newIndex << endl;
+  //          fileReader->UpdateSagittalTexture(newIndex);
+
+
+  //          ID3D11Texture2D* tex = fileReader->sagittalTextureCache[newIndex];
+  //          ID3D11ShaderResourceView* srv = getSRVForTexture(tex);
+  //          m_SRViews.slices[3] = srv;
+
+  //          ID3D11RenderTargetView* rtv = getRTVForTexture(tex);
+  //          m_RTViews.slices[3] = rtv;
+
+
+  //      }
+
+  //      lastScrollYSagittal = scrollYSagittal;
+
+
+  //  }
+
+
+
+
+  //  ImGui::Image((void*)m_SRViews.slices[1], ImVec2(512, fileReader->m_width * 7)); // 예시
+
+
+  //  ImGui::EndChild();
+  //  ImGui::End();
 
 
 
@@ -2099,6 +2229,92 @@ void QDirect3D11Widget::onReset()
 }
 
 
+//fileReader->currentIndex[0]
+void QDirect3D11Widget::onAxialScroll(int value) {
+    // Axial 뷰의 슬라이스 변경
+    if (!fileReader) return;
+
+    // ImGui 로직과 동일: 스크롤 값을 슬라이스 인덱스로 변환
+    int newIndex = value;
+    newIndex = std::clamp(newIndex, 0, fileReader->m_depth - 1);
+
+    if (newIndex != fileReader->currentIndex[1]) {
+        fileReader->currentIndex[1] = newIndex;
+        qDebug() << "[Axial] slice index:" << newIndex;
+
+        // 텍스처 업데이트
+        fileReader->UpdateAxialTexture(newIndex);
+
+        // SRV 및 RTV 업데이트
+        ID3D11Texture2D* tex = fileReader->axialTextureCache[newIndex];
+        ID3D11ShaderResourceView* srv = getSRVForTexture(tex);
+        m_SRViews.slices[1] = srv;
+
+        ID3D11RenderTargetView* rtv = getRTVForTexture(tex);
+        m_RTViews.slices[1] = rtv;
+
+        // 렌더링 업데이트
+        update();
+    }
+}
+
+void QDirect3D11Widget::onCoronalScroll(int value) {
+    if (!fileReader) return;
+
+    // ImGui 로직: Coronal은 역방향으로 계산
+    // int newIndex = fileReader->m_height - 1 - value;
+    // 또는 정방향으로 하려면:
+    int newIndex = value;
+    newIndex = std::clamp(newIndex, 0, fileReader->m_height - 1);
+
+    if (newIndex != fileReader->currentIndex[2]) {
+        fileReader->currentIndex[2] = newIndex;
+        qDebug() << "[Coronal] slice index:" << newIndex;
+
+        // 텍스처 업데이트
+        fileReader->UpdateCoronalTexture(newIndex);
+
+        // SRV 및 RTV 업데이트
+        ID3D11Texture2D* tex = fileReader->coronalTextureCache[newIndex];
+        ID3D11ShaderResourceView* srv = getSRVForTexture(tex);
+        m_SRViews.slices[2] = srv;
+
+        ID3D11RenderTargetView* rtv = getRTVForTexture(tex);
+        m_RTViews.slices[2] = rtv;
+
+        // 렌더링 업데이트
+        update();
+    }
+}
+
+void QDirect3D11Widget::onSagittalScroll(int value) {
+    if (!fileReader) return;
+
+    // ImGui 로직과 동일
+    int newIndex = value;
+    newIndex = std::clamp(newIndex, 0, fileReader->m_width - 1);
+
+    if (newIndex != fileReader->currentIndex[3]) {
+        fileReader->currentIndex[3] = newIndex;
+        qDebug() << "[Sagittal] slice index:" << newIndex;
+
+        // 텍스처 업데이트
+        fileReader->UpdateSagittalTexture(newIndex);
+
+        // SRV 및 RTV 업데이트
+        ID3D11Texture2D* tex = fileReader->sagittalTextureCache[newIndex];
+        ID3D11ShaderResourceView* srv = getSRVForTexture(tex);
+        m_SRViews.slices[3] = srv;
+
+        ID3D11RenderTargetView* rtv = getRTVForTexture(tex);
+        m_RTViews.slices[3] = rtv;
+
+        // 렌더링 업데이트
+        update();
+    }
+}
+
+
 
 void QDirect3D11Widget::resetEnvironment()
 {
@@ -2143,6 +2359,22 @@ void QDirect3D11Widget::resizeEvent(QResizeEvent* event)
         onReset();
         emit widgetResized();
     }
+
+    int w = width() / 2;
+    int h = height() / 2;
+    int scrollBarWidth = 16;
+    int gap = 4;
+    int labelMargin = 8;
+
+    // 스크롤바 위치 (각 뷰의 오른쪽)
+    scrollAxial->setGeometry(width() - scrollBarWidth - gap, gap,
+        scrollBarWidth, h - gap * 2);
+    scrollCoronal->setGeometry(w - scrollBarWidth - gap, h + gap,
+        scrollBarWidth, h - gap * 2);
+    scrollSagittal->setGeometry(width() - scrollBarWidth - gap, h + gap,
+        scrollBarWidth, h - gap * 2);
+
+
 
     QWidget::resizeEvent(event);
 }

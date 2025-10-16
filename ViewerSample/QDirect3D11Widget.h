@@ -7,6 +7,7 @@
 
 #include<QTimer>
 #include<unordered_map>
+#include<qscrollbar.h>
 
 
 
@@ -53,6 +54,10 @@ struct ViewInfoCB {
 class QDirect3D11Widget : public QWidget
 {
     Q_OBJECT
+public:
+    QScrollBar* scrollAxial;
+    QScrollBar* scrollCoronal;
+    QScrollBar* scrollSagittal;
 
 public:
     QDirect3D11Widget(QWidget * parent);
@@ -146,7 +151,7 @@ private:
     LRESULT WINAPI WndProc(MSG * pMsg);
 
 #if QT_VERSION >= 0x050000
-    bool nativeEvent(const QByteArray & eventType, void * message, long * result) override;
+    bool nativeEvent(const QByteArray & eventTypeonAxialScroll, void * message, long * result) override;
 #else
     bool winEvent(MSG * message, long * result) override;
 #endif
@@ -170,6 +175,12 @@ signals:
 private slots:
     void onFrame();
     void onReset();
+    void onAxialScroll(int value);
+    void onCoronalScroll(int value);
+    void onSagittalScroll(int value);
+
+   
+
 
     // Getters / Setters
 public:
