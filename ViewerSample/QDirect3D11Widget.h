@@ -67,7 +67,12 @@ public:
     QLabel* labelAxial;
     QLabel* labelCoronal;
     QLabel* labelSagittal;
-    CrosshairWidget* crosshairWidget;
+
+
+    // 슬라이스 정보 라벨 추가
+    QLabel* sliceInfoAxial;
+    QLabel* sliceInfoCoronal;
+    QLabel* sliceInfoSagittal;
 
 public:
     QDirect3D11Widget(QWidget * parent);
