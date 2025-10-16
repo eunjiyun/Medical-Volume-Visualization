@@ -8,6 +8,10 @@
 #include<QTimer>
 #include<unordered_map>
 #include<qscrollbar.h>
+#include<qlabel.h>
+#include <QPainter>
+#include <QPen>
+#include <QColor>
 
 
 
@@ -49,7 +53,7 @@ struct ViewInfoCB {
 };
 
 
-
+class CrosshairWidget;
 
 class QDirect3D11Widget : public QWidget
 {
@@ -58,6 +62,12 @@ public:
     QScrollBar* scrollAxial;
     QScrollBar* scrollCoronal;
     QScrollBar* scrollSagittal;
+
+    QLabel* labelVolume;
+    QLabel* labelAxial;
+    QLabel* labelCoronal;
+    QLabel* labelSagittal;
+    CrosshairWidget* crosshairWidget;
 
 public:
     QDirect3D11Widget(QWidget * parent);
@@ -256,6 +266,32 @@ public:
     float viewHeight;
     DirectX::XMFLOAT3 patientCoord;
     int clickedViewIndex;
+
+
+    //protected:
+    //    void paintEvent(QPaintEvent* event) override {
+    //        // D3D11 렌더링 먼저
+    //        render();
+
+    //        // Qt로 십자선 그리기
+    //        QPainter painter(this);
+    //        painter.setRenderHint(QPainter::Antialiasing);
+
+    //        int w = width();
+    //        int h = height();
+    //        int halfW = w / 2;
+    //        int halfH = h / 2;
+
+    //        // 펜 설정 (빨간색, 두께 2)
+    //        QPen pen(QColor(220, 50, 50), 2);
+    //        painter.setPen(pen);
+
+    //        // 수직선
+    //        painter.drawLine(halfW, 0, halfW, h);
+
+    //        // 수평선
+    //        painter.drawLine(0, halfH, w, halfH);
+    //    }
 };
 
 

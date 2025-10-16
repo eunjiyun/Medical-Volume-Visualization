@@ -23,6 +23,29 @@ constexpr int FPS_LIMIT = 60.0f;
 constexpr int MS_PER_FRAME = (int)((1.0f / FPS_LIMIT) * 1000.0f);
 
 
+class CrosshairWidget : public QWidget {
+public:
+    CrosshairWidget(QWidget* parent) : QWidget(parent) {
+        setAttribute(Qt::WA_TransparentForMouseEvents);  // 마우스 이벤트 통과
+        setAttribute(Qt::WA_TranslucentBackground);      // 투명 배경
+    }
+
+protected:
+    void paintEvent(QPaintEvent* event) override {
+        QPainter painter(this);
+        painter.setRenderHint(QPainter::Antialiasing);
+
+        int w = width();
+        int h = height();
+
+        QPen pen(QColor(220, 50, 50), 2);
+        painter.setPen(pen);
+        painter.drawLine(w / 2, 0, w / 2, h);
+        painter.drawLine(0, h / 2, w, h / 2);
+    }
+};
+
+
 
 QDirect3D11Widget::QDirect3D11Widget(QWidget* parent)
     : QWidget(parent)
@@ -60,36 +83,169 @@ QDirect3D11Widget::QDirect3D11Widget(QWidget* parent)
     scrollCoronal = new QScrollBar(Qt::Vertical, this);
     scrollSagittal = new QScrollBar(Qt::Vertical, this);
 
+    // 라벨 생성
+    labelVolume = new QLabel("Volume", this);
+    labelAxial = new QLabel("Axial(A)", this);
+    labelCoronal = new QLabel("Coronal(C)", this);
+    labelSagittal = new QLabel("Sagittal(S)", this);
 
 
-    // 스크롤바에 테두리 스타일 적용
-    QString scrollBarStyle =
+
+    //// 스크롤바에 테두리 스타일 적용
+    //QString scrollBarStyle =
+    //    "QScrollBar:vertical {"
+    //    "   border: 2px solid #4078B4;"  // 파란색 테두리
+    //    "   background: #2b2b2b;"
+    //    "   width: 16px;"
+    //    "   margin: 0px;"
+    //    "}"
+    //    "QScrollBar::handle:vertical {"
+    //    "   background: #606060;"
+    //    "   min-height: 20px;"
+    //    "   border-radius: 4px;"
+    //    "}"
+    //    "QScrollBar::handle:vertical:hover {"
+    //    "   background: #707070;"
+    //    "}"
+    //    "QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {"
+    //    "   height: 0px;"
+    //    "}";
+
+    //scrollAxial->setStyleSheet(scrollBarStyle);
+    //scrollCoronal->setStyleSheet(scrollBarStyle);
+    //scrollSagittal->setStyleSheet(scrollBarStyle);
+
+
+
+  // Axial 스크롤바 - 보라/마젠타
+    scrollAxial->setStyleSheet(
         "QScrollBar:vertical {"
-        "   border: 2px solid #4078B4;"  // 파란색 테두리
-        "   background: #2b2b2b;"
+        "   background: #1a1a1a;"
+        "   border: 2px solid #D87FD8;"  // 보라/마젠타
+        "   border-radius: 4px;"
         "   width: 16px;"
-        "   margin: 0px;"
+        "   margin: 4px;"
         "}"
         "QScrollBar::handle:vertical {"
-        "   background: #606060;"
-        "   min-height: 20px;"
-        "   border-radius: 4px;"
+        "   background: #D87FD8;"
+        "   border-radius: 3px;"
+        "   min-height: 30px;"
         "}"
         "QScrollBar::handle:vertical:hover {"
-        "   background: #707070;"
+        "   background: #E89FE8;"  // 밝은 보라
         "}"
-        "QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {"
-        "   height: 0px;"
-        "}";
+    );
 
-    scrollAxial->setStyleSheet(scrollBarStyle);
-    scrollCoronal->setStyleSheet(scrollBarStyle);
-    scrollSagittal->setStyleSheet(scrollBarStyle);
+    // Coronal 스크롤바 - 청록색
+    scrollCoronal->setStyleSheet(
+        "QScrollBar:vertical {"
+        "   background: #1a1a1a;"
+        "   border: 2px solid #00CED1;"  // 청록색
+        "   border-radius: 4px;"
+        "   width: 16px;"
+        "   margin: 4px;"
+        "}"
+        "QScrollBar::handle:vertical {"
+        "   background: #00CED1;"
+        "   border-radius: 3px;"
+        "   min-height: 30px;"
+        "}"
+        "QScrollBar::handle:vertical:hover {"
+        "   background: #20DEE1;"  // 밝은 청록
+        "}"
+    );
+
+    // Sagittal 스크롤바 - 노란색
+    scrollSagittal->setStyleSheet(
+        "QScrollBar:vertical {"
+        "   background: #1a1a1a;"
+        "   border: 2px solid #FFD700;"  // 노란색
+        "   border-radius: 4px;"
+        "   width: 16px;"
+        "   margin: 4px;"
+        "}"
+        "QScrollBar::handle:vertical {"
+        "   background: #FFD700;"
+        "   border-radius: 3px;"
+        "   min-height: 30px;"
+        "}"
+        "QScrollBar::handle:vertical:hover {"
+        "   background: #FFE44D;"  // 밝은 노란색
+        "}");
 
     //// 스크롤바 설정
     //scrollAxial->setRange(0, 100);
     //scrollCoronal->setRange(0, 100);
     //scrollSagittal->setRange(0, 100);
+
+
+    //      // 라벨 스타일 설정
+    //QString labelStyle =
+    //    "QLabel {"
+    //    "   color: #7CFC00;"  // 밝은 녹색 (라임 그린)
+    //    "   background-color: rgba(0, 0, 0, 150);"  // 반투명 검은 배경
+    //    "   padding: 4px 8px;"
+    //    "   border-radius: 3px;"
+    //    "   font-size: 13px;"
+    //    "   font-weight: bold;"
+    //    "}";
+
+
+    //labelVolume->setStyleSheet(labelStyle);
+    //labelAxial->setStyleSheet(labelStyle);
+    //labelCoronal->setStyleSheet(labelStyle);
+    //labelSagittal->setStyleSheet(labelStyle);
+
+
+    // 옵션 2: 각 뷰마다 다른 색상
+// Volume - 회색/흰색 (3D 렌더링)
+    labelVolume->setStyleSheet(
+        "QLabel { "
+        "   color: #CCCCCC; "
+        "   background-color: rgba(80, 80, 80, 100); "
+        "   padding: 4px 8px; "
+        "   border-radius: 3px; "
+        "   font-weight: bold; "
+        "}");
+
+    // Axial - 보라/마젠타 계열 (이미지의 Axial(A) 색상)
+    labelAxial->setStyleSheet(
+        "QLabel { "
+        "   color: #D87FD8; "
+        "   background-color: rgba(216, 127, 216, 30); "
+        "   padding: 4px 8px; "
+        "   border-radius: 3px; "
+        "   font-weight: bold; "
+        "}");
+
+    // Coronal - 청록색 (이미지의 Coronal(C) 색상)
+    labelCoronal->setStyleSheet(
+        "QLabel { "
+        "   color: #00CED1; "
+        "   background-color: rgba(0, 206, 209, 30); "
+        "   padding: 4px 8px; "
+        "   border-radius: 3px; "
+        "   font-weight: bold; "
+        "}");
+
+    // Sagittal - 노란색 (이미지의 Sagittal(S) 색상)
+    labelSagittal->setStyleSheet(
+        "QLabel { "
+        "   color: #FFD700; "
+        "   background-color: rgba(255, 215, 0, 30); "
+        "   padding: 4px 8px; "
+        "   border-radius: 3px; "
+        "   font-weight: bold; "
+        "}");
+
+
+   // // 십자선 위젯 추가
+   // crosshairWidget = new CrosshairWidget(this);
+   // crosshairWidget->setGeometry(0, 0, width(), height());
+   // crosshairWidget->raise();  // 최상단에 배치
+   //// crosshairWidget->show();
+
+
 
     // 시그널 연결
     connect(scrollAxial, &QScrollBar::valueChanged, this, &QDirect3D11Widget::onAxialScroll);
@@ -1023,9 +1179,9 @@ void QDirect3D11Widget::mousePressEvent(QMouseEvent* event)
     //float py = event->pos().y() * scale;
 
 
-    ImGuiIO& io = ImGui::GetIO();
-    if (event->button() == Qt::LeftButton)
-        io.MouseDown[0] = true;
+    //ImGuiIO& io = ImGui::GetIO();
+    //if (event->button() == Qt::LeftButton)
+    //    io.MouseDown[0] = true;
 
     // 예: 클릭된 뷰가 i번째 뷰라고 가정
     //int clickedViewIndex = i; // 0: Axial, 1: Coronal, 2: Sagittal, 3: Volume
@@ -1419,29 +1575,29 @@ void QDirect3D11Widget::RenderAllQuads()
     }
 
 
-    //======
+    ////======
     ImGuiIO& io = ImGui::GetIO();
 
 
-    // 폰트 등록은 여기서!
-    static bool fontLoaded = false;
-    if (!fontLoaded) {
-        ImFontConfig font_cfg;
-        font_cfg.OversampleH = 3;
-        font_cfg.OversampleV = 3;
-        font_cfg.PixelSnapH = true;
+    //// 폰트 등록은 여기서!
+    //static bool fontLoaded = false;
+    //if (!fontLoaded) {
+    //    ImFontConfig font_cfg;
+    //    font_cfg.OversampleH = 3;
+    //    font_cfg.OversampleV = 3;
+    //    font_cfg.PixelSnapH = true;
 
-        static const ImWchar customRange[] = {
-            0x0020, 0x00FF,
-            0x3131, 0x3163,
-            0xAC00, 0xD7A3,
-            0
-        };
+    //    static const ImWchar customRange[] = {
+    //        0x0020, 0x00FF,
+    //        0x3131, 0x3163,
+    //        0xAC00, 0xD7A3,
+    //        0
+    //    };
 
-        io.Fonts->AddFontFromFileTTF("NotoSansCJKkr-Regular.otf", 18.0f, &font_cfg, customRange);
-        io.Fonts->Build();
-        fontLoaded = true;
-    }
+    //    io.Fonts->AddFontFromFileTTF("NotoSansCJKkr-Regular.otf", 18.0f, &font_cfg, customRange);
+    //    io.Fonts->Build();
+    //    fontLoaded = true;
+    //}
 
 
     // ✅ 여기에 ImGui 렌더링 추가!
@@ -1449,101 +1605,115 @@ void QDirect3D11Widget::RenderAllQuads()
     ImGui_ImplWin32_NewFrame();
     ImGui::NewFrame();
 
+   //// ImGui::Begin("Sagittal View", nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
+
+   //  ImGui::Begin("##VolumeNoTitle", nullptr,
+   //     ImGuiWindowFlags_NoTitleBar |   // 👈 제목줄 제거
+   //     ImGuiWindowFlags_NoResize |
+   //     ImGuiWindowFlags_NoMove |
+   //     ImGuiWindowFlags_NoScrollbar |
+   //     ImGuiWindowFlags_NoScrollWithMouse
+   // );
 
 
-    ImGui::SetNextWindowPos(ImVec2(0, 0)); // 좌측 상단 위치
-    ImGui::SetNextWindowSize(ImVec2(90, 20));
+    //ImGui::SetNextWindowPos(ImVec2(0, 0)); // 좌측 상단 위치
+    //ImGui::SetNextWindowSize(ImVec2(90, 20));
 
-    ImGui::Begin("##VolumeNoTitle", nullptr,
-        ImGuiWindowFlags_NoTitleBar |   // 👈 제목줄 제거
-        ImGuiWindowFlags_NoResize |
-        ImGuiWindowFlags_NoMove |
-        ImGuiWindowFlags_NoScrollbar |
-        ImGuiWindowFlags_NoScrollWithMouse
-    );
+    //ImGui::Begin("##VolumeNoTitle", nullptr,
+    //    ImGuiWindowFlags_NoTitleBar |   // 👈 제목줄 제거
+    //    ImGuiWindowFlags_NoResize |
+    //    ImGuiWindowFlags_NoMove |
+    //    ImGuiWindowFlags_NoScrollbar |
+    //    ImGuiWindowFlags_NoScrollWithMouse
+    //);
 
-    ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(0, 255, 0, 255)); // 글자색 초록
-    ImGui::SetWindowFontScale(1.3f); // 글씨 크기 키움
-    ImGui::Text("Volume");
-    ImGui::PopStyleColor();
-
-
-
-
-    ImDrawList* drawList = ImGui::GetBackgroundDrawList();
-
-    ImVec2 screenSize = ImGui::GetIO().DisplaySize;
-    float cx = screenSize.x * 0.5f;
-    float cy = screenSize.y * 0.5f;
-
-    // 수직선
-    drawList->AddLine(ImVec2(cx, 0), ImVec2(cx, screenSize.y), IM_COL32(255, 255, 0, 255), 1.0f);
-    // 수평선
-    drawList->AddLine(ImVec2(0, cy), ImVec2(screenSize.x, cy), IM_COL32(0, 128, 255, 255), 1.0f);
-
-    ImGui::End();
-
-
-    ImGui::SetNextWindowPos(ImVec2(width()/2+10, 0)); // 좌측 상단 위치
-    ImGui::SetNextWindowSize(ImVec2(90, 20));
-
-    ImGui::Begin("##AxialNoTitle", nullptr,
-        ImGuiWindowFlags_NoTitleBar |   // 👈 제목줄 제거
-        ImGuiWindowFlags_NoResize |
-        ImGuiWindowFlags_NoMove |
-        ImGuiWindowFlags_NoScrollbar |
-        ImGuiWindowFlags_NoScrollWithMouse
-    );
-
-    ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(142, 124, 249, 255)); // 글자색 초록
-    ImGui::SetWindowFontScale(1.3f); // 글씨 크기 키움
-    ImGui::Text("Axial(A)");
-    ImGui::PopStyleColor();
-
-    ImGui::End();
+    //ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(0, 255, 0, 255)); // 글자색 초록
+    //ImGui::SetWindowFontScale(1.3f); // 글씨 크기 키움
+    //ImGui::Text("Volume");
+    //ImGui::PopStyleColor();
 
 
 
 
-    ImGui::SetNextWindowPos(ImVec2(0, height()/2)); // 좌측 상단 위치
-    ImGui::SetNextWindowSize(ImVec2(90, 20));
+ // ✅ Begin/End 없이 바로 그리기
+     ImDrawList* drawList = ImGui::GetBackgroundDrawList();
+     ImVec2 screenSize = ImGui::GetIO().DisplaySize;
+     float cx = screenSize.x * 0.5f;
+     float cy = screenSize.y * 0.5f;
 
-    ImGui::Begin("##CoronalNoTitle", nullptr,
-        ImGuiWindowFlags_NoTitleBar |   // 👈 제목줄 제거
-        ImGuiWindowFlags_NoResize |
-        ImGuiWindowFlags_NoMove |
-        ImGuiWindowFlags_NoScrollbar |
-        ImGuiWindowFlags_NoScrollWithMouse
-    );
+     // 수직선 (빨간색)
+     drawList->AddLine(ImVec2(cx, 0), ImVec2(cx, screenSize.y), IM_COL32(220, 50, 50, 255), 2.0f);
 
-    ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(48, 216, 198, 255)); // 글자색 초록
-    ImGui::SetWindowFontScale(1.3f); // 글씨 크기 키움
-    ImGui::Text("Coronal(C)");
-    ImGui::PopStyleColor();
+     // 수평선 (빨간색)
+     drawList->AddLine(ImVec2(0, cy), ImVec2(screenSize.x, cy), IM_COL32(220, 50, 50, 255), 2.0f);
 
-    ImGui::End();
+     // ImGui 렌더링 마무리
+     ImGui::Render();
+     ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
 
-
+   // ImGui::End();
 
 
+    //ImGui::SetNextWindowPos(ImVec2(width()/2+10, 0)); // 좌측 상단 위치
+    //ImGui::SetNextWindowSize(ImVec2(90, 20));
 
-    ImGui::SetNextWindowPos(ImVec2(width() / 2 + 10, height() / 2)); // 좌측 상단 위치
-    ImGui::SetNextWindowSize(ImVec2(90, 20));
+    //ImGui::Begin("##AxialNoTitle", nullptr,
+    //    ImGuiWindowFlags_NoTitleBar |   // 👈 제목줄 제거
+    //    ImGuiWindowFlags_NoResize |
+    //    ImGuiWindowFlags_NoMove |
+    //    ImGuiWindowFlags_NoScrollbar |
+    //    ImGuiWindowFlags_NoScrollWithMouse
+    //);
 
-    ImGui::Begin("##SagittalNoTitle", nullptr,
-        ImGuiWindowFlags_NoTitleBar |   // 👈 제목줄 제거
-        ImGuiWindowFlags_NoResize |
-        ImGuiWindowFlags_NoMove |
-        ImGuiWindowFlags_NoScrollbar |
-        ImGuiWindowFlags_NoScrollWithMouse
-    );
+    //ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(142, 124, 249, 255)); // 글자색 초록
+    //ImGui::SetWindowFontScale(1.3f); // 글씨 크기 키움
+    //ImGui::Text("Axial(A)");
+    //ImGui::PopStyleColor();
 
-    ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(224, 239, 0, 255)); // 글자색 초록
-    ImGui::SetWindowFontScale(1.3f); // 글씨 크기 키움
-    ImGui::Text("Sagittal(S)");
-    ImGui::PopStyleColor();
+    //ImGui::End();
 
-    ImGui::End();
+
+
+
+    //ImGui::SetNextWindowPos(ImVec2(0, height()/2)); // 좌측 상단 위치
+    //ImGui::SetNextWindowSize(ImVec2(90, 20));
+
+    //ImGui::Begin("##CoronalNoTitle", nullptr,
+    //    ImGuiWindowFlags_NoTitleBar |   // 👈 제목줄 제거
+    //    ImGuiWindowFlags_NoResize |
+    //    ImGuiWindowFlags_NoMove |
+    //    ImGuiWindowFlags_NoScrollbar |
+    //    ImGuiWindowFlags_NoScrollWithMouse
+    //);
+
+    //ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(48, 216, 198, 255)); // 글자색 초록
+    //ImGui::SetWindowFontScale(1.3f); // 글씨 크기 키움
+    //ImGui::Text("Coronal(C)");
+    //ImGui::PopStyleColor();
+
+    //ImGui::End();
+
+
+
+
+
+    //ImGui::SetNextWindowPos(ImVec2(width() / 2 + 10, height() / 2)); // 좌측 상단 위치
+    //ImGui::SetNextWindowSize(ImVec2(90, 20));
+
+    //ImGui::Begin("##SagittalNoTitle", nullptr,
+    //    ImGuiWindowFlags_NoTitleBar |   // 👈 제목줄 제거
+    //    ImGuiWindowFlags_NoResize |
+    //    ImGuiWindowFlags_NoMove |
+    //    ImGuiWindowFlags_NoScrollbar |
+    //    ImGuiWindowFlags_NoScrollWithMouse
+    //);
+
+    //ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(224, 239, 0, 255)); // 글자색 초록
+    //ImGui::SetWindowFontScale(1.3f); // 글씨 크기 키움
+    //ImGui::Text("Sagittal(S)");
+    //ImGui::PopStyleColor();
+
+    //ImGui::End();
 
 
 
@@ -1824,8 +1994,8 @@ void QDirect3D11Widget::RenderAllQuads()
 
 
 
-    ImGui::Render();
-    ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
+    //ImGui::Render();
+    //ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
 
 
 
@@ -2195,16 +2365,16 @@ XMFLOAT2 QDirect3D11Widget::GetCrossUVFromPatientCoord(int viewIndex, XMFLOAT3 p
 
 
 void QDirect3D11Widget::mouseMoveEvent(QMouseEvent* event) {
-    ImGuiIO& io = ImGui::GetIO();
-    io.MousePos = ImVec2(event->pos().x(), event->pos().y());
+    /*ImGuiIO& io = ImGui::GetIO();
+    io.MousePos = ImVec2(event->pos().x(), event->pos().y());*/
 }
 
 
 
 void QDirect3D11Widget::mouseReleaseEvent(QMouseEvent* event) {
-    ImGuiIO& io = ImGui::GetIO();
+    /*ImGuiIO& io = ImGui::GetIO();
     if (event->button() == Qt::LeftButton)
-        io.MouseDown[0] = false;
+        io.MouseDown[0] = false;*/
 }
 
 
@@ -2256,6 +2426,9 @@ void QDirect3D11Widget::onAxialScroll(int value) {
         // 렌더링 업데이트
         update();
     }
+
+    // 라벨에 슬라이스 정보 표시 (선택사항)
+   // labelAxial->setText(QString("Axial(A) %1/%2").arg(newIndex + 1).arg(fileReader->m_depth));
 }
 
 void QDirect3D11Widget::onCoronalScroll(int value) {
@@ -2285,6 +2458,7 @@ void QDirect3D11Widget::onCoronalScroll(int value) {
         // 렌더링 업데이트
         update();
     }
+   // labelCoronal->setText(QString("Coronal(C) %1/%2").arg(newIndex + 1).arg(fileReader->m_height));
 }
 
 void QDirect3D11Widget::onSagittalScroll(int value) {
@@ -2312,6 +2486,8 @@ void QDirect3D11Widget::onSagittalScroll(int value) {
         // 렌더링 업데이트
         update();
     }
+
+   // labelSagittal->setText(QString("Sagittal(S) %1/%2").arg(newIndex + 1).arg(fileReader->m_width));
 }
 
 
@@ -2350,7 +2526,36 @@ QPaintEngine* QDirect3D11Widget::paintEngine() const
     return Q_NULLPTR;
 }
 
-void QDirect3D11Widget::paintEvent(QPaintEvent* event) {}
+void QDirect3D11Widget::paintEvent(QPaintEvent* event)
+{
+    //// D3D11 렌더링
+    //render();
+
+    //// Qt로 십자선 그리기
+    //QPainter painter(this);
+    //painter.setRenderHint(QPainter::Antialiasing);
+
+    //int w = width();
+    //int h = height();
+    //int halfW = w / 2;
+    //int halfH = h / 2;
+
+    //// 그림자 (어두운 선)
+    //QPen shadowPen(QColor(0, 0, 0, 150), 2);
+    //painter.setPen(shadowPen);
+    //painter.drawLine(halfW + 1, 1, halfW + 1, h + 1);
+    //painter.drawLine(1, halfH + 1, w + 1, halfH + 1);
+
+    //// 실제 선 (밝은 빨간색)
+    //QPen linePen(QColor(255, 80, 80), 2);
+    //painter.setPen(linePen);
+    //painter.drawLine(halfW, 0, halfW, h);
+    //painter.drawLine(0, halfH, w, halfH);
+
+
+
+
+}
 
 void QDirect3D11Widget::resizeEvent(QResizeEvent* event)
 {
@@ -2374,9 +2579,21 @@ void QDirect3D11Widget::resizeEvent(QResizeEvent* event)
     scrollSagittal->setGeometry(width() - scrollBarWidth - gap, h + gap,
         scrollBarWidth, h - gap * 2);
 
+    // 라벨 위치 (좌측 상단 모서리)
+    labelVolume->move(labelMargin, labelMargin);
+    labelAxial->move(w + labelMargin, labelMargin);
+    labelCoronal->move(labelMargin, h + labelMargin);
+    labelSagittal->move(w + labelMargin, h + labelMargin);
 
+    //// 십자선 위젯 크기 조정
+    //if (crosshairWidget) {
+    //    crosshairWidget->setGeometry(0, 0, width(), height());
+    //}
 
     QWidget::resizeEvent(event);
+
+
+
 }
 
 bool QDirect3D11Widget::event(QEvent* event)
