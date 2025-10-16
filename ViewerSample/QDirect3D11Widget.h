@@ -234,7 +234,7 @@ private:
     bool m_bRenderActive;
     bool m_bStarted;
 
-    D3DCOLORVALUE m_BackColor;
+    D3DCOLORVALUE m_BackColor = { 0.0f, 0.0f, 0.0f, 1.0f }; // Black, fully opaque
 public:
     ID3D11Device* m_pDevice;
 

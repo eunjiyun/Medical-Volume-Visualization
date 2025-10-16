@@ -117,14 +117,33 @@ QDirect3D11Widget::QDirect3D11Widget(QWidget* parent)
 
 
 
-  // Axial 스크롤바 - 보라/마젠타
+  //// Axial 스크롤바 - 보라/마젠타
+  //  scrollAxial->setStyleSheet(
+  //      "QScrollBar:vertical {"
+  //      "   background: #1a1a1a;"
+  //      "   border: 2px solid #D87FD8;"  // 보라/마젠타
+  //      "   border-radius: 4px;"
+  //      "   width: 16px;"
+  //      "   margin: 16px 0px 16px 0px;"  // 위아래 화살표 공간
+  //      "}"
+  //      "QScrollBar::handle:vertical {"
+  //      "   background: #D87FD8;"
+  //      "   border-radius: 3px;"
+  //      "   min-height: 30px;"
+  //      "}"
+  //      "QScrollBar::handle:vertical:hover {"
+  //      "   background: #E89FE8;"  // 밝은 보라
+  //      "}"
+  //  );
+
+    // Axial 스크롤바 - 보라/마젠타
     scrollAxial->setStyleSheet(
         "QScrollBar:vertical {"
         "   background: #1a1a1a;"
-        "   border: 2px solid #D87FD8;"  // 보라/마젠타
+        "   border: 2px solid #D87FD8;"
         "   border-radius: 4px;"
         "   width: 16px;"
-        "   margin: 4px;"
+        "   margin: 18px 0px 18px 0px;"  // 위아래 화살표 공간
         "}"
         "QScrollBar::handle:vertical {"
         "   background: #D87FD8;"
@@ -132,7 +151,48 @@ QDirect3D11Widget::QDirect3D11Widget(QWidget* parent)
         "   min-height: 30px;"
         "}"
         "QScrollBar::handle:vertical:hover {"
-        "   background: #E89FE8;"  // 밝은 보라
+        "   background: #E89FE8;"
+        "}"
+        "QScrollBar::add-line:vertical {"
+        "   background: #2a2a2a;"
+        "   height: 18px;"
+        "   subcontrol-position: bottom;"
+        "   subcontrol-origin: margin;"
+        "   border: 1px solid #D87FD8;"
+        "   border-radius: 2px;"
+        "}"
+        "QScrollBar::sub-line:vertical {"
+        "   background: #2a2a2a;"
+        "   height: 18px;"
+        "   subcontrol-position: top;"
+        "   subcontrol-origin: margin;"
+        "   border: 1px solid #D87FD8;"
+        "   border-radius: 2px;"
+        "}"
+        "QScrollBar::add-line:vertical:hover {"
+        "   background: #3a3a3a;"
+        "}"
+        "QScrollBar::sub-line:vertical:hover {"
+        "   background: #3a3a3a;"
+        "}"
+        "QScrollBar::up-arrow:vertical {"
+        "   image: none;"
+        "   border-left: 4px solid transparent;"
+        "   border-right: 4px solid transparent;"
+        "   border-bottom: 6px solid #D87FD8;"
+        "   width: 0px;"
+        "   height: 0px;"
+        "}"
+        "QScrollBar::down-arrow:vertical {"
+        "   image: none;"
+        "   border-left: 4px solid transparent;"
+        "   border-right: 4px solid transparent;"
+        "   border-top: 6px solid #D87FD8;"
+        "   width: 0px;"
+        "   height: 0px;"
+        "}"
+        "QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {"
+        "   background: none;"
         "}"
     );
 
@@ -140,10 +200,10 @@ QDirect3D11Widget::QDirect3D11Widget(QWidget* parent)
     scrollCoronal->setStyleSheet(
         "QScrollBar:vertical {"
         "   background: #1a1a1a;"
-        "   border: 2px solid #00CED1;"  // 청록색
+        "   border: 2px solid #00CED1;"
         "   border-radius: 4px;"
         "   width: 16px;"
-        "   margin: 4px;"
+        "   margin: 18px 0px 18px 0px;"
         "}"
         "QScrollBar::handle:vertical {"
         "   background: #00CED1;"
@@ -151,7 +211,48 @@ QDirect3D11Widget::QDirect3D11Widget(QWidget* parent)
         "   min-height: 30px;"
         "}"
         "QScrollBar::handle:vertical:hover {"
-        "   background: #20DEE1;"  // 밝은 청록
+        "   background: #20DEE1;"
+        "}"
+        "QScrollBar::add-line:vertical {"
+        "   background: #2a2a2a;"
+        "   height: 18px;"
+        "   subcontrol-position: bottom;"
+        "   subcontrol-origin: margin;"
+        "   border: 1px solid #00CED1;"
+        "   border-radius: 2px;"
+        "}"
+        "QScrollBar::sub-line:vertical {"
+        "   background: #2a2a2a;"
+        "   height: 18px;"
+        "   subcontrol-position: top;"
+        "   subcontrol-origin: margin;"
+        "   border: 1px solid #00CED1;"
+        "   border-radius: 2px;"
+        "}"
+        "QScrollBar::add-line:vertical:hover {"
+        "   background: #3a3a3a;"
+        "}"
+        "QScrollBar::sub-line:vertical:hover {"
+        "   background: #3a3a3a;"
+        "}"
+        "QScrollBar::up-arrow:vertical {"
+        "   image: none;"
+        "   border-left: 4px solid transparent;"
+        "   border-right: 4px solid transparent;"
+        "   border-bottom: 6px solid #00CED1;"
+        "   width: 0px;"
+        "   height: 0px;"
+        "}"
+        "QScrollBar::down-arrow:vertical {"
+        "   image: none;"
+        "   border-left: 4px solid transparent;"
+        "   border-right: 4px solid transparent;"
+        "   border-top: 6px solid #00CED1;"
+        "   width: 0px;"
+        "   height: 0px;"
+        "}"
+        "QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {"
+        "   background: none;"
         "}"
     );
 
@@ -159,10 +260,10 @@ QDirect3D11Widget::QDirect3D11Widget(QWidget* parent)
     scrollSagittal->setStyleSheet(
         "QScrollBar:vertical {"
         "   background: #1a1a1a;"
-        "   border: 2px solid #FFD700;"  // 노란색
+        "   border: 2px solid #FFD700;"
         "   border-radius: 4px;"
         "   width: 16px;"
-        "   margin: 4px;"
+        "   margin: 18px 0px 18px 0px;"
         "}"
         "QScrollBar::handle:vertical {"
         "   background: #FFD700;"
@@ -170,8 +271,173 @@ QDirect3D11Widget::QDirect3D11Widget(QWidget* parent)
         "   min-height: 30px;"
         "}"
         "QScrollBar::handle:vertical:hover {"
-        "   background: #FFE44D;"  // 밝은 노란색
-        "}");
+        "   background: #FFE44D;"
+        "}"
+        "QScrollBar::add-line:vertical {"
+        "   background: #2a2a2a;"
+        "   height: 18px;"
+        "   subcontrol-position: bottom;"
+        "   subcontrol-origin: margin;"
+        "   border: 1px solid #FFD700;"
+        "   border-radius: 2px;"
+        "}"
+        "QScrollBar::sub-line:vertical {"
+        "   background: #2a2a2a;"
+        "   height: 18px;"
+        "   subcontrol-position: top;"
+        "   subcontrol-origin: margin;"
+        "   border: 1px solid #FFD700;"
+        "   border-radius: 2px;"
+        "}"
+        "QScrollBar::add-line:vertical:hover {"
+        "   background: #3a3a3a;"
+        "}"
+        "QScrollBar::sub-line:vertical:hover {"
+        "   background: #3a3a3a;"
+        "}"
+        "QScrollBar::up-arrow:vertical {"
+        "   image: none;"
+        "   border-left: 4px solid transparent;"
+        "   border-right: 4px solid transparent;"
+        "   border-bottom: 6px solid #FFD700;"
+        "   width: 0px;"
+        "   height: 0px;"
+        "}"
+        "QScrollBar::down-arrow:vertical {"
+        "   image: none;"
+        "   border-left: 4px solid transparent;"
+        "   border-right: 4px solid transparent;"
+        "   border-top: 6px solid #FFD700;"
+        "   width: 0px;"
+        "   height: 0px;"
+        "}"
+        "QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {"
+        "   background: none;"
+        "}"
+    );
+
+
+
+
+    // Coronal 스크롤바 - 청록색
+    scrollCoronal->setStyleSheet(
+        "QScrollBar:vertical {"
+        "   background: #1a1a1a;"
+        "   border: 2px solid #00CED1;"
+        "   border-radius: 4px;"
+        "   width: 16px;"
+        "   margin: 18px 0px 18px 0px;"
+        "}"
+        "QScrollBar::handle:vertical {"
+        "   background: #00CED1;"
+        "   border-radius: 3px;"
+        "   min-height: 30px;"
+        "}"
+        "QScrollBar::handle:vertical:hover {"
+        "   background: #20DEE1;"
+        "}"
+        "QScrollBar::add-line:vertical {"
+        "   background: #2a2a2a;"
+        "   height: 18px;"
+        "   subcontrol-position: bottom;"
+        "   subcontrol-origin: margin;"
+        "   border: 1px solid #00CED1;"
+        "   border-radius: 2px;"
+        "}"
+        "QScrollBar::sub-line:vertical {"
+        "   background: #2a2a2a;"
+        "   height: 18px;"
+        "   subcontrol-position: top;"
+        "   subcontrol-origin: margin;"
+        "   border: 1px solid #00CED1;"
+        "   border-radius: 2px;"
+        "}"
+        "QScrollBar::add-line:vertical:hover {"
+        "   background: #3a3a3a;"
+        "}"
+        "QScrollBar::sub-line:vertical:hover {"
+        "   background: #3a3a3a;"
+        "}"
+        "QScrollBar::up-arrow:vertical {"
+        "   image: none;"
+        "   border-left: 4px solid transparent;"
+        "   border-right: 4px solid transparent;"
+        "   border-bottom: 6px solid #00CED1;"
+        "   width: 0px;"
+        "   height: 0px;"
+        "}"
+        "QScrollBar::down-arrow:vertical {"
+        "   image: none;"
+        "   border-left: 4px solid transparent;"
+        "   border-right: 4px solid transparent;"
+        "   border-top: 6px solid #00CED1;"
+        "   width: 0px;"
+        "   height: 0px;"
+        "}"
+        "QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {"
+        "   background: none;"
+        "}"
+    );
+
+    // Sagittal 스크롤바 - 노란색
+    scrollSagittal->setStyleSheet(
+        "QScrollBar:vertical {"
+        "   background: #1a1a1a;"
+        "   border: 2px solid #FFD700;"
+        "   border-radius: 4px;"
+        "   width: 16px;"
+        "   margin: 18px 0px 18px 0px;"
+        "}"
+        "QScrollBar::handle:vertical {"
+        "   background: #FFD700;"
+        "   border-radius: 3px;"
+        "   min-height: 30px;"
+        "}"
+        "QScrollBar::handle:vertical:hover {"
+        "   background: #FFE44D;"
+        "}"
+        "QScrollBar::add-line:vertical {"
+        "   background: #2a2a2a;"
+        "   height: 18px;"
+        "   subcontrol-position: bottom;"
+        "   subcontrol-origin: margin;"
+        "   border: 1px solid #FFD700;"
+        "   border-radius: 2px;"
+        "}"
+        "QScrollBar::sub-line:vertical {"
+        "   background: #2a2a2a;"
+        "   height: 18px;"
+        "   subcontrol-position: top;"
+        "   subcontrol-origin: margin;"
+        "   border: 1px solid #FFD700;"
+        "   border-radius: 2px;"
+        "}"
+        "QScrollBar::add-line:vertical:hover {"
+        "   background: #3a3a3a;"
+        "}"
+        "QScrollBar::sub-line:vertical:hover {"
+        "   background: #3a3a3a;"
+        "}"
+        "QScrollBar::up-arrow:vertical {"
+        "   image: none;"
+        "   border-left: 4px solid transparent;"
+        "   border-right: 4px solid transparent;"
+        "   border-bottom: 6px solid #FFD700;"
+        "   width: 0px;"
+        "   height: 0px;"
+        "}"
+        "QScrollBar::down-arrow:vertical {"
+        "   image: none;"
+        "   border-left: 4px solid transparent;"
+        "   border-right: 4px solid transparent;"
+        "   border-top: 6px solid #FFD700;"
+        "   width: 0px;"
+        "   height: 0px;"
+        "}"
+        "QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {"
+        "   background: none;"
+        "}"
+    );
 
     //// 스크롤바 설정
     //scrollAxial->setRange(0, 100);
@@ -202,40 +468,55 @@ QDirect3D11Widget::QDirect3D11Widget(QWidget* parent)
     labelVolume->setStyleSheet(
         "QLabel { "
         "   color: #CCCCCC; "
-        "   background-color: rgba(80, 80, 80, 100); "
+      /*  "   background-color: rgba(80, 80, 80, 100); "*/
+      /*  "   background-color: rgb(80, 80, 80); "*/
+        "   background-color: transparent; "
         "   padding: 4px 8px; "
         "   border-radius: 3px; "
-        "   font-weight: bold; "
+        "   font-weight: 900; "
+        "   font-size: 14px; "
+        "   margin: 0px; "
         "}");
 
     // Axial - 보라/마젠타 계열 (이미지의 Axial(A) 색상)
     labelAxial->setStyleSheet(
         "QLabel { "
         "   color: #D87FD8; "
-        "   background-color: rgba(216, 127, 216, 30); "
+    /*    "   background-color: rgba(216, 127, 216, 30); "*/
+      /*  "   background-color: rgb(216, 127, 216); "*/
+        "   background-color: transparent; "
         "   padding: 4px 8px; "
         "   border-radius: 3px; "
-        "   font-weight: bold; "
+        "   font-weight: 900; "
+        "   font-size: 14px; "
+        "   margin: 0px; "
         "}");
+
 
     // Coronal - 청록색 (이미지의 Coronal(C) 색상)
     labelCoronal->setStyleSheet(
         "QLabel { "
         "   color: #00CED1; "
-        "   background-color: rgba(0, 206, 209, 30); "
+     /*   "   background-color: rgba(0, 206, 209, 30); "*/
+       /* "   background-color: rgb(0, 206, 209); "*/
+        "   background-color: transparent; "
         "   padding: 4px 8px; "
         "   border-radius: 3px; "
-        "   font-weight: bold; "
+        "   font-weight: 900; "
+        "   font-size: 14px; "
         "}");
 
     // Sagittal - 노란색 (이미지의 Sagittal(S) 색상)
     labelSagittal->setStyleSheet(
         "QLabel { "
         "   color: #FFD700; "
-        "   background-color: rgba(255, 215, 0, 30); "
+       /* "   background-color: rgba(255, 215, 0, 30); "*/
+       /* "   background-color: rgb(255, 215, 0); "*/
+        "   background-color: transparent; "
         "   padding: 4px 8px; "
         "   border-radius: 3px; "
-        "   font-weight: bold; "
+        "   font-weight: 900; "
+        "   font-size: 14px; "
         "}");
 
 
@@ -1560,7 +1841,7 @@ void QDirect3D11Widget::RenderAllQuads()
 
      //// 2. 백버퍼에 출력할 준비
     m_pDeviceContext->OMSetRenderTargets(1, &m_pSwapChainRTV, nullptr);
-    ////m_pDeviceContext->ClearRenderTargetView(m_pSwapChainRTV, reinterpret_cast<float*>(&m_BackColor));
+    m_pDeviceContext->ClearRenderTargetView(m_pSwapChainRTV, reinterpret_cast<float*>(&m_BackColor));
 
     // 3. 각 렌더 타겟 텍스처를 quad로 출력
     for (int i{}; i < 4; ++i)
@@ -1999,7 +2280,7 @@ void QDirect3D11Widget::RenderAllQuads()
     //ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
 
 
-
+   // m_pDeviceContext->ClearRenderTargetView(m_pRenderTargetView, m_BackColor);
     m_pSwapChain->Present(1, 0);
 
     emit rendered(); // Qt ??볥젃??
@@ -2570,7 +2851,7 @@ void QDirect3D11Widget::resizeEvent(QResizeEvent* event)
     int h = height() / 2;
     int scrollBarWidth = 16;
     int gap = 4;
-    int labelMargin = 8;
+    int labelMargin = 6;
 
     // 스크롤바 위치 (각 뷰의 오른쪽)
     scrollAxial->setGeometry(width() - scrollBarWidth - gap, gap,
@@ -2581,10 +2862,10 @@ void QDirect3D11Widget::resizeEvent(QResizeEvent* event)
         scrollBarWidth, h - gap * 2);
 
     // 라벨 위치 (좌측 상단 모서리)
-    labelVolume->move(labelMargin, labelMargin);
-    labelAxial->move(w + labelMargin, labelMargin);
-    labelCoronal->move(labelMargin, h + labelMargin);
-    labelSagittal->move(w + labelMargin, h + labelMargin);
+    labelVolume->move(0, labelMargin);
+    labelAxial->move(w + 2, labelMargin);
+    labelCoronal->move(0, h + labelMargin);
+    labelSagittal->move(w + 2, h + labelMargin);
 
     //// 십자선 위젯 크기 조정
     //if (crosshairWidget) {
