@@ -194,7 +194,7 @@ private slots:
     void onCoronalScroll(int value);
     void onSagittalScroll(int value);
 
-   
+
 
 
     // Getters / Setters
@@ -221,7 +221,7 @@ public:
     std::vector<ID3D11RenderTargetView*> rtvPool, activeRTVs;
     std::unordered_map<ID3D11Texture2D*, ID3D11RenderTargetView*> rtvCache;
     std::unordered_map<ID3D11Texture2D*, ID3D11ShaderResourceView*> srvCache;
-   
+
 
 private:
 

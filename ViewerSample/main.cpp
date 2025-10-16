@@ -18,42 +18,42 @@
 
 class FourViewWindow :public QMainWindow {
 public:
-	FourViewWindow(QWidget* parent = nullptr) :QMainWindow(parent) {
-		QWidget* central = new QWidget(this);
+    FourViewWindow(QWidget* parent = nullptr) :QMainWindow(parent) {
+        QWidget* central = new QWidget(this);
 
-		//QGridLayout은 Qt에서 위젯을 격자 형태로 배치하는 레이아웃 시스템
-		//central이라는 부모 위젯에 붙이는 작업
-		QGridLayout* layout = new QGridLayout(central);
+        //QGridLayout은 Qt에서 위젯을 격자 형태로 배치하는 레이아웃 시스템
+        //central이라는 부모 위젯에 붙이는 작업
+        QGridLayout* layout = new QGridLayout(central);
 
 
-		//4개의 분할 영역 생성
-		for (int i{}; i < 4; ++i) {
-			QWidget* view = new QWidget();
-			view->setStyleSheet("background-color: lightgray; border: 1px solid black;");
-			QStringList viewNames = { "Volume", "Axial", "Coronal", "Sagittal" };
+        //4개의 분할 영역 생성
+        for (int i{}; i < 4; ++i) {
+            QWidget* view = new QWidget();
+            view->setStyleSheet("background-color: lightgray; border: 1px solid black;");
+            QStringList viewNames = { "Volume", "Axial", "Coronal", "Sagittal" };
 
-			//label은 텍스트나 이미지를 표시하는 위젯
-			//view는 QWidget 객체 => 직접 만든 회색 배경의 컨테이너
-			//view를 label의 부모로 지정
-			QLabel* label = new QLabel(view);
-			label->setText(viewNames[i]);
+            //label은 텍스트나 이미지를 표시하는 위젯
+            //view는 QWidget 객체 => 직접 만든 회색 배경의 컨테이너
+            //view를 label의 부모로 지정
+            QLabel* label = new QLabel(view);
+            label->setText(viewNames[i]);
 
-			//label 위치 정렬
-			label->setAlignment(Qt::AlignCenter);
+            //label 위치 정렬
+            label->setAlignment(Qt::AlignCenter);
 
-			//Grid 위치 계산
-			//세로 : row
-			int row = i / 2;
+            //Grid 위치 계산
+            //세로 : row
+            int row = i / 2;
 
-			//가로 : col
-			int col = i % 2;
-			layout->addWidget(view, row, col);
-		}
+            //가로 : col
+            int col = i % 2;
+            layout->addWidget(view, row, col);
+        }
 
-		setCentralWidget(central);
-		setWindowTitle("Viewer Sample");
-		resize(800, 600);
-	}
+        setCentralWidget(central);
+        setWindowTitle("Viewer Sample");
+        resize(800, 600);
+    }
 };
 
 
@@ -65,16 +65,16 @@ public:
 //=> return->프로그램 종료
 int main(int argc, char *argv[])
 {
-	//qt gui 애플리케이션을 초기화하는 객체
-	//이벤트 루프 관리 및 모든 위젯의 생명주기를 통제함
+    //qt gui 애플리케이션을 초기화하는 객체
+    //이벤트 루프 관리 및 모든 위젯의 생명주기를 통제함
     QApplication a(argc, argv);
 
     ViewerSample w;
     w.show();
 
-	////QMainWindow를 상송한 클래스
-	//FourViewWindow w;
-	//w.show();
+    ////QMainWindow를 상송한 클래스
+    //FourViewWindow w;
+    //w.show();
 
     return a.exec();
 }

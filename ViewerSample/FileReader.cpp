@@ -68,7 +68,7 @@ bool FileReader::LoadDICOMSeries(std::string folderPath, ID3D11Device* g_pd3dDev
                 if (dataset->findAndGetOFString(DCM_WindowCenter, wcStr).good() &&
                     dataset->findAndGetOFString(DCM_WindowWidth, wwStr).good() &&
 
-                   
+
 
 
                     dataset->findAndGetOFString(DCM_PatientName, patientName).good() &&
@@ -96,7 +96,7 @@ bool FileReader::LoadDICOMSeries(std::string folderPath, ID3D11Device* g_pd3dDev
 
                 OFString pixelSpacingStr, sliceThicknessStr, imagePositionStr;
 
-               
+
                 // Pixel Spacing (0028,0030)
                 if (dataset->findAndGetOFString(DCM_PixelSpacing, pixelSpacingStr).good()) {
                     std::stringstream ss(pixelSpacingStr.c_str());
@@ -156,9 +156,9 @@ bool FileReader::LoadDICOMSeries(std::string folderPath, ID3D11Device* g_pd3dDev
                     }
 
                     try {
-                       /* views[1].origin.x = std::stof(ox);
-                        views[1].origin.y = std::stof(oy);
-                        views[1].origin.z = std::stof(oz);*/
+                        /* views[1].origin.x = std::stof(ox);
+                         views[1].origin.y = std::stof(oy);
+                         views[1].origin.z = std::stof(oz);*/
 
                         views.origin.x = std::stof(ox);
                         views.origin.y = std::stof(oy);
@@ -168,7 +168,7 @@ bool FileReader::LoadDICOMSeries(std::string folderPath, ID3D11Device* g_pd3dDev
                         std::cerr << "Error parsing ImagePositionPatient: " << e.what() << std::endl;
                     }
 
-                   // std::cout << "Image Origin: (" << views[1].origin.x << ", " << views[1].origin.y << ", " << views[1].origin.z << ")" << std::endl;
+                    // std::cout << "Image Origin: (" << views[1].origin.x << ", " << views[1].origin.y << ", " << views[1].origin.z << ")" << std::endl;
                     std::cout << "Image Origin: (" << views.origin.x << ", " << views.origin.y << ", " << views.origin.z << ")" << std::endl;
 
                 }
@@ -184,7 +184,7 @@ bool FileReader::LoadDICOMSeries(std::string folderPath, ID3D11Device* g_pd3dDev
     //views[1].sliceIndex = 0; // 초기 슬라이스 인덱스 (축상 뷰 기준)
 
     views.imageSize = DirectX::XMFLOAT3(m_width, m_height, m_depth);
-   // views.sliceIndex = 0; // 초기 슬라이스 인덱스 (축상 뷰 기준)
+    // views.sliceIndex = 0; // 초기 슬라이스 인덱스 (축상 뷰 기준)
 
 
     for (int i{}; i < m_depth; ++i) {
@@ -274,9 +274,9 @@ bool FileReader::BuildVolume()
     return true;
 }
 void FileReader::PrintMetadata()
-{ 
+{
     DcmFileFormat file;
-    OFCondition status = file.loadFile(m_filePaths[0].c_str()); 
+    OFCondition status = file.loadFile(m_filePaths[0].c_str());
     if (!status.good()) {
         std::cerr << "PrintMetadata : Failed to load DICOM file: " << m_filePaths[0] << std::endl;
         return;
@@ -304,7 +304,7 @@ std::vector<uint8_t> FileReader::GenerateAxialSlice(int zIndex)
 
     if (offset + sliceSize > m_volumeData.size()) {
         std::cerr << "Invalid zIndex: out of bounds." << std::endl;
-        std::cout << "zIndex : "<<zIndex << endl;
+        std::cout << "zIndex : " << zIndex << endl;
         return {};
     }
 
@@ -505,7 +505,7 @@ ID3D11Texture2D* FileReader::CreateTextureFromSlice(const std::vector<uint8_t>& 
     texDesc.Height = height;
     texDesc.MipLevels = 1;
     texDesc.ArraySize = 1;
-    texDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM; 
+    texDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
     //texDesc.Format = DXGI_FORMAT_R8_UNORM; 
 
     texDesc.SampleDesc.Count = 1;
