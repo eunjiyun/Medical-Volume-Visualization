@@ -49,6 +49,16 @@ struct ViewInfoCB {
     int padding[3]; // 16바이트 정렬을 맞추기 위해
 };
 
+struct ViewGeometry {
+	XMFLOAT3 origin;
+	XMFLOAT3 rowDir;
+	XMFLOAT3 colDir;
+	float pixelSpacingX;
+	float pixelSpacingY;
+	float sliceSpacing;
+};
+
+
 
 class QDirect3D11Widget : public QWidget
 {
@@ -86,7 +96,9 @@ public:
 
     void mousePressEvent(QMouseEvent* event);
     int GetClickedViewIndex(int px, int py, int width, int height);
-
+	ViewGeometry GetAxialGeometry();
+	ViewGeometry GetCoronalGeometry();
+	ViewGeometry GetSagittalGeometry();
     int px, py;
 private:
 
