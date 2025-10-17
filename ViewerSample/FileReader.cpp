@@ -24,6 +24,7 @@ FileReader::FileReader()
 }
 
 
+//ÅÂ±× ÆÄ½Ì 
 bool FileReader::LoadDICOMSeries(std::string folderPath, ID3D11Device* g_pd3dDevice)
 {
     cout << "this : " << this << endl;
@@ -198,6 +199,7 @@ bool FileReader::LoadDICOMSeries(std::string folderPath, ID3D11Device* g_pd3dDev
 
     return true;
 }
+
 
 ID3D11Texture2D* FileReader::getOrCreateAxialTexture(int z) {
     if (axialTextureCache.find(z) != axialTextureCache.end()) return axialTextureCache[z];
@@ -538,7 +540,7 @@ ID3D11Texture2D* FileReader::CreateTextureFromSlice(const std::vector<uint8_t>& 
 
     hr = g_pd3dDevice->CreateBuffer(&cbDesc, nullptr, &m_crosshairBuffer);
     if (FAILED(hr)) {
-        cerr << "[?ëŸ¬] Crosshair ConstantBuffer ?ì„± ?¤íŒ¨!";
+        cerr << " Crosshair ConstantBuffer ";
     }
 
     return texture;

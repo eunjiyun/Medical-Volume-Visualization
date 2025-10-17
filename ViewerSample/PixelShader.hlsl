@@ -169,7 +169,8 @@ PSOutput PSMain(VSOutput input)
     case 0: o.color0 = isCross ? crossColor : base; break;
     case 1:   o.color1 = isCross ? crossColor : base; break;
     case 2:    o.color2 = isCross ? crossColor : base; break;
-    case 3:   o.color3 = isCross ? crossColor : base; break;
+   case 3:   o.color3 = isCross ? crossColor : base; break;
+	//case 3:   o.color3 = float4(1, 0, 0, 0); break;
     }
 
     return o;
