@@ -125,7 +125,7 @@ private:
     void SetBackgroundColor(int index);
     void RenderSceneToTarget(int i);
 
-    void UpdateCrosshairFromPatientCoord(DirectX::XMFLOAT3 patientCoord);
+    void UpdateCrosshairFromPatientCoord(DirectX::XMFLOAT3 patientCoord,int idx);
     DirectX::XMFLOAT3 GetDefaultPatientCenter();
     void InitializeCrosshair();
     void RenderAllQuads();

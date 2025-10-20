@@ -1774,9 +1774,14 @@ void QDirect3D11Widget::InitializeCrosshair()
 
 }
 
+<<<<<<< Updated upstream
 //251020
 void QDirect3D11Widget::UpdateCrosshairFromPatientCoord(DirectX::XMFLOAT3 patientCoord)
+=======
+void QDirect3D11Widget::UpdateCrosshairFromPatientCoord(DirectX::XMFLOAT3 patientCoord,int viewIdx)
+>>>>>>> Stashed changes
 {
+	int viewIndex = GetClickedViewIndex(px, py, this->width(), this->height()); // 현재 뷰 인덱스 (0: Axial, 1: Coronal, 2: Sagittal, 3: 기타)
     /*CrosshairData crosshair = {};
 
     for (int i = 0; i < 4; ++i)
@@ -1797,10 +1802,31 @@ void QDirect3D11Widget::UpdateCrosshairFromPatientCoord(DirectX::XMFLOAT3 patien
 
     m_pDeviceContext->UpdateSubresource(fileReader->m_crosshairBuffer, 0, nullptr, &crosshair, 0, 0);*/
 
+	// ✅ Aspect ratio 고려한 정규화 좌표
+XMFLOAT2 normUV = GetNormalizedUV(px, py, clickedViewIndex);
+
+	DirectX::XMFLOAT2 uv;
+	for (int i{ 1 }; i < 4; ++i)
+	{
+		if (viewIndex != i)
+			uv = normUV;
+		else
+			uv = GetCrossUVFromPatientCoord(i, patientCoord);
+
+		/*switch (i)
+		{
+		case 0: crosshair.cross0 = uv; break;
+		case 1: crosshair.cross1 = uv; break;
+		case 2: crosshair.cross2 = uv; break;
+		case 3: crosshair.cross3 = uv; break;
+		}*/
+	}
+
     CrosshairData crosshair = {};
 
-    int viewIndex = GetClickedViewIndex(px, py, this->width(), this->height()); // 현재 뷰 인덱스 (0: Axial, 1: Coronal, 2: Sagittal, 3: 기타)
+ //   //int viewIndex = GetClickedViewIndex(px, py, this->width(), this->height()); // 현재 뷰 인덱스 (0: Axial, 1: Coronal, 2: Sagittal, 3: 기타)
 
+<<<<<<< Updated upstream
     //// 현재 뷰에 맞는 십자선 위치 계산
     //crosshair.crossUV = GetCrossUVFromPatientCoord(viewIndex, patientCoord);
 
@@ -1825,9 +1851,20 @@ void QDirect3D11Widget::UpdateCrosshairFromPatientCoord(DirectX::XMFLOAT3 patien
 
 //	XMFLOAT3 pCoord = GetPatientCoordFromUV(clickedViewIndex, crosshair.crossUV);
 
+=======
+ //   // 현재 뷰에 맞는 십자선 위치 계산
+ //   crosshair.crossUV = GetCrossUVFromPatientCoord(viewIdx, patientCoord);
+>>>>>>> Stashed changes
 
-	// ✅ Aspect ratio 고려한 정규화 좌표
-	XMFLOAT2 normUV = GetNormalizedUV(px, py, clickedViewIndex);
+	////crosshair.crossUV = XMFLOAT2(px, py);
+
+	//// ✅ Aspect ratio 고려한 정규화 좌표
+	//XMFLOAT2 normUV = GetNormalizedUV(px, py, clickedViewIndex);
+
+
+	//crosshair.crossUV = normUV;
+
+	crosshair.crossUV = uv;
 
     // 십자선 스타일 설정
     crosshair.crossThickness = 0.002f;
@@ -1880,11 +1917,11 @@ void QDirect3D11Widget::RenderAllQuads()
 	//qDebug() << "🧪 UV after aspect correction:";
 	//qDebug() << "  normX:" << normUV.x << "normY:" << normUV.y;
 
-	// 텍스처 좌표 → 픽셀 좌표
-	float py = normUV.y * fileReader->views.imageSize.y;
+	//// 텍스처 좌표 → 픽셀 좌표
+	//float py = normUV.y * fileReader->views.imageSize.y;
 
-	// Z축 좌표 계산 (Coronal 뷰 기준)
-	float patientZ = fileReader->views.origin.z + py * fileReader->views.spacing.z;
+	//// Z축 좌표 계산 (Coronal 뷰 기준)
+	//float patientZ = fileReader->views.origin.z + py * fileReader->views.spacing.z;
 
 	//// 디버깅 로그: 계산된 Z값
 	//qDebug() << "🧪 PatientCoord.z from UV:";
@@ -1904,12 +1941,28 @@ void QDirect3D11Widget::RenderAllQuads()
 	//	qDebug() << "  imageSize y:" << fileReader->views.imageSize.y;
 	//}
 
+<<<<<<< Updated upstream
+
+=======
+	//for (int i{ 1 }; i <= 3; ++i) {
+	//	fileReader->views.centerPatientCoord[i] = patientCoord;
+>>>>>>> Stashed changes
 
 
-
+	//	//ComputeSliceIndexFromPatientCoord_Robust
+	//   // fileReader->currentIndex[i] = ComputeSliceIndexFromPatientCoord(i, patientCoord);
+	//   /* fileReader->currentIndex[i] = ComputeSliceIndexFromPatientCoord_Robust(patientCoord, i,
+	//		fileReader->views.origin, XMFLOAT3(1, 0, 0), XMFLOAT3(0, 1, 0),
+	//		fileReader->views.spacing.x, fileReader->views.spacing.y, 0.15f, XMUINT3(632, 794, 794));*/
+	//	fileReader->currentIndex[i] = ComputeSliceIndexForView(patientCoord, i);
+	//}
 
     
+<<<<<<< Updated upstream
    //// UpdateCrosshairFromPatientCoord(patientCoord);
+=======
+    UpdateCrosshairFromPatientCoord(patientCoord, clickedViewIndex);
+>>>>>>> Stashed changes
 
    // // 3. 셰이더에 바인딩
    // m_pDeviceContext->PSSetConstantBuffers(0, 1, &fileReader->m_crosshairBuffer);
@@ -2533,6 +2586,7 @@ XMFLOAT2 QDirect3D11Widget::GetCrossUVFromPatientCoord(int viewIndex, XMFLOAT3 p
 		spacingY = spacing.y;
 		break;
 
+<<<<<<< Updated upstream
 	case 2: // Coronal (XZ 평면)
 		px = (patientCoord.x - origin.x) / spacing.x;
 		py = (patientCoord.z - origin.z) / spacing.z;
@@ -2550,15 +2604,51 @@ XMFLOAT2 QDirect3D11Widget::GetCrossUVFromPatientCoord(int viewIndex, XMFLOAT3 p
 		spacingX = spacing.y;
 		spacingY = spacing.z;
 		break;
+=======
+    float px = 0.0f, py = 0.0f;
+	float sizeX = 0.0f, sizeY = 0.0f;
+
+    switch (viewIndex)
+    {
+    case 1: // 축상
+        px = (patientCoord.x - origin.x) / spacing.x;
+        py = (patientCoord.y - origin.y) / spacing.y;
+		sizeX = imageSize.x; sizeY = imageSize.y;
+        break;
+    case 2: // 관상
+        px = (patientCoord.x - origin.x) / spacing.x;
+        py = (patientCoord.z - origin.z) / spacing.z;
+		sizeX = imageSize.x; sizeY = imageSize.z;
+        break;
+    case 3: // 시상
+        px = (patientCoord.y - origin.y) / spacing.y;
+        py = (patientCoord.z - origin.z) / spacing.z;
+		sizeX = imageSize.y; sizeY = imageSize.z;
+        break;
+    default: // Volume 또는 기타
+        px = 0.0f;
+        py = 0.0f;
+        break;
+    }
+>>>>>>> Stashed changes
 
 	default:
 		return XMFLOAT2(0.5f, 0.5f);
 	}
 
+<<<<<<< Updated upstream
 	// 정규화
 	XMFLOAT2 uv;
 	uv.x = px / sizeX;
 	uv.y = py / sizeY;
+=======
+    XMFLOAT2 uv;
+    //uv.x = px / imageSize.x;
+    //uv.y = py / imageSize.y;
+	uv.x = std::clamp(px / sizeX, 0.0f, 1.0f);
+	uv.y = std::clamp(py / sizeY, 0.0f, 1.0f);
+
+>>>>>>> Stashed changes
 
 	// ✅ Aspect ratio 보정
 	float dataAspect = (sizeX * spacingX) / (sizeY * spacingY);
