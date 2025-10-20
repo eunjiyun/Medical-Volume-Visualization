@@ -122,12 +122,12 @@ private:
     void SetBackgroundColor(int index);
     void RenderSceneToTarget(int i);
 
-    void UpdateCrosshairFromPatientCoord(DirectX::XMFLOAT3 patientCoord);
+    void UpdateCrosshairFromPatientCoord(DirectX::XMFLOAT3 patientCoord,int i);
     DirectX::XMFLOAT3 GetDefaultPatientCenter();
     void InitializeCrosshair();
     void RenderAllQuads();
     void DrawFullScreenQuad();
-    void DrawQuadWithTexture(ID3D11ShaderResourceView* pSRV, const D3D11_VIEWPORT& vp);
+    void DrawQuadWithTexture(ID3D11ShaderResourceView* pSRV, const D3D11_VIEWPORT& vp,int i);
 
     UINT BytesPerPixel(DXGI_FORMAT format);
     ID3D11Texture2D* CreateTexture2D(ID3D11Device* device, UINT width, UINT height, DXGI_FORMAT format, const void* initData);

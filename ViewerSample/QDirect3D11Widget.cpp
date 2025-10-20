@@ -1765,7 +1765,7 @@ void QDirect3D11Widget::InitializeCrosshair()
 
 }
 
-void QDirect3D11Widget::UpdateCrosshairFromPatientCoord(DirectX::XMFLOAT3 patientCoord)
+void QDirect3D11Widget::UpdateCrosshairFromPatientCoord(DirectX::XMFLOAT3 patientCoord,int i)
 {
     /*CrosshairData crosshair = {};
 
@@ -1792,7 +1792,7 @@ void QDirect3D11Widget::UpdateCrosshairFromPatientCoord(DirectX::XMFLOAT3 patien
     int viewIndex = GetClickedViewIndex(px, py, this->width(), this->height()); // 현재 뷰 인덱스 (0: Axial, 1: Coronal, 2: Sagittal, 3: 기타)
 
     // 현재 뷰에 맞는 십자선 위치 계산
-    crosshair.crossUV = GetCrossUVFromPatientCoord(viewIndex, patientCoord);
+    crosshair.crossUV = GetCrossUVFromPatientCoord(i, patientCoord);
 
 	// ✅ Aspect ratio 고려한 정규화 좌표
 	XMFLOAT2 normUV = GetNormalizedUV(px, py, clickedViewIndex);
@@ -1869,11 +1869,11 @@ void QDirect3D11Widget::RenderAllQuads()
 
 
 
-    
-    UpdateCrosshairFromPatientCoord(patientCoord);
+    //
+    //UpdateCrosshairFromPatientCoord(patientCoord);
 
-    // 3. 셰이더에 바인딩
-    m_pDeviceContext->PSSetConstantBuffers(0, 1, &fileReader->m_crosshairBuffer);
+    //// 3. 셰이더에 바인딩
+    //m_pDeviceContext->PSSetConstantBuffers(0, 1, &fileReader->m_crosshairBuffer);
     m_pDeviceContext->PSSetShaderResources(0, 4, m_SRViews.slices.data());     // tex0~tex3
     m_pDeviceContext->PSSetSamplers(0, 1, m_samplerState.data());       // samp0~samp3
 
@@ -1907,7 +1907,7 @@ void QDirect3D11Widget::RenderAllQuads()
         //for(int j{};j< m_SRViews.flagIndex[i];++j)
         //    DrawQuadWithTexture(m_SRViews.slices[j], vp);      // ← 여기서 호출!
 
-        DrawQuadWithTexture(m_SRViews.slices[i], vp);      // ← 여기서 호출!
+        DrawQuadWithTexture(m_SRViews.slices[i], vp,i);      // ← 여기서 호출!
     }
 
 
@@ -1961,11 +1961,19 @@ void QDirect3D11Widget::DrawFullScreenQuad()
     m_pDeviceContext->Draw(4, 0); // 4개의 정점으로 quad 출력
 }
 
-void QDirect3D11Widget::DrawQuadWithTexture(ID3D11ShaderResourceView* pSRV, const D3D11_VIEWPORT& vp)
+void QDirect3D11Widget::DrawQuadWithTexture(ID3D11ShaderResourceView* pSRV, const D3D11_VIEWPORT& vp,int i)
 {
     m_pDeviceContext->RSSetViewports(1, &vp);
     m_pDeviceContext->VSSetShader(m_vertexShader, nullptr, 0);
     m_pDeviceContext->PSSetShader(m_pixelShader, nullptr, 0);
+
+
+	UpdateCrosshairFromPatientCoord(patientCoord,i);
+
+	// 3. 셰이더에 바인딩
+	m_pDeviceContext->PSSetConstantBuffers(0, 1, &fileReader->m_crosshairBuffer);
+
+
     m_pDeviceContext->PSSetShaderResources(0, 1, &pSRV);
     m_pDeviceContext->IASetInputLayout(m_inputLayout);
 
