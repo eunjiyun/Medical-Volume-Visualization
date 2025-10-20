@@ -1798,7 +1798,12 @@ void QDirect3D11Widget::UpdateCrosshairFromPatientCoord(DirectX::XMFLOAT3 patien
 	XMFLOAT2 normUV = GetNormalizedUV(px, py, clickedViewIndex);
 
     // 십자선 스타일 설정
-    crosshair.crossThickness = 0.002f;
+	if(0==i)
+		crosshair.crossThickness = 0.0f;
+	else
+		crosshair.crossThickness = 0.002f;
+
+
     crosshair.crossColor = { 1.0f, 0.0f, 0.0f, 1.0f }; // 빨강
 
     // GPU에 전달
@@ -1968,10 +1973,12 @@ void QDirect3D11Widget::DrawQuadWithTexture(ID3D11ShaderResourceView* pSRV, cons
     m_pDeviceContext->PSSetShader(m_pixelShader, nullptr, 0);
 
 
-	UpdateCrosshairFromPatientCoord(patientCoord,i);
+	//if (0 != i) {
+		UpdateCrosshairFromPatientCoord(patientCoord, i);
 
-	// 3. 셰이더에 바인딩
-	m_pDeviceContext->PSSetConstantBuffers(0, 1, &fileReader->m_crosshairBuffer);
+		// 3. 셰이더에 바인딩
+		m_pDeviceContext->PSSetConstantBuffers(0, 1, &fileReader->m_crosshairBuffer);
+	//}
 
 
     m_pDeviceContext->PSSetShaderResources(0, 1, &pSRV);
