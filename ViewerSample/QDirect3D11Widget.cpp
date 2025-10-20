@@ -32,7 +32,8 @@ QDirect3D11Widget::QDirect3D11Widget(QWidget* parent)
     , m_bDeviceInitialized(false)
     , m_bRenderActive(false)
     , m_bStarted(false)
-    , m_BackColor{ 0.0f, 0.135f, 0.481f, 1.0f }
+  /*  , m_BackColor{ 0.0f, 0.135f, 0.481f, 1.0f }*/
+	, m_BackColor{ 0.0f, 0.0f, 0.0f, 1.0f }
 {
     qDebug() << "[QDirect3D11Widget::QDirect3D11Widget] - Widget Handle: " << m_hWnd;
 
@@ -755,6 +756,7 @@ void QDirect3D11Widget::initializeRenderTargets()
             ID3D11Texture2D* axialTex = fileReader->getOrCreateAxialTexture(fileReader->currentIndex[1]);
             axialTex->GetDesc(&desc);
             texDesc.Width = desc.Width;
+		//	texDesc.Width = desc.Height;
             texDesc.Height = desc.Height;
 
 
@@ -1273,7 +1275,7 @@ void QDirect3D11Widget::InitShaders()
 
 D3D11_VIEWPORT QDirect3D11Widget::CreateViewport(int index)
 {
-    D3D11_VIEWPORT vp = {};
+   /* D3D11_VIEWPORT vp = {};
     vp.Width = static_cast<float>(width()) / 2;
     vp.Height = static_cast<float>(height()) / 2;
     vp.MinDepth = 0.0f;
@@ -1286,7 +1288,89 @@ D3D11_VIEWPORT QDirect3D11Widget::CreateViewport(int index)
     case 3: vp.TopLeftX = vp.Width; vp.TopLeftY = vp.Height; break;
     }
 
-    return vp;
+    return vp;*/
+
+
+	D3D11_VIEWPORT vp = {};
+
+	float screenWidth = static_cast<float>(width());
+	float screenHeight = static_cast<float>(height());
+
+	// 기본 4분할 영역
+	float quadWidth = screenWidth / 2.0f;
+	float quadHeight = screenHeight / 2.0f;
+
+	// ✅ 각 뷰의 실제 데이터 aspect ratio 계산
+	float dataAspect = 1.0f;
+
+	switch (index) {
+	case 1: // Axial (Z축 슬라이싱)
+		dataAspect = (float)(fileReader->m_width) / (float)(fileReader->m_height);
+		break;
+
+	case 2: // Coronal (Y축 슬라이싱)
+		// X × Z 평면
+		dataAspect = (float)(fileReader->m_width) / (float)(fileReader->m_depth);
+		break;
+
+	case 3: // Sagittal (X축 슬라이싱)
+		// Y × Z 평면
+		dataAspect = (float)(fileReader->m_height) / (float)(fileReader->m_depth);
+		break;
+
+	default: // Volume (3D)
+		dataAspect = 1.0f;
+		break;
+	}
+
+	// ✅ Aspect ratio 유지하며 최대 크기로 맞춤
+	float renderWidth = quadWidth;
+	float renderHeight = quadHeight;
+	float offsetX = 0.0f;
+	float offsetY = 0.0f;
+
+	float quadAspect = quadWidth / quadHeight;
+
+	if (quadAspect > dataAspect) {
+		// 4분할 영역이 더 넓음 → 세로에 맞추고 가로 중앙 정렬
+		renderWidth = quadHeight * dataAspect;
+		offsetX = (quadWidth - renderWidth) / 2.0f;
+	}
+	else {
+		// 4분할 영역이 더 높음 → 가로에 맞추고 세로 중앙 정렬
+		renderHeight = quadWidth / dataAspect;
+		offsetY = (quadHeight - renderHeight) / 2.0f;
+	}
+
+	// ✅ 4분할 위치 설정
+	switch (index) {
+	case 1: // Axial - 우상단
+		vp.TopLeftX = quadWidth + offsetX;
+		vp.TopLeftY = offsetY;
+		break;
+
+	case 2: // Coronal - 좌하단
+		vp.TopLeftX = offsetX;
+		vp.TopLeftY = quadHeight + offsetY;
+		break;
+
+	case 3: // Sagittal - 우하단
+		vp.TopLeftX = quadWidth + offsetX;
+		vp.TopLeftY = quadHeight + offsetY;
+		break;
+
+	case 0: // Volume - 좌상단
+		vp.TopLeftX = offsetX;
+		vp.TopLeftY = offsetY;
+		break;
+	}
+
+	vp.Width = renderWidth;
+	vp.Height = renderHeight;
+	vp.MinDepth = 0.0f;
+	vp.MaxDepth = 1.0f;
+
+	return vp;
 }
 void QDirect3D11Widget::SetBackgroundColor(int index)
 {
@@ -1358,116 +1442,118 @@ void QDirect3D11Widget::RenderSceneToTarget(int i)
 
 
 //251017
-//// Axial 뷰 (Z축 슬라이스)
-//ViewGeometry QDirect3D11Widget::GetAxialGeometry() {
-//	ViewGeometry geom;
-//	geom.origin = fileReader->views.origin;  // 원본 DICOM origin
-//	geom.rowDir = fileReader->imageOrientationPatient_Row;
-//	geom.colDir = fileReader->imageOrientationPatient_Col;
-//	geom.pixelSpacingX = fileReader->pixelSpacing[1];  // X spacing
-//	geom.pixelSpacingY = fileReader->pixelSpacing[0];  // Y spacing
-//	geom.sliceSpacing = fileReader->sliceThickness;    // Z spacing
-//	return geom;
-//}
-//
-//// Coronal 뷰 (Y축 슬라이스)
-//ViewGeometry QDirect3D11Widget::GetCoronalGeometry() {
-//	ViewGeometry geom;
-//
-//	// Origin: 볼륨의 전방 하단 좌측 (front-bottom-left)
-//	geom.origin = XMFLOAT3(
-//		fileReader->imagePositionPatient.x,
-//		fileReader->imagePositionPatient.y,  // Y 최소값
-//		fileReader->imagePositionPatient.z
-//	);
-//
-//	// Row direction: X축 (좌→우)
-//	geom.rowDir = XMFLOAT3(1.0f, 0.0f, 0.0f);
-//
-//	// Column direction: Z축 (하→상)
-//	geom.colDir = XMFLOAT3(0.0f, 0.0f, 1.0f);
-//
-//	// Spacing
-//	geom.pixelSpacingX = fileReader->pixelSpacing[1];     // X spacing
-//	geom.pixelSpacingY = fileReader->sliceThickness;      // Z spacing (세로)
-//	geom.sliceSpacing = fileReader->pixelSpacing[0];      // Y spacing (슬라이스 방향)
-//
-//	return geom;
-//}
-//
-//// Sagittal 뷰 (X축 슬라이스)
-//ViewGeometry QDirect3D11Widget::GetSagittalGeometry() {
-//	ViewGeometry geom;
-//
-//	// Origin: 볼륨의 좌측 하단 전방 (left-bottom-front)
-//	geom.origin = XMFLOAT3(
-//		fileReader->imagePositionPatient.x,  // X 최소값
-//		fileReader->imagePositionPatient.y,
-//		fileReader->imagePositionPatient.z
-//	);
-//
-//	// Row direction: Y축 (전→후)
-//	geom.rowDir = XMFLOAT3(0.0f, 1.0f, 0.0f);
-//
-//	// Column direction: Z축 (하→상)
-//	geom.colDir = XMFLOAT3(0.0f, 0.0f, 1.0f);
-//
-//	// Spacing
-//	geom.pixelSpacingX = fileReader->pixelSpacing[0];     // Y spacing
-//	geom.pixelSpacingY = fileReader->sliceThickness;      // Z spacing (세로)
-//	geom.sliceSpacing = fileReader->pixelSpacing[1];      // X spacing (슬라이스 방향)
-//
-//	return geom;
-//}
+// Axial 뷰 (Z축 슬라이스)
+ViewGeometry QDirect3D11Widget::GetAxialGeometry() {
+	ViewGeometry geom;
+	geom.origin = fileReader->views.origin;  // 원본 DICOM origin
+	geom.rowDir = fileReader->views.rowDir;
+	geom.colDir = fileReader->views.colDir;
+	geom.pixelSpacingX = fileReader->views.spacing.x;  // X spacing
+	geom.pixelSpacingY = fileReader->views.spacing.y;   // Y spacing
+	geom.sliceSpacing = fileReader->views.spacing.z;     // Z spacing
+	return geom;
+}
 
-//int ComputeSliceIndexForView(const XMFLOAT3& patientCoord, int viewIndex)
-//{
-//	ViewGeometry geom;
-//	XMUINT3 dims;
-//
-//	switch (viewIndex) {
-//	case 1: // Axial
-//		geom = GetAxialGeometry();
-//		dims = XMUINT3(
-//			fileReader->width,
-//			fileReader->height,
-//			fileReader->sliceIndex[1]  // Z depth
-//		);
-//		break;
-//
-//	case 2: // Coronal
-//		geom = GetCoronalGeometry();
-//		dims = XMUINT3(
-//			fileReader->width,          // X
-//			fileReader->sliceIndex[2],  // Y slices
-//			fileReader->sliceIndex[1]   // Z height
-//		);
-//		break;
-//
-//	case 3: // Sagittal
-//		geom = GetSagittalGeometry();
-//		dims = XMUINT3(
-//			fileReader->sliceIndex[3],  // X slices
-//			fileReader->height,         // Y
-//			fileReader->sliceIndex[1]   // Z height
-//		);
-//		break;
-//	}
-//
-//	return ComputeSliceIndexFromPatientCoord_Robust(
-//		patientCoord,
-//		viewIndex,
-//		geom.origin,
-//		geom.rowDir,
-//		geom.colDir,
-//		geom.pixelSpacingX,
-//		geom.pixelSpacingY,
-//		geom.sliceSpacing,
-//		dims
-//	);
-//}
-//
-//
+// Coronal 뷰 (Y축 슬라이스)
+ViewGeometry QDirect3D11Widget::GetCoronalGeometry() {
+	ViewGeometry geom;
+
+	// Origin: 볼륨의 전방 하단 좌측 (front-bottom-left)
+	geom.origin = fileReader->views.origin;
+
+	//// Row direction: X축 (좌→우)
+	//geom.rowDir = XMFLOAT3(1.0f, 0.0f, 0.0f);
+
+	//// Column direction: Z축 (하→상)
+	//geom.colDir = XMFLOAT3(0.0f, 0.0f, 1.0f);
+
+	geom.rowDir = fileReader->views.rowDir;
+	geom.colDir = fileReader->views.colDir;
+
+//	fileReader->views.imageSize = DirectX::XMFLOAT3(fileReader->m_width, fileReader->m_depth, fileReader->m_height);
+
+	// Spacing
+	geom.pixelSpacingX = fileReader->views.spacing.x;     // X spacing
+	geom.pixelSpacingY = fileReader->views.spacing.z;      // Z spacing (세로)
+	geom.sliceSpacing = fileReader->views.spacing.y; ;      // Y spacing (슬라이스 방향)
+
+	return geom;
+}
+
+// Sagittal 뷰 (X축 슬라이스)
+ViewGeometry QDirect3D11Widget::GetSagittalGeometry() {
+	ViewGeometry geom;
+
+	// Origin: 볼륨의 좌측 하단 전방 (left-bottom-front)
+	geom.origin = fileReader->views.origin;
+
+	//// Row direction: Y축 (전→후)
+	//geom.rowDir = XMFLOAT3(0.0f, 1.0f, 0.0f);
+
+	//// Column direction: Z축 (하→상)
+	//geom.colDir = XMFLOAT3(0.0f, 0.0f, 1.0f);
+
+	geom.rowDir = fileReader->views.rowDir;
+	geom.colDir = fileReader->views.colDir;
+
+//	fileReader->views.imageSize = DirectX::XMFLOAT3(fileReader->m_height, fileReader->m_depth, fileReader->m_width);
+
+	// Spacing
+	geom.pixelSpacingX = fileReader->views.spacing.y;     // X spacing
+	geom.pixelSpacingY = fileReader->views.spacing.z;      // Z spacing (세로)
+	geom.sliceSpacing = fileReader->views.spacing.x; ;      // Y spacing (슬라이스 방향)
+
+	return geom;
+}
+
+int QDirect3D11Widget::ComputeSliceIndexForView(const XMFLOAT3& patientCoord, int viewIndex)
+{
+	ViewGeometry geom;
+	XMUINT3 dims;
+
+	switch (viewIndex) {
+	case 1: // Axial
+		geom = GetAxialGeometry();
+		dims = XMUINT3(
+			fileReader->m_width,
+			fileReader->m_height,
+			fileReader->m_depth    // ✅ 총 슬라이스 개수 (Z축)
+		);
+		break;
+
+	case 2: // Coronal
+		geom = GetCoronalGeometry();
+		dims = XMUINT3(
+			fileReader->m_width,
+			fileReader->m_height,
+			fileReader->m_depth    // ✅ 총 슬라이스 개수 (Z축)
+		);
+		break;
+
+	case 3: // Sagittal
+		geom = GetSagittalGeometry();
+		dims = XMUINT3(
+			fileReader->m_width,
+			fileReader->m_height,
+			fileReader->m_depth    // ✅ 총 슬라이스 개수 (Z축)
+		);
+		break;
+	}
+
+	return ComputeSliceIndexFromPatientCoord_Robust(
+		patientCoord,
+		viewIndex,
+		geom.origin,
+		geom.rowDir,
+		geom.colDir,
+		geom.pixelSpacingX,
+		geom.pixelSpacingY,
+		geom.sliceSpacing,
+		dims
+	);
+}
+
+
 
 ////디버깅 방법
 //qDebug() << "=== View" << viewIndex << "===";
@@ -1522,6 +1608,10 @@ void QDirect3D11Widget::mousePressEvent(QMouseEvent* event)
     // 모든 뷰에 동일한 십자선 위치 적용
     DirectX::XMFLOAT2 crossUV = { normX, normY };
 
+
+	// ✅ Aspect ratio 고려한 정규화 좌표
+	XMFLOAT2 normUV = GetNormalizedUV(px, py, clickedViewIndex);
+
     // 클릭된 위치 → 환자 좌표
     patientCoord = GetPatientCoordFromClick(clickedViewIndex, crossUV);
 
@@ -1533,9 +1623,10 @@ void QDirect3D11Widget::mousePressEvent(QMouseEvent* event)
 
         //ComputeSliceIndexFromPatientCoord_Robust
        // fileReader->currentIndex[i] = ComputeSliceIndexFromPatientCoord(i, patientCoord);
-        fileReader->currentIndex[i] = ComputeSliceIndexFromPatientCoord_Robust(patientCoord, i,
+       /* fileReader->currentIndex[i] = ComputeSliceIndexFromPatientCoord_Robust(patientCoord, i,
             fileReader->views.origin, XMFLOAT3(1, 0, 0), XMFLOAT3(0, 1, 0),
-            fileReader->views.spacing.x, fileReader->views.spacing.y, 0.15f, XMUINT3(632, 794, 794));
+            fileReader->views.spacing.x, fileReader->views.spacing.y, 0.15f, XMUINT3(632, 794, 794));*/
+		fileReader->currentIndex[i] = ComputeSliceIndexForView(patientCoord, i);
 
 
         ID3D11RenderTargetView* rtvA, *rtvC, *rtvS;
@@ -1703,6 +1794,9 @@ void QDirect3D11Widget::UpdateCrosshairFromPatientCoord(DirectX::XMFLOAT3 patien
     // 현재 뷰에 맞는 십자선 위치 계산
     crosshair.crossUV = GetCrossUVFromPatientCoord(viewIndex, patientCoord);
 
+	// ✅ Aspect ratio 고려한 정규화 좌표
+	XMFLOAT2 normUV = GetNormalizedUV(px, py, clickedViewIndex);
+
     // 십자선 스타일 설정
     crosshair.crossThickness = 0.002f;
     crosshair.crossColor = { 1.0f, 0.0f, 0.0f, 1.0f }; // 빨강
@@ -1740,8 +1834,40 @@ void QDirect3D11Widget::RenderAllQuads()
     // 모든 뷰에 동일한 십자선 위치 적용
     DirectX::XMFLOAT2 crossUV = { normX, normY };
 
+	// ✅ Aspect ratio 고려한 정규화 좌표
+	XMFLOAT2 normUV = GetNormalizedUV(px, py, clickedViewIndex);
+
+
+
+	// 디버깅 로그: 보정된 UV 좌표
+	qDebug() << "🧪 UV after aspect correction:";
+	qDebug() << "  normX:" << normUV.x << "normY:" << normUV.y;
+
+	// 텍스처 좌표 → 픽셀 좌표
+	float py = normUV.y * fileReader->views.imageSize.y;
+
+	// Z축 좌표 계산 (Coronal 뷰 기준)
+	float patientZ = fileReader->views.origin.z + py * fileReader->views.spacing.z;
+
+	// 디버깅 로그: 계산된 Z값
+	qDebug() << "🧪 PatientCoord.z from UV:";
+	qDebug() << "  py:" << py << "→ patientCoord.z:" << patientZ;
+
+
+
     // 클릭된 위치 → 환자 좌표
-    patientCoord = GetPatientCoordFromClick(clickedViewIndex, crossUV);
+    patientCoord = GetPatientCoordFromClick(clickedViewIndex, normUV);
+
+	if (2 == clickedViewIndex) {
+		// 디버깅 로그 출력
+		qDebug() << "🔍 Coronal View Click Debug";
+		qDebug() << "  uv.y:" << normUV.y;
+		qDebug() << "  py:" << py;
+		qDebug() << "  patientCoord.z:" << patientCoord.z;
+		qDebug() << "  imageSize y:" << fileReader->views.imageSize.y;
+	}
+
+
 
     
     UpdateCrosshairFromPatientCoord(patientCoord);
@@ -1992,22 +2118,38 @@ int QDirect3D11Widget::ComputeSliceIndexFromPatientCoord_Robust(
 	qDebug() << "ComputeSliceIndexFromPatientCoord_Robust\n";
 
 
-    // depending on requested viewIndex, return correct slice index:
-    switch (viewIndex)
-    {
-    case 1:// Axial → Z축 슬라이스
-        kk = std::clamp(kk, 0, static_cast<int>(fileReader->sliceIndex[viewIndex]) - 1);
-        return kk; // axial -> k (slice along normal)
-    case 2:// Coronal → Y축 슬라이스
-        jj = std::clamp(jj, 0, static_cast<int>(fileReader->sliceIndex[viewIndex]) - 1);
-        return jj; // coronal -> j
-    case 3:// Sagittal → X축 슬라이스
-        ii = std::clamp(ii, 0, static_cast<int>(fileReader->sliceIndex[viewIndex]) - 1);
-        return ii; // sagittal -> i
-    default:
-        kk = std::clamp(kk, 0, static_cast<int>(fileReader->sliceIndex[viewIndex]) - 1);
-        return kk;
-    }
+    //// depending on requested viewIndex, return correct slice index:
+    //switch (viewIndex)
+    //{
+    //case 1:// Axial → Z축 슬라이스
+    //    kk = std::clamp(kk, 0, static_cast<int>(fileReader->sliceIndex[viewIndex]) - 1);
+    //    return kk; // axial -> k (slice along normal)
+    //case 2:// Coronal → Y축 슬라이스
+    //    jj = std::clamp(jj, 0, static_cast<int>(fileReader->sliceIndex[viewIndex]) - 1);
+    //    return jj; // coronal -> j
+    //case 3:// Sagittal → X축 슬라이스
+    //    ii = std::clamp(ii, 0, static_cast<int>(fileReader->sliceIndex[viewIndex]) - 1);
+    //    return ii; // sagittal -> i
+    //default:
+    //    kk = std::clamp(kk, 0, static_cast<int>(fileReader->sliceIndex[viewIndex]) - 1);
+    //    return kk;
+    //}
+
+
+	qDebug() << "🔍 Debug Info:";
+	qDebug() << "  ViewIndex:" << viewIndex;
+	qDebug() << "  Computed indices (i, j, k):" << ii << jj << kk;
+	qDebug() << "  dims:" << dims.x << dims.y << dims.z;
+	qDebug() << "  fileReader->sliceIndex[viewIndex]:" << fileReader->sliceIndex[viewIndex];
+
+	switch (viewIndex)
+	{
+	case 1: return kk; // axial
+	case 2: return jj; // coronal
+	case 3: return ii; // sagittal
+	default: return kk;
+	}
+
 }
 
 
@@ -2065,6 +2207,54 @@ int QDirect3D11Widget::ComputeSliceIndexFromPatientCoord(int viewIndex, XMFLOAT3
 }
 
 
+DirectX::XMFLOAT2 QDirect3D11Widget::GetNormalizedUV(int px, int py, int viewIndex)
+{
+	D3D11_VIEWPORT vp = CreateViewport(viewIndex);
+
+	// 클릭 좌표 → 뷰포트 내 좌표
+	float localX = px - vp.TopLeftX;
+	float localY = py - vp.TopLeftY;
+
+	// ✅ 정규화 (0~1 범위)
+	float normX = localX / vp.Width;
+	float normY = localY / vp.Height;
+
+	// ✅ Aspect Ratio 보정
+	float viewportAspect = vp.Width / vp.Height;
+
+	// 각 뷰의 실제 데이터 aspect ratio
+	float dataAspect = 1.0f;
+	switch (viewIndex) {
+	case 1: // Axial
+		dataAspect = (fileReader->m_width * fileReader->views.spacing.x) /
+			(fileReader->m_height * fileReader->views.spacing.y);
+		break;
+	case 2: // Coronal
+		dataAspect = (fileReader->m_width * fileReader->views.spacing.x) /
+			(fileReader->m_depth * fileReader->views.spacing.z);
+		break;
+	case 3: // Sagittal
+		dataAspect = (fileReader->m_height * fileReader->views.spacing.y) /
+			(fileReader->m_depth * fileReader->views.spacing.z);
+		break;
+	}
+
+	// ✅ Aspect ratio 차이 보정
+	if (viewportAspect > dataAspect) {
+		// 뷰포트가 더 넓음 → X 좌표 보정
+		float scale = dataAspect / viewportAspect;
+		normX = (normX - 0.5f) * scale + 0.5f;
+	}
+	else {
+		// 뷰포트가 더 높음 → Y 좌표 보정
+		float scale = viewportAspect / dataAspect;
+		normY = (normY - 0.5f) * scale + 0.5f;
+	}
+
+	return XMFLOAT2(normX, normY);
+}
+
+
 XMFLOAT3 QDirect3D11Widget::GetPatientCoordFromClick(int viewIndex, XMFLOAT2 uv)
 {
     /*if (2 == viewIndex)
@@ -2084,7 +2274,7 @@ XMFLOAT3 QDirect3D11Widget::GetPatientCoordFromClick(int viewIndex, XMFLOAT2 uv)
     XMFLOAT3 imageSize = fileReader->views.imageSize; // 영상 크기 (픽셀 단위)
     int sliceIndex = fileReader->currentIndex[viewIndex];  // 현재 슬라이스 인덱스
 
-    // 텍스처 좌표 → 픽셀 좌표
+    //// 텍스처 좌표 → 픽셀 좌표
     float px = uv.x * imageSize.x;
     float py = uv.y * imageSize.y;
 
@@ -2093,21 +2283,39 @@ XMFLOAT3 QDirect3D11Widget::GetPatientCoordFromClick(int viewIndex, XMFLOAT2 uv)
     switch (viewIndex)
     {
     case 1: // 축상 (XY 평면, Z 고정)
+
+		 px = uv.x * fileReader->m_width;
+		 py = uv.y * fileReader->m_height;
+
+
         patientCoord.x = origin.x + px * spacing.x;
         patientCoord.y = origin.y + py * spacing.y;
         patientCoord.z = origin.z + sliceIndex * spacing.z;
         break;
 
     case 2: // 관상 (XZ 평면, Y 고정)
+		 px = uv.x * fileReader->m_width;   // X 방향
+		 py = uv.y * fileReader->m_depth;   // ✅ Z 방향 (depth 사용!)
+
+
         patientCoord.x = origin.x + px * spacing.x;
         patientCoord.y = origin.y + sliceIndex * spacing.y;
         patientCoord.z = origin.z + py * spacing.z;
+	//	patientCoord.z = origin.z + (imageSize.y - py) * spacing.z;
+
         break;
 
     case 3: // 시상 (YZ 평면, X 고정)
+
+		 px = uv.x * fileReader->m_height;  // Y 방향
+		 py = uv.y * fileReader->m_depth;   // ✅ Z 방향 (depth 사용!)
+
+
         patientCoord.x = origin.x + sliceIndex * spacing.x;
         patientCoord.y = origin.y + px * spacing.y;
         patientCoord.z = origin.z + py * spacing.z;
+
+	//	patientCoord.z = origin.z + (imageSize.y - py) * spacing.z;
         break;
 
     default:
@@ -2116,13 +2324,73 @@ XMFLOAT3 QDirect3D11Widget::GetPatientCoordFromClick(int viewIndex, XMFLOAT2 uv)
 
     }
 
-
-    /*qDebug() << "Origin: (" << origin.x << ", " << origin.y << ", " << origin.z << ")";
-    qDebug() << "Spacing: (" << spacing.x << ", " << spacing.y << ", " << spacing.z << ")";
-    qDebug() << "SliceIndex: " << sliceIndex;
-    qDebug() << "PatientCoord: (" << patientCoord.x << ", " << patientCoord.y << ", " << patientCoord.z << ")";*/
+	//qDebug() << "view index: (" << viewIndex<< ")";
+ //   qDebug() << "Origin: (" << origin.x << ", " << origin.y << ", " << origin.z << ")";
+ //   qDebug() << "Spacing: (" << spacing.x << ", " << spacing.y << ", " << spacing.z << ")";
+ //   qDebug() << "SliceIndex: " << sliceIndex;
+ //   qDebug() << "PatientCoord: (" << patientCoord.x << ", " << patientCoord.y << ", " << patientCoord.z << ")";
 
     return patientCoord;
+
+
+
+	//// ❌ 잘못된 예시
+ //   // 모든 뷰에 동일한 origin/rowDir/colDir 사용
+ //   XMFLOAT3 origin = fileReader->views.origin;
+ //   XMFLOAT3 rowDir = fileReader->views.rowDir;
+ //   XMFLOAT3 colDir = fileReader->views.colDir;
+ //   
+	//XMFLOAT3 sliceDir;
+	//XMFLOAT3 expectedDir;
+ //   // ✅ 올바른 방법: 각 뷰의 geometry 사용
+ //   ViewGeometry geom;
+ //   switch (viewIndex) {
+ //   case 1: geom = GetAxialGeometry(); 
+	//	sliceDir = XMFLOAT3(0.0f, 0.0f, 1.0f);
+	//	break;
+ //   case 2: geom = GetCoronalGeometry(); 
+	//	sliceDir = XMFLOAT3(0.0f, 1.0f, 0.0f); 
+	//	break;
+ //   case 3: geom = GetSagittalGeometry(); 
+	//	sliceDir = XMFLOAT3(1.0f, 0.0f, 0.0f); 
+	//	break;
+	//default:
+	//	sliceDir = XMFLOAT3(0, 0, 0);
+	//	    patientCoord = GetDefaultPatientCenter(); // 또는 적절한 계산
+	//		return patientCoord;
+ //   }
+ //   
+ //   // 현재 슬라이스의 환자 좌표 계산
+ //   XMFLOAT3 patientCoord;
+ //   
+ //   // uv는 [0,1] 범위, 텍스처 좌표
+ //   // 실제 픽셀 인덱스로 변환
+ //   int pixelX = static_cast<int>(uv.x * fileReader->m_width);
+ //   int pixelY = static_cast<int>(uv.y * fileReader->m_height);
+ //   
+ //   // 픽셀 → 환자 좌표 변환
+ //   XMVECTOR vOrigin = V(geom.origin);
+ //   XMVECTOR vRow = V(geom.rowDir);
+ //   XMVECTOR vCol = V(geom.colDir);
+ //   XMVECTOR vNormal = XMVector3Cross(vRow, vCol);
+
+	//XMVECTOR vSliceDir = XMLoadFloat3(&sliceDir);
+	//vSliceDir = XMVector3Normalize(vSliceDir);
+
+	//// 만약 sliceDir이 음수 방향이면 반전 (임시방편)
+	//if (XMVectorGetX(XMVector3Dot(vNormal, vSliceDir)) < 0)
+	//	vNormal = XMVectorNegate(vNormal);
+ //   
+ //   // 현재 슬라이스 오프셋
+ //   int currentSlice = fileReader->currentIndex[viewIndex];
+ //   
+ //   XMVECTOR pos = vOrigin
+ //       + vRow * (pixelX * geom.pixelSpacingX)
+ //       + vCol * (pixelY * geom.pixelSpacingY)
+ //       + vNormal * (currentSlice * geom.sliceSpacing);
+ //   
+ //   XMStoreFloat3(&patientCoord, pos);
+ //   return patientCoord;
 
 }
 

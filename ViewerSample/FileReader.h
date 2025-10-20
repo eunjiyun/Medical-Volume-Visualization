@@ -31,6 +31,7 @@ struct ViewInfo {
     /*int sliceIndex;*/
 
     DirectX::XMFLOAT3 centerPatientCoord[4];
+	DirectX::XMFLOAT3 rowDir, colDir;
 };
 
 

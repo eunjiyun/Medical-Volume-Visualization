@@ -99,6 +99,7 @@ public:
 	ViewGeometry GetAxialGeometry();
 	ViewGeometry GetCoronalGeometry();
 	ViewGeometry GetSagittalGeometry();
+	int ComputeSliceIndexForView(const XMFLOAT3& patientCoord, int viewIndex);
     int px, py;
 private:
 
@@ -151,6 +152,7 @@ private:
         float sliceSpacing,              // (mm) spacing between slices (0018,0088) or SliceThickness
         const XMUINT3& dims              // width, height, depth (voxels)
     );
+	DirectX::XMFLOAT2 GetNormalizedUV(int px, int py, int viewIndex);
     XMFLOAT3 GetPatientCoordFromClick(int viewIndex, XMFLOAT2 uv);
     XMFLOAT2 GetCrossUVFromPatientCoord(int viewIndex, XMFLOAT3 patientCoord);
 
