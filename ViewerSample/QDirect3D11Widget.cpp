@@ -1839,9 +1839,9 @@ void QDirect3D11Widget::RenderAllQuads()
 
 
 
-	// 디버깅 로그: 보정된 UV 좌표
-	qDebug() << "🧪 UV after aspect correction:";
-	qDebug() << "  normX:" << normUV.x << "normY:" << normUV.y;
+	//// 디버깅 로그: 보정된 UV 좌표
+	//qDebug() << "🧪 UV after aspect correction:";
+	//qDebug() << "  normX:" << normUV.x << "normY:" << normUV.y;
 
 	// 텍스처 좌표 → 픽셀 좌표
 	float py = normUV.y * fileReader->views.imageSize.y;
@@ -1849,23 +1849,23 @@ void QDirect3D11Widget::RenderAllQuads()
 	// Z축 좌표 계산 (Coronal 뷰 기준)
 	float patientZ = fileReader->views.origin.z + py * fileReader->views.spacing.z;
 
-	// 디버깅 로그: 계산된 Z값
-	qDebug() << "🧪 PatientCoord.z from UV:";
-	qDebug() << "  py:" << py << "→ patientCoord.z:" << patientZ;
+	//// 디버깅 로그: 계산된 Z값
+	//qDebug() << "🧪 PatientCoord.z from UV:";
+	//qDebug() << "  py:" << py << "→ patientCoord.z:" << patientZ;
 
 
 
     // 클릭된 위치 → 환자 좌표
     patientCoord = GetPatientCoordFromClick(clickedViewIndex, normUV);
 
-	if (2 == clickedViewIndex) {
-		// 디버깅 로그 출력
-		qDebug() << "🔍 Coronal View Click Debug";
-		qDebug() << "  uv.y:" << normUV.y;
-		qDebug() << "  py:" << py;
-		qDebug() << "  patientCoord.z:" << patientCoord.z;
-		qDebug() << "  imageSize y:" << fileReader->views.imageSize.y;
-	}
+	//if (2 == clickedViewIndex) {
+	//	// 디버깅 로그 출력
+	//	qDebug() << "🔍 Coronal View Click Debug";
+	//	qDebug() << "  uv.y:" << normUV.y;
+	//	qDebug() << "  py:" << py;
+	//	qDebug() << "  patientCoord.z:" << patientCoord.z;
+	//	qDebug() << "  imageSize y:" << fileReader->views.imageSize.y;
+	//}
 
 
 
@@ -2394,63 +2394,137 @@ XMFLOAT3 QDirect3D11Widget::GetPatientCoordFromClick(int viewIndex, XMFLOAT2 uv)
 
 }
 
+//XMFLOAT2 QDirect3D11Widget::GetCrossUVFromPatientCoord(int viewIndex, XMFLOAT3 patientCoord)
+//{
+//    /*XMFLOAT3 origin = fileReader->views[viewIndex].origin;
+//    XMFLOAT3 spacing = fileReader->views[viewIndex].spacing;
+//    XMFLOAT3 imageSize = fileReader->views[viewIndex].imageSize;*/
+//
+//
+//    XMFLOAT3 origin = fileReader->views.origin;
+//    XMFLOAT3 spacing = fileReader->views.spacing;
+//    XMFLOAT3 imageSize = fileReader->views.imageSize;
+//
+//    /*  qDebug() << "View " << viewIndex << " origin: (" << origin.x << ", " << origin.y << ", " << origin.z << ")" << endl;
+//      qDebug() << "View " << viewIndex << " spacing: (" << spacing.x << ", " << spacing.y << ", " << spacing.z << ")" << endl;
+//      qDebug() << "View " << viewIndex << " imageSize: (" << imageSize.x << ", " << imageSize.y << ", " << imageSize.z << ")" << endl;*/
+//
+//    float px = 0.0f, py = 0.0f;
+//
+//    switch (viewIndex)
+//    {
+//    case 1: // 축상
+//        px = (patientCoord.x - origin.x) / spacing.x;
+//        py = (patientCoord.y - origin.y) / spacing.y;
+//        break;
+//    case 2: // 관상
+//        px = (patientCoord.x - origin.x) / spacing.x;
+//        py = (patientCoord.z - origin.z) / spacing.z;
+//        break;
+//    case 3: // 시상
+//        px = (patientCoord.y - origin.y) / spacing.y;
+//        py = (patientCoord.z - origin.z) / spacing.z;
+//        break;
+//    default: // Volume 또는 기타
+//        px = 0.0f;
+//        py = 0.0f;
+//        break;
+//    }
+//
+//    /*  px = std::clamp(px, 0.0f, imageSize.x);
+//      py = std::clamp(py, 0.0f, imageSize.y);*/
+//
+//    XMFLOAT2 uv;
+//    uv.x = px / imageSize.x;
+//    uv.y = py / imageSize.y;
+//
+//    /* uv.x = std::clamp(px / imageSize.x, 0.0f, 1.0f);
+//     uv.y = std::clamp(py / imageSize.y, 0.0f, 1.0f);*/
+//
+//     //qDebug() << "View " << viewIndex << " UV: (" << uv.x << ", " << uv.y << ")" << endl;
+//
+//    if (spacing.x <= 0 || spacing.y <= 0 || spacing.z <= 0 ||
+//        imageSize.x <= 0 || imageSize.y <= 0) {
+//        // qDebug() << "Invalid spacing or imageSize in view" << viewIndex;
+//        return XMFLOAT2(0.5f, 0.5f); // fallback 중앙값
+//    }
+//
+//
+//    return uv;
+//}
+
 XMFLOAT2 QDirect3D11Widget::GetCrossUVFromPatientCoord(int viewIndex, XMFLOAT3 patientCoord)
 {
-    /*XMFLOAT3 origin = fileReader->views[viewIndex].origin;
-    XMFLOAT3 spacing = fileReader->views[viewIndex].spacing;
-    XMFLOAT3 imageSize = fileReader->views[viewIndex].imageSize;*/
+	XMFLOAT3 origin = fileReader->views.origin;
+	XMFLOAT3 spacing = fileReader->views.spacing;
+	XMFLOAT3 imageSize = fileReader->views.imageSize;
 
+	if (spacing.x <= 0 || spacing.y <= 0 || spacing.z <= 0 ||
+		imageSize.x <= 0 || imageSize.y <= 0 || imageSize.z <= 0) {
+		return XMFLOAT2(0.5f, 0.5f); // fallback 중앙값
+	}
 
-    XMFLOAT3 origin = fileReader->views.origin;
-    XMFLOAT3 spacing = fileReader->views.spacing;
-    XMFLOAT3 imageSize = fileReader->views.imageSize;
+	float px = 0.0f, py = 0.0f;
+	float sizeX = 0.0f, sizeY = 0.0f;
+	float spacingX = 1.0f, spacingY = 1.0f;
 
-    /*  qDebug() << "View " << viewIndex << " origin: (" << origin.x << ", " << origin.y << ", " << origin.z << ")" << endl;
-      qDebug() << "View " << viewIndex << " spacing: (" << spacing.x << ", " << spacing.y << ", " << spacing.z << ")" << endl;
-      qDebug() << "View " << viewIndex << " imageSize: (" << imageSize.x << ", " << imageSize.y << ", " << imageSize.z << ")" << endl;*/
+	switch (viewIndex)
+	{
+	case 1: // Axial (XY 평면)
+		px = (patientCoord.x - origin.x) / spacing.x;
+		py = (patientCoord.y - origin.y) / spacing.y;
+		sizeX = imageSize.x;
+		sizeY = imageSize.y;
+		spacingX = spacing.x;
+		spacingY = spacing.y;
+		break;
 
-    float px = 0.0f, py = 0.0f;
+	case 2: // Coronal (XZ 평면)
+		px = (patientCoord.x - origin.x) / spacing.x;
+		py = (patientCoord.z - origin.z) / spacing.z;
+		sizeX = imageSize.x;
+		sizeY = imageSize.z;
+		spacingX = spacing.x;
+		spacingY = spacing.z;
+		break;
 
-    switch (viewIndex)
-    {
-    case 1: // 축상
-        px = (patientCoord.x - origin.x) / spacing.x;
-        py = (patientCoord.y - origin.y) / spacing.y;
-        break;
-    case 2: // 관상
-        px = (patientCoord.x - origin.x) / spacing.x;
-        py = (patientCoord.z - origin.z) / spacing.z;
-        break;
-    case 3: // 시상
-        px = (patientCoord.y - origin.y) / spacing.y;
-        py = (patientCoord.z - origin.z) / spacing.z;
-        break;
-    default: // Volume 또는 기타
-        px = 0.0f;
-        py = 0.0f;
-        break;
-    }
+	case 3: // Sagittal (YZ 평면)
+		px = (patientCoord.y - origin.y) / spacing.y;
+		py = (patientCoord.z - origin.z) / spacing.z;
+		sizeX = imageSize.y;
+		sizeY = imageSize.z;
+		spacingX = spacing.y;
+		spacingY = spacing.z;
+		break;
 
-    /*  px = std::clamp(px, 0.0f, imageSize.x);
-      py = std::clamp(py, 0.0f, imageSize.y);*/
+	default:
+		return XMFLOAT2(0.5f, 0.5f);
+	}
 
-    XMFLOAT2 uv;
-    uv.x = px / imageSize.x;
-    uv.y = py / imageSize.y;
+	// 정규화
+	XMFLOAT2 uv;
+	uv.x = px / sizeX;
+	uv.y = py / sizeY;
 
-    /* uv.x = std::clamp(px / imageSize.x, 0.0f, 1.0f);
-     uv.y = std::clamp(py / imageSize.y, 0.0f, 1.0f);*/
+	// ✅ Aspect ratio 보정
+	float dataAspect = (sizeX * spacingX) / (sizeY * spacingY);
+	D3D11_VIEWPORT vp = CreateViewport(viewIndex);
+	float viewportAspect = vp.Width / vp.Height;
 
-     //qDebug() << "View " << viewIndex << " UV: (" << uv.x << ", " << uv.y << ")" << endl;
+	if (viewportAspect > dataAspect) {
+		float scale = dataAspect / viewportAspect;
+		uv.x = (uv.x - 0.5f) * scale + 0.5f;
+	}
+	else {
+		float scale = viewportAspect / dataAspect;
+		uv.y = (uv.y - 0.5f) * scale + 0.5f;
+	}
 
-    if (spacing.x <= 0 || spacing.y <= 0 || spacing.z <= 0 ||
-        imageSize.x <= 0 || imageSize.y <= 0) {
-        // qDebug() << "Invalid spacing or imageSize in view" << viewIndex;
-        return XMFLOAT2(0.5f, 0.5f); // fallback 중앙값
-    }
+	// 범위 제한
+	uv.x = std::clamp(uv.x, 0.0f, 1.0f);
+	uv.y = std::clamp(uv.y, 0.0f, 1.0f);
 
-
-    return uv;
+	return uv;
 }
 
 
