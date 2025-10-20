@@ -1612,6 +1612,7 @@ void QDirect3D11Widget::mousePressEvent(QMouseEvent* event)
 	// ✅ Aspect ratio 고려한 정규화 좌표
 	XMFLOAT2 normUV = GetNormalizedUV(px, py, clickedViewIndex);
 
+	currentUV[clickedViewIndex] = crossUV;
     // 클릭된 위치 → 환자 좌표
     patientCoord = GetPatientCoordFromClick(clickedViewIndex, crossUV);
 
@@ -1717,6 +1718,13 @@ DirectX::XMFLOAT3 QDirect3D11Widget::GetDefaultPatientCenter()
     float centerX = axialView.origin.x + (axialView.imageSize.x * axialView.spacing.x) / 2.0f;
     float centerY = axialView.origin.y + (axialView.imageSize.y * axialView.spacing.y) / 2.0f;
     float centerZ = axialView.origin.z + (axialView.imageSize.z * axialView.spacing.z) / 2.0f;
+
+	/*for (int i{1}; i < 4; ++i)
+		currentPatientCoord[i] = DirectX::XMFLOAT3(centerX, centerY, centerZ);*/
+
+
+	for (int i{ 1 }; i < 4; ++i)
+		currentUV[i] = DirectX::XMFLOAT2(0.5f, 0.5f);
 
     return DirectX::XMFLOAT3(centerX, centerY, centerZ);
 }
@@ -2293,6 +2301,8 @@ XMFLOAT3 QDirect3D11Widget::GetPatientCoordFromClick(int viewIndex, XMFLOAT2 uv)
     float px = uv.x * imageSize.x;
     float py = uv.y * imageSize.y;
 
+	currentUV[viewIndex] = uv;
+
     XMFLOAT3 patientCoord;
 
     switch (viewIndex)
@@ -2306,6 +2316,8 @@ XMFLOAT3 QDirect3D11Widget::GetPatientCoordFromClick(int viewIndex, XMFLOAT2 uv)
         patientCoord.x = origin.x + px * spacing.x;
         patientCoord.y = origin.y + py * spacing.y;
         patientCoord.z = origin.z + sliceIndex * spacing.z;
+
+	
         break;
 
     case 2: // 관상 (XZ 평면, Y 고정)
@@ -2317,6 +2329,8 @@ XMFLOAT3 QDirect3D11Widget::GetPatientCoordFromClick(int viewIndex, XMFLOAT2 uv)
         patientCoord.y = origin.y + sliceIndex * spacing.y;
         patientCoord.z = origin.z + py * spacing.z;
 	//	patientCoord.z = origin.z + (imageSize.y - py) * spacing.z;
+
+		//currentPatientCoord[2] = patientCoord;
 
         break;
 
@@ -2331,6 +2345,8 @@ XMFLOAT3 QDirect3D11Widget::GetPatientCoordFromClick(int viewIndex, XMFLOAT2 uv)
         patientCoord.z = origin.z + py * spacing.z;
 
 	//	patientCoord.z = origin.z + (imageSize.y - py) * spacing.z;
+
+	//	currentPatientCoord[3] = patientCoord;
         break;
 
     default:
@@ -2603,9 +2619,33 @@ void QDirect3D11Widget::onAxialScroll(int value) {
         ID3D11RenderTargetView* rtv = getRTVForTexture(tex);
         m_RTViews.slices[1] = rtv;
 
+		//auto p =GetPatientCoordFromClick(1, currentUV[1]);
+
+		patientCoord = GetPatientCoordFromClick(1, currentUV[1]);
+
+
+
+
+
+		for (int i{ 2 }; i <= 3; ++i) {
+		//	patientCoord = GetPatientCoordFromClick(1, currentUV[1]);
+			fileReader->views.centerPatientCoord[i] = patientCoord;
+			fileReader->currentIndex[i] = ComputeSliceIndexForView(patientCoord, i);
+
+
+			UpdateCrosshairFromPatientCoord(patientCoord, i);
+
+			// 3. 셰이더에 바인딩
+			m_pDeviceContext->PSSetConstantBuffers(0, 1, &fileReader->m_crosshairBuffer);
+		}
+
+
+
         // 렌더링 업데이트
         update();
     }
+
+
 
     sliceInfoAxial->hide();
     // 슬라이스 정보 업데이트
@@ -2639,6 +2679,17 @@ void QDirect3D11Widget::onCoronalScroll(int value) {
         ID3D11RenderTargetView* rtv = getRTVForTexture(tex);
         m_RTViews.slices[2] = rtv;
 
+		auto p = GetPatientCoordFromClick(2, currentUV[2]);
+
+		for (int i{ 1 }; i <= 3; ++i) {
+			if (2 != i) {
+				UpdateCrosshairFromPatientCoord(p, i);
+
+				// 3. 셰이더에 바인딩
+				m_pDeviceContext->PSSetConstantBuffers(0, 1, &fileReader->m_crosshairBuffer);
+			}
+		}
+
         // 렌더링 업데이트
         update();
     }
@@ -2671,6 +2722,18 @@ void QDirect3D11Widget::onSagittalScroll(int value) {
 
         ID3D11RenderTargetView* rtv = getRTVForTexture(tex);
         m_RTViews.slices[3] = rtv;
+
+		auto p = GetPatientCoordFromClick(3, currentUV[3]);
+
+
+		for (int i{ 1 }; i <= 2; ++i) {
+			
+				UpdateCrosshairFromPatientCoord(p, i);
+
+				// 3. 셰이더에 바인딩
+				m_pDeviceContext->PSSetConstantBuffers(0, 1, &fileReader->m_crosshairBuffer);
+			
+		}
 
         // 렌더링 업데이트
         update();

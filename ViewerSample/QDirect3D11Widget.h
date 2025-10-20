@@ -79,6 +79,15 @@ public:
     QLabel* sliceInfoCoronal;
     QLabel* sliceInfoSagittal;
 
+	//DirectX::XMFLOAT3 currentPatientCoord[4];
+	DirectX::XMFLOAT2 currentUV[4] = {
+	{0.0f, 0.0f},
+	{0.5f, 0.5f},
+	{0.5f, 0.5f},
+	{0.5f, 0.5f}
+	};
+
+
 public:
     QDirect3D11Widget(QWidget * parent);
     ~QDirect3D11Widget();
