@@ -1648,7 +1648,7 @@ void QDirect3D11Widget::mousePressEvent(QMouseEvent* event)
 
 
                 sliceInfoAxial->hide();
-                sliceInfoAxial->setText(QString("Image %1/%2").arg(fileReader->currentIndex[1] + 1).arg(fileReader->m_depth));
+                sliceInfoAxial->setText(QString("Image %1/%2").arg(fileReader->m_depth-fileReader->currentIndex[1] + 1).arg(fileReader->m_depth));
                 //sliceInfoAxial->adjustSize();
               //  sliceInfoAxial->repaint();  // 강제로 다시 그리기
                 sliceInfoAxial->show();
