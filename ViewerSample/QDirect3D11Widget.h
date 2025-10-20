@@ -60,6 +60,9 @@ struct ViewGeometry {
 
 
 
+
+
+
 class QDirect3D11Widget : public QWidget
 {
     Q_OBJECT

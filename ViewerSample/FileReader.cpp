@@ -611,6 +611,20 @@ ID3D11Texture2D* FileReader::CreateTextureFromSlice(const std::vector<uint8_t>& 
 		cerr << "[?ëŸ¬] Crosshair ConstantBuffer ?ì„± ?¤íŒ¨!";
 	}
 
+
+	D3D11_BUFFER_DESC cbDescIdx = {};
+	//cbDesc.ByteWidth = sizeof(CrosshairData);
+	cbDescIdx.ByteWidth = ((sizeof(ViewInfo) + 15) / 16) * 16;
+	cbDescIdx.Usage = D3D11_USAGE_DEFAULT;
+	cbDescIdx.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+	cbDescIdx.CPUAccessFlags = 0;
+	cbDescIdx.MiscFlags = 0;
+
+	hr = g_pd3dDevice->CreateBuffer(&cbDesc, nullptr, &m_viewInfoBuffer);
+	if (FAILED(hr)) {
+		cerr << "[?ëŸ¬] Crosshair ConstantBuffer ?ì„± ?¤íŒ¨!";
+	}
+
 	return texture;
 }
 

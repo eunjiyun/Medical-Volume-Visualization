@@ -44,7 +44,10 @@
 
 cbuffer Crosshair : register(b0)
 {
-    float2 crossUV;         // 십자선 위치 (0~1)
+   
+	float2 cross1;         // 십자선 위치 (0~1)
+	float2 cross2;         // 십자선 위치 (0~1)
+	float2 cross3;         // 십자선 위치 (0~1)
     float crossThickness;   // 선 두께
     float4 crossColor;      // 십자선 색상
 }
@@ -158,21 +161,36 @@ PSOutput PSMain(VSOutput input)
 
 
   //  float2 crossUV = ... // viewIndex에 따라 선택
-    bool isCross = abs(uv.x - crossUV.x) < crossThickness || abs(uv.y - crossUV.y) < crossThickness;
+  //  bool isCross = abs(uv.x - crossUV.x) < crossThickness || abs(uv.y - crossUV.y) < crossThickness;
     //bool isCross = abs(uv.x - 0.5f) < crossThickness || abs(uv.y - 0.5f) < crossThickness;
-
+	bool isCross;
     switch (viewIndex)
     {
 
 
         // 십자선 포함 색상 출력
-    case 0: o.color0 = isCross ? crossColor : base; break;
-    case 1:   o.color1 = isCross ? crossColor : base; break;
-    case 2:    o.color2 = isCross ? crossColor : base; break;
-    case 3:   o.color3 = isCross ? crossColor : base; break;
+    case 0: 
+		isCross = abs(uv.x - cross1.x) < crossThickness || abs(uv.y - cross1.y) < crossThickness;
+		o.color0 = isCross ? crossColor : base; 
+
+		o.color0  = float4(viewIndex / 3.0f, 0, 0, 1); // viewIndex에 따라 빨강 농도 변화
+		
+		break;
+    case 1:  
+		isCross = abs(uv.x - cross1.x) < crossThickness || abs(uv.y - cross1.y) < crossThickness;
+		o.color1 = isCross ? crossColor : base; 
+		break;
+    case 2:    
+		isCross = abs(uv.x - cross2.x) < crossThickness || abs(uv.y - cross2.y) < crossThickness;
+		o.color2 = isCross ? crossColor : base; 
+		break;
+    case 3:   
+		isCross = abs(uv.x - cross3.x) < crossThickness || abs(uv.y - cross3.y) < crossThickness;
+		o.color3 = isCross ? crossColor : base; 
+		break;
     }
 
-    return o;
+	return o;
 
 }
 

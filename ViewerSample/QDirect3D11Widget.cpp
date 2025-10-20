@@ -1757,7 +1757,16 @@ void QDirect3D11Widget::InitializeCrosshair()
     DirectX::XMFLOAT3 patientCoord = GetDefaultPatientCenter(); // 환자 좌표계 기준 중심점
 
     CrosshairData crosshair = {};
-    crosshair.crossUV = GetCrossUVFromPatientCoord(viewIndex, patientCoord); // 현재 뷰에 맞는 UV 좌표
+	for (int i{ 1 }; i < 4; ++i) {
+		if (1 == i)
+			crosshair.cross1 = GetCrossUVFromPatientCoord(i, patientCoord); // 현재 뷰에 맞는 UV 좌표
+		else if (2 == i)
+			crosshair.cross2 = GetCrossUVFromPatientCoord(i, patientCoord); // 현재 뷰에 맞는 UV 좌표
+		else if (3 == i)
+			crosshair.cross3 = GetCrossUVFromPatientCoord(i, patientCoord); // 현재 뷰에 맞는 UV 좌표
+
+	}
+   // crosshair.crossUV = GetCrossUVFromPatientCoord(viewIndex, patientCoord); // 현재 뷰에 맞는 UV 좌표
     crosshair.crossThickness = 0.002f;
     crosshair.crossColor = { 1.0f, 0.0f, 0.0f, 1.0f }; // 빨강
 
@@ -1765,6 +1774,7 @@ void QDirect3D11Widget::InitializeCrosshair()
 
 }
 
+//251020
 void QDirect3D11Widget::UpdateCrosshairFromPatientCoord(DirectX::XMFLOAT3 patientCoord)
 {
     /*CrosshairData crosshair = {};
@@ -1791,8 +1801,30 @@ void QDirect3D11Widget::UpdateCrosshairFromPatientCoord(DirectX::XMFLOAT3 patien
 
     int viewIndex = GetClickedViewIndex(px, py, this->width(), this->height()); // 현재 뷰 인덱스 (0: Axial, 1: Coronal, 2: Sagittal, 3: 기타)
 
-    // 현재 뷰에 맞는 십자선 위치 계산
-    crosshair.crossUV = GetCrossUVFromPatientCoord(viewIndex, patientCoord);
+    //// 현재 뷰에 맞는 십자선 위치 계산
+    //crosshair.crossUV = GetCrossUVFromPatientCoord(viewIndex, patientCoord);
+
+
+	ViewInfoData viewInfo = {};
+	
+
+	for (int i{ 1 }; i < 4; ++i) {
+		//if (viewIndex != i)
+		{
+			viewInfo.viewIndex = i;
+			if (1 == i)
+				crosshair.cross1 = GetCrossUVFromPatientCoord(i, patientCoord); // 현재 뷰에 맞는 UV 좌표
+			else if (2 == i)
+				crosshair.cross2 = GetCrossUVFromPatientCoord(i, patientCoord); // 현재 뷰에 맞는 UV 좌표
+			else if (3 == i)
+				crosshair.cross3 = GetCrossUVFromPatientCoord(i, patientCoord); // 현재 뷰에 맞는 UV 좌표
+		}
+
+
+	}
+
+//	XMFLOAT3 pCoord = GetPatientCoordFromUV(clickedViewIndex, crosshair.crossUV);
+
 
 	// ✅ Aspect ratio 고려한 정규화 좌표
 	XMFLOAT2 normUV = GetNormalizedUV(px, py, clickedViewIndex);
@@ -1803,6 +1835,11 @@ void QDirect3D11Widget::UpdateCrosshairFromPatientCoord(DirectX::XMFLOAT3 patien
 
     // GPU에 전달
     m_pDeviceContext->UpdateSubresource(fileReader->m_crosshairBuffer, 0, nullptr, &crosshair, 0, 0);
+
+
+	m_pDeviceContext->UpdateSubresource(fileReader->m_viewInfoBuffer, 0, nullptr, &viewInfo, 0, 0);
+	m_pDeviceContext->VSSetConstantBuffers(1, 1, &fileReader->m_viewInfoBuffer); // b1에 바인딩
+
 
 }
 
@@ -1869,13 +1906,15 @@ void QDirect3D11Widget::RenderAllQuads()
 
 
 
-    
-    UpdateCrosshairFromPatientCoord(patientCoord);
 
-    // 3. 셰이더에 바인딩
-    m_pDeviceContext->PSSetConstantBuffers(0, 1, &fileReader->m_crosshairBuffer);
-    m_pDeviceContext->PSSetShaderResources(0, 4, m_SRViews.slices.data());     // tex0~tex3
-    m_pDeviceContext->PSSetSamplers(0, 1, m_samplerState.data());       // samp0~samp3
+
+    
+   //// UpdateCrosshairFromPatientCoord(patientCoord);
+
+   // // 3. 셰이더에 바인딩
+   // m_pDeviceContext->PSSetConstantBuffers(0, 1, &fileReader->m_crosshairBuffer);
+   // m_pDeviceContext->PSSetShaderResources(0, 4, m_SRViews.slices.data());     // tex0~tex3
+   // m_pDeviceContext->PSSetSamplers(0, 1, m_samplerState.data());       // samp0~samp3
 
 
     //rtv 너무 많이 생성해서 생기는 오류//251001
@@ -1906,6 +1945,21 @@ void QDirect3D11Widget::RenderAllQuads()
         ////여기서 벡터 오류251001
         //for(int j{};j< m_SRViews.flagIndex[i];++j)
         //    DrawQuadWithTexture(m_SRViews.slices[j], vp);      // ← 여기서 호출!
+
+		// 1. viewIndex 설정
+		ViewInfoData viewInfo = {};
+		viewInfo.viewIndex = i;
+		m_pDeviceContext->UpdateSubresource(fileReader->m_viewInfoBuffer, 0, nullptr, &viewInfo, 0, 0);
+		m_pDeviceContext->PSSetConstantBuffers(1, 1, &fileReader->m_viewInfoBuffer); // b1
+
+		// 2. 십자선 설정
+		UpdateCrosshairFromPatientCoord(patientCoord); // 내부에서 cross1~3 설정
+		m_pDeviceContext->PSSetConstantBuffers(0, 1, &fileReader->m_crosshairBuffer); // b0
+
+		// 3. 텍스처 설정
+		m_pDeviceContext->PSSetShaderResources(0, 1, &m_SRViews.slices[i]); // tex0
+
+
 
         DrawQuadWithTexture(m_SRViews.slices[i], vp);      // ← 여기서 호출!
     }
