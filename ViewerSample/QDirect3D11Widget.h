@@ -318,6 +318,11 @@ public:
 	DirectX::XMFLOAT4X4 m_volumeProjectionMatrix;
 
 	ID3D11DepthStencilView* m_pDepthStencilView;  // ← 이게 있는지 확인
+
+	// // ✅ 각 평면의 World Matrix를 저장
+	//XMFLOAT4X4 m_axialPlaneWorld;
+	//XMFLOAT4X4 m_coronalPlaneWorld;
+	//XMFLOAT4X4 m_sagittalPlaneWorld;
 	VolumeConstants constants{};
 
 public:
@@ -330,7 +335,7 @@ public:
 	void InitializeBoundingCube();
 	void UpdateSlicePlanePositions();
 	void RenderBoundingCube(const VolumeConstants& constants);
-	void DrawPlane();
+	void DrawPlane(const SlicePlane& plane);
 	void CreateDepthStencilBuffer();
 
 

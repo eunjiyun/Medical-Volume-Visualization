@@ -453,6 +453,45 @@ QDirect3D11Widget::QDirect3D11Widget(QWidget* parent)
 	sliceInfoCoronal->adjustSize();
 	sliceInfoSagittal->adjustSize();
 
+	//// ✅ World Matrix 초기화
+	//XMStoreFloat4x4(&m_axialPlane.worldMatrix, XMMatrixIdentity());
+	//XMStoreFloat4x4(&m_coronalPlane.worldMatrix, XMMatrixIdentity());
+	//XMStoreFloat4x4(&m_sagittalPlane.worldMatrix, XMMatrixIdentity());
+
+
+//	//=======================================================
+//	XMMATRIX scale = XMMatrixScaling(0.8f, 0.8f, 0.8f); // ← 여기서 크기 조절
+//
+//// ---- Axial (XY plane, z=0)
+//	
+//		XMMATRIX worldA = scale * XMMatrixTranslation(0.0f, 0.0f, 0.0f);
+//		XMStoreFloat4x4(&m_axialPlane.worldMatrix, XMMatrixTranspose(worldA));
+//	
+//
+//	// ---- Coronal (XZ plane, y=0)
+//	
+//		XMMATRIX worldC = scale * XMMatrixRotationX(XM_PIDIV2);
+//		XMStoreFloat4x4(&m_coronalPlane.worldMatrix, XMMatrixTranspose(worldC));
+//
+//	
+//	
+//		XMMATRIX worldS = scale * XMMatrixRotationY(XM_PIDIV2);
+//		XMStoreFloat4x4(&m_sagittalPlane.worldMatrix, XMMatrixTranspose(worldS));
+//	
+//
+//
+//		//===============================================================
+
+
+
+
+
+
+
+
+
+
+
 
 	// 시그널 연결
 	connect(scrollAxial, &QScrollBar::valueChanged, this, &QDirect3D11Widget::onAxialScroll);
@@ -588,9 +627,6 @@ bool QDirect3D11Widget::init()
 	}
 
 	resetEnvironment();
-
-
-
 
 	LoadDICOMSeries();  // 최초 표시 시 DICOM 로드
 
@@ -1133,134 +1169,6 @@ void QDirect3D11Widget::InitializeGraphics()
 
 void QDirect3D11Widget::RenderVolumeView()
 {
-	//	m_pDeviceContext->ClearDepthStencilView(m_pDepthStencilView, D3D11_CLEAR_DEPTH, 1.0f, 0);
-	//	// ✅ Depth Buffer 바인딩 (3D 렌더링에 필수!)
-	//	m_pDeviceContext->OMSetRenderTargets(1, &m_pSwapChainRTV, m_pDepthStencilView);
-	//
-	//	UpdateSlicePlanePositions();  // ← 3번 (매 프레임)
-	//	// ✅ 3D 셰이더 활성화
-	//	m_pDeviceContext->VSSetShader(m_volumeVS, nullptr, 0);
-	//	m_pDeviceContext->PSSetShader(m_volumePS, nullptr, 0);
-	//	m_pDeviceContext->VSSetConstantBuffers(0, 1, &m_volumeConstantBuffer);
-	//
-	//	// View/Projection 행렬 설정
-	//	VolumeConstants constants;
-	//
-	//
-	//	// ---- Axial (XY 평면)
-	//	XMMATRIX tempWorld;
-	//	tempWorld = XMMatrixTranspose(XMMatrixIdentity());
-	//	// ✅ World = 단위 행렬
-	//	XMStoreFloat4x4(&constants.World, tempWorld);
-	//
-	//
-	//
-	//	// ✅ View = 원점에서 Z-축 반대 방향을 보는 기본 카메라
-	//// eye(0,0,-2) → target(0,0,0) → up(0,1,0)
-	//// 기본 카메라 & 투영 행렬
-	//	XMMATRIX view = XMMatrixLookAtLH(
-	//		XMVectorSet(0.0f, 0.0f, -3.0f, 0.0f),
-	//		XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f),
-	//		XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f)
-	//	);
-	//	XMMATRIX tempView;
-	//	//XMStoreFloat4x4(&tempView, view);
-	//	tempView = XMMatrixTranspose(view);
-	//	XMStoreFloat4x4(&constants.View, tempView);
-	//
-	//	// ✅ Projection = 기본 Perspective (FOV 45도)
-	//	XMMATRIX proj = XMMatrixPerspectiveFovLH(
-	//		XM_PIDIV4,    // 45도
-	//		1.0f,         // aspect ratio
-	//		0.1f,         // near
-	//		100.0f        // far
-	//	);
-	//	//XMStoreFloat4x4(&constants.Projection, proj);
-	//	XMMATRIX tempProj;
-	//	//XMStoreFloat4x4(&tempView, view);
-	//	tempProj = XMMatrixTranspose(proj);
-	//	XMStoreFloat4x4(&constants.Projection, tempProj);
-	//
-	//
-	//	constants.Color = XMFLOAT4(1, 0, 0, 1);
-	//
-	//
-	//
-	//
-	//	// ✅ GPU로 업로드
-	//	m_pDeviceContext->UpdateSubresource(m_volumeConstantBuffer, 0, nullptr, &constants, 0, 0);
-	//
-	//	//m_pDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-	//
-	//	// 3. VS에 바인딩
-	//	m_pDeviceContext->VSSetConstantBuffers(0, 1, &m_volumeConstantBuffer);
-	//	DrawPlane();
-	//
-	//
-	//	// ---- Coronal (XZ 평면)
-	//
-	//	XMMATRIX coronalRot = XMMatrixRotationX(XM_PIDIV2); // X축으로 90도
-	//	XMMATRIX tempWorldCoronal;
-	//	tempWorldCoronal = XMMatrixTranspose(coronalRot);
-	//	// ✅ World = 단위 행렬
-	//	XMStoreFloat4x4(&constants.World, tempWorldCoronal);
-	//	constants.Color = XMFLOAT4(0, 1, 0, 1); // 초록
-	//	m_pDeviceContext->UpdateSubresource(m_volumeConstantBuffer, 0, nullptr, &constants, 0, 0);
-	//	DrawPlane();
-	//
-	//	// ---- Sagittal (YZ 평면)
-	//	XMMATRIX sagittalRot = XMMatrixRotationY(XM_PIDIV2); // Y축으로 90도
-	//	XMMATRIX tempWorldSagittal;
-	//	tempWorldSagittal = XMMatrixTranspose(sagittalRot);
-	//	XMStoreFloat4x4(&constants.World, tempWorldSagittal);
-	//	constants.Color = XMFLOAT4(0, 0, 1, 1); // 파랑
-	//	m_pDeviceContext->UpdateSubresource(m_volumeConstantBuffer, 0, nullptr, &constants, 0, 0);
-	//	DrawPlane();
-	//
-	//
-	//
-	//
-	//	//constants.View = m_volumeViewMatrix;
-	//	//constants.Projection = m_volumeProjectionMatrix;
-	//	////XMStoreFloat4x4(&constants.View, m_volumeViewMatrix);
-	//	////XMStoreFloat4x4(&constants.Projection, m_volumeProjectionMatrix);
-	//
-	//	//// 1. 큐브 와이어프레임 렌더링
-	//	//RenderBoundingCube(constants);
-	//
-	//	//// 2. Axial 평면
-	//	//constants.World = XMFLOAT4X4(); // 기본 초기화 (선택적)
-	//	//XMStoreFloat4x4(&constants.World, XMMatrixIdentity());
-	//
-	//
-	//	////constants.World = m_axialPlane.worldMatrix;
-	//	//m_pDeviceContext->UpdateSubresource(m_volumeConstantBuffer, 0, nullptr, &constants, 0, 0);
-	//	//m_pDeviceContext->PSSetShaderResources(0, 1, &m_axialPlane.texture);
-	//	//DrawPlane();
-	//
-	//	//// 3. Coronal 평면
-	//	//constants.World = m_coronalPlane.worldMatrix;
-	//	//m_pDeviceContext->UpdateSubresource(m_volumeConstantBuffer, 0, nullptr, &constants, 0, 0);
-	//	//m_pDeviceContext->PSSetShaderResources(0, 1, &m_coronalPlane.texture);
-	//	//DrawPlane();
-	//
-	//	//// 4. Sagittal 평면
-	//	//constants.World = m_sagittalPlane.worldMatrix;
-	//	//m_pDeviceContext->UpdateSubresource(m_volumeConstantBuffer, 0, nullptr, &constants, 0, 0);
-	//	//m_pDeviceContext->PSSetShaderResources(0, 1, &m_sagittalPlane.texture);
-	//	//DrawPlane();
-	//
-	//
-	//
-	//
-	//	////// ✅ 간단한 테스트: 빨간색으로 채우기
-	//	////float red[4] = { 1.0f, 0.0f, 0.0f, 1.0f };
-	//	////m_pDeviceContext->ClearRenderTargetView(m_pSwapChainRTV, red);
-	//
-	//	////qDebug() << "RenderVolumeView called!";
-
-
-
 	m_pDeviceContext->ClearDepthStencilView(m_pDepthStencilView, D3D11_CLEAR_DEPTH, 1.0f, 0);
 	m_pDeviceContext->OMSetRenderTargets(1, &m_pSwapChainRTV, m_pDepthStencilView);
 
@@ -1268,30 +1176,8 @@ void QDirect3D11Widget::RenderVolumeView()
 	m_pDeviceContext->PSSetShader(m_volumePS, nullptr, 0);
 	m_pDeviceContext->VSSetConstantBuffers(0, 1, &m_volumeConstantBuffer);
 	m_pDeviceContext->PSSetConstantBuffers(0, 1, &m_volumeConstantBuffer);
-
 	
 
-	//// ✅ View/Projection 설정
-	//XMMATRIX view = XMMatrixLookAtLH(
-	//	XMVectorSet(0.0f, 0.0f, -2.5f, 0.0f),
-	//	XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f),
-	//	XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f)
-	//);// ✅ View/Projection 설정
-	//XMMATRIX view = XMMatrixLookAtLH(
-	//	XMVectorSet(-2.0f, 2.0f, -3.0f, 0.0f), // ← 왼쪽 위 뒤에서 바라보는 시점
-	//	XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f),   // 원점 바라봄
-	//	XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f)    // 업 벡터
-	//);
-	//XMMATRIX view = XMMatrixLookAtLH(
-	//	XMVectorSet(-1.2f, 1.2f, -2.0f, 0.0f),  // ← 살짝 왼쪽 위 뒤에서
-	//	XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f),    // 원점 바라봄
-	//	XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f)     // 업 벡터
-	//);
-	//XMMATRIX view = XMMatrixLookAtLH(
-	//	XMVectorSet(-0.6f, 0.6f, -1.5f, 0.0f),  // ← 살짝 왼쪽 위 뒤에서, 더 가까이
-	//	XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f),    // 원점 바라봄
-	//	XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f)     // 업 벡터
-	//);
 	XMMATRIX view = XMMatrixLookAtLH(
 		XMVectorSet(-0.3f, 0.3f, -1.2f, 0.0f),  // ← 거의 정면에 가까운 위치
 		XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f),    // 원점 바라봄
@@ -1309,35 +1195,36 @@ void QDirect3D11Widget::RenderVolumeView()
 
 	// ---- Axial (XY plane, z=0)
 	{
-		XMMATRIX world = scale * XMMatrixTranslation(0.0f, 0.0f, 0.0f);
-		//XMMATRIX world = scale * XMMatrixRotationZ(XMConvertToRadians(10.0f)) * XMMatrixTranslation(0.0f, 0.0f, 0.2f);
+		/*XMMATRIX world = scale * XMMatrixTranslation(0.0f, 0.0f, 0.0f);
+		XMStoreFloat4x4(&constants.World, XMMatrixTranspose(world));*/
 
-		XMStoreFloat4x4(&constants.World, XMMatrixTranspose(world));
+		constants.World = m_axialPlane.worldMatrix; // ✅ 저장된 World Matrix 사용
 		constants.Color = XMFLOAT4(0.0f, 1.0f, 1.0f, 1.0f); // 청록
 		m_pDeviceContext->UpdateSubresource(m_volumeConstantBuffer, 0, nullptr, &constants, 0, 0);
-		DrawPlane();
+		DrawPlane(m_axialPlane);
 	}
 
 	// ---- Coronal (XZ plane, y=0)
 	{
-		XMMATRIX world = scale * XMMatrixRotationX(XM_PIDIV2);
-		//XMMATRIX world = scale * XMMatrixRotationX(XM_PIDIV2 + XMConvertToRadians(5.0f)) * XMMatrixTranslation(0.0f, 0.2f, 0.0f);
+		/*XMMATRIX world = scale * XMMatrixRotationX(XM_PIDIV2);
+		XMStoreFloat4x4(&constants.World, XMMatrixTranspose(world));*/
 
-		XMStoreFloat4x4(&constants.World, XMMatrixTranspose(world));
+
+		constants.World = m_coronalPlane.worldMatrix;  // ✅ 저장된 World Matrix 사용
 		constants.Color = XMFLOAT4(1.0f, 0.0f, 1.0f, 1.0f); // 자홍
 		m_pDeviceContext->UpdateSubresource(m_volumeConstantBuffer, 0, nullptr, &constants, 0, 0);
-		DrawPlane();
+		DrawPlane(m_coronalPlane);
 	}
 
 	// ---- Sagittal (YZ plane, x=0)
 	{
-		XMMATRIX world = scale * XMMatrixRotationY(XM_PIDIV2);
-		//XMMATRIX world = scale * XMMatrixRotationY(XM_PIDIV2 + XMConvertToRadians(-5.0f)) * XMMatrixTranslation(0.2f, 0.0f, 0.0f);
+		/*XMMATRIX world = scale * XMMatrixRotationY(XM_PIDIV2);
+		XMStoreFloat4x4(&constants.World, XMMatrixTranspose(world));*/
 
-		XMStoreFloat4x4(&constants.World, XMMatrixTranspose(world));
+		constants.World = m_sagittalPlane.worldMatrix; // ✅ 저장된 World Matrix 사용
 		constants.Color = XMFLOAT4(1.0f, 1.0f, 0.0f, 1.0f); // 노랑
 		m_pDeviceContext->UpdateSubresource(m_volumeConstantBuffer, 0, nullptr, &constants, 0, 0);
-		DrawPlane();
+		DrawPlane(m_sagittalPlane);
 	}
 }
 void QDirect3D11Widget::InitializeVolumeCamera() {
@@ -2140,37 +2027,33 @@ void QDirect3D11Widget::CreateDepthStencilBuffer()
 	depthStencilBuffer->Release();
 }
 
+//m_pDeviceContext->OMSetRenderTargets(4, m_RTViews.slices.data(), nullptr);
+
+	////// 3. 셰이더에 바인딩
+	////m_pDeviceContext->PSSetConstantBuffers(0, 1, &fileReader->m_crosshairBuffer);
+	//m_pDeviceContext->PSSetShaderResources(0, 4, m_SRViews.slices.data());     // tex0~tex3
+	//m_pDeviceContext->PSSetSamplers(0, 1, m_samplerState.data());       // samp0~samp3
+
+
+	////rtv 너무 많이 생성해서 생기는 오류//251001
+	//UINT stride = sizeof(Vertex);
+	//UINT offset = 0;
+
+	//m_pDeviceContext->IASetInputLayout(m_inputLayout);
+	//m_pDeviceContext->IASetVertexBuffers(0, 1, &m_vertexBuffer, &stride, &offset);
+	//m_pDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
+
+	//m_pDeviceContext->VSSetShader(m_vertexShader, nullptr, 0);
+	//m_pDeviceContext->PSSetShader(m_pixelShader, nullptr, 0);
+
+	//m_pDeviceContext->Draw(4, 0); // 4개의 정점으로 quad 출력
+
+
 void QDirect3D11Widget::RenderAllQuads()
 {
-	m_pDeviceContext->OMSetRenderTargets(4, m_RTViews.slices.data(), nullptr);
-
-
-
+	
 	// 클릭된 위치 → 환자 좌표
 	patientCoord = GetPatientCoordFromClick(clickedViewIndex, currentUV[clickedViewIndex]);
-
-	;
-
-	//// 3. 셰이더에 바인딩
-	//m_pDeviceContext->PSSetConstantBuffers(0, 1, &fileReader->m_crosshairBuffer);
-	m_pDeviceContext->PSSetShaderResources(0, 4, m_SRViews.slices.data());     // tex0~tex3
-	m_pDeviceContext->PSSetSamplers(0, 1, m_samplerState.data());       // samp0~samp3
-
-
-	//rtv 너무 많이 생성해서 생기는 오류//251001
-	UINT stride = sizeof(Vertex);
-	UINT offset = 0;
-
-	m_pDeviceContext->IASetInputLayout(m_inputLayout);
-	m_pDeviceContext->IASetVertexBuffers(0, 1, &m_vertexBuffer, &stride, &offset);
-	m_pDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
-
-	m_pDeviceContext->VSSetShader(m_vertexShader, nullptr, 0);
-	m_pDeviceContext->PSSetShader(m_pixelShader, nullptr, 0);
-
-	m_pDeviceContext->Draw(4, 0); // 4개의 정점으로 quad 출력
-
-
 
 	 //// 2. 백버퍼에 출력할 준비
 	m_pDeviceContext->OMSetRenderTargets(1, &m_pSwapChainRTV, m_pDepthStencilView);
@@ -2793,9 +2676,34 @@ void QDirect3D11Widget::InitializeSlicePlanes() {
 	m_sagittalPlane.indexBuffer = m_axialPlane.indexBuffer;
 
 	// World Matrix 초기화
-	XMStoreFloat4x4(&m_axialPlane.worldMatrix, XMMatrixIdentity());
-	XMStoreFloat4x4(&m_coronalPlane.worldMatrix, XMMatrixIdentity());
-	XMStoreFloat4x4(&m_sagittalPlane.worldMatrix, XMMatrixIdentity());
+	//XMStoreFloat4x4(&m_axialPlane.worldMatrix, XMMatrixIdentity());
+	//XMStoreFloat4x4(&m_coronalPlane.worldMatrix, XMMatrixIdentity());
+	//XMStoreFloat4x4(&m_sagittalPlane.worldMatrix, XMMatrixIdentity());
+
+
+
+	//=======================================================
+	XMMATRIX scale = XMMatrixScaling(0.8f, 0.8f, 0.8f); // ← 여기서 크기 조절
+
+// ---- Axial (XY plane, z=0)
+
+	XMMATRIX worldA = scale * XMMatrixTranslation(0.0f, 0.0f, 0.0f);
+	XMStoreFloat4x4(&m_axialPlane.worldMatrix, XMMatrixTranspose(worldA));
+	//constants.World = m_axialPlane.worldMatrix; // ✅ 저장된 World Matrix 사용
+
+	// ---- Coronal (XZ plane, y=0)
+
+	XMMATRIX worldC = scale * XMMatrixRotationX(XM_PIDIV2);
+	XMStoreFloat4x4(&m_coronalPlane.worldMatrix, XMMatrixTranspose(worldC));
+	//constants.World = m_coronalPlane.worldMatrix; // ✅ 저장된 World Matrix 사용
+
+
+	XMMATRIX worldS = scale * XMMatrixRotationY(XM_PIDIV2);
+	XMStoreFloat4x4(&m_sagittalPlane.worldMatrix, XMMatrixTranspose(worldS));
+	//constants.World = m_sagittalPlane.worldMatrix; // ✅ 저장된 World Matrix 사용
+
+
+	//===============================================================
 
 	qDebug() << "Slice planes initialized successfully!";
 }
@@ -2867,43 +2775,66 @@ void QDirect3D11Widget::InitializeBoundingCube() {
 void QDirect3D11Widget::UpdateSlicePlanePositions() {
 	if (!fileReader) return;
 
+	
 	XMFLOAT3 origin = fileReader->views.origin;
 	XMFLOAT3 spacing = fileReader->views.spacing;
 
-	// ===== Axial 평면 (XY 평면, Z 고정) =====
-	float axialZ = origin.z + fileReader->currentIndex[1] * spacing.z;
-	float width = fileReader->m_width * spacing.x;
-	float height = fileReader->m_height * spacing.y;
+	// ⚙️ 공통 스케일
+	XMMATRIX scale = XMMatrixScaling(0.8f, 0.8f, 0.8f);
 
-	XMMATRIX axialWorld = XMMatrixScaling(width, height, 1.0f) *
-		XMMatrixTranslation(origin.x + width * 0.5f,
-			origin.y + height * 0.5f,
-			axialZ);
-	XMStoreFloat4x4(&m_axialPlane.worldMatrix, axialWorld);
-	m_axialPlane.texture = m_SRViews.slices[1]; // Axial 텍스처
+	{
+		// ===== Axial 평면 (XY 평면, Z축 이동) =====
+		float totalDepth = fileReader->m_depth * spacing.z;
+		float axialZ = origin.z + fileReader->currentIndex[1] * spacing.z;
+		float normalizedZ = (axialZ - origin.z - totalDepth * 0.5f) / totalDepth;
 
-	// ===== Coronal 평면 (XZ 평면, Y 고정) =====
-	float coronalY = origin.y + fileReader->currentIndex[2] * spacing.y;
-	float depth = fileReader->m_depth * spacing.z;
+		XMMATRIX axialWorld = scale * XMMatrixTranslation(0.0f, 0.0f, normalizedZ);
+		//XMStoreFloat4x4(&m_axialPlane.worldMatrix, axialWorld);
+		XMStoreFloat4x4(&m_axialPlane.worldMatrix, XMMatrixTranspose(axialWorld));
 
-	XMMATRIX coronalWorld = XMMatrixRotationX(XM_PIDIV2) * // 90도 회전 (X축 기준)
-		XMMatrixScaling(width, depth, 1.0f) *
-		XMMatrixTranslation(origin.x + width * 0.5f,
-			coronalY,
-			origin.z + depth * 0.5f);
-	XMStoreFloat4x4(&m_coronalPlane.worldMatrix, coronalWorld);
-	m_coronalPlane.texture = m_SRViews.slices[2]; // Coronal 텍스처
+		//XMStoreFloat4x4(&constants.World, axialWorld);
+		//m_pDeviceContext->UpdateSubresource(m_volumeConstantBuffer, 0, nullptr, &constants, 0, 0);
+		qDebug() << "Axial Z:" << normalizedZ << "(slice" << fileReader->currentIndex[1] << "/" << fileReader->m_depth << ")";
 
-	// ===== Sagittal 평면 (YZ 평면, X 고정) =====
-	float sagittalX = origin.x + fileReader->currentIndex[3] * spacing.x;
+		//DrawPlane(m_axialPlane);
+	}
+	{
+		// ===== Coronal 평면 (XZ 평면, Y축 이동) =====
+		float totalHeight = fileReader->m_height * spacing.y;
+		float coronalY = origin.y + fileReader->currentIndex[2] * spacing.y;
+		float normalizedY = (coronalY - origin.y - totalHeight * 0.5f) / totalHeight;
 
-	XMMATRIX sagittalWorld = XMMatrixRotationY(XM_PIDIV2) * // 90도 회전 (Y축 기준)
-		XMMatrixScaling(height, depth, 1.0f) *
-		XMMatrixTranslation(sagittalX,
-			origin.y + height * 0.5f,
-			origin.z + depth * 0.5f);
-	XMStoreFloat4x4(&m_sagittalPlane.worldMatrix, sagittalWorld);
-	m_sagittalPlane.texture = m_SRViews.slices[3]; // Sagittal 텍스처
+		XMMATRIX coronalWorld = scale *
+			XMMatrixRotationX(XM_PIDIV2) *
+			XMMatrixTranslation(0.0f, normalizedY, 0.0f);
+		//XMStoreFloat4x4(&m_coronalPlane.worldMatrix, coronalWorld);
+		XMStoreFloat4x4(&m_coronalPlane.worldMatrix, XMMatrixTranspose(coronalWorld));
+
+
+		//XMStoreFloat4x4(&constants.World,  coronalWorld);
+		//m_pDeviceContext->UpdateSubresource(m_volumeConstantBuffer, 0, nullptr, &constants, 0, 0);
+		qDebug() << "Coronal Y:" << normalizedY << "(slice" << fileReader->currentIndex[2] << "/" << fileReader->m_height << ")";
+
+		//DrawPlane(m_coronalPlane);
+	}
+	{
+		// ===== Sagittal 평면 (YZ 평면, X축 이동) =====
+		float totalWidth = fileReader->m_width * spacing.x;
+		float sagittalX = origin.x + fileReader->currentIndex[3] * spacing.x;
+		float normalizedX = (sagittalX - origin.x - totalWidth * 0.5f) / totalWidth;
+
+		XMMATRIX sagittalWorld = scale *
+			XMMatrixRotationY(XM_PIDIV2) *
+			XMMatrixTranslation(normalizedX, 0.0f, 0.0f);
+		//XMStoreFloat4x4(&m_sagittalPlane.worldMatrix, sagittalWorld);
+		XMStoreFloat4x4(&m_sagittalPlane.worldMatrix, XMMatrixTranspose(sagittalWorld));
+
+		//XMStoreFloat4x4(&constants.World, sagittalWorld);
+		//m_pDeviceContext->UpdateSubresource(m_volumeConstantBuffer, 0, nullptr, &constants, 0, 0);
+		qDebug() << "Sagittal X:" << normalizedX << "(slice" << fileReader->currentIndex[3] << "/" << fileReader->m_width << ")";
+
+		//DrawPlane(m_sagittalPlane);
+	}
 }
 
 // ========================================
@@ -2947,30 +2878,48 @@ void QDirect3D11Widget::RenderBoundingCube(const VolumeConstants& constants) {
 // ========================================
 // 5. 평면 그리기
 // ========================================
-void QDirect3D11Widget::DrawPlane()
+void QDirect3D11Widget::DrawPlane(const SlicePlane& plane)
 {
 	// ✅ Input Layout 바인딩 추가!
-	m_pDeviceContext->IASetInputLayout(m_volumeInputLayout);
+	//m_pDeviceContext->IASetInputLayout(m_volumeInputLayout);
 
 
 
 	// Vertex Buffer 바인딩
-	UINT stride = sizeof(float) * 5; // XMFLOAT3(position) + XMFLOAT2(texcoord)
-	UINT offset = 0;
+	//UINT stride = sizeof(float) * 5; // XMFLOAT3(position) + XMFLOAT2(texcoord)
+	//UINT offset = 0;
 
 	//HRESULT hr=
-	m_pDeviceContext->IASetVertexBuffers(0, 1, &m_axialPlane.vertexBuffer, &stride, &offset);
-	m_pDeviceContext->IASetIndexBuffer(m_axialPlane.indexBuffer, DXGI_FORMAT_R32_UINT, 0);
+	//m_pDeviceContext->IASetVertexBuffers(0, 1, &m_axialPlane.vertexBuffer, &stride, &offset);
+	//m_pDeviceContext->IASetIndexBuffer(m_axialPlane.indexBuffer, DXGI_FORMAT_R32_UINT, 0);
 	//m_pDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-	m_pDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_LINELIST);
+	//m_pDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_LINELIST);
 
 	// Sampler State 바인딩
-	m_pDeviceContext->PSSetSamplers(0, 1, m_samplerState.data());
+	//m_pDeviceContext->PSSetSamplers(0, 1, m_samplerState.data());
 
 	// Quad 그리기 (2개 삼각형 = 6개 인덱스)
-	m_pDeviceContext->DrawIndexed(8, 0, 0);
+//	m_pDeviceContext->DrawIndexed(8, 0, 0);
 
-	if (!m_axialPlane.texture) qDebug() << "Axial texture is null!";
+//	if (!m_axialPlane.texture) qDebug() << "Axial texture is null!";
+
+	m_pDeviceContext->IASetInputLayout(m_volumeInputLayout);
+
+	UINT stride = sizeof(float) * 5;
+	UINT offset = 0;
+
+	m_pDeviceContext->IASetVertexBuffers(0, 1, &plane.vertexBuffer, &stride, &offset);
+	m_pDeviceContext->IASetIndexBuffer(plane.indexBuffer, DXGI_FORMAT_R32_UINT, 0);
+	m_pDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_LINELIST);
+
+	////m_pDeviceContext->PSSetShaderResources(0, 1, &plane.texture);
+	////m_pDeviceContext->PSSetSamplers(0, 1, m_samplerState.data());
+
+	m_pDeviceContext->DrawIndexed(8, 0, 0); // 2 triangles = 6 indices
+
+	//if (!plane.texture) qDebug() << "Texture is null!";
+
+
 }
 
 
@@ -3029,8 +2978,6 @@ void QDirect3D11Widget::onAxialScroll(int value) {
 	if (!fileReader) return;
 
 	
-
-
 	clickedViewIndex = 1;
 
 	// ImGui 로직과 동일: 스크롤 값을 슬라이스 인덱스로 변환
@@ -3052,36 +2999,16 @@ void QDirect3D11Widget::onAxialScroll(int value) {
 		ID3D11RenderTargetView* rtv = getRTVForTexture(tex);
 		m_RTViews.slices[1] = rtv;
 
-		//float z = fileReader->views.origin.z + value * fileReader->views.spacing.z;
-	//XMMATRIX scale = XMMatrixScaling(0.8f, 0.8f, 0.8f); // ← 여기서 크기 조절
-	//XMMATRIX world = scale * XMMatrixTranslation(0.0f, 0.0f, z);
-	//XMStoreFloat4x4(&constants.World, XMMatrixTranspose(world));
 
 		UpdateSlicePlanePositions();
 
-		m_pDeviceContext->UpdateSubresource(m_volumeConstantBuffer, 0, nullptr, &constants, 0, 0);
-			//DrawPlane(); // Axial 평면만 다시 그리기
-		RenderVolumeView();
-
-
-			//RenderVolumeView(); // 또는 DrawScene(), Present() 등
-
-			//float axialZ = fileReader->views.origin.z + fileReader->currentIndex[1] * fileReader->views.spacing.z;
-
-			//float width = fileReader->m_width * fileReader->views.spacing.x;
-			//float height = fileReader->m_height *fileReader->views.spacing.y;
-
-			//XMMATRIX axialWorld = XMMatrixScaling(width, height, 1.0f) *
-			//	XMMatrixTranslation(fileReader->views.origin.x + width * 0.5f,
-			//		fileReader->views.origin.y + height * 0.5f,
-			//		axialZ);
-			//XMStoreFloat4x4(&m_axialPlane.worldMatrix, axialWorld);
-			//m_axialPlane.texture = m_SRViews.slices[1]; // Axial 텍스처
-
+		//RenderVolumeView(); // 강제 호출로 확인
 
 
 		// 렌더링 업데이트
 		update();
+
+		RenderVolumeView(); // 강제 호출로 확인
 	}
 
 
@@ -3177,6 +3104,8 @@ void QDirect3D11Widget::onSagittalScroll(int value) {
 		//		m_pDeviceContext->PSSetConstantBuffers(0, 1, &fileReader->m_crosshairBuffer);
 		//	
 		//}
+
+		//RenderVolumeView();
 
 		// 렌더링 업데이트
 		update();
