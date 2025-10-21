@@ -1133,97 +1133,211 @@ void QDirect3D11Widget::InitializeGraphics()
 
 void QDirect3D11Widget::RenderVolumeView()
 {
+	//	m_pDeviceContext->ClearDepthStencilView(m_pDepthStencilView, D3D11_CLEAR_DEPTH, 1.0f, 0);
+	//	// ✅ Depth Buffer 바인딩 (3D 렌더링에 필수!)
+	//	m_pDeviceContext->OMSetRenderTargets(1, &m_pSwapChainRTV, m_pDepthStencilView);
+	//
+	//	UpdateSlicePlanePositions();  // ← 3번 (매 프레임)
+	//	// ✅ 3D 셰이더 활성화
+	//	m_pDeviceContext->VSSetShader(m_volumeVS, nullptr, 0);
+	//	m_pDeviceContext->PSSetShader(m_volumePS, nullptr, 0);
+	//	m_pDeviceContext->VSSetConstantBuffers(0, 1, &m_volumeConstantBuffer);
+	//
+	//	// View/Projection 행렬 설정
+	//	VolumeConstants constants;
+	//
+	//
+	//	// ---- Axial (XY 평면)
+	//	XMMATRIX tempWorld;
+	//	tempWorld = XMMatrixTranspose(XMMatrixIdentity());
+	//	// ✅ World = 단위 행렬
+	//	XMStoreFloat4x4(&constants.World, tempWorld);
+	//
+	//
+	//
+	//	// ✅ View = 원점에서 Z-축 반대 방향을 보는 기본 카메라
+	//// eye(0,0,-2) → target(0,0,0) → up(0,1,0)
+	//// 기본 카메라 & 투영 행렬
+	//	XMMATRIX view = XMMatrixLookAtLH(
+	//		XMVectorSet(0.0f, 0.0f, -3.0f, 0.0f),
+	//		XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f),
+	//		XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f)
+	//	);
+	//	XMMATRIX tempView;
+	//	//XMStoreFloat4x4(&tempView, view);
+	//	tempView = XMMatrixTranspose(view);
+	//	XMStoreFloat4x4(&constants.View, tempView);
+	//
+	//	// ✅ Projection = 기본 Perspective (FOV 45도)
+	//	XMMATRIX proj = XMMatrixPerspectiveFovLH(
+	//		XM_PIDIV4,    // 45도
+	//		1.0f,         // aspect ratio
+	//		0.1f,         // near
+	//		100.0f        // far
+	//	);
+	//	//XMStoreFloat4x4(&constants.Projection, proj);
+	//	XMMATRIX tempProj;
+	//	//XMStoreFloat4x4(&tempView, view);
+	//	tempProj = XMMatrixTranspose(proj);
+	//	XMStoreFloat4x4(&constants.Projection, tempProj);
+	//
+	//
+	//	constants.Color = XMFLOAT4(1, 0, 0, 1);
+	//
+	//
+	//
+	//
+	//	// ✅ GPU로 업로드
+	//	m_pDeviceContext->UpdateSubresource(m_volumeConstantBuffer, 0, nullptr, &constants, 0, 0);
+	//
+	//	//m_pDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+	//
+	//	// 3. VS에 바인딩
+	//	m_pDeviceContext->VSSetConstantBuffers(0, 1, &m_volumeConstantBuffer);
+	//	DrawPlane();
+	//
+	//
+	//	// ---- Coronal (XZ 평면)
+	//
+	//	XMMATRIX coronalRot = XMMatrixRotationX(XM_PIDIV2); // X축으로 90도
+	//	XMMATRIX tempWorldCoronal;
+	//	tempWorldCoronal = XMMatrixTranspose(coronalRot);
+	//	// ✅ World = 단위 행렬
+	//	XMStoreFloat4x4(&constants.World, tempWorldCoronal);
+	//	constants.Color = XMFLOAT4(0, 1, 0, 1); // 초록
+	//	m_pDeviceContext->UpdateSubresource(m_volumeConstantBuffer, 0, nullptr, &constants, 0, 0);
+	//	DrawPlane();
+	//
+	//	// ---- Sagittal (YZ 평면)
+	//	XMMATRIX sagittalRot = XMMatrixRotationY(XM_PIDIV2); // Y축으로 90도
+	//	XMMATRIX tempWorldSagittal;
+	//	tempWorldSagittal = XMMatrixTranspose(sagittalRot);
+	//	XMStoreFloat4x4(&constants.World, tempWorldSagittal);
+	//	constants.Color = XMFLOAT4(0, 0, 1, 1); // 파랑
+	//	m_pDeviceContext->UpdateSubresource(m_volumeConstantBuffer, 0, nullptr, &constants, 0, 0);
+	//	DrawPlane();
+	//
+	//
+	//
+	//
+	//	//constants.View = m_volumeViewMatrix;
+	//	//constants.Projection = m_volumeProjectionMatrix;
+	//	////XMStoreFloat4x4(&constants.View, m_volumeViewMatrix);
+	//	////XMStoreFloat4x4(&constants.Projection, m_volumeProjectionMatrix);
+	//
+	//	//// 1. 큐브 와이어프레임 렌더링
+	//	//RenderBoundingCube(constants);
+	//
+	//	//// 2. Axial 평면
+	//	//constants.World = XMFLOAT4X4(); // 기본 초기화 (선택적)
+	//	//XMStoreFloat4x4(&constants.World, XMMatrixIdentity());
+	//
+	//
+	//	////constants.World = m_axialPlane.worldMatrix;
+	//	//m_pDeviceContext->UpdateSubresource(m_volumeConstantBuffer, 0, nullptr, &constants, 0, 0);
+	//	//m_pDeviceContext->PSSetShaderResources(0, 1, &m_axialPlane.texture);
+	//	//DrawPlane();
+	//
+	//	//// 3. Coronal 평면
+	//	//constants.World = m_coronalPlane.worldMatrix;
+	//	//m_pDeviceContext->UpdateSubresource(m_volumeConstantBuffer, 0, nullptr, &constants, 0, 0);
+	//	//m_pDeviceContext->PSSetShaderResources(0, 1, &m_coronalPlane.texture);
+	//	//DrawPlane();
+	//
+	//	//// 4. Sagittal 평면
+	//	//constants.World = m_sagittalPlane.worldMatrix;
+	//	//m_pDeviceContext->UpdateSubresource(m_volumeConstantBuffer, 0, nullptr, &constants, 0, 0);
+	//	//m_pDeviceContext->PSSetShaderResources(0, 1, &m_sagittalPlane.texture);
+	//	//DrawPlane();
+	//
+	//
+	//
+	//
+	//	////// ✅ 간단한 테스트: 빨간색으로 채우기
+	//	////float red[4] = { 1.0f, 0.0f, 0.0f, 1.0f };
+	//	////m_pDeviceContext->ClearRenderTargetView(m_pSwapChainRTV, red);
+	//
+	//	////qDebug() << "RenderVolumeView called!";
+
+
+
 	m_pDeviceContext->ClearDepthStencilView(m_pDepthStencilView, D3D11_CLEAR_DEPTH, 1.0f, 0);
-	// ✅ Depth Buffer 바인딩 (3D 렌더링에 필수!)
 	m_pDeviceContext->OMSetRenderTargets(1, &m_pSwapChainRTV, m_pDepthStencilView);
 
-	UpdateSlicePlanePositions();  // ← 3번 (매 프레임)
-	// ✅ 3D 셰이더 활성화
 	m_pDeviceContext->VSSetShader(m_volumeVS, nullptr, 0);
 	m_pDeviceContext->PSSetShader(m_volumePS, nullptr, 0);
 	m_pDeviceContext->VSSetConstantBuffers(0, 1, &m_volumeConstantBuffer);
 
-	// View/Projection 행렬 설정
-	VolumeConstants constants;
+	VolumeConstants constants{};
 
-	// ✅ World = 단위 행렬
-	XMStoreFloat4x4(&constants.World, XMMatrixIdentity());
-
-
-
-	// ✅ View = 원점에서 Z-축 반대 방향을 보는 기본 카메라
-// eye(0,0,-2) → target(0,0,0) → up(0,1,0)
+	//// ✅ View/Projection 설정
+	//XMMATRIX view = XMMatrixLookAtLH(
+	//	XMVectorSet(0.0f, 0.0f, -2.5f, 0.0f),
+	//	XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f),
+	//	XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f)
+	//);// ✅ View/Projection 설정
+	//XMMATRIX view = XMMatrixLookAtLH(
+	//	XMVectorSet(-2.0f, 2.0f, -3.0f, 0.0f), // ← 왼쪽 위 뒤에서 바라보는 시점
+	//	XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f),   // 원점 바라봄
+	//	XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f)    // 업 벡터
+	//);
+	//XMMATRIX view = XMMatrixLookAtLH(
+	//	XMVectorSet(-1.2f, 1.2f, -2.0f, 0.0f),  // ← 살짝 왼쪽 위 뒤에서
+	//	XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f),    // 원점 바라봄
+	//	XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f)     // 업 벡터
+	//);
+	//XMMATRIX view = XMMatrixLookAtLH(
+	//	XMVectorSet(-0.6f, 0.6f, -1.5f, 0.0f),  // ← 살짝 왼쪽 위 뒤에서, 더 가까이
+	//	XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f),    // 원점 바라봄
+	//	XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f)     // 업 벡터
+	//);
 	XMMATRIX view = XMMatrixLookAtLH(
-		XMVectorSet(0.0f, 0.0f, -2.0f, 0.0f),
-		XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f),
-		XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f)
+		XMVectorSet(-0.3f, 0.3f, -1.2f, 0.0f),  // ← 거의 정면에 가까운 위치
+		XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f),    // 원점 바라봄
+		XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f)     // 업 벡터
 	);
-	XMStoreFloat4x4(&constants.View, view);
-
-	// ✅ Projection = 기본 Perspective (FOV 45도)
-	XMMATRIX proj = XMMatrixPerspectiveFovLH(
-		XM_PIDIV4,    // 45도
-		1.0f,         // aspect ratio
-		0.1f,         // near
-		100.0f        // far
-	);
-	XMStoreFloat4x4(&constants.Projection, proj);
 
 
-	constants.Color = XMFLOAT4(1, 0, 0, 1);
+	XMMATRIX proj = XMMatrixPerspectiveFovLH(XM_PIDIV4, 1.0f, 0.1f, 100.0f);
 
+	XMStoreFloat4x4(&constants.View, XMMatrixTranspose(view));
+	XMStoreFloat4x4(&constants.Projection, XMMatrixTranspose(proj));
 
+	// ⚙️ 공통 스케일 (크기 조정)
+	XMMATRIX scale = XMMatrixScaling(0.8f, 0.8f, 0.8f); // ← 여기서 크기 조절
 
+	// ---- Axial (XY plane, z=0)
+	{
+		XMMATRIX world = scale * XMMatrixTranslation(0.0f, 0.0f, 0.0f);
+		//XMMATRIX world = scale * XMMatrixRotationZ(XMConvertToRadians(10.0f)) * XMMatrixTranslation(0.0f, 0.0f, 0.2f);
 
-	// ✅ GPU로 업로드
-	m_pDeviceContext->UpdateSubresource(m_volumeConstantBuffer, 0, nullptr, &constants, 0, 0);
+		XMStoreFloat4x4(&constants.World, XMMatrixTranspose(world));
+		constants.Color = XMFLOAT4(0.0f, 1.0f, 1.0f, 1.0f); // 청록
+		m_pDeviceContext->UpdateSubresource(m_volumeConstantBuffer, 0, nullptr, &constants, 0, 0);
+		DrawPlane();
+	}
 
-	//m_pDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+	// ---- Coronal (XZ plane, y=0)
+	{
+		XMMATRIX world = scale * XMMatrixRotationX(XM_PIDIV2);
+		//XMMATRIX world = scale * XMMatrixRotationX(XM_PIDIV2 + XMConvertToRadians(5.0f)) * XMMatrixTranslation(0.0f, 0.2f, 0.0f);
 
-	// 3. VS에 바인딩
-	m_pDeviceContext->VSSetConstantBuffers(0, 1, &m_volumeConstantBuffer);
-	DrawPlane();
+		XMStoreFloat4x4(&constants.World, XMMatrixTranspose(world));
+		constants.Color = XMFLOAT4(1.0f, 0.0f, 1.0f, 1.0f); // 자홍
+		m_pDeviceContext->UpdateSubresource(m_volumeConstantBuffer, 0, nullptr, &constants, 0, 0);
+		DrawPlane();
+	}
 
+	// ---- Sagittal (YZ plane, x=0)
+	{
+		XMMATRIX world = scale * XMMatrixRotationY(XM_PIDIV2);
+		//XMMATRIX world = scale * XMMatrixRotationY(XM_PIDIV2 + XMConvertToRadians(-5.0f)) * XMMatrixTranslation(0.2f, 0.0f, 0.0f);
 
-
-	//constants.View = m_volumeViewMatrix;
-	//constants.Projection = m_volumeProjectionMatrix;
-	////XMStoreFloat4x4(&constants.View, m_volumeViewMatrix);
-	////XMStoreFloat4x4(&constants.Projection, m_volumeProjectionMatrix);
-
-	//// 1. 큐브 와이어프레임 렌더링
-	//RenderBoundingCube(constants);
-
-	//// 2. Axial 평면
-	//constants.World = XMFLOAT4X4(); // 기본 초기화 (선택적)
-	//XMStoreFloat4x4(&constants.World, XMMatrixIdentity());
-
-
-	////constants.World = m_axialPlane.worldMatrix;
-	//m_pDeviceContext->UpdateSubresource(m_volumeConstantBuffer, 0, nullptr, &constants, 0, 0);
-	//m_pDeviceContext->PSSetShaderResources(0, 1, &m_axialPlane.texture);
-	//DrawPlane();
-
-	//// 3. Coronal 평면
-	//constants.World = m_coronalPlane.worldMatrix;
-	//m_pDeviceContext->UpdateSubresource(m_volumeConstantBuffer, 0, nullptr, &constants, 0, 0);
-	//m_pDeviceContext->PSSetShaderResources(0, 1, &m_coronalPlane.texture);
-	//DrawPlane();
-
-	//// 4. Sagittal 평면
-	//constants.World = m_sagittalPlane.worldMatrix;
-	//m_pDeviceContext->UpdateSubresource(m_volumeConstantBuffer, 0, nullptr, &constants, 0, 0);
-	//m_pDeviceContext->PSSetShaderResources(0, 1, &m_sagittalPlane.texture);
-	//DrawPlane();
-
-
-
-
-	////// ✅ 간단한 테스트: 빨간색으로 채우기
-	////float red[4] = { 1.0f, 0.0f, 0.0f, 1.0f };
-	////m_pDeviceContext->ClearRenderTargetView(m_pSwapChainRTV, red);
-
-	////qDebug() << "RenderVolumeView called!";
+		XMStoreFloat4x4(&constants.World, XMMatrixTranspose(world));
+		constants.Color = XMFLOAT4(1.0f, 1.0f, 0.0f, 1.0f); // 노랑
+		m_pDeviceContext->UpdateSubresource(m_volumeConstantBuffer, 0, nullptr, &constants, 0, 0);
+		DrawPlane();
+	}
 }
 void QDirect3D11Widget::InitializeVolumeCamera() {
 	using namespace DirectX;
@@ -1278,10 +1392,10 @@ void QDirect3D11Widget::InitializeVolumeShaders()
 	}
 
 
-	
-	
+
+
 	// Pixel Shader 컴파일
-	hr=D3DCompileFromFile(L"VolumePS.hlsl", nullptr, nullptr,
+	hr = D3DCompileFromFile(L"VolumePS.hlsl", nullptr, nullptr,
 		"PSMain", "ps_5_0", 0, 0, &psBlob, nullptr);
 
 	if (FAILED(hr)) {
@@ -1312,7 +1426,7 @@ void QDirect3D11Widget::InitializeVolumeShaders()
 	cbDesc.CPUAccessFlags = 0;
 	cbDesc.MiscFlags = 0;
 
-	 hr = m_pDevice->CreateBuffer(&cbDesc, nullptr, &m_volumeConstantBuffer);
+	hr = m_pDevice->CreateBuffer(&cbDesc, nullptr, &m_volumeConstantBuffer);
 	if (FAILED(hr)) {
 		qDebug() << "Failed to create volume constant buffer!";
 	}
@@ -1549,10 +1663,10 @@ D3D11_VIEWPORT QDirect3D11Widget::CreateViewport(int index)
 void QDirect3D11Widget::SetBackgroundColor(int index)
 {
 	switch (index) {
-	case 0: m_BackColor = { 1.0f, 0.0f, 0.0f, 1.0f }; break; 
-	case 1: m_BackColor = { 0.0f, 1.0f, 0.0f, 1.0f }; break; 
-	case 2: m_BackColor = { 0.0f, 0.0f, 1.0f, 1.0f }; break; 
-	case 3: m_BackColor = { 1.0f, 1.0f, 0.0f, 1.0f }; break; 
+	case 0: m_BackColor = { 1.0f, 0.0f, 0.0f, 1.0f }; break;
+	case 1: m_BackColor = { 0.0f, 1.0f, 0.0f, 1.0f }; break;
+	case 2: m_BackColor = { 0.0f, 0.0f, 1.0f, 1.0f }; break;
+	case 3: m_BackColor = { 1.0f, 1.0f, 0.0f, 1.0f }; break;
 	}
 }
 
@@ -2004,7 +2118,7 @@ void QDirect3D11Widget::UpdateCrosshairFromPatientCoord(DirectX::XMFLOAT3 patien
 }
 
 
-void QDirect3D11Widget::CreateDepthStencilBuffer() 
+void QDirect3D11Widget::CreateDepthStencilBuffer()
 {
 	// Depth Stencil Texture 생성
 	D3D11_TEXTURE2D_DESC depthDesc = {};
@@ -2631,7 +2745,14 @@ void QDirect3D11Widget::InitializeSlicePlanes() {
 		{ XMFLOAT3(0.5f,  0.5f, 0.0f), XMFLOAT2(1.0f, 0.0f) }  // 우상
 	};
 
-	UINT indices[] = { 0, 1, 2, 2, 1, 3 };
+	//UINT indices[] = { 0, 1, 2, 2, 1, 3 };
+	UINT lineIndices[] = {
+		0, 1,  // 좌측
+		1, 3,  // 상단
+		3, 2,  // 우측
+		2, 0   // 하단
+	};
+
 
 	// Vertex Buffer 생성
 	D3D11_BUFFER_DESC vbDesc = {};
@@ -2655,11 +2776,11 @@ void QDirect3D11Widget::InitializeSlicePlanes() {
 	// Index Buffer 생성
 	D3D11_BUFFER_DESC ibDesc = {};
 	ibDesc.Usage = D3D11_USAGE_DEFAULT;
-	ibDesc.ByteWidth = sizeof(indices);
+	ibDesc.ByteWidth = sizeof(lineIndices);
 	ibDesc.BindFlags = D3D11_BIND_INDEX_BUFFER;
 
 	D3D11_SUBRESOURCE_DATA ibData = {};
-	ibData.pSysMem = indices;
+	ibData.pSysMem = lineIndices;
 
 	hr = m_pDevice->CreateBuffer(&ibDesc, &ibData, &m_axialPlane.indexBuffer);
 	if (FAILED(hr)) {
@@ -2825,7 +2946,7 @@ void QDirect3D11Widget::RenderBoundingCube(const VolumeConstants& constants) {
 // ========================================
 // 5. 평면 그리기
 // ========================================
-void QDirect3D11Widget::DrawPlane() 
+void QDirect3D11Widget::DrawPlane()
 {
 	// ✅ Input Layout 바인딩 추가!
 	m_pDeviceContext->IASetInputLayout(m_volumeInputLayout);
@@ -2839,13 +2960,14 @@ void QDirect3D11Widget::DrawPlane()
 	//HRESULT hr=
 	m_pDeviceContext->IASetVertexBuffers(0, 1, &m_axialPlane.vertexBuffer, &stride, &offset);
 	m_pDeviceContext->IASetIndexBuffer(m_axialPlane.indexBuffer, DXGI_FORMAT_R32_UINT, 0);
-	m_pDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+	//m_pDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+	m_pDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_LINELIST);
 
 	// Sampler State 바인딩
 	m_pDeviceContext->PSSetSamplers(0, 1, m_samplerState.data());
 
 	// Quad 그리기 (2개 삼각형 = 6개 인덱스)
-	m_pDeviceContext->DrawIndexed(6, 0, 0);
+	m_pDeviceContext->DrawIndexed(8, 0, 0);
 
 	if (!m_axialPlane.texture) qDebug() << "Axial texture is null!";
 }
