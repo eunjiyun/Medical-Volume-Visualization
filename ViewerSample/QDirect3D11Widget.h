@@ -318,6 +318,7 @@ public:
 	DirectX::XMFLOAT4X4 m_volumeProjectionMatrix;
 
 	ID3D11DepthStencilView* m_pDepthStencilView;  // ← 이게 있는지 확인
+	VolumeConstants constants{};
 
 public:
 

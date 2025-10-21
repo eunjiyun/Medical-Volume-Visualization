@@ -1267,8 +1267,9 @@ void QDirect3D11Widget::RenderVolumeView()
 	m_pDeviceContext->VSSetShader(m_volumeVS, nullptr, 0);
 	m_pDeviceContext->PSSetShader(m_volumePS, nullptr, 0);
 	m_pDeviceContext->VSSetConstantBuffers(0, 1, &m_volumeConstantBuffer);
+	m_pDeviceContext->PSSetConstantBuffers(0, 1, &m_volumeConstantBuffer);
 
-	VolumeConstants constants{};
+	
 
 	//// ✅ View/Projection 설정
 	//XMMATRIX view = XMMatrixLookAtLH(
@@ -3008,15 +3009,27 @@ void QDirect3D11Widget::onReset()
 
 	ReleaseObject(pBackBuffer);
 
-	// 4. ??쎈늄??쎄쾿?????쐭 ??野???源??
-	//initializeRenderTargets(); // ??????λ땾?癒?퐣 m_RTViews, m_SRViews ??밴쉐
 }
+
+
+
+//float z = originZ + sliceIndex * sliceSpacing;
+//
+//XMMATRIX scale = XMMatrixScaling(2.5f, 2.5f, 2.5f);
+//XMMATRIX world = scale * XMMatrixTranslation(0.0f, 0.0f, z);
+//XMStoreFloat4x4(&constants.World, XMMatrixTranspose(world));
+//
+//m_pDeviceContext->UpdateSubresource(m_volumeConstantBuffer, 0, nullptr, &constants, 0, 0);
+
 
 
 //fileReader->currentIndex[0]
 void QDirect3D11Widget::onAxialScroll(int value) {
 	// Axial 뷰의 슬라이스 변경
 	if (!fileReader) return;
+
+	
+
 
 	clickedViewIndex = 1;
 
@@ -3039,25 +3052,31 @@ void QDirect3D11Widget::onAxialScroll(int value) {
 		ID3D11RenderTargetView* rtv = getRTVForTexture(tex);
 		m_RTViews.slices[1] = rtv;
 
-		//auto p =GetPatientCoordFromClick(1, currentUV[1]);
+		//float z = fileReader->views.origin.z + value * fileReader->views.spacing.z;
+	//XMMATRIX scale = XMMatrixScaling(0.8f, 0.8f, 0.8f); // ← 여기서 크기 조절
+	//XMMATRIX world = scale * XMMatrixTranslation(0.0f, 0.0f, z);
+	//XMStoreFloat4x4(&constants.World, XMMatrixTranspose(world));
 
-		//patientCoord = GetPatientCoordFromClick(1, currentUV[1]);
+		UpdateSlicePlanePositions();
 
-
-
-
-
-		//for (int i{ 2 }; i <= 3; ++i) {
-		////	patientCoord = GetPatientCoordFromClick(1, currentUV[1]);
-		//	fileReader->views.centerPatientCoord[i] = patientCoord;
-		//	fileReader->currentIndex[i] = ComputeSliceIndexForView(patientCoord, i);
+		m_pDeviceContext->UpdateSubresource(m_volumeConstantBuffer, 0, nullptr, &constants, 0, 0);
+			//DrawPlane(); // Axial 평면만 다시 그리기
+		RenderVolumeView();
 
 
-		//	UpdateCrosshairFromPatientCoord(patientCoord, i);
+			//RenderVolumeView(); // 또는 DrawScene(), Present() 등
 
-		//	// 3. 셰이더에 바인딩
-		//	m_pDeviceContext->PSSetConstantBuffers(0, 1, &fileReader->m_crosshairBuffer);
-		//}
+			//float axialZ = fileReader->views.origin.z + fileReader->currentIndex[1] * fileReader->views.spacing.z;
+
+			//float width = fileReader->m_width * fileReader->views.spacing.x;
+			//float height = fileReader->m_height *fileReader->views.spacing.y;
+
+			//XMMATRIX axialWorld = XMMatrixScaling(width, height, 1.0f) *
+			//	XMMatrixTranslation(fileReader->views.origin.x + width * 0.5f,
+			//		fileReader->views.origin.y + height * 0.5f,
+			//		axialZ);
+			//XMStoreFloat4x4(&m_axialPlane.worldMatrix, axialWorld);
+			//m_axialPlane.texture = m_SRViews.slices[1]; // Axial 텍스처
 
 
 
