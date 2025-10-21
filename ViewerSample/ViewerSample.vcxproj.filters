@@ -111,6 +111,9 @@
   <ItemGroup>
     <FxCompile Include="PixelShader.hlsl" />
     <FxCompile Include="VertexShader.hlsl" />
+    <FxCompile Include="VolumeVS.hlsl" />
+    <FxCompile Include="VolumePS.hlsl" />
+    <FxCompile Include="CubeWireframe.hlsl" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="icon.ico">
