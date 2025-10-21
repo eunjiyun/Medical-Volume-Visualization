@@ -109,7 +109,11 @@ public:
 	ViewGeometry GetCoronalGeometry();
 	ViewGeometry GetSagittalGeometry();
 	int ComputeSliceIndexForView(const XMFLOAT3& patientCoord, int viewIndex);
-    int px, py;
+    int px[4], py[4];
+	int clickedViewIndex{};
+
+
+	D3D11_VIEWPORT viewPort;
 private:
 
 
@@ -133,7 +137,7 @@ private:
 
     void UpdateCrosshairFromPatientCoord(DirectX::XMFLOAT3 patientCoord,int i);
     DirectX::XMFLOAT3 GetDefaultPatientCenter();
-    void InitializeCrosshair();
+    //void InitializeCrosshair();
     void RenderAllQuads();
     void DrawFullScreenQuad();
     void DrawQuadWithTexture(ID3D11ShaderResourceView* pSRV, const D3D11_VIEWPORT& vp,int i);
@@ -288,7 +292,7 @@ public:
     float viewWidth;
     float viewHeight;
     DirectX::XMFLOAT3 patientCoord;
-    int clickedViewIndex;
+  //  int clickedViewIndex;
 
 
     //protected:

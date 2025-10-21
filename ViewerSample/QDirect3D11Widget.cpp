@@ -1572,8 +1572,8 @@ int QDirect3D11Widget::ComputeSliceIndexForView(const XMFLOAT3& patientCoord, in
 
 void QDirect3D11Widget::mousePressEvent(QMouseEvent* event)
 {
-    px = event->pos().x(); // 클릭된 x 좌표
-    py = event->pos().y(); // 클릭된 y 좌표
+    px[0] = event->pos().x(); // 클릭된 x 좌표
+    py[0] = event->pos().y(); // 클릭된 y 좌표
 
 
     qDebug() << "px:" << px << "py:" << py;
@@ -1590,31 +1590,32 @@ void QDirect3D11Widget::mousePressEvent(QMouseEvent* event)
 
     // 예: 클릭된 뷰가 i번째 뷰라고 가정
     //int clickedViewIndex = i; // 0: Axial, 1: Coronal, 2: Sagittal, 3: Volume
-    int clickedViewIndex = GetClickedViewIndex(px, py, this->width(), this->height());
+    clickedViewIndex = GetClickedViewIndex(px[0], py[0], this->width(), this->height());
+	px[clickedViewIndex] = px[0];
+	py[clickedViewIndex] = py[0];
 
-
-    D3D11_VIEWPORT vp = CreateViewport(clickedViewIndex); // i = 0~3
-    viewX = vp.TopLeftX;
-    viewY = vp.TopLeftY;
-    viewWidth = vp.Width;
-    viewHeight = vp.Height;
+	viewPort = CreateViewport(clickedViewIndex); // i = 0~3
+    viewX =viewPort.TopLeftX;
+    viewY =viewPort.TopLeftY;
+    viewWidth = viewPort.Width;
+    viewHeight = viewPort.Height;
 
 
     // 마우스 클릭 좌표 정규화
-    float normX = static_cast<float>(px - viewX) / viewWidth;
-    float normY = static_cast<float>(py - viewY) / viewHeight;
+    float normX = static_cast<float>(px[clickedViewIndex] - viewX) / viewWidth;
+    float normY = static_cast<float>(py[clickedViewIndex] - viewY) / viewHeight;
 
 
     // 모든 뷰에 동일한 십자선 위치 적용
-    DirectX::XMFLOAT2 crossUV = { normX, normY };
+	currentUV[clickedViewIndex] = { normX, normY };
 
 
 	// ✅ Aspect ratio 고려한 정규화 좌표
-	XMFLOAT2 normUV = GetNormalizedUV(px, py, clickedViewIndex);
+	//XMFLOAT2 normUV = GetNormalizedUV(px[clickedViewIndex], py[clickedViewIndex], clickedViewIndex);
 
-	currentUV[clickedViewIndex] = crossUV;
+	//currentUV[clickedViewIndex] = crossUV;
     // 클릭된 위치 → 환자 좌표
-    patientCoord = GetPatientCoordFromClick(clickedViewIndex, crossUV);
+    patientCoord = GetPatientCoordFromClick(clickedViewIndex, currentUV[clickedViewIndex]);
 
 
 
@@ -1634,8 +1635,8 @@ void QDirect3D11Widget::mousePressEvent(QMouseEvent* event)
         ID3D11ShaderResourceView* srvA, *srvC, *srvS;
         ID3D11Texture2D* texA, *texC, *texS;
 
-        int viewIndex = GetClickedViewIndex(px, py, this->width(), this->height()); // 현재 뷰 인덱스 (0: Axial, 1: Coronal, 2: Sagittal, 3: 기타)
-        if (viewIndex != i) {
+       // int viewIndex = GetClickedViewIndex(px, py, this->width(), this->height()); // 현재 뷰 인덱스 (0: Axial, 1: Coronal, 2: Sagittal, 3: 기타)
+        if (clickedViewIndex != i) {
 
             switch (i) {
             case 1:
@@ -1653,6 +1654,9 @@ void QDirect3D11Widget::mousePressEvent(QMouseEvent* event)
                 //sliceInfoAxial->adjustSize();
               //  sliceInfoAxial->repaint();  // 강제로 다시 그리기
                 sliceInfoAxial->show();
+
+
+			//	onAxialScroll(fileReader->currentIndex[1]);
                 break;
             case 2:
                 fileReader->UpdateCoronalTexture(fileReader->currentIndex[2]);
@@ -1669,6 +1673,10 @@ void QDirect3D11Widget::mousePressEvent(QMouseEvent* event)
                 //sliceInfoCoronal->adjustSize();
               //  sliceInfoCoronal->repaint();  // 강제로 다시 그리기
                 sliceInfoCoronal->show();
+
+
+
+				//onCoronalScroll(fileReader->currentIndex[2]);
                 break;
             case 3:
                 fileReader->UpdateSagittalTexture(fileReader->currentIndex[3]);
@@ -1684,6 +1692,8 @@ void QDirect3D11Widget::mousePressEvent(QMouseEvent* event)
                 //sliceInfoSagittal->adjustSize();
                 //sliceInfoSagittal->repaint();  // 강제로 다시 그리기
                 sliceInfoSagittal->show();
+
+				//onSagittalScroll(fileReader->currentIndex[3]);
                 break;
             }
         }
@@ -1730,48 +1740,48 @@ DirectX::XMFLOAT3 QDirect3D11Widget::GetDefaultPatientCenter()
 }
 
 
-void QDirect3D11Widget::InitializeCrosshair()
-{
-    //// 기본 중심점: 환자 좌표계의 중앙 또는 첫 슬라이스 기준
-    //DirectX::XMFLOAT3 patientCoord = GetDefaultPatientCenter(); // 예: 영상 중앙 좌표
-
-    //// 십자선 데이터 구조 초기화
-    //CrosshairData crosshair = {};
-
-    //for (int i = 0; i < 4; ++i)
-    //{
-    //    DirectX::XMFLOAT2 uv = GetCrossUVFromPatientCoord(i, patientCoord);
-
-    //    switch (i)
-    //    {
-    //    case 0: crosshair.cross0 = uv; break;
-    //    case 1: crosshair.cross1 = uv; break;
-    //    case 2: crosshair.cross2 = uv; break;
-    //    case 3: crosshair.cross3 = uv; break;
-    //    }
-    //}
-
-    //crosshair.crossThickness = 0.002f;
-    //crosshair.crossColor = { 1.0f, 0.0f, 0.0f, 1.0f }; // 빨강
-
-    //// GPU에 전달
-    //m_pDeviceContext->UpdateSubresource(fileReader->m_crosshairBuffer, 0, nullptr, &crosshair, 0, 0);
-
-
-    int viewIndex = GetClickedViewIndex(px, py, this->width(), this->height()); // 현재 뷰 인덱스 (0: Axial, 1: Coronal, 2: Sagittal, 3: 기타)
-    UpdateViewIndexBuffer(viewIndex); // 반드시 렌더링 전에 호출
-    m_pDeviceContext->PSSetConstantBuffers(1, 1, &m_viewIndexBuffer); // b1 슬롯
-
-    DirectX::XMFLOAT3 patientCoord = GetDefaultPatientCenter(); // 환자 좌표계 기준 중심점
-
-    CrosshairData crosshair = {};
-    crosshair.crossUV = GetCrossUVFromPatientCoord(viewIndex, patientCoord); // 현재 뷰에 맞는 UV 좌표
-    crosshair.crossThickness = 0.002f;
-    crosshair.crossColor = { 1.0f, 0.0f, 0.0f, 1.0f }; // 빨강
-
-    m_pDeviceContext->UpdateSubresource(fileReader->m_crosshairBuffer, 0, nullptr, &crosshair, 0, 0);
-
-}
+//void QDirect3D11Widget::InitializeCrosshair()
+//{
+//    //// 기본 중심점: 환자 좌표계의 중앙 또는 첫 슬라이스 기준
+//    //DirectX::XMFLOAT3 patientCoord = GetDefaultPatientCenter(); // 예: 영상 중앙 좌표
+//
+//    //// 십자선 데이터 구조 초기화
+//    //CrosshairData crosshair = {};
+//
+//    //for (int i = 0; i < 4; ++i)
+//    //{
+//    //    DirectX::XMFLOAT2 uv = GetCrossUVFromPatientCoord(i, patientCoord);
+//
+//    //    switch (i)
+//    //    {
+//    //    case 0: crosshair.cross0 = uv; break;
+//    //    case 1: crosshair.cross1 = uv; break;
+//    //    case 2: crosshair.cross2 = uv; break;
+//    //    case 3: crosshair.cross3 = uv; break;
+//    //    }
+//    //}
+//
+//    //crosshair.crossThickness = 0.002f;
+//    //crosshair.crossColor = { 1.0f, 0.0f, 0.0f, 1.0f }; // 빨강
+//
+//    //// GPU에 전달
+//    //m_pDeviceContext->UpdateSubresource(fileReader->m_crosshairBuffer, 0, nullptr, &crosshair, 0, 0);
+//
+//
+//    int viewIndex = GetClickedViewIndex(px, py, this->width(), this->height()); // 현재 뷰 인덱스 (0: Axial, 1: Coronal, 2: Sagittal, 3: 기타)
+//    UpdateViewIndexBuffer(viewIndex); // 반드시 렌더링 전에 호출
+//    m_pDeviceContext->PSSetConstantBuffers(1, 1, &m_viewIndexBuffer); // b1 슬롯
+//
+//    DirectX::XMFLOAT3 patientCoord = GetDefaultPatientCenter(); // 환자 좌표계 기준 중심점
+//
+//    CrosshairData crosshair = {};
+//    crosshair.crossUV = GetCrossUVFromPatientCoord(viewIndex, patientCoord); // 현재 뷰에 맞는 UV 좌표
+//    crosshair.crossThickness = 0.002f;
+//    crosshair.crossColor = { 1.0f, 0.0f, 0.0f, 1.0f }; // 빨강
+//
+//    m_pDeviceContext->UpdateSubresource(fileReader->m_crosshairBuffer, 0, nullptr, &crosshair, 0, 0);
+//
+//}
 
 void QDirect3D11Widget::UpdateCrosshairFromPatientCoord(DirectX::XMFLOAT3 patientCoord,int i)
 {
@@ -1797,13 +1807,13 @@ void QDirect3D11Widget::UpdateCrosshairFromPatientCoord(DirectX::XMFLOAT3 patien
 
     CrosshairData crosshair = {};
 
-    int viewIndex = GetClickedViewIndex(px, py, this->width(), this->height()); // 현재 뷰 인덱스 (0: Axial, 1: Coronal, 2: Sagittal, 3: 기타)
+   // int viewIndex = GetClickedViewIndex(px, py, this->width(), this->height()); // 현재 뷰 인덱스 (0: Axial, 1: Coronal, 2: Sagittal, 3: 기타)
 
     // 현재 뷰에 맞는 십자선 위치 계산
     crosshair.crossUV = GetCrossUVFromPatientCoord(i, patientCoord);
 
 	// ✅ Aspect ratio 고려한 정규화 좌표
-	XMFLOAT2 normUV = GetNormalizedUV(px, py, clickedViewIndex);
+//	XMFLOAT2 normUV = GetNormalizedUV(px[clickedViewIndex], px[clickedViewIndex], clickedViewIndex);
 
     // 십자선 스타일 설정
 	if(0==i)
@@ -1827,28 +1837,28 @@ void QDirect3D11Widget::RenderAllQuads()
     // 1. 십자선 위치 계산
     CrosshairData crosshair = {};
 
-    // 예: 클릭된 뷰가 i번째 뷰라고 가정
-    //int clickedViewIndex = i; // 0: Axial, 1: Coronal, 2: Sagittal, 3: Volume
-    int clickedViewIndex = GetClickedViewIndex(px, py, this->width(), this->height());
+    //// 예: 클릭된 뷰가 i번째 뷰라고 가정
+    ////int clickedViewIndex = i; // 0: Axial, 1: Coronal, 2: Sagittal, 3: Volume
+    //int clickedViewIndex = GetClickedViewIndex(px, py, this->width(), this->height());
 
 
-    D3D11_VIEWPORT vp = CreateViewport(clickedViewIndex); // i = 0~3
-    viewX = vp.TopLeftX;
-    viewY = vp.TopLeftY;
-    viewWidth = vp.Width;
-    viewHeight = vp.Height;
+    //D3D11_VIEWPORT vp = CreateViewport(clickedViewIndex); // i = 0~3
+    //viewX = vp.TopLeftX;
+    //viewY = vp.TopLeftY;
+    //viewWidth = vp.Width;
+    //viewHeight = vp.Height;
 
 
-    // 마우스 클릭 좌표 정규화
-    float normX = static_cast<float>(px - viewX) / viewWidth;
-    float normY = static_cast<float>(py - viewY) / viewHeight;
+ //   // 마우스 클릭 좌표 정규화
+ //   float normX = static_cast<float>(px[click - viewX) / viewWidth;
+ //   float normY = static_cast<float>(py - viewY) / viewHeight;
 
 
-    // 모든 뷰에 동일한 십자선 위치 적용
-    DirectX::XMFLOAT2 crossUV = { normX, normY };
+ //   // 모든 뷰에 동일한 십자선 위치 적용
+ //   DirectX::XMFLOAT2 crossUV = { normX, normY };
 
-	// ✅ Aspect ratio 고려한 정규화 좌표
-	XMFLOAT2 normUV = GetNormalizedUV(px, py, clickedViewIndex);
+	//// ✅ Aspect ratio 고려한 정규화 좌표
+	//XMFLOAT2 normUV = GetNormalizedUV(px, py, clickedViewIndex);
 
 
 
@@ -1856,20 +1866,12 @@ void QDirect3D11Widget::RenderAllQuads()
 	//qDebug() << "🧪 UV after aspect correction:";
 	//qDebug() << "  normX:" << normUV.x << "normY:" << normUV.y;
 
-	// 텍스처 좌표 → 픽셀 좌표
-	float py = normUV.y * fileReader->views.imageSize.y;
 
-	// Z축 좌표 계산 (Coronal 뷰 기준)
-	float patientZ = fileReader->views.origin.z + py * fileReader->views.spacing.z;
-
-	//// 디버깅 로그: 계산된 Z값
-	//qDebug() << "🧪 PatientCoord.z from UV:";
-	//qDebug() << "  py:" << py << "→ patientCoord.z:" << patientZ;
 
 
 
     // 클릭된 위치 → 환자 좌표
-    patientCoord = GetPatientCoordFromClick(clickedViewIndex, normUV);
+    patientCoord = GetPatientCoordFromClick(clickedViewIndex, currentUV[clickedViewIndex]);
 
 	//if (2 == clickedViewIndex) {
 	//	// 디버깅 로그 출력
@@ -2600,6 +2602,8 @@ void QDirect3D11Widget::onAxialScroll(int value) {
     // Axial 뷰의 슬라이스 변경
     if (!fileReader) return;
 
+	clickedViewIndex = 1;
+
     // ImGui 로직과 동일: 스크롤 값을 슬라이스 인덱스로 변환
     int newIndex = value;
     newIndex = std::clamp(newIndex, 0, fileReader->m_depth - 1);
@@ -2621,23 +2625,23 @@ void QDirect3D11Widget::onAxialScroll(int value) {
 
 		//auto p =GetPatientCoordFromClick(1, currentUV[1]);
 
-		patientCoord = GetPatientCoordFromClick(1, currentUV[1]);
+		//patientCoord = GetPatientCoordFromClick(1, currentUV[1]);
 
 
 
 
 
-		for (int i{ 2 }; i <= 3; ++i) {
-		//	patientCoord = GetPatientCoordFromClick(1, currentUV[1]);
-			fileReader->views.centerPatientCoord[i] = patientCoord;
-			fileReader->currentIndex[i] = ComputeSliceIndexForView(patientCoord, i);
+		//for (int i{ 2 }; i <= 3; ++i) {
+		////	patientCoord = GetPatientCoordFromClick(1, currentUV[1]);
+		//	fileReader->views.centerPatientCoord[i] = patientCoord;
+		//	fileReader->currentIndex[i] = ComputeSliceIndexForView(patientCoord, i);
 
 
-			UpdateCrosshairFromPatientCoord(patientCoord, i);
+		//	UpdateCrosshairFromPatientCoord(patientCoord, i);
 
-			// 3. 셰이더에 바인딩
-			m_pDeviceContext->PSSetConstantBuffers(0, 1, &fileReader->m_crosshairBuffer);
-		}
+		//	// 3. 셰이더에 바인딩
+		//	m_pDeviceContext->PSSetConstantBuffers(0, 1, &fileReader->m_crosshairBuffer);
+		//}
 
 
 
@@ -2657,6 +2661,8 @@ void QDirect3D11Widget::onAxialScroll(int value) {
 
 void QDirect3D11Widget::onCoronalScroll(int value) {
     if (!fileReader) return;
+
+	clickedViewIndex = 2;
 
     // ImGui 로직: Coronal은 역방향으로 계산
     int newIndex = fileReader->m_height - 1 - value;
@@ -2679,16 +2685,16 @@ void QDirect3D11Widget::onCoronalScroll(int value) {
         ID3D11RenderTargetView* rtv = getRTVForTexture(tex);
         m_RTViews.slices[2] = rtv;
 
-		auto p = GetPatientCoordFromClick(2, currentUV[2]);
+		//auto p = GetPatientCoordFromClick(2, currentUV[2]);
 
-		for (int i{ 1 }; i <= 3; ++i) {
-			if (2 != i) {
-				UpdateCrosshairFromPatientCoord(p, i);
+		//for (int i{ 1 }; i <= 3; ++i) {
+		//	if (2 != i) {
+		//		UpdateCrosshairFromPatientCoord(p, i);
 
-				// 3. 셰이더에 바인딩
-				m_pDeviceContext->PSSetConstantBuffers(0, 1, &fileReader->m_crosshairBuffer);
-			}
-		}
+		//		// 3. 셰이더에 바인딩
+		//		m_pDeviceContext->PSSetConstantBuffers(0, 1, &fileReader->m_crosshairBuffer);
+		//	}
+		//}
 
         // 렌더링 업데이트
         update();
@@ -2703,6 +2709,8 @@ void QDirect3D11Widget::onCoronalScroll(int value) {
 
 void QDirect3D11Widget::onSagittalScroll(int value) {
     if (!fileReader) return;
+
+	clickedViewIndex = 3;
 
     // ImGui 로직과 동일
     int newIndex = value;
@@ -2723,17 +2731,17 @@ void QDirect3D11Widget::onSagittalScroll(int value) {
         ID3D11RenderTargetView* rtv = getRTVForTexture(tex);
         m_RTViews.slices[3] = rtv;
 
-		auto p = GetPatientCoordFromClick(3, currentUV[3]);
+		//auto p = GetPatientCoordFromClick(3, currentUV[3]);
 
 
-		for (int i{ 1 }; i <= 2; ++i) {
-			
-				UpdateCrosshairFromPatientCoord(p, i);
+		//for (int i{ 1 }; i <= 2; ++i) {
+		//	
+		//		UpdateCrosshairFromPatientCoord(p, i);
 
-				// 3. 셰이더에 바인딩
-				m_pDeviceContext->PSSetConstantBuffers(0, 1, &fileReader->m_crosshairBuffer);
-			
-		}
+		//		// 3. 셰이더에 바인딩
+		//		m_pDeviceContext->PSSetConstantBuffers(0, 1, &fileReader->m_crosshairBuffer);
+		//	
+		//}
 
         // 렌더링 업데이트
         update();
