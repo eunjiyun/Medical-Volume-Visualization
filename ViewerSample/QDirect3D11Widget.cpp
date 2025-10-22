@@ -1368,6 +1368,153 @@ void QDirect3D11Widget::InitializeGraphics()
 	//initializeRenderTargets();
 }
 
+//void QDirect3D11Widget::RenderVolumeView()
+//{
+//	m_pDeviceContext->ClearDepthStencilView(m_pDepthStencilView, D3D11_CLEAR_DEPTH, 1.0f, 0);
+//	m_pDeviceContext->OMSetRenderTargets(1, &m_pSwapChainRTV, m_pDepthStencilView);
+//
+//	m_pDeviceContext->VSSetShader(m_volumeVS, nullptr, 0);
+//	m_pDeviceContext->PSSetShader(m_volumePS, nullptr, 0);
+//	m_pDeviceContext->VSSetConstantBuffers(0, 1, &m_volumeConstantBuffer);
+//	m_pDeviceContext->PSSetConstantBuffers(0, 1, &m_volumeConstantBuffer);
+//	
+//
+//	XMMATRIX view = XMMatrixLookAtLH(
+//		XMVectorSet(-0.3f, 0.3f, -1.2f, 0.0f),  // ← 거의 정면에 가까운 위치
+//		XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f),    // 원점 바라봄
+//		XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f)     // 업 벡터
+//	);
+//
+//
+//	XMMATRIX proj = XMMatrixPerspectiveFovLH(XM_PIDIV4, 1.0f, 0.1f, 100.0f);
+//
+//	XMStoreFloat4x4(&constants.View, XMMatrixTranspose(view));
+//	XMStoreFloat4x4(&constants.Projection, XMMatrixTranspose(proj));
+//
+//	// ⚙️ 공통 스케일 (크기 조정)
+//	XMMATRIX scale = XMMatrixScaling(0.8f, 0.8f, 0.8f); // ← 여기서 크기 조절
+//
+//	// ---- Axial (XY plane, z=0)
+//	{
+//		/*XMMATRIX world = scale * XMMatrixTranslation(0.0f, 0.0f, 0.0f);
+//		XMStoreFloat4x4(&constants.World, XMMatrixTranspose(world));*/
+//
+//		constants.World = m_CoronalPlane.worldMatrix; // ✅ 저장된 World Matrix 사용
+//		constants.Color = XMFLOAT4(0.0f, 1.0f, 1.0f, 1.0f); // 청록
+//		m_pDeviceContext->UpdateSubresource(m_volumeConstantBuffer, 0, nullptr, &constants, 0, 0);
+//		DrawPlane(m_CoronalPlane);
+//	}
+//
+//	// ---- Coronal (XZ plane, y=0)
+//	{
+//		/*XMMATRIX world = scale * XMMatrixRotationX(XM_PIDIV2);
+//		XMStoreFloat4x4(&constants.World, XMMatrixTranspose(world));*/
+//
+//
+//		constants.World = m_AxialPlane.worldMatrix;  // ✅ 저장된 World Matrix 사용
+//		constants.Color = XMFLOAT4(1.0f, 0.0f, 1.0f, 1.0f); // 자홍
+//		m_pDeviceContext->UpdateSubresource(m_volumeConstantBuffer, 0, nullptr, &constants, 0, 0);
+//		DrawPlane(m_AxialPlane);
+//	}
+//
+//	// ---- Sagittal (YZ plane, x=0)
+//	{
+//		/*XMMATRIX world = scale * XMMatrixRotationY(XM_PIDIV2);
+//		XMStoreFloat4x4(&constants.World, XMMatrixTranspose(world));*/
+//
+//		constants.World = m_SagittalPlane.worldMatrix; // ✅ 저장된 World Matrix 사용
+//		constants.Color = XMFLOAT4(1.0f, 1.0f, 0.0f, 1.0f); // 노랑
+//		m_pDeviceContext->UpdateSubresource(m_volumeConstantBuffer, 0, nullptr, &constants, 0, 0);
+//		DrawPlane(m_SagittalPlane);
+//	}
+//
+//
+//	// ===== ✅ 임시 볼륨 (슬라이스 스택) =====
+//	{
+//		m_pDeviceContext->IASetInputLayout(m_prevVolumeInputLayout); // 동일 레이아웃 유지
+//		// 0️⃣ 셰이더 교체 (볼륨용)
+//		m_pDeviceContext->VSSetShader(m_volumeQuadVS, nullptr, 0);
+//		m_pDeviceContext->PSSetShader(m_volumeQuadPS, nullptr, 0);
+//
+//		// 2️⃣ 깊이 테스트 끄기 (뒤쪽도 보이게)
+//		//m_pDeviceContext->OMSetDepthStencilState(m_disableDepthState, 0);
+//		m_pDeviceContext->OMSetDepthStencilState(m_disableDepthState.Get(), 0);
+//
+//		// 1️⃣ 블렌딩 켜기 (투명 누적용)
+//		float blendFactor[4] = { 0,0,0,0 };
+//		//m_pDeviceContext->OMSetBlendState(m_alphaBlendState, blendFactor, 0xffffffff);
+//		m_pDeviceContext->OMSetBlendState(m_alphaBlendState.Get(), blendFactor, 0xffffffff);
+//
+//
+//
+//		// 📏 볼륨 중심 기준 (현재 코드 유지)
+//		float centerY = (fileReader->m_height - 1) * 0.5f;
+//
+//		// ✅ 볼륨 크기 스케일 조정 (왼쪽처럼 작게)
+//		XMMATRIX scale = XMMatrixScaling(0.58f, 0.58f, 0.58f); // ← 약 15~20% 축소
+//
+//		// ✅ 살짝 회전 (왼쪽과 비슷한 각도로 약간 오른쪽으로 틀기)
+//		XMMATRIX rotation = XMMatrixRotationY(-XMConvertToRadians(7.0f)); // 오른쪽으로 살짝 회전
+//
+//		// ✅ 살짝 위로 올려서 중심 맞춤
+//		XMMATRIX centerOffset = XMMatrixTranslation(0.0f, -0.08f, 0.0f); // 높이 보정
+//
+//		for (int y = fileReader->m_height - 1; y >= 0; --y)
+//		{
+//			// ✅ offsetY 계산 (세로 크기 살짝 줄임)
+//			float offsetY = ((y - centerY) / centerY) * 0.45f;  // 세로 높이 약간 더 줄임
+//			offsetY *= fileReader->views.spacing.y * 0.75f;     // spacing 반영 (조금 더 압축)
+//
+//			// ✅ 투명도
+//			float alpha = 1.0f / fileReader->m_height * 0.45f; // 투명도 약간 줄임 (누적 덜 진하게)
+//
+//			// ✅ 위치 이동
+//			XMMATRIX translation = XMMatrixTranslation(0.0f, offsetY, 0.0f);
+//
+//			// ✅ 최종 월드 행렬 (회전 + 스케일 + 중심 보정)
+//			XMMATRIX world = scale * rotation * translation * centerOffset;
+//
+//			XMStoreFloat4x4(&constants.World, XMMatrixTranspose(world));
+//			constants.Color = XMFLOAT4(1, 1, 1, alpha);
+//			m_pDeviceContext->UpdateSubresource(m_volumeConstantBuffer, 0, nullptr, &constants, 0, 0);
+//
+//			// 슬라이스 텍스처 바인딩
+//			ID3D11ShaderResourceView* srv = coronalTextureCacheSrv[y];
+//			m_pDeviceContext->PSSetShaderResources(0, 1, &srv);
+//
+//			DrawSliceQuad();
+//		}
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//		// 4️⃣ 상태 원복
+//		m_pDeviceContext->OMSetBlendState(nullptr, blendFactor, 0xffffffff);
+//		m_pDeviceContext->OMSetDepthStencilState(nullptr, 0);
+//
+//
+//		//m_pDeviceContext->OMSetBlendState(nullptr, nullptr, 0xffffffff);
+//		//m_pDeviceContext->OMSetDepthStencilState(nullptr, 0);
+//
+//			// ✅ 기존 라인/플레인 셰이더로 복원
+//		m_pDeviceContext->VSSetShader(m_volumeVS, nullptr, 0);
+//		m_pDeviceContext->PSSetShader(m_volumePS, nullptr, 0);
+//	}
+//}
+
+
+
+
+
 void QDirect3D11Widget::RenderVolumeView()
 {
 	m_pDeviceContext->ClearDepthStencilView(m_pDepthStencilView, D3D11_CLEAR_DEPTH, 1.0f, 0);
@@ -1377,7 +1524,7 @@ void QDirect3D11Widget::RenderVolumeView()
 	m_pDeviceContext->PSSetShader(m_volumePS, nullptr, 0);
 	m_pDeviceContext->VSSetConstantBuffers(0, 1, &m_volumeConstantBuffer);
 	m_pDeviceContext->PSSetConstantBuffers(0, 1, &m_volumeConstantBuffer);
-	
+
 
 	XMMATRIX view = XMMatrixLookAtLH(
 		XMVectorSet(-0.3f, 0.3f, -1.2f, 0.0f),  // ← 거의 정면에 가까운 위치
@@ -1428,88 +1575,83 @@ void QDirect3D11Widget::RenderVolumeView()
 		DrawPlane(m_SagittalPlane);
 	}
 
-
-	// ===== ✅ 임시 볼륨 (슬라이스 스택) =====
+	// ===== ✅ 볼륨 렌더링 (왼쪽 뷰처럼 축소 및 회전) =====
 	{
-		m_pDeviceContext->IASetInputLayout(m_prevVolumeInputLayout); // 동일 레이아웃 유지
-		// 0️⃣ 셰이더 교체 (볼륨용)
+		m_pDeviceContext->IASetInputLayout(m_prevVolumeInputLayout);
 		m_pDeviceContext->VSSetShader(m_volumeQuadVS, nullptr, 0);
 		m_pDeviceContext->PSSetShader(m_volumeQuadPS, nullptr, 0);
+		m_pDeviceContext->VSSetConstantBuffers(0, 1, &m_volumePrevConstantBuffer);
+		m_pDeviceContext->PSSetConstantBuffers(0, 1, &m_volumePrevConstantBuffer);
 
-		// 2️⃣ 깊이 테스트 끄기 (뒤쪽도 보이게)
-		//m_pDeviceContext->OMSetDepthStencilState(m_disableDepthState, 0);
 		m_pDeviceContext->OMSetDepthStencilState(m_disableDepthState.Get(), 0);
 
-		// 1️⃣ 블렌딩 켜기 (투명 누적용)
+
+
+
+		// === 기존 카메라 설정 ===
+		XMMATRIX view = XMMatrixLookAtLH(
+			XMVectorSet(-0.3f, 0.3f, -1.2f, 0.0f),  // 카메라 위치
+			XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f),    // 바라보는 지점
+			XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f)     // 업 벡터
+		);
+
+		XMMATRIX proj = XMMatrixPerspectiveFovLH(XM_PIDIV4, 1.0f, 0.1f, 100.0f);
+
+		XMStoreFloat4x4(&constants.View, XMMatrixTranspose(view));
+		XMStoreFloat4x4(&constants.Projection, XMMatrixTranspose(proj));
+
+
+		// === 볼륨 회전에 카메라 방향 반영 ===
+
+// 1️⃣ view 행렬의 역행렬 계산
+		XMMATRIX invView = XMMatrixInverse(nullptr, view);
+
+		// 2️⃣ 볼륨 스케일 적용
+		XMMATRIX volumeScale = XMMatrixScaling(0.55f, 0.55f, 0.55f);
+
+		// 3️⃣ 볼륨 중심 약간 이동 (턱이 화면 중앙으로)
+		XMMATRIX volumeOffset = XMMatrixTranslation(0.0f, -0.08f, 0.0f);
+
+		// 4️⃣ 최종 월드 행렬 구성
+		//    🔹 invView를 곱하면 카메라의 회전을 그대로 따라가게 됨
+		XMMATRIX volumeWorld = volumeScale * invView * volumeOffset;
+
+
+
 		float blendFactor[4] = { 0,0,0,0 };
-		//m_pDeviceContext->OMSetBlendState(m_alphaBlendState, blendFactor, 0xffffffff);
 		m_pDeviceContext->OMSetBlendState(m_alphaBlendState.Get(), blendFactor, 0xffffffff);
 
-
-
-		//// 3️⃣ 슬라이스 루프 (Coronal 방향 예시)
-		////for (int y = 0; y < fileReader->m_height; ++y)
-		//for (int y = fileReader->m_height - 1; y >= 0; --y)
-		//{
-		//	//float offsetY = (y / float(fileReader->m_height)) * 2.0f - 1.0f;
-		//	float offsetY = (y * fileReader->views.spacing.y / float(fileReader->m_height)) * 2.0f - 1.0f;
-		//	//float alpha = 1.0f / fileReader->m_height * 8.0f; // 투명도 세기 조절 이하로
-		//	float alpha = 1.0f / fileReader->m_height * 4.0f;
-
-		//	XMMATRIX world = XMMatrixTranslation(0.0f, offsetY, 0.0f);
-		//	XMStoreFloat4x4(&constants.World, XMMatrixTranspose(scale * world));
-		//	constants.Color = XMFLOAT4(1, 1, 1, alpha);
-		//	m_pDeviceContext->UpdateSubresource(m_volumeConstantBuffer, 0, nullptr, &constants, 0, 0);
-
-		//	// 현재 슬라이스 텍스처 바인딩
-		//	ID3D11ShaderResourceView* srv = coronalTextureCacheSrv[y];
-		//	m_pDeviceContext->PSSetShaderResources(0, 1, &srv);
-
-		//	// 슬라이스 한 장 그리기
-		//	//DrawPlane(m_CoronalPlane);
-		//	DrawSliceQuad();
-		//}
-
-
-
-
-
-
-
-
-
-		// 📏 볼륨 중심 기준 (현재 코드 유지)
 		float centerY = (fileReader->m_height - 1) * 0.5f;
 
-		// ✅ 볼륨 크기 스케일 조정 (왼쪽처럼 작게)
-		XMMATRIX scale = XMMatrixScaling(0.58f, 0.58f, 0.58f); // ← 약 15~20% 축소
+		// 🟠 볼륨 크기 더 줄임
+		XMMATRIX volScale = XMMatrixScaling(0.52f, 0.52f, 0.52f);
 
-		// ✅ 살짝 회전 (왼쪽과 비슷한 각도로 약간 오른쪽으로 틀기)
-		XMMATRIX rotation = XMMatrixRotationY(-XMConvertToRadians(7.0f)); // 오른쪽으로 살짝 회전
+		// 🟠 볼륨 공통 회전 (왼쪽 뷰 기준)
+		XMMATRIX volRotation =
+			XMMatrixRotationY(-XMConvertToRadians(10.0f)) *
+			XMMatrixRotationX(XMConvertToRadians(6.0f));
 
-		// ✅ 살짝 위로 올려서 중심 맞춤
-		XMMATRIX centerOffset = XMMatrixTranslation(0.0f, -0.08f, 0.0f); // 높이 보정
+		// 🟠 중심 살짝 위로
+		XMMATRIX centerOffset = XMMatrixTranslation(0.0f, -0.1f, 0.0f);
 
 		for (int y = fileReader->m_height - 1; y >= 0; --y)
 		{
-			// ✅ offsetY 계산 (세로 크기 살짝 줄임)
-			float offsetY = ((y - centerY) / centerY) * 0.45f;  // 세로 높이 약간 더 줄임
-			offsetY *= fileReader->views.spacing.y * 0.75f;     // spacing 반영 (조금 더 압축)
+			float offsetY = ((y - centerY) / centerY) * 0.4f;
+			offsetY *= fileReader->views.spacing.y * 0.7f;
 
-			// ✅ 투명도
-			float alpha = 1.0f / fileReader->m_height * 0.45f; // 투명도 약간 줄임 (누적 덜 진하게)
+			float alpha = 1.0f / fileReader->m_height * 0.4f;
 
-			// ✅ 위치 이동
 			XMMATRIX translation = XMMatrixTranslation(0.0f, offsetY, 0.0f);
 
-			// ✅ 최종 월드 행렬 (회전 + 스케일 + 중심 보정)
-			XMMATRIX world = scale * rotation * translation * centerOffset;
+			invView.r[3] = XMVectorSet(0, 0, 0, 1); // 위치는 빼고 회전만 사용
+
+			// ✅ invView를 포함해 카메라 회전 반영
+			XMMATRIX world = volScale * translation * invView * centerOffset;
 
 			XMStoreFloat4x4(&constants.World, XMMatrixTranspose(world));
 			constants.Color = XMFLOAT4(1, 1, 1, alpha);
-			m_pDeviceContext->UpdateSubresource(m_volumeConstantBuffer, 0, nullptr, &constants, 0, 0);
+			m_pDeviceContext->UpdateSubresource(m_volumePrevConstantBuffer, 0, nullptr, &constants, 0, 0);
 
-			// 슬라이스 텍스처 바인딩
 			ID3D11ShaderResourceView* srv = coronalTextureCacheSrv[y];
 			m_pDeviceContext->PSSetShaderResources(0, 1, &srv);
 
@@ -1517,30 +1659,13 @@ void QDirect3D11Widget::RenderVolumeView()
 		}
 
 
-
-
-
-
-
-
-
-
-
-
-
-		// 4️⃣ 상태 원복
 		m_pDeviceContext->OMSetBlendState(nullptr, blendFactor, 0xffffffff);
 		m_pDeviceContext->OMSetDepthStencilState(nullptr, 0);
-
-
-		//m_pDeviceContext->OMSetBlendState(nullptr, nullptr, 0xffffffff);
-		//m_pDeviceContext->OMSetDepthStencilState(nullptr, 0);
-
-			// ✅ 기존 라인/플레인 셰이더로 복원
 		m_pDeviceContext->VSSetShader(m_volumeVS, nullptr, 0);
 		m_pDeviceContext->PSSetShader(m_volumePS, nullptr, 0);
 	}
 }
+
 void QDirect3D11Widget::InitializeVolumeCamera() {
 	using namespace DirectX;
 
