@@ -107,3 +107,61 @@ finalColor = pow(finalColor, 1.0 / 1.8);
 
 return float4(finalColor, alpha);
 }
+
+//Texture2D sliceTexture : register(t0);
+//SamplerState samplerState : register(s0);
+//
+//cbuffer VolumeConstants : register(b0)
+//{
+//	matrix World;
+//	matrix View;
+//	matrix Projection;
+//	float4 color;
+//};
+//
+//struct VS_OUTPUT {
+//	float4 position : SV_POSITION;
+//	float2 texcoord : TEXCOORD;
+//	float3 worldPos : WORLDPOS;
+//};
+//
+//float4 PSVolume(VS_OUTPUT input) : SV_TARGET
+//{
+//	float gray = sliceTexture.Sample(samplerState, input.texcoord).r;
+//
+//// === HU 윈도우/레벨 조정 ===
+//float windowCenter = 0.30;
+//float windowWidth = 0.48;
+//gray = saturate((gray - (windowCenter - windowWidth * 0.5)) / windowWidth);
+//gray = pow(gray, 1.8);
+//
+//// === 색상 매핑 (따뜻한 오렌지 톤) ===
+//float3 darkTone = float3(0.28, 0.18, 0.10);
+//float3 midTone = float3(0.92, 0.65, 0.40);
+//float3 lightTone = float3(1.0, 0.82, 0.55);
+//float3 baseColor = lerp(darkTone, lightTone, gray);
+//float3 finalColor = lerp(baseColor, midTone, 0.3);
+//
+//// === Lambert 조명 (밝기 보정 포함) ===
+//float3 dx = ddx(input.worldPos);
+//float3 dy = ddy(input.worldPos);
+//float3 normal = normalize(cross(dx, dy));
+//
+//// 광원 방향 (정면+위)
+//float3 lightDir = normalize(float3(-0.2, 0.6, -0.5));
+//float diffuse = saturate(dot(normal, lightDir));
+//
+//// 조명 밸런스 조정
+//diffuse = diffuse * 0.6 + 0.5;  // 기본 밝기 0.5, 조명 효과 60%
+//
+//finalColor *= diffuse;
+//
+//// === 투명도 ===
+//float alpha = smoothstep(0.5, 0.85, gray);
+//alpha = pow(alpha, 2.3) * 0.4;
+//
+//// === 감마 보정 ===
+//finalColor = pow(finalColor, 1.0 / 1.8);
+//
+//return float4(finalColor, alpha);
+//}
