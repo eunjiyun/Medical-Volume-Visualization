@@ -309,9 +309,9 @@ public:
 	ID3D11Buffer* m_cubeIndexBuffer;
 
 	// ✅ 3D 평면들
-	SlicePlane m_axialPlane;
-	SlicePlane m_coronalPlane;
-	SlicePlane m_sagittalPlane;
+	SlicePlane m_CoronalPlane;
+	SlicePlane m_AxialPlane;
+	SlicePlane m_SagittalPlane;
 
 	// ✅ 올바른 선언
 	DirectX::XMFLOAT4X4 m_volumeViewMatrix;
