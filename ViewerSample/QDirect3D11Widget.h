@@ -283,7 +283,7 @@ private:
 	//ID3D11RenderTargetView * m_pRTView;
 	SliceSeriesRtv m_RTViews;// m_RTViewsVolume, m_RTViewsAxial, m_RTViewsCoronal, m_RTViewsSagittal;
 	ID3D11RenderTargetView* m_pSwapChainRTV = nullptr;
-
+	std::vector<ID3D11ShaderResourceView*> coronalTextureCacheSrv;
 	QTimer m_qTimer;
 
 	HWND m_hWnd;
@@ -305,17 +305,31 @@ public:
 	ID3D11VertexShader*       m_volumeVS = nullptr;
 	ID3D11PixelShader*        m_volumePS = nullptr;
 
+
+	//m_volumeQuadVS
+
+	ID3D11VertexShader*       m_volumeQuadVS = nullptr;
+	ID3D11PixelShader*        m_volumeQuadPS = nullptr;
+
 	ID3D11Buffer*             m_vertexBuffer = nullptr;
 
 	ID3D11InputLayout*        m_inputLayout = nullptr;
 
 	ID3D11InputLayout*        m_volumeInputLayout = nullptr;
+
+	ID3D11InputLayout*        m_prevVolumeInputLayout = nullptr;
 	ID3D11InputLayout* m_cubeInputLayout;        // ✅ 큐브용 (Position만)
 
 	//ID3D11Buffer* m_vertexBuffer = nullptr;
 
 
 	ID3D11Buffer* m_volumeConstantBuffer;  // ← 여기 추가!
+	ID3D11Buffer* m_volumePrevConstantBuffer;  // ← 여기 추가!
+
+	// D3D11 상태 객체들
+	Microsoft::WRL::ComPtr<ID3D11BlendState>        m_alphaBlendState;
+	Microsoft::WRL::ComPtr<ID3D11DepthStencilState> m_disableDepthState;
+
 
 		// ✅ 큐브 관련
 	ID3D11Buffer* m_cubeVertexBuffer;
@@ -349,6 +363,8 @@ public:
 	void UpdateSlicePlanePositions();
 	void RenderBoundingCube(const VolumeConstants& constants);
 	void DrawPlane(const SlicePlane& plane);
+	void DrawSliceQuad();
+
 	void CreateDepthStencilBuffer();
 
 

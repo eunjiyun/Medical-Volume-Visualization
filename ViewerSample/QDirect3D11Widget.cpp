@@ -782,10 +782,12 @@ void QDirect3D11Widget::tick()
 
 void QDirect3D11Widget::initializeRenderTargets()
 {
+	
 	m_RTViews.slices.clear();
 	m_SRViews.slices.clear();
 	m_samplerState.clear();
-
+	coronalTextureCacheSrv.clear();
+	coronalTextureCacheSrv.resize(fileReader->m_height);
 
 	fileReader->SliceIdxManage();
 
@@ -793,98 +795,9 @@ void QDirect3D11Widget::initializeRenderTargets()
 	for (int i{}; i < 4; ++i) {
 		if (0 == i) {
 
-//			
-//
-//
-//
-//			D3D11_TEXTURE2D_DESC texDesc = {};
-//			D3D11_TEXTURE2D_DESC desc;
-//
-//
-//			ID3D11Texture2D* axialTex = fileReader->getOrCreateCoronalTexture(fileReader->currentIndex[1]);
-//			axialTex->GetDesc(&desc);
-//			//texDesc.Width = desc.Width;
-//			//texDesc.Height = desc.Height;
-//			texDesc.Width = fileReader->m_width;
-//			texDesc.Height = fileReader->m_depth;
-//
-//			texDesc.MipLevels = 1;
-//			texDesc.ArraySize = fileReader->m_height;
-//
-//			//DXGI_FORMAT_R8G8B8A8_UNORM
-//			texDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-//			//texDesc.Format = DXGI_FORMAT_R8_UNORM;
-//
-//
-//			texDesc.SampleDesc.Count = 1;
-//			texDesc.Usage = D3D11_USAGE_DEFAULT;
-//			//texDesc.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
-//			texDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
-//		//	texDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ZERO;
-//
-//
-//			std::vector<D3D11_SUBRESOURCE_DATA> initData(fileReader->m_height);
-//			std::vector<std::vector<uint8_t>> sliceData(fileReader->m_height);
-//
-//			for (int i = 0; i < fileReader->m_height; ++i)
-//			{
-//				// 한 슬라이스의 RGBA 데이터
-//				sliceData[i] = fileReader->GenerateCoronalSlice(i); // ← RGBA일 경우
-//				initData[i].pSysMem = sliceData[i].data();
-//				initData[i].SysMemPitch = fileReader->m_width * 4; // RGBA = 4 bytes
-//			}
-//
-//
-//			ComPtr<ID3D11Texture2D> texArray;
-//			HRESULT hr = m_pDevice->CreateTexture2D(&texDesc, initData.data(), &texArray);
-//			if (FAILED(hr))
-//				qDebug() << "CreateTexture2D failed. HRESULT:" << QString::number(hr, 16);
-//
-//			D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
-//			srvDesc.Format = texDesc.Format;
-//			srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2DARRAY;
-//			srvDesc.Texture2DArray.MostDetailedMip = 0;
-//			srvDesc.Texture2DArray.MipLevels = 1;
-//			srvDesc.Texture2DArray.FirstArraySlice = 0;
-//			srvDesc.Texture2DArray.ArraySize = texDesc.ArraySize;
-//
-//			ComPtr<ID3D11ShaderResourceView> texArraySRV;
-//			hr = m_pDevice->CreateShaderResourceView(texArray.Get(), &srvDesc, &texArraySRV);
-//			if (FAILED(hr))
-//				qDebug() << "CreateShaderResourceView failed. HRESULT:" << QString::number(hr, 16);
-//
-//
-//
-//			//initData.pSysMem = slice.data();
-//			//initData.SysMemPitch = 4 * width * sizeof(uint8_t);
-//
-//
-//
-//			//ID3D11Texture2D* texArray = nullptr;
-//			////DXCall(m_pDevice->CreateTexture2D(&texDesc, initData.data(), &texArray));
-//			//HRESULT hr=m_pDevice->CreateTexture2D(&texDesc, initData.data(), &texArray);
-//
-//			
-//
-//
-//		/*	if (FAILED(hr)) {
-//				qDebug() << "CreateTexture2D failed: 0x" << QString::number(hr, 16);
-//			}*/
-//
-//	/*		ID3D11Debug* debug = nullptr;
-//			if (SUCCEEDED(m_pDevice->QueryInterface(__uuidof(ID3D11Debug), (void**)&debug))) {
-//				ID3D11InfoQueue* infoQueue = nullptr;
-//				if (SUCCEEDED(debug->QueryInterface(__uuidof(ID3D11InfoQueue), (void**)&infoQueue))) {
-//					infoQueue->SetBreakOnSeverity(D3D11_MESSAGE_SEVERITY_ERROR, TRUE);
-//				}
-//			}
-//*/
-//
-//			
 
 
-
-			D3D11_TEXTURE2D_DESC texDesc = {};
+		/*	D3D11_TEXTURE2D_DESC texDesc = {};
 			texDesc.Width = fileReader->m_width;
 			texDesc.Height = fileReader->m_depth;
 			texDesc.MipLevels = 1;
@@ -892,36 +805,111 @@ void QDirect3D11Widget::initializeRenderTargets()
 			texDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
 			texDesc.SampleDesc.Count = 1;
 			texDesc.Usage = D3D11_USAGE_DEFAULT;
-			texDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+			texDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE;*/
 
-			std::vector<D3D11_SUBRESOURCE_DATA> initData(fileReader->m_height);
+		//	std::vector<D3D11_SUBRESOURCE_DATA> initData(fileReader->m_height);
 			std::vector<std::vector<uint8_t>> sliceData(fileReader->m_height);
 
 			for (int i = 0; i < fileReader->m_height; ++i)
 			{
-				sliceData[i] = fileReader->GenerateCoronalSlice(i);
+				/*sliceData[i] = fileReader->GenerateCoronalSlice(i);
 				initData[i].pSysMem = sliceData[i].data();
-				initData[i].SysMemPitch = fileReader->m_width * 4 * sizeof(uint8_t);
+				initData[i].SysMemPitch = fileReader->m_width * 4 * sizeof(uint8_t);*/
+
+
+
+				sliceData[i] = fileReader->GenerateCoronalSlice(i);
+
+				D3D11_TEXTURE2D_DESC sliceDesc = {};
+				sliceDesc.Width = fileReader->m_width;
+				sliceDesc.Height = fileReader->m_depth;
+				sliceDesc.MipLevels = 1;
+				sliceDesc.ArraySize = 1;
+				sliceDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+				sliceDesc.SampleDesc.Count = 1;
+				sliceDesc.Usage = D3D11_USAGE_DEFAULT;
+				sliceDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+
+				D3D11_SUBRESOURCE_DATA initData = {};
+				initData.pSysMem = sliceData[i].data();
+				initData.SysMemPitch = fileReader->m_width * 4;
+
+				ID3D11Texture2D* sliceTex = nullptr;
+				HRESULT hr = m_pDevice->CreateTexture2D(&sliceDesc, &initData, &sliceTex);
+				if (FAILED(hr)) continue;
+
+				// 슬라이스 개별 SRV
+				ID3D11ShaderResourceView* sliceSRV = nullptr;
+				hr = m_pDevice->CreateShaderResourceView(sliceTex, nullptr, &sliceSRV);
+				if (SUCCEEDED(hr))
+				{
+					coronalTextureCacheSrv[i] = sliceSRV; // ✅ 저장
+				}
 		
 			//	*sizeof(uint8_t);
 			}
 
-			ComPtr<ID3D11Texture2D> texArray;
-			HRESULT hr = m_pDevice->CreateTexture2D(&texDesc, initData.data(), &texArray);
+			//ComPtr<ID3D11Texture2D> texArray;
+			//HRESULT hr = m_pDevice->CreateTexture2D(&texDesc, initData.data(), &texArray);
 
-			if (SUCCEEDED(hr))
-			{
-				D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
-				srvDesc.Format = texDesc.Format;
-				srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2DARRAY;
-				srvDesc.Texture2DArray.MostDetailedMip = 0;
-				srvDesc.Texture2DArray.MipLevels = 1;
-				srvDesc.Texture2DArray.FirstArraySlice = 0;
-				srvDesc.Texture2DArray.ArraySize = texDesc.ArraySize;
+			//if (SUCCEEDED(hr))
+			//{
+			//	D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+			//	srvDesc.Format = texDesc.Format;
+			//	srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2DARRAY;
+			//	srvDesc.Texture2DArray.MostDetailedMip = 0;
+			//	srvDesc.Texture2DArray.MipLevels = 1;
+			//	srvDesc.Texture2DArray.FirstArraySlice = 0;
+			//	srvDesc.Texture2DArray.ArraySize = texDesc.ArraySize;
 
-				ComPtr<ID3D11ShaderResourceView> texArraySRV;
-				hr = m_pDevice->CreateShaderResourceView(texArray.Get(), &srvDesc, &texArraySRV);
+			//	ComPtr<ID3D11ShaderResourceView> texArraySRV;
+			//	hr = m_pDevice->CreateShaderResourceView(texArray.Get(), &srvDesc, &texArraySRV);
+
+			//	if (SUCCEEDED(hr))
+			//	{
+			//		// ✅ 볼륨 전체용 SRV 저장 (원하면 m_SRViews.slices[0] 등에)
+			//		
+			//		coronalTextureCacheSrv = texArraySRV.Get();
+			//	}
+			//}
+
+
+
+			// ===== 1. 알파 블렌딩 상태 생성 =====
+			D3D11_BLEND_DESC blendDesc = {};
+			blendDesc.AlphaToCoverageEnable = FALSE;
+			blendDesc.IndependentBlendEnable = FALSE;
+
+			D3D11_RENDER_TARGET_BLEND_DESC rtBlend = {};
+			rtBlend.BlendEnable = TRUE;
+			rtBlend.SrcBlend = D3D11_BLEND_SRC_ALPHA;
+			rtBlend.DestBlend = D3D11_BLEND_INV_SRC_ALPHA;
+			rtBlend.BlendOp = D3D11_BLEND_OP_ADD;
+			rtBlend.SrcBlendAlpha = D3D11_BLEND_ONE;
+			rtBlend.DestBlendAlpha = D3D11_BLEND_ZERO;
+			rtBlend.BlendOpAlpha = D3D11_BLEND_OP_ADD;
+			rtBlend.RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
+
+			blendDesc.RenderTarget[0] = rtBlend;
+
+			HRESULT hr = m_pDevice->CreateBlendState(&blendDesc, &m_alphaBlendState);
+			if (FAILED(hr)) {
+				qDebug() << "❌ Failed to create alpha blend state";
 			}
+
+
+			// ===== 2. 깊이 테스트 끈 상태 생성 =====
+			D3D11_DEPTH_STENCIL_DESC depthDesc = {};
+			depthDesc.DepthEnable = FALSE; // 깊이 테스트 끄기
+			depthDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ZERO;
+			depthDesc.DepthFunc = D3D11_COMPARISON_ALWAYS;
+			depthDesc.StencilEnable = FALSE;
+
+			hr = m_pDevice->CreateDepthStencilState(&depthDesc, &m_disableDepthState);
+			if (FAILED(hr)) {
+				qDebug() << "❌ Failed to create disable depth state";
+			}
+
 
 
 		}
@@ -1439,6 +1427,61 @@ void QDirect3D11Widget::RenderVolumeView()
 		m_pDeviceContext->UpdateSubresource(m_volumeConstantBuffer, 0, nullptr, &constants, 0, 0);
 		DrawPlane(m_SagittalPlane);
 	}
+
+
+	// ===== ✅ 임시 볼륨 (슬라이스 스택) =====
+	{
+		m_pDeviceContext->IASetInputLayout(m_prevVolumeInputLayout); // 동일 레이아웃 유지
+		// 0️⃣ 셰이더 교체 (볼륨용)
+		m_pDeviceContext->VSSetShader(m_volumeQuadVS, nullptr, 0);
+		m_pDeviceContext->PSSetShader(m_volumeQuadPS, nullptr, 0);
+
+		// 2️⃣ 깊이 테스트 끄기 (뒤쪽도 보이게)
+		//m_pDeviceContext->OMSetDepthStencilState(m_disableDepthState, 0);
+		m_pDeviceContext->OMSetDepthStencilState(m_disableDepthState.Get(), 0);
+
+		// 1️⃣ 블렌딩 켜기 (투명 누적용)
+		float blendFactor[4] = { 0,0,0,0 };
+		//m_pDeviceContext->OMSetBlendState(m_alphaBlendState, blendFactor, 0xffffffff);
+		m_pDeviceContext->OMSetBlendState(m_alphaBlendState.Get(), blendFactor, 0xffffffff);
+
+
+
+		// 3️⃣ 슬라이스 루프 (Coronal 방향 예시)
+		//for (int y = 0; y < fileReader->m_height; ++y)
+		for (int y = fileReader->m_height - 1; y >= 0; --y)
+		{
+			//float offsetY = (y / float(fileReader->m_height)) * 2.0f - 1.0f;
+			float offsetY = (y * fileReader->views.spacing.y / float(fileReader->m_height)) * 2.0f - 1.0f;
+			//float alpha = 1.0f / fileReader->m_height * 8.0f; // 투명도 세기 조절 이하로
+			float alpha = 1.0f / fileReader->m_height * 4.0f;
+
+			XMMATRIX world = XMMatrixTranslation(0.0f, offsetY, 0.0f);
+			XMStoreFloat4x4(&constants.World, XMMatrixTranspose(scale * world));
+			constants.Color = XMFLOAT4(1, 1, 1, alpha);
+			m_pDeviceContext->UpdateSubresource(m_volumeConstantBuffer, 0, nullptr, &constants, 0, 0);
+
+			// 현재 슬라이스 텍스처 바인딩
+			ID3D11ShaderResourceView* srv = coronalTextureCacheSrv[y];
+			m_pDeviceContext->PSSetShaderResources(0, 1, &srv);
+
+			// 슬라이스 한 장 그리기
+			//DrawPlane(m_CoronalPlane);
+			DrawSliceQuad();
+		}
+
+		// 4️⃣ 상태 원복
+		m_pDeviceContext->OMSetBlendState(nullptr, blendFactor, 0xffffffff);
+		m_pDeviceContext->OMSetDepthStencilState(nullptr, 0);
+
+
+		//m_pDeviceContext->OMSetBlendState(nullptr, nullptr, 0xffffffff);
+		//m_pDeviceContext->OMSetDepthStencilState(nullptr, 0);
+
+			// ✅ 기존 라인/플레인 셰이더로 복원
+		m_pDeviceContext->VSSetShader(m_volumeVS, nullptr, 0);
+		m_pDeviceContext->PSSetShader(m_volumePS, nullptr, 0);
+	}
 }
 void QDirect3D11Widget::InitializeVolumeCamera() {
 	using namespace DirectX;
@@ -1468,6 +1511,12 @@ void QDirect3D11Widget::InitializeVolumeShaders()
 	ID3DBlob* vsBlob = nullptr;
 	ID3DBlob* psBlob = nullptr;
 	ID3DBlob* errorBlob = nullptr;
+
+
+	// Vertex Shader 컴파일
+	ID3DBlob* vsPrevBlob = nullptr;
+	ID3DBlob* psPrevBlob = nullptr;
+	ID3DBlob* errorPrevBlob = nullptr;
 
 	HRESULT hr = D3DCompileFromFile(L"VolumeVS.hlsl", nullptr, nullptr,
 		"VSMain", "vs_5_0", 0, 0, &vsBlob, nullptr);
@@ -1534,6 +1583,73 @@ void QDirect3D11Widget::InitializeVolumeShaders()
 
 
 
+
+
+	hr = D3DCompileFromFile(L"prevVolumeVS.hlsl", nullptr, nullptr,
+		"VSVolume", "vs_5_0", 0, 0, &vsPrevBlob, nullptr);
+
+
+	if (FAILED(hr)) {
+		if (errorPrevBlob) {
+			qDebug() << "VS Compile Error:" << (char*)errorPrevBlob->GetBufferPointer();
+			errorPrevBlob->Release();
+		}
+		qDebug() << "Failed to compile volume vertex shader!";
+		return;
+	}
+
+
+	hr = m_pDevice->CreateVertexShader(vsPrevBlob->GetBufferPointer(),
+		vsPrevBlob->GetBufferSize(),
+		nullptr, &m_volumeQuadVS);
+
+	if (FAILED(hr)) {
+		qDebug() << "Failed to create volume vertex shader!";
+		return;
+	}
+
+
+
+
+	// Pixel Shader 컴파일
+	hr = D3DCompileFromFile(L"prevVolumePS.hlsl", nullptr, nullptr,
+		"PSVolume", "ps_5_0", 0, 0, &psPrevBlob, nullptr);
+
+	if (FAILED(hr)) {
+		if (errorPrevBlob) {
+			qDebug() << "PS Compile Error:" << (char*)errorPrevBlob->GetBufferPointer();
+			errorPrevBlob->Release();
+		}
+		qDebug() << "Failed to compile volume pixel shader!";
+		return;
+	}
+
+	hr = m_pDevice->CreatePixelShader(psPrevBlob->GetBufferPointer(),
+		psPrevBlob->GetBufferSize(),
+		nullptr, &m_volumeQuadPS);
+
+	if (FAILED(hr)) {
+		qDebug() << "Failed to create volume pixel shader!";
+		return;
+	}
+
+	qDebug() << "✅ Volume shaders compiled successfully!";
+
+	// ✅ Constant Buffer 생성
+	D3D11_BUFFER_DESC cbDescPrev = {};
+	cbDescPrev.Usage = D3D11_USAGE_DEFAULT;
+	cbDescPrev.ByteWidth = sizeof(VolumeConstants);  // ← 구조체 크기
+	cbDescPrev.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+	cbDescPrev.CPUAccessFlags = 0;
+	cbDescPrev.MiscFlags = 0;
+
+	hr = m_pDevice->CreateBuffer(&cbDescPrev, nullptr, &m_volumePrevConstantBuffer);
+	if (FAILED(hr)) {
+		qDebug() << "Failed to create volume constant buffer!";
+	}
+
+
+
 	// ✅ 1. 평면용 Input Layout (Position + Texcoord)
 	D3D11_INPUT_ELEMENT_DESC planeLayout[] = {
 	{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0,
@@ -1546,6 +1662,37 @@ void QDirect3D11Widget::InitializeVolumeShaders()
 		vsBlob->GetBufferPointer(),
 		vsBlob->GetBufferSize(),
 		&m_volumeInputLayout);
+
+
+	// ✅ 1. 평면용 Input Layout (Position + Texcoord)
+	D3D11_INPUT_ELEMENT_DESC planePrevLayout[] = {
+	{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0,
+	  D3D11_INPUT_PER_VERTEX_DATA, 0 },
+	{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0,
+	  D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 }
+	};
+
+	m_pDevice->CreateInputLayout(planePrevLayout, ARRAYSIZE(planePrevLayout),
+		vsPrevBlob->GetBufferPointer(),
+		vsPrevBlob->GetBufferSize(),
+		&m_prevVolumeInputLayout);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 	// ✅ 2. 큐브용 Input Layout (Position만)
 	D3D11_INPUT_ELEMENT_DESC cubeLayout[] = {
@@ -3091,29 +3238,6 @@ void QDirect3D11Widget::RenderBoundingCube(const VolumeConstants& constants) {
 // ========================================
 void QDirect3D11Widget::DrawPlane(const SlicePlane& plane)
 {
-	// ✅ Input Layout 바인딩 추가!
-	//m_pDeviceContext->IASetInputLayout(m_volumeInputLayout);
-
-
-
-	// Vertex Buffer 바인딩
-	//UINT stride = sizeof(float) * 5; // XMFLOAT3(position) + XMFLOAT2(texcoord)
-	//UINT offset = 0;
-
-	//HRESULT hr=
-	//m_pDeviceContext->IASetVertexBuffers(0, 1, &m_axialPlane.vertexBuffer, &stride, &offset);
-	//m_pDeviceContext->IASetIndexBuffer(m_axialPlane.indexBuffer, DXGI_FORMAT_R32_UINT, 0);
-	//m_pDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-	//m_pDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_LINELIST);
-
-	// Sampler State 바인딩
-	//m_pDeviceContext->PSSetSamplers(0, 1, m_samplerState.data());
-
-	// Quad 그리기 (2개 삼각형 = 6개 인덱스)
-//	m_pDeviceContext->DrawIndexed(8, 0, 0);
-
-//	if (!m_axialPlane.texture) qDebug() << "Axial texture is null!";
-
 	m_pDeviceContext->IASetInputLayout(m_volumeInputLayout);
 
 	UINT stride = sizeof(float) * 5;
@@ -3123,14 +3247,62 @@ void QDirect3D11Widget::DrawPlane(const SlicePlane& plane)
 	m_pDeviceContext->IASetIndexBuffer(plane.indexBuffer, DXGI_FORMAT_R32_UINT, 0);
 	m_pDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_LINELIST);
 
-	////m_pDeviceContext->PSSetShaderResources(0, 1, &plane.texture);
-	////m_pDeviceContext->PSSetSamplers(0, 1, m_samplerState.data());
 
 	m_pDeviceContext->DrawIndexed(8, 0, 0); // 2 triangles = 6 indices
 
-	//if (!plane.texture) qDebug() << "Texture is null!";
+}
+void QDirect3D11Widget::DrawSliceQuad()
+{
+	// ✅ 정점 레이아웃: (x, y, z, u, v)
+	struct Vertex {
+		float x, y, z;
+		float u, v;
+	};
 
+	Vertex vertices[] =
+	{
+		{ -1.0f, -1.0f, 0.0f, 0.0f, 1.0f }, // Bottom-left
+		{ -1.0f,  1.0f, 0.0f, 0.0f, 0.0f }, // Top-left
+		{  1.0f,  1.0f, 0.0f, 1.0f, 0.0f }, // Top-right
+		{  1.0f, -1.0f, 0.0f, 1.0f, 1.0f }  // Bottom-right
+	};
 
+	UINT indices[] = { 0, 1, 2, 0, 2, 3 };
+
+	// --- 버퍼 설정 ---
+	D3D11_BUFFER_DESC vbd = {};
+	vbd.Usage = D3D11_USAGE_DEFAULT;
+	vbd.ByteWidth = sizeof(vertices);
+	vbd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+
+	D3D11_SUBRESOURCE_DATA vinitData = {};
+	vinitData.pSysMem = vertices;
+
+	ComPtr<ID3D11Buffer> vertexBuffer;
+	m_pDevice->CreateBuffer(&vbd, &vinitData, &vertexBuffer);
+
+	D3D11_BUFFER_DESC ibd = {};
+	ibd.Usage = D3D11_USAGE_DEFAULT;
+	ibd.ByteWidth = sizeof(indices);
+	ibd.BindFlags = D3D11_BIND_INDEX_BUFFER;
+
+	D3D11_SUBRESOURCE_DATA iinitData = {};
+	iinitData.pSysMem = indices;
+
+	ComPtr<ID3D11Buffer> indexBuffer;
+	m_pDevice->CreateBuffer(&ibd, &iinitData, &indexBuffer);
+
+	// --- 렌더링 ---
+	UINT stride = sizeof(Vertex);
+	UINT offset = 0;
+
+	m_pDeviceContext->IASetInputLayout(m_prevVolumeInputLayout); // 이미 있는 InputLayout
+	m_pDeviceContext->IASetVertexBuffers(0, 1, vertexBuffer.GetAddressOf(), &stride, &offset);
+	m_pDeviceContext->IASetIndexBuffer(indexBuffer.Get(), DXGI_FORMAT_R32_UINT, 0);
+	m_pDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+	// --- 드로우 ---
+	m_pDeviceContext->DrawIndexed(6, 0, 0);
 }
 
 
