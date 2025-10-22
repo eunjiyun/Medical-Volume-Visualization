@@ -633,6 +633,7 @@ bool QDirect3D11Widget::init()
 
 
 	initializeRenderTargets();
+//	initializeVolumeRenderTargets();
 
 	createSwapChainRTV();
 
@@ -785,69 +786,155 @@ void QDirect3D11Widget::initializeRenderTargets()
 	m_SRViews.slices.clear();
 	m_samplerState.clear();
 
-	//fileReader->currentIndex[0] = fileReader->m_depth / 2;   // Axial (Z 방향)
-	//fileReader->currentIndex[1] = fileReader->m_height / 2;  // Coronal (Y 방향)
-	//fileReader->currentIndex[2] = fileReader->m_width / 2;   // Sagittal (X 방향)
 
 	fileReader->SliceIdxManage();
 
 
 	for (int i{}; i < 4; ++i) {
-
-
 		if (0 == i) {
 
-			// 1. ??용뮞筌???밴쉐
+//			
+//
+//
+//
+//			D3D11_TEXTURE2D_DESC texDesc = {};
+//			D3D11_TEXTURE2D_DESC desc;
+//
+//
+//			ID3D11Texture2D* axialTex = fileReader->getOrCreateCoronalTexture(fileReader->currentIndex[1]);
+//			axialTex->GetDesc(&desc);
+//			//texDesc.Width = desc.Width;
+//			//texDesc.Height = desc.Height;
+//			texDesc.Width = fileReader->m_width;
+//			texDesc.Height = fileReader->m_depth;
+//
+//			texDesc.MipLevels = 1;
+//			texDesc.ArraySize = fileReader->m_height;
+//
+//			//DXGI_FORMAT_R8G8B8A8_UNORM
+//			texDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+//			//texDesc.Format = DXGI_FORMAT_R8_UNORM;
+//
+//
+//			texDesc.SampleDesc.Count = 1;
+//			texDesc.Usage = D3D11_USAGE_DEFAULT;
+//			//texDesc.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
+//			texDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+//		//	texDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ZERO;
+//
+//
+//			std::vector<D3D11_SUBRESOURCE_DATA> initData(fileReader->m_height);
+//			std::vector<std::vector<uint8_t>> sliceData(fileReader->m_height);
+//
+//			for (int i = 0; i < fileReader->m_height; ++i)
+//			{
+//				// 한 슬라이스의 RGBA 데이터
+//				sliceData[i] = fileReader->GenerateCoronalSlice(i); // ← RGBA일 경우
+//				initData[i].pSysMem = sliceData[i].data();
+//				initData[i].SysMemPitch = fileReader->m_width * 4; // RGBA = 4 bytes
+//			}
+//
+//
+//			ComPtr<ID3D11Texture2D> texArray;
+//			HRESULT hr = m_pDevice->CreateTexture2D(&texDesc, initData.data(), &texArray);
+//			if (FAILED(hr))
+//				qDebug() << "CreateTexture2D failed. HRESULT:" << QString::number(hr, 16);
+//
+//			D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+//			srvDesc.Format = texDesc.Format;
+//			srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2DARRAY;
+//			srvDesc.Texture2DArray.MostDetailedMip = 0;
+//			srvDesc.Texture2DArray.MipLevels = 1;
+//			srvDesc.Texture2DArray.FirstArraySlice = 0;
+//			srvDesc.Texture2DArray.ArraySize = texDesc.ArraySize;
+//
+//			ComPtr<ID3D11ShaderResourceView> texArraySRV;
+//			hr = m_pDevice->CreateShaderResourceView(texArray.Get(), &srvDesc, &texArraySRV);
+//			if (FAILED(hr))
+//				qDebug() << "CreateShaderResourceView failed. HRESULT:" << QString::number(hr, 16);
+//
+//
+//
+//			//initData.pSysMem = slice.data();
+//			//initData.SysMemPitch = 4 * width * sizeof(uint8_t);
+//
+//
+//
+//			//ID3D11Texture2D* texArray = nullptr;
+//			////DXCall(m_pDevice->CreateTexture2D(&texDesc, initData.data(), &texArray));
+//			//HRESULT hr=m_pDevice->CreateTexture2D(&texDesc, initData.data(), &texArray);
+//
+//			
+//
+//
+//		/*	if (FAILED(hr)) {
+//				qDebug() << "CreateTexture2D failed: 0x" << QString::number(hr, 16);
+//			}*/
+//
+//	/*		ID3D11Debug* debug = nullptr;
+//			if (SUCCEEDED(m_pDevice->QueryInterface(__uuidof(ID3D11Debug), (void**)&debug))) {
+//				ID3D11InfoQueue* infoQueue = nullptr;
+//				if (SUCCEEDED(debug->QueryInterface(__uuidof(ID3D11InfoQueue), (void**)&infoQueue))) {
+//					infoQueue->SetBreakOnSeverity(D3D11_MESSAGE_SEVERITY_ERROR, TRUE);
+//				}
+//			}
+//*/
+//
+//			
+
+
+
 			D3D11_TEXTURE2D_DESC texDesc = {};
-
-			//fileReader->axialTexture
-			/*texDesc.Width = width() / 2;
-			texDesc.Height = height() / 2;*/
-
-			D3D11_TEXTURE2D_DESC desc;
-			ID3D11Texture2D* axialTex = fileReader->getOrCreateAxialTexture(fileReader->currentIndex[1]);
-			axialTex->GetDesc(&desc);
-			texDesc.Width = desc.Width;
-			//	texDesc.Width = desc.Height;
-			texDesc.Height = desc.Height;
-
-
+			texDesc.Width = fileReader->m_width;
+			texDesc.Height = fileReader->m_depth;
 			texDesc.MipLevels = 1;
-			texDesc.ArraySize = 1;
+			texDesc.ArraySize = fileReader->m_height;
 			texDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
 			texDesc.SampleDesc.Count = 1;
 			texDesc.Usage = D3D11_USAGE_DEFAULT;
-			texDesc.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
+			texDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
 
-			ID3D11Texture2D* pTexture = nullptr;
+			std::vector<D3D11_SUBRESOURCE_DATA> initData(fileReader->m_height);
+			std::vector<std::vector<uint8_t>> sliceData(fileReader->m_height);
 
-			//250922  texture
-			DXCall(m_pDevice->CreateTexture2D(&texDesc, nullptr, &pTexture));
+			for (int i = 0; i < fileReader->m_height; ++i)
+			{
+				sliceData[i] = fileReader->GenerateCoronalSlice(i);
+				initData[i].pSysMem = sliceData[i].data();
+				initData[i].SysMemPitch = fileReader->m_width * 4 * sizeof(uint8_t);
+		
+			//	*sizeof(uint8_t);
+			}
 
+			ComPtr<ID3D11Texture2D> texArray;
+			HRESULT hr = m_pDevice->CreateTexture2D(&texDesc, initData.data(), &texArray);
 
+			if (SUCCEEDED(hr))
+			{
+				D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+				srvDesc.Format = texDesc.Format;
+				srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2DARRAY;
+				srvDesc.Texture2DArray.MostDetailedMip = 0;
+				srvDesc.Texture2DArray.MipLevels = 1;
+				srvDesc.Texture2DArray.FirstArraySlice = 0;
+				srvDesc.Texture2DArray.ArraySize = texDesc.ArraySize;
 
-			// 2. RenderTargetView ??밴쉐
-			ID3D11RenderTargetView* pRTV = nullptr;
-			DXCall(m_pDevice->CreateRenderTargetView(pTexture, nullptr, &pRTV));
-			m_RTViews.slices.push_back(pRTV);
+				ComPtr<ID3D11ShaderResourceView> texArraySRV;
+				hr = m_pDevice->CreateShaderResourceView(texArray.Get(), &srvDesc, &texArraySRV);
+			}
 
-
-			// 3. ShaderResourceView ??밴쉐
-			ID3D11ShaderResourceView* pSRV = nullptr;
-			DXCall(m_pDevice->CreateShaderResourceView(pTexture, nullptr, &pSRV));
-			m_SRViews.slices.push_back(pSRV);
-
-			m_SRViews.flagIndex[0] = m_SRViews.slices.size() - 1;
 
 		}
 		else if (1 == i) {
 
+			for (int i{}; i < 2; ++i) {
 
-			ID3D11Texture2D* axialTex = fileReader->getOrCreateAxialTexture(fileReader->currentIndex[1]);
-			ID3D11RenderTargetView* axialRTV = getRTVForTexture(axialTex);
-			m_RTViews.slices.push_back(axialRTV);
-			ID3D11ShaderResourceView* axialSRV = getSRVForTexture(axialTex);
-			m_SRViews.slices.push_back(axialSRV);
+				ID3D11Texture2D* axialTex = fileReader->getOrCreateAxialTexture(fileReader->currentIndex[1]);
+				ID3D11RenderTargetView* axialRTV = getRTVForTexture(axialTex);
+				m_RTViews.slices.push_back(axialRTV);
+				ID3D11ShaderResourceView* axialSRV = getSRVForTexture(axialTex);
+				m_SRViews.slices.push_back(axialSRV);
+			}
 
 
 			m_SRViews.flagIndex[1] = m_SRViews.flagIndex[0] + fileReader->m_depth - 1;
@@ -896,6 +983,132 @@ void QDirect3D11Widget::initializeRenderTargets()
 	ID3D11SamplerState* pSampler = nullptr;
 	DXCall(m_pDevice->CreateSamplerState(&sampDesc, &pSampler));
 	m_samplerState.push_back(pSampler);
+}
+
+void QDirect3D11Widget::initializeVolumeRenderTargets()
+{
+	////m_RTViews.slices.clear();
+	////m_SRViews.slices.clear();
+	////m_samplerState.clear();
+
+	//////fileReader->currentIndex[0] = fileReader->m_depth / 2;   // Axial (Z 방향)
+	//////fileReader->currentIndex[1] = fileReader->m_height / 2;  // Coronal (Y 방향)
+	//////fileReader->currentIndex[2] = fileReader->m_width / 2;   // Sagittal (X 방향)
+
+	////fileReader->SliceIdxManage();
+
+
+	//for (int i{}; i < 4; ++i) {
+
+
+	//	if (0 == i) {
+
+	//		D3D11_TEXTURE2D_DESC texDesc = {};
+
+	//		//fileReader->axialTexture
+	//		/*texDesc.Width = width() / 2;
+	//		texDesc.Height = height() / 2;*/
+
+	//		D3D11_TEXTURE2D_DESC desc;
+	//		ID3D11Texture2D* axialTex = fileReader->getOrCreateAxialTexture(fileReader->currentIndex[1]);
+	//		axialTex->GetDesc(&desc);
+	//		texDesc.Width = desc.Width;
+	//		texDesc.Height = desc.Height;
+
+	//		texDesc.MipLevels = 1;
+	//		texDesc.ArraySize = m_depth;
+	//		texDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+	//		texDesc.SampleDesc.Count = 1;
+	//		texDesc.Usage = D3D11_USAGE_DEFAULT;
+	//		texDesc.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
+
+
+
+	//		D3D11_TEXTURE2D_DESC texDesc = {};
+	//		texDesc.Width = width;
+	//		texDesc.Height = height;
+	//		texDesc.MipLevels = 1;
+	//		texDesc.ArraySize = m_depth;
+	//		texDesc.Format = DXGI_FORMAT_R8_UNORM;
+	//		texDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+
+	//		ID3D11Texture2D* pTexture = nullptr;
+
+	//		//250922  texture
+	//		DXCall(m_pDevice->CreateTexture2D(&texDesc, nullptr, &pTexture));
+
+
+
+	//		// 2. RenderTargetView 
+	//		ID3D11RenderTargetView* pRTV = nullptr;
+	//		DXCall(m_pDevice->CreateRenderTargetView(pTexture, nullptr, &pRTV));
+	//		m_RTViews.slices.push_back(pRTV);
+
+
+	//		// 3. ShaderResourceView 
+	//		ID3D11ShaderResourceView* pSRV = nullptr;
+	//		DXCall(m_pDevice->CreateShaderResourceView(pTexture, nullptr, &pSRV));
+	//		m_SRViews.slices.push_back(pSRV);
+
+	//		m_SRViews.flagIndex[0] = m_SRViews.slices.size() - 1;
+
+	//	}
+	//	else if (1 == i) {
+
+
+	//		ID3D11Texture2D* axialTex = fileReader->getOrCreateAxialTexture(fileReader->currentIndex[1]);
+	//		ID3D11RenderTargetView* axialRTV = getRTVForTexture(axialTex);
+	//		m_RTViews.slices.push_back(axialRTV);
+	//		ID3D11ShaderResourceView* axialSRV = getSRVForTexture(axialTex);
+	//		m_SRViews.slices.push_back(axialSRV);
+
+
+	//		m_SRViews.flagIndex[1] = m_SRViews.flagIndex[0] + fileReader->m_depth - 1;
+
+	//	}
+	//	else if (2 == i) {
+
+	//		ID3D11Texture2D* coronalTex = fileReader->getOrCreateCoronalTexture(fileReader->currentIndex[2]);
+	//		ID3D11RenderTargetView* coronalRTV = getRTVForTexture(coronalTex);
+	//		m_RTViews.slices.push_back(coronalRTV);
+	//		ID3D11ShaderResourceView* coronalSRV = getSRVForTexture(coronalTex);
+	//		m_SRViews.slices.push_back(coronalSRV);
+
+	//		m_SRViews.flagIndex[2] = m_SRViews.flagIndex[1] + fileReader->m_height - 1;
+
+	//	}
+	//	else if (3 == i) {
+
+	//		ID3D11Texture2D* sagittalTex = fileReader->getOrCreateSagittalTexture(fileReader->currentIndex[3]);
+	//		ID3D11RenderTargetView* sagittalRTV = getRTVForTexture(sagittalTex);
+	//		m_RTViews.slices.push_back(sagittalRTV);
+	//		ID3D11ShaderResourceView* sagittalSRV = getSRVForTexture(sagittalTex);
+	//		m_SRViews.slices.push_back(sagittalSRV);
+
+	//		m_SRViews.flagIndex[3] = m_SRViews.flagIndex[2] + fileReader->m_width - 1;
+
+	//	}
+
+
+
+	//	// 4. ??용뮞筌???곸젫
+	//  //  pTexture->Release();
+	//}
+
+
+	//// 4. 샘플러 상태 생성
+	//D3D11_SAMPLER_DESC sampDesc = {};
+	//sampDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+	//sampDesc.AddressU = D3D11_TEXTURE_ADDRESS_CLAMP;
+	//sampDesc.AddressV = D3D11_TEXTURE_ADDRESS_CLAMP;
+	//sampDesc.AddressW = D3D11_TEXTURE_ADDRESS_CLAMP;
+	//sampDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
+	//sampDesc.MinLOD = 0;
+	//sampDesc.MaxLOD = D3D11_FLOAT32_MAX;
+
+	//ID3D11SamplerState* pSampler = nullptr;
+	//DXCall(m_pDevice->CreateSamplerState(&sampDesc, &pSampler));
+	//m_samplerState.push_back(pSampler);
 }
 
 void QDirect3D11Widget::createSwapChainRTV()
@@ -1160,11 +1373,11 @@ void QDirect3D11Widget::InitSampler()
 
 void QDirect3D11Widget::InitializeGraphics()
 {
-	InitShaders();
-	InitTextures(width() / 2, height() / 2);
-	InitSampler();       // ← 여기서 샘플러 생성
+	//InitShaders();
+	//InitTextures(width() / 2, height() / 2);
+	//InitSampler();       // ← 여기서 샘플러 생성
 
-	initializeRenderTargets();
+	//initializeRenderTargets();
 }
 
 void QDirect3D11Widget::RenderVolumeView()
@@ -2530,10 +2743,6 @@ XMFLOAT3 QDirect3D11Widget::GetPatientCoordFromClick(int viewIndex, XMFLOAT2 uv)
  //   qDebug() << "PatientCoord: (" << patientCoord.x << ", " << patientCoord.y << ", " << patientCoord.z << ")";
 
 	return patientCoord;
-
-
-
-
 }
 
 

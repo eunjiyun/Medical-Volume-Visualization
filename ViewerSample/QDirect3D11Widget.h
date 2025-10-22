@@ -1,24 +1,29 @@
 ﻿#pragma once
 
-#include<stdexcept>
-
+#include <d3d11.h>
+#include <wrl/client.h>
+#include <DirectXMath.h>        // XMMatrix 등
+#include <QtCore/QDebug>        // Qt 포함은 나중에
 #include<QWidget>
-
-
 #include<QTimer>
-#include<unordered_map>
 #include<qscrollbar.h>
 #include<qlabel.h>
 #include <QPainter>
 #include <QPen>
 #include <QColor>
+#include<stdexcept>
+#include<unordered_map>
+#include<vector>
+using namespace std;
+
+using Microsoft::WRL::ComPtr;
 
 
 
 #pragma comment(lib, "d3d11.lib")
 #pragma comment(lib, "dxgi.lib")
 #pragma comment(lib, "d3dcompiler.lib")
-#include <d3d11.h>
+
 
 #include <D3Dcompiler.h>
 #include <directxmath.h>
@@ -131,6 +136,9 @@ public:
 
 
 	D3D11_VIEWPORT viewPort;
+
+	//std::vector<std::vector<uint8_t>> sliceData;
+	ComPtr<ID3D11ShaderResourceView> texArraySRV;
 private:
 
 
@@ -138,7 +146,12 @@ private:
 	void endScene();
 
 	void tick();
+
+
+
+
 	void initializeRenderTargets();
+	void initializeVolumeRenderTargets();
 
 	void createSwapChainRTV();
 
