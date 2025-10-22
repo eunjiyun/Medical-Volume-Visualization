@@ -1447,13 +1447,35 @@ void QDirect3D11Widget::RenderVolumeView()
 
 
 
-		// 3️⃣ 슬라이스 루프 (Coronal 방향 예시)
-		//for (int y = 0; y < fileReader->m_height; ++y)
+		//// 3️⃣ 슬라이스 루프 (Coronal 방향 예시)
+		////for (int y = 0; y < fileReader->m_height; ++y)
+		//for (int y = fileReader->m_height - 1; y >= 0; --y)
+		//{
+		//	//float offsetY = (y / float(fileReader->m_height)) * 2.0f - 1.0f;
+		//	float offsetY = (y * fileReader->views.spacing.y / float(fileReader->m_height)) * 2.0f - 1.0f;
+		//	//float alpha = 1.0f / fileReader->m_height * 8.0f; // 투명도 세기 조절 이하로
+		//	float alpha = 1.0f / fileReader->m_height * 4.0f;
+
+		//	XMMATRIX world = XMMatrixTranslation(0.0f, offsetY, 0.0f);
+		//	XMStoreFloat4x4(&constants.World, XMMatrixTranspose(scale * world));
+		//	constants.Color = XMFLOAT4(1, 1, 1, alpha);
+		//	m_pDeviceContext->UpdateSubresource(m_volumeConstantBuffer, 0, nullptr, &constants, 0, 0);
+
+		//	// 현재 슬라이스 텍스처 바인딩
+		//	ID3D11ShaderResourceView* srv = coronalTextureCacheSrv[y];
+		//	m_pDeviceContext->PSSetShaderResources(0, 1, &srv);
+
+		//	// 슬라이스 한 장 그리기
+		//	//DrawPlane(m_CoronalPlane);
+		//	DrawSliceQuad();
+		//}
+		float centerY = (fileReader->m_height - 1) * 0.5f;
+
 		for (int y = fileReader->m_height - 1; y >= 0; --y)
 		{
-			//float offsetY = (y / float(fileReader->m_height)) * 2.0f - 1.0f;
-			float offsetY = (y * fileReader->views.spacing.y / float(fileReader->m_height)) * 2.0f - 1.0f;
-			//float alpha = 1.0f / fileReader->m_height * 8.0f; // 투명도 세기 조절 이하로
+			float offsetY = ((y - centerY) / centerY) * 1.0f; // 중심 정렬
+			offsetY *= fileReader->views.spacing.y;           // voxel 비율 반영
+
 			float alpha = 1.0f / fileReader->m_height * 4.0f;
 
 			XMMATRIX world = XMMatrixTranslation(0.0f, offsetY, 0.0f);
@@ -1461,12 +1483,9 @@ void QDirect3D11Widget::RenderVolumeView()
 			constants.Color = XMFLOAT4(1, 1, 1, alpha);
 			m_pDeviceContext->UpdateSubresource(m_volumeConstantBuffer, 0, nullptr, &constants, 0, 0);
 
-			// 현재 슬라이스 텍스처 바인딩
 			ID3D11ShaderResourceView* srv = coronalTextureCacheSrv[y];
 			m_pDeviceContext->PSSetShaderResources(0, 1, &srv);
 
-			// 슬라이스 한 장 그리기
-			//DrawPlane(m_CoronalPlane);
 			DrawSliceQuad();
 		}
 
