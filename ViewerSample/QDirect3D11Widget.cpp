@@ -1469,19 +1469,38 @@ void QDirect3D11Widget::RenderVolumeView()
 		//	//DrawPlane(m_CoronalPlane);
 		//	DrawSliceQuad();
 		//}
+
+
+
+
+
+
+
+
+
+		// 📏 볼륨 중심 기준 (현재 코드 유지)
 		float centerY = (fileReader->m_height - 1) * 0.5f;
+
+		// ✅ 볼륨 크기 스케일 조정 (왼쪽 이미지처럼 축소)
+		XMMATRIX scale = XMMatrixScaling(0.65f, 0.65f, 0.65f); // ← 기존보다 작게
 
 		for (int y = fileReader->m_height - 1; y >= 0; --y)
 		{
-			float offsetY = ((y - centerY) / centerY) * 1.0f; // 중심 정렬
-			offsetY *= fileReader->views.spacing.y;           // voxel 비율 반영
+			// ✅ offsetY 계산 보정
+			// 기존: ((y - centerY) / centerY) * 1.0f → 너무 크게 이동함
+			// 수정: 전체 높이의 절반만큼만 이동
+			float offsetY = ((y - centerY) / centerY) * 0.5f; // ← y 이동 절반 축소
+			offsetY *= fileReader->views.spacing.y * 0.8f;    // ← spacing 반영 + 살짝 축소
 
-			//float alpha = 1.0f / fileReader->m_height * 4.0f;
-			//float alpha = 1.0f / fileReader->m_height * 8.0f;  // ← 투명도 강화
+			// ✅ 투명도 (alpha) 기본 유지
 			float alpha = 1.0f / fileReader->m_height * 0.5f;
 
-			XMMATRIX world = XMMatrixTranslation(0.0f, offsetY, 0.0f);
-			XMStoreFloat4x4(&constants.World, XMMatrixTranspose(scale * world));
+			// ✅ 중심 높이 보정 (턱이 너무 아래로 가지 않게)
+			XMMATRIX translation = XMMatrixTranslation(0.0f, offsetY - 0.1f, 0.0f);
+
+			XMMATRIX world = scale * translation;
+			XMStoreFloat4x4(&constants.World, XMMatrixTranspose(world));
+
 			constants.Color = XMFLOAT4(1, 1, 1, alpha);
 			m_pDeviceContext->UpdateSubresource(m_volumeConstantBuffer, 0, nullptr, &constants, 0, 0);
 
@@ -1490,6 +1509,18 @@ void QDirect3D11Widget::RenderVolumeView()
 
 			DrawSliceQuad();
 		}
+
+
+
+
+
+
+
+
+
+
+
+
 
 		// 4️⃣ 상태 원복
 		m_pDeviceContext->OMSetBlendState(nullptr, blendFactor, 0xffffffff);
