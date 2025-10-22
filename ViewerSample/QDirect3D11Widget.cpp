@@ -1481,29 +1481,35 @@ void QDirect3D11Widget::RenderVolumeView()
 		// 📏 볼륨 중심 기준 (현재 코드 유지)
 		float centerY = (fileReader->m_height - 1) * 0.5f;
 
-		// ✅ 볼륨 크기 스케일 조정 (왼쪽 이미지처럼 축소)
-		XMMATRIX scale = XMMatrixScaling(0.65f, 0.65f, 0.65f); // ← 기존보다 작게
+		// ✅ 볼륨 크기 스케일 조정 (왼쪽처럼 작게)
+		XMMATRIX scale = XMMatrixScaling(0.58f, 0.58f, 0.58f); // ← 약 15~20% 축소
+
+		// ✅ 살짝 회전 (왼쪽과 비슷한 각도로 약간 오른쪽으로 틀기)
+		XMMATRIX rotation = XMMatrixRotationY(-XMConvertToRadians(7.0f)); // 오른쪽으로 살짝 회전
+
+		// ✅ 살짝 위로 올려서 중심 맞춤
+		XMMATRIX centerOffset = XMMatrixTranslation(0.0f, -0.08f, 0.0f); // 높이 보정
 
 		for (int y = fileReader->m_height - 1; y >= 0; --y)
 		{
-			// ✅ offsetY 계산 보정
-			// 기존: ((y - centerY) / centerY) * 1.0f → 너무 크게 이동함
-			// 수정: 전체 높이의 절반만큼만 이동
-			float offsetY = ((y - centerY) / centerY) * 0.5f; // ← y 이동 절반 축소
-			offsetY *= fileReader->views.spacing.y * 0.8f;    // ← spacing 반영 + 살짝 축소
+			// ✅ offsetY 계산 (세로 크기 살짝 줄임)
+			float offsetY = ((y - centerY) / centerY) * 0.45f;  // 세로 높이 약간 더 줄임
+			offsetY *= fileReader->views.spacing.y * 0.75f;     // spacing 반영 (조금 더 압축)
 
-			// ✅ 투명도 (alpha) 기본 유지
-			float alpha = 1.0f / fileReader->m_height * 0.5f;
+			// ✅ 투명도
+			float alpha = 1.0f / fileReader->m_height * 0.45f; // 투명도 약간 줄임 (누적 덜 진하게)
 
-			// ✅ 중심 높이 보정 (턱이 너무 아래로 가지 않게)
-			XMMATRIX translation = XMMatrixTranslation(0.0f, offsetY - 0.1f, 0.0f);
+			// ✅ 위치 이동
+			XMMATRIX translation = XMMatrixTranslation(0.0f, offsetY, 0.0f);
 
-			XMMATRIX world = scale * translation;
+			// ✅ 최종 월드 행렬 (회전 + 스케일 + 중심 보정)
+			XMMATRIX world = scale * rotation * translation * centerOffset;
+
 			XMStoreFloat4x4(&constants.World, XMMatrixTranspose(world));
-
 			constants.Color = XMFLOAT4(1, 1, 1, alpha);
 			m_pDeviceContext->UpdateSubresource(m_volumeConstantBuffer, 0, nullptr, &constants, 0, 0);
 
+			// 슬라이스 텍스처 바인딩
 			ID3D11ShaderResourceView* srv = coronalTextureCacheSrv[y];
 			m_pDeviceContext->PSSetShaderResources(0, 1, &srv);
 
