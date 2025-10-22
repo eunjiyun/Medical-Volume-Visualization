@@ -1476,7 +1476,9 @@ void QDirect3D11Widget::RenderVolumeView()
 			float offsetY = ((y - centerY) / centerY) * 1.0f; // 중심 정렬
 			offsetY *= fileReader->views.spacing.y;           // voxel 비율 반영
 
-			float alpha = 1.0f / fileReader->m_height * 4.0f;
+			//float alpha = 1.0f / fileReader->m_height * 4.0f;
+			//float alpha = 1.0f / fileReader->m_height * 8.0f;  // ← 투명도 강화
+			float alpha = 1.0f / fileReader->m_height * 0.5f;
 
 			XMMATRIX world = XMMatrixTranslation(0.0f, offsetY, 0.0f);
 			XMStoreFloat4x4(&constants.World, XMMatrixTranspose(scale * world));
