@@ -3356,23 +3356,23 @@ void QDirect3D11Widget::InitializeSlicePlanes() {
 
 
 	//=======================================================
-	XMMATRIX scale = XMMatrixScaling(0.8f, 0.8f, 0.8f); // ← 여기서 크기 조절
+	//XMMATRIX scale = XMMatrixScaling(0.8f, 0.8f, 0.8f); // ← 여기서 크기 조절
 
 // ---- Axial (XY plane, z=0)
 
 	
-	XMMATRIX worldA = scale * XMMatrixRotationX(XM_PIDIV2);
+	XMMATRIX worldA = /*scale **/ XMMatrixRotationX(XM_PIDIV2);
 	XMStoreFloat4x4(&m_AxialPlane.worldMatrix, XMMatrixTranspose(worldA));
 	//constants.World = m_axialPlane.worldMatrix; // ✅ 저장된 World Matrix 사용
 
 	// ---- Coronal (XZ plane, y=0)
 
-	XMMATRIX worldC = scale * XMMatrixTranslation(0.0f, 0.0f, 0.0f);
+	XMMATRIX worldC = /*scale **/ XMMatrixTranslation(0.0f, 0.0f, 0.0f);
 	XMStoreFloat4x4(&m_CoronalPlane.worldMatrix, XMMatrixTranspose(worldC));
 	//constants.World = m_coronalPlane.worldMatrix; // ✅ 저장된 World Matrix 사용
 
 
-	XMMATRIX worldS = scale * XMMatrixRotationY(XM_PIDIV2);
+	XMMATRIX worldS = /*scale **/ XMMatrixRotationY(XM_PIDIV2);
 	XMStoreFloat4x4(&m_SagittalPlane.worldMatrix, XMMatrixTranspose(worldS));
 	//constants.World = m_sagittalPlane.worldMatrix; // ✅ 저장된 World Matrix 사용
 
@@ -3454,7 +3454,7 @@ void QDirect3D11Widget::UpdateSlicePlanePositions() {
 	XMFLOAT3 spacing = fileReader->views.spacing;
 
 	// ⚙️ 공통 스케일
-	XMMATRIX scale = XMMatrixScaling(0.8f, 0.8f, 0.8f);
+	//XMMATRIX scale = XMMatrixScaling(0.9f, 0.9f, 0.9f);
 
 	{
 		// ===== Axial 평면 (XY 평면, Z축 이동) =====
@@ -3462,7 +3462,10 @@ void QDirect3D11Widget::UpdateSlicePlanePositions() {
 		float axialZ = origin.z + fileReader->currentIndex[1] * spacing.z;
 		float normalizedZ = -(axialZ - origin.z - totalDepth * 0.5f) / totalDepth;
 
-		XMMATRIX axialWorld = scale *
+		// 🔹 평면 이동 범위 확장 (예: 1.5배 정도)
+		normalizedZ *= 1.9f;
+
+		XMMATRIX axialWorld = /*scale **/
 			XMMatrixRotationX(XM_PIDIV2) *
 			XMMatrixTranslation(0.0f, normalizedZ, 0.0f);
 		//XMStoreFloat4x4(&m_axialPlane.worldMatrix, axialWorld);
@@ -3479,8 +3482,9 @@ void QDirect3D11Widget::UpdateSlicePlanePositions() {
 		float totalHeight = fileReader->m_height * spacing.y;
 		float coronalY = origin.y + fileReader->currentIndex[2] * spacing.y;
 		float normalizedY = (coronalY - origin.y - totalHeight * 0.5f) / totalHeight;
+		normalizedY *= 1.9f;
 
-		XMMATRIX coronalWorld = scale * XMMatrixTranslation(0.0f, 0.0f, normalizedY);
+		XMMATRIX coronalWorld = /*scale **/ XMMatrixTranslation(0.0f, 0.0f, normalizedY);
 		
 		//XMStoreFloat4x4(&m_coronalPlane.worldMatrix, coronalWorld);
 		XMStoreFloat4x4(&m_CoronalPlane.worldMatrix, XMMatrixTranspose(coronalWorld));
@@ -3498,7 +3502,10 @@ void QDirect3D11Widget::UpdateSlicePlanePositions() {
 		float sagittalX = origin.x + fileReader->currentIndex[3] * spacing.x;
 		float normalizedX = (sagittalX - origin.x - totalWidth * 0.5f) / totalWidth;
 
-		XMMATRIX sagittalWorld = scale *
+		// 🔹 평면 이동 범위 확장 (예: 1.5배 정도)
+		normalizedX *= 1.9f;
+
+		XMMATRIX sagittalWorld =/* scale **/
 			XMMatrixRotationY(XM_PIDIV2) *
 			XMMatrixTranslation(normalizedX, 0.0f, 0.0f);
 		//XMStoreFloat4x4(&m_sagittalPlane.worldMatrix, sagittalWorld);
