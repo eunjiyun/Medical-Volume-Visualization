@@ -2435,6 +2435,8 @@ void QDirect3D11Widget::mousePressEvent(QMouseEvent* event)
 	px[clickedViewIndex] = px[0];
 	py[clickedViewIndex] = py[0];
 
+	
+
 	viewPort = CreateViewport(clickedViewIndex); // i = 0~3
 	viewX = viewPort.TopLeftX;
 	viewY = viewPort.TopLeftY;
@@ -2497,7 +2499,7 @@ void QDirect3D11Widget::mousePressEvent(QMouseEvent* event)
 				sliceInfoAxial->show();
 
 
-				//	onAxialScroll(fileReader->currentIndex[1]);
+				//onAxialScroll(fileReader->currentIndex[1]);
 				break;
 			case 2:
 				fileReader->UpdateCoronalTexture(fileReader->currentIndex[2]);
@@ -2540,6 +2542,16 @@ void QDirect3D11Widget::mousePressEvent(QMouseEvent* event)
 		}
 
 	}
+
+	UpdateSlicePlanePositions();
+
+	//RenderVolumeView(); // 강제 호출로 확인
+
+
+	// 렌더링 업데이트
+	update();
+
+	RenderVolumeView(); // 강제 호출로 확인
 
 	qDebug() << "a cur slice : " << 631 - fileReader->currentIndex[1] << endl;
 	qDebug() << "c cur slice : " << fileReader->currentIndex[2] << endl;
@@ -3666,7 +3678,7 @@ void QDirect3D11Widget::onAxialScroll(int value) {
 	if (!fileReader) return;
 
 	
-	clickedViewIndex = 1;
+		clickedViewIndex = 1;
 
 	// ImGui 로직과 동일: 스크롤 값을 슬라이스 인덱스로 변환
 	int newIndex = value;
