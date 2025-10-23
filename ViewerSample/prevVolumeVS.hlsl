@@ -19,9 +19,39 @@ struct VS_OUTPUT {
 VS_OUTPUT VSVolume(VS_INPUT input)
 {
 	VS_OUTPUT output;
+
+
+	// 🔹 스케일 행렬 생성 (0.5로 축소)
+	float4x4 scale = float4x4(
+		0.9, 0.0, 0.0, 0.0,
+		0.0, 0.9, 0.0, 0.0,
+		0.0, 0.0, 0.9, 0.0,
+		0.0, 0.0, 0.0, 1.0
+		);
+
+
+
+	//// 🔹 스케일 행렬 생성 (0.5로 축소)
+	//float4x4 scale = float4x4(
+	//	1.0, 0.0, 0.0, 0.0,
+	//	0.0, 1.0, 0.0, 0.0,
+	//	0.0, 0.0, 1.0, 0.0,
+	//	0.0, 0.0, 0.0, 1.0
+	//	);
+
+
+
+	//output.position = mul(float4(input.position, 1.0f), mul(scale, World));
+	//output.position = mul(output.position, View);
+	//output.position = mul(output.position, Projection);
+	//output.texcoord = input.texcoord;
+
+
 	output.position = mul(float4(input.position, 1.0f), World);
 	output.position = mul(output.position, View);
 	output.position = mul(output.position, Projection);
 	output.texcoord = input.texcoord;
 	return output;
+
+
 }

@@ -821,6 +821,9 @@ void QDirect3D11Widget::initializeRenderTargets()
 				sliceData[i] = fileReader->GenerateCoronalSlice(i);
 
 				D3D11_TEXTURE2D_DESC sliceDesc = {};
+				/*sliceDesc.Width = fileReader->m_width;
+				sliceDesc.Height = fileReader->m_depth;*/
+
 				sliceDesc.Width = fileReader->m_width;
 				sliceDesc.Height = fileReader->m_depth;
 				sliceDesc.MipLevels = 1;
@@ -1526,20 +1529,53 @@ void QDirect3D11Widget::RenderVolumeView()
 	m_pDeviceContext->PSSetConstantBuffers(0, 1, &m_volumeConstantBuffer);
 
 
-	XMMATRIX view = XMMatrixLookAtLH(
-		XMVectorSet(-0.3f, 0.3f, -1.2f, 0.0f),  // ← 거의 정면에 가까운 위치
-		XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f),    // 원점 바라봄
-		XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f)     // 업 벡터
-	);
+	//XMMATRIX view = XMMatrixLookAtLH(
+	//	XMVectorSet(-0.3f, 0.3f, -1.2f, 0.0f),  // ← 거의 정면에 가까운 위치 // 카메라 위치 (eye)
+	//	XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f),    // 원점 바라봄                // 바라보는 대상 (target)
+	//	XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f)     // 업 벡터                    // 위쪽 방향 (up)
+	//);
+
+	// 🎯 기존보다 살짝 사선 시점으로
+	//XMVECTOR eye = XMVectorSet(0.6f, 0.5f, -1.0f, 0.0f);     // 오른쪽 위 뒤에서
+	//XMVECTOR target = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);   // 원점(볼륨 중심)
+	//XMVECTOR up = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);       // Y축 기준 위쪽
+
+// ✅ 카메라 위치 조정 (조금 더 정면 + 가까이)
+//	XMVECTOR eye = XMVectorSet(-0.45f, 0.25f, -0.9f, 0.0f);  // ← 왼쪽·위로 살짝, 거리 짧게
+	
+	XMVECTOR eye = XMVectorSet(-0.2f, 0.2f, -1.0f, 0.0f);  // 더 정면, 더 낮게
+
+	XMVECTOR target = XMVectorZero();                        // 원점(볼륨 중심)
+	XMVECTOR up = XMVectorSet(0.0f, 1.0f, -0.05f, 0.0f);
 
 
-	XMMATRIX proj = XMMatrixPerspectiveFovLH(XM_PIDIV4, 1.0f, 0.1f, 100.0f);
+
+
+	XMMATRIX view = XMMatrixLookAtLH(eye, target, up);
+	//XMMATRIX proj = XMMatrixPerspectiveFovLH(XM_PIDIV4, 1.0f, 0.1f, 100.0f);
+
+
+	//// Orthographic Projection으로 변경
+	//float viewWidth = 2.0f;   // 화면에 보일 가로 범위
+	//float viewHeight = 2.0f;  // 화면에 보일 세로 범위
+	float nearZ = 0.01f;
+	float farZ = 100.0f;
+
+
+	float aspect = (float)(fileReader->m_width*1.1) / (float)(fileReader->m_depth); // Coronal 기준
+	float viewHeight = 2.0f;
+	float viewWidth = viewHeight * aspect;
+
+
+	XMMATRIX proj = XMMatrixOrthographicLH(viewWidth, viewHeight, nearZ, farZ);
+
+
 
 	XMStoreFloat4x4(&constants.View, XMMatrixTranspose(view));
 	XMStoreFloat4x4(&constants.Projection, XMMatrixTranspose(proj));
 
 	// ⚙️ 공통 스케일 (크기 조정)
-	XMMATRIX scale = XMMatrixScaling(0.8f, 0.8f, 0.8f); // ← 여기서 크기 조절
+	//XMMATRIX worldScale = XMMatrixScaling(0.55f, 0.55f, 0.55f);
 
 	// ---- Axial (XY plane, z=0)
 	{
@@ -1588,33 +1624,32 @@ void QDirect3D11Widget::RenderVolumeView()
 
 
 
-		// === 기존 카메라 설정 ===
-		XMMATRIX view = XMMatrixLookAtLH(
-			XMVectorSet(-0.3f, 0.3f, -1.2f, 0.0f),  // 카메라 위치
-			XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f),    // 바라보는 지점
-			XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f)     // 업 벡터
-		);
+		//// === 기존 카메라 설정 ===
+		//XMMATRIX view = XMMatrixLookAtLH(
+		//	XMVectorSet(-0.3f, 0.3f, -1.2f, 0.0f),  // 카메라 위치
+		//	XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f),    // 바라보는 지점
+		//	XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f)     // 업 벡터
+		//);
 
-		XMMATRIX proj = XMMatrixPerspectiveFovLH(XM_PIDIV4, 1.0f, 0.1f, 100.0f);
+		//XMMATRIX proj = XMMatrixPerspectiveFovLH(XM_PIDIV4, 1.0f, 0.1f, 100.0f);
 
-		XMStoreFloat4x4(&constants.View, XMMatrixTranspose(view));
-		XMStoreFloat4x4(&constants.Projection, XMMatrixTranspose(proj));
+
 
 
 		// === 볼륨 회전에 카메라 방향 반영 ===
 
-// 1️⃣ view 행렬의 역행렬 계산
-		XMMATRIX invView = XMMatrixInverse(nullptr, view);
-
-		// 2️⃣ 볼륨 스케일 적용
-		XMMATRIX volumeScale = XMMatrixScaling(0.55f, 0.55f, 0.55f);
-
-		// 3️⃣ 볼륨 중심 약간 이동 (턱이 화면 중앙으로)
-		XMMATRIX volumeOffset = XMMatrixTranslation(0.0f, -0.08f, 0.0f);
-
-		// 4️⃣ 최종 월드 행렬 구성
-		//    🔹 invView를 곱하면 카메라의 회전을 그대로 따라가게 됨
-		XMMATRIX volumeWorld = volumeScale * invView * volumeOffset;
+//// 1️⃣ view 행렬의 역행렬 계산
+//		XMMATRIX invView = XMMatrixInverse(nullptr, view);
+//
+//		// 2️⃣ 볼륨 스케일 적용
+//		XMMATRIX volumeScale = XMMatrixScaling(0.55f, 0.55f, 0.55f);
+//
+//		// 3️⃣ 볼륨 중심 약간 이동 (턱이 화면 중앙으로)
+//		XMMATRIX volumeOffset = XMMatrixTranslation(0.0f, -0.08f, 0.0f);
+//
+//		// 4️⃣ 최종 월드 행렬 구성
+//		//    🔹 invView를 곱하면 카메라의 회전을 그대로 따라가게 됨
+//		XMMATRIX volumeWorld = volumeScale * invView * volumeOffset;
 
 
 
@@ -1623,34 +1658,80 @@ void QDirect3D11Widget::RenderVolumeView()
 
 		float centerY = (fileReader->m_height - 1) * 0.5f;
 
-		// 🟠 볼륨 크기 더 줄임
-		XMMATRIX volScale = XMMatrixScaling(0.52f, 0.52f, 0.52f);
+		//// 🟠 볼륨 크기 더 줄임
+		//XMMATRIX volScale = XMMatrixScaling(0.52f, 0.52f, 0.52f);
 
-		// 🟠 볼륨 공통 회전 (왼쪽 뷰 기준)
-		XMMATRIX volRotation =
-			XMMatrixRotationY(-XMConvertToRadians(10.0f)) *
-			XMMatrixRotationX(XMConvertToRadians(6.0f));
+		////// 🟠 볼륨 공통 회전 (왼쪽 뷰 기준)
+		////XMMATRIX volRotation =
+		////	XMMatrixRotationY(-XMConvertToRadians(10.0f)) *
+		////	XMMatrixRotationX(XMConvertToRadians(6.0f));
 
-		// 🟠 중심 살짝 위로
-		XMMATRIX centerOffset = XMMatrixTranslation(0.0f, -0.1f, 0.0f);
+		//// 🟠 중심 살짝 위로
+		//XMMATRIX centerOffset = XMMatrixTranslation(0.0f, -0.1f, 0.0f);
 
 		for (int y = fileReader->m_height - 1; y >= 0; --y)
 		{
+		/*	float offsetY = ((y - centerY) / centerY) * 0.4f;
+			offsetY *= fileReader->views.spacing.y * 0.7f;*/
+
+			float alpha = 1.0f / fileReader->m_height * 0.2f;
+
+			//XMMATRIX translation = XMMatrixTranslation(0.0f, offsetY, 0.0f);
+
+
+			////m_CoronalPlane.worldMatrix; 
+			//XMMATRIX world = volScale * translation * centerOffset;
+
+			//XMMATRIX world = volScale * translation * centerOffset;
+
+			//XMStoreFloat4x4(&constantsPrev.World, XMMatrixTranspose(world));
+
+
+			XMMATRIX scale = XMMatrixScaling(0.9f, 0.9f, 0.9f); // ← 여기서 크기 조절
+
+				// 2️⃣ 회전 — 플레인과 동일한 카메라 시점 정합
+			XMMATRIX volRotation =
+				XMMatrixRotationY(XMConvertToRadians(-10.0f)) *   // 오른쪽으로 살짝 회전
+				XMMatrixRotationX(XMConvertToRadians(6.0f));      // 위에서 약간 내려다봄
+
+			   // 3️⃣ 볼륨 중심 약간 이동 (턱 기준으로 정렬)
+			XMMATRIX volOffset = XMMatrixTranslation(0.0f, -0.08f, 0.0f);
+
+			// 4️⃣ 슬라이스 간 세로 offset (적층 높이)
 			float offsetY = ((y - centerY) / centerY) * 0.4f;
 			offsetY *= fileReader->views.spacing.y * 0.7f;
 
-			float alpha = 1.0f / fileReader->m_height * 0.4f;
 
 			XMMATRIX translation = XMMatrixTranslation(0.0f, offsetY, 0.0f);
 
-			invView.r[3] = XMVectorSet(0, 0, 0, 1); // 위치는 빼고 회전만 사용
+			//XMMATRIX worldC = scale * XMMatrixTranslation(0.0f, 0.0f, 0.0f);
 
-			// ✅ invView를 포함해 카메라 회전 반영
-			XMMATRIX world = volScale * translation * invView * centerOffset;
 
-			XMStoreFloat4x4(&constants.World, XMMatrixTranspose(world));
-			constants.Color = XMFLOAT4(1, 1, 1, alpha);
-			m_pDeviceContext->UpdateSubresource(m_volumePrevConstantBuffer, 0, nullptr, &constants, 0, 0);
+
+			XMMATRIX invView = XMMatrixInverse(nullptr, view);
+			invView.r[3] = XMVectorSet(0, 0, 0, 1); // 위치 영향 제거, 회전만 적용
+
+		//	XMMATRIX volumeScale = XMMatrixScaling(0.55f, 0.55f, 0.55f);
+		//	XMMATRIX volumeOffset = XMMatrixTranslation(0.0f, -0.08f, 0.0f);
+		//	XMMATRIX volumeWorld = /*volumeScale **/ invView * volumeOffset;
+
+			  // 6️⃣ 최종 World 구성: 스케일 → 회전 → 슬라이스 위치 → 카메라 정합 → 오프셋
+			XMMATRIX volumeWorld =
+				scale *
+				volRotation *
+				translation *
+				invView *
+				volOffset;
+
+
+			XMStoreFloat4x4(&constantsPrev.View, XMMatrixTranspose(view));
+			XMStoreFloat4x4(&constantsPrev.Projection, XMMatrixTranspose(proj));
+			XMStoreFloat4x4(&constantsPrev.World, XMMatrixTranspose(volumeWorld));
+
+
+			constantsPrev.Color = XMFLOAT4(1, 1, 1, alpha);
+	
+			m_pDeviceContext->UpdateSubresource(m_volumePrevConstantBuffer, 0, nullptr, &constantsPrev, 0, 0);
 
 			ID3D11ShaderResourceView* srv = coronalTextureCacheSrv[y];
 			m_pDeviceContext->PSSetShaderResources(0, 1, &srv);
@@ -2017,6 +2098,46 @@ D3D11_VIEWPORT QDirect3D11Widget::CreateViewport(int index)
 	// ✅ 각 뷰의 실제 데이터 aspect ratio 계산
 	float dataAspect = 1.0f;
 
+
+	if (0==index ) {
+		//// 좌상단 사분할 영역 기준
+		//float quadAspect = quadWidth / quadHeight;
+		//float dataAspect = (float)(fileReader->m_width) / (float)(fileReader->m_depth);
+
+		//float renderWidth = quadWidth;
+		//float renderHeight = quadHeight;
+		//float offsetX = 0.0f;
+		//float offsetY = 0.0f;
+
+		//if (quadAspect > dataAspect) {
+		//	// 세로 기준으로 맞춤
+		//	renderWidth = quadHeight * dataAspect;
+		//	offsetX = (quadWidth - renderWidth) / 2.0f;
+		//}
+		//else {
+		//	// 가로 기준으로 맞춤
+		//	renderHeight = quadWidth / dataAspect;
+		//	offsetY = (quadHeight - renderHeight) / 2.0f;
+		//}
+
+		//vp.TopLeftX = offsetX;
+		//vp.TopLeftY = offsetY;
+		//vp.Width = renderWidth;
+		//vp.Height = renderHeight;
+		//vp.MinDepth = 0.0f;
+		//vp.MaxDepth = 1.0f;
+
+		vp.Width = quadWidth;
+		vp.Height = quadHeight;
+		vp.MinDepth = 0.0f;
+		vp.MaxDepth = 1.0f;
+
+		return vp;
+
+		return vp;
+	}
+
+
 	switch (index) {
 
 	case 1: // Axial (Z축 슬라이싱)
@@ -2034,7 +2155,8 @@ D3D11_VIEWPORT QDirect3D11Widget::CreateViewport(int index)
 		break;
 
 	default: // Volume (3D)
-		dataAspect = 1.0f;
+		//dataAspect = 1.0f;
+		dataAspect = (float)(fileReader->m_width) / (float)(fileReader->m_depth);
 		break;
 	}
 
@@ -2074,7 +2196,7 @@ D3D11_VIEWPORT QDirect3D11Widget::CreateViewport(int index)
 		vp.TopLeftY = quadHeight + offsetY;
 		break;
 
-	case 0: // Volume - 좌상단
+	default: // Volume - 좌상단
 		vp.TopLeftX = offsetX;
 		vp.TopLeftY = offsetY;
 		break;

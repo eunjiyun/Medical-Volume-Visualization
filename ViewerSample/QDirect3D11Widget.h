@@ -351,6 +351,7 @@ public:
 	//XMFLOAT4X4 m_coronalPlaneWorld;
 	//XMFLOAT4X4 m_sagittalPlaneWorld;
 	VolumeConstants constants{};
+	VolumeConstants constantsPrev{};
 
 public:
 

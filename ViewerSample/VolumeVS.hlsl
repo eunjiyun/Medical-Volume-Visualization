@@ -20,7 +20,17 @@ struct VS_OUTPUT {
 VS_OUTPUT VSMain(VS_INPUT input) {
 	VS_OUTPUT output;
 
-	float4 worldPos = mul(float4(input.position, 1.0f), World);
+
+	// ğŸ”¹ ìŠ¤ì¼€ì¼ í–‰ë ¬ (2.0ë°° í™•ëŒ€)
+	float4x4 scale = {
+		2.2, 0.0, 0.0, 0.0,
+		0.0, 2.2, 0.0, 0.0,
+		0.0, 0.0, 2.2, 0.0,
+		0.0, 0.0, 0.0, 1.0
+	};
+
+	float4 worldPos = mul(float4(input.position, 1.0f), mul(scale, World));
+	//float4 worldPos = mul(float4(input.position, 1.0f), World);
 	float4 viewPos = mul(worldPos, View);
 	output.position = mul(viewPos, Projection);
 
@@ -33,7 +43,7 @@ VS_OUTPUT VSMain(VS_INPUT input) {
 
 //VS_OUTPUT VSMain(VS_INPUT input) {
 //	VS_OUTPUT output;
-//	output.position = float4(input.position, 1.0f); // NDC ÁÂÇ¥ Á÷Á¢ Ãâ·Â
+//	output.position = float4(input.position, 1.0f); // NDC ì¢Œí‘œ ì§ì ‘ ì¶œë ¥
 //	output.texcoord = input.texcoord;
 //	output.worldPos = input.position;
 //	return output;
