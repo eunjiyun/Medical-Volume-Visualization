@@ -21,7 +21,7 @@ VS_OUTPUT VSMain(VS_INPUT input) {
 	VS_OUTPUT output;
 
 
-	// 🔹 스케일 행렬 (2.0배 확대)
+	// ?�� ?��????�렬 (2.0�??��?)
 	float4x4 scale = {
 		1.9, 0.0, 0.0, 0.0,
 		0.0, 1.9, 0.0, 0.0,

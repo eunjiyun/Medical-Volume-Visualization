@@ -21,7 +21,7 @@ VS_OUTPUT VSVolume(VS_INPUT input)
 	VS_OUTPUT output;
 
 
-	// 🔹 스케일 행렬 생성 (0.5로 축소)
+	// ?�� ?��????�렬 ?�성 (0.5�?축소)
 	float4x4 scale = float4x4(
 		0.9, 0.0, 0.0, 0.0,
 		0.0, 0.9, 0.0, 0.0,
@@ -31,7 +31,7 @@ VS_OUTPUT VSVolume(VS_INPUT input)
 
 
 
-	//// 🔹 스케일 행렬 생성 (0.5로 축소)
+	//// ?�� ?��????�렬 ?�성 (0.5�?축소)
 	//float4x4 scale = float4x4(
 	//	1.0, 0.0, 0.0, 0.0,
 	//	0.0, 1.0, 0.0, 0.0,
