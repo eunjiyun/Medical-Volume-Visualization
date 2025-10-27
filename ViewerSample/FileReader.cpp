@@ -1,4 +1,4 @@
-#include "FileReader.h"
+ï»¿#include "FileReader.h"
 #include <dcmtk/dcmdata/dcfilefo.h>
 #include <dcmtk/dcmdata/dcdeftag.h>
 #include <dcmtk/ofstd/ofcond.h>
@@ -67,10 +67,6 @@ bool FileReader::LoadDICOMSeries(std::string folderPath, ID3D11Device* g_pd3dDev
 				OFString wcStr, wwStr;
 				if (dataset->findAndGetOFString(DCM_WindowCenter, wcStr).good() &&
 					dataset->findAndGetOFString(DCM_WindowWidth, wwStr).good() &&
-
-
-
-
 					dataset->findAndGetOFString(DCM_PatientName, patientName).good() &&
 					dataset->findAndGetOFString(DCM_PatientBirthDate, birthDate).good() &&
 					dataset->findAndGetOFString(DCM_StudyDate, studyDate).good() &&
@@ -103,7 +99,7 @@ bool FileReader::LoadDICOMSeries(std::string folderPath, ID3D11Device* g_pd3dDev
 					std::string sx, sy;
 					std::getline(ss, sx, '\\');
 					if (!std::getline(ss, sy, '\\')) {
-						sy = sx; // fallback: µÑ ´Ù °°Àº °ªÀ¸·Î ¼³Á¤
+						sy = sx; // fallback: ë‘˜ ë‹¤ ê°™ì€ ê°’ìœ¼ë¡œ ì„¤ì •
 					}
 
 					/*views[1].spacing.x = std::stof(sx);
@@ -146,12 +142,12 @@ bool FileReader::LoadDICOMSeries(std::string folderPath, ID3D11Device* g_pd3dDev
 					std::getline(ss, ox, '\\');
 
 					if (!std::getline(ss, oy, '\\')) {
-						oy = "0.0"; // fallback ¶Ç´Â ox¿Í µ¿ÀÏÇÏ°Ô ¼³Á¤ÇØµµ µÊ
+						oy = "0.0"; // fallback ë˜ëŠ” oxì™€ ë™ì¼í•˜ê²Œ ì„¤ì •í•´ë„ ë¨
 						std::cerr << "Warning: Missing Y value in ImagePositionPatient" << std::endl;
 					}
 
 					if (!std::getline(ss, oz, '\\')) {
-						oz = "0.0"; // fallback ¶Ç´Â ox¿Í µ¿ÀÏÇÏ°Ô ¼³Á¤ÇØµµ µÊ
+						oz = "0.0"; // fallback ë˜ëŠ” oxì™€ ë™ì¼í•˜ê²Œ ì„¤ì •í•´ë„ ë¨
 						std::cerr << "Warning: Missing Z value in ImagePositionPatient" << std::endl;
 					}
 
@@ -172,21 +168,21 @@ bool FileReader::LoadDICOMSeries(std::string folderPath, ID3D11Device* g_pd3dDev
 					std::cout << "Image Origin: (" << views.origin.x << ", " << views.origin.y << ", " << views.origin.z << ")" << std::endl;
 
 				}
-				// Image Orientation (Patient) (0020,0037) - °¡Àå Áß¿ä!
+				// Image Orientation (Patient) (0020,0037) - ê°€ì¥ ì¤‘ìš”!
 
 				if (dataset->findAndGetOFString(DCM_ImageOrientationPatient, imageOrientationStr).good()) {
 					std::stringstream ss(imageOrientationStr.c_str());
 					std::string vals[6];
 					int count = 0;
 
-					// ¹é½½·¡½Ã·Î ±¸ºĞÇÏ¿© ÀĞ±â
+					// ë°±ìŠ¬ë˜ì‹œë¡œ êµ¬ë¶„í•˜ì—¬ ì½ê¸°
 					std::string token;
 					while (count < 6 && std::getline(ss, token, '\\')) {
 						vals[count] = token;
 						++count;
 					}
 
-					// °ª °ËÁõ ¹× Ãâ·Â
+					// ê°’ ê²€ì¦ ë° ì¶œë ¥
 					std::cout << "Parsed " << count << " values:" << std::endl;
 					for (int i = 0; i < count; ++i) {
 						std::cout << "  vals[" << i << "] = [" << vals[i] << "]" << std::endl;
@@ -195,7 +191,7 @@ bool FileReader::LoadDICOMSeries(std::string folderPath, ID3D11Device* g_pd3dDev
 
 
 
-					// 6°³ °ªÀÌ ¸ğµÎ ÀÖ´ÂÁö È®ÀÎ
+					// 6ê°œ ê°’ì´ ëª¨ë‘ ìˆëŠ”ì§€ í™•ì¸
 					if (count == 6) {
 						try {
 							views.rowDir.x = std::stof(vals[0]);
@@ -213,34 +209,47 @@ bool FileReader::LoadDICOMSeries(std::string folderPath, ID3D11Device* g_pd3dDev
 						}
 						catch (const std::exception& e) {
 							std::cerr << "Error converting to float: " << e.what() << std::endl;
-							// ±âº»°ª ¼³Á¤
+							// ê¸°ë³¸ê°’ ì„¤ì •
 							views.rowDir = { 1.0f, 0.0f, 0.0f };
 							views.colDir = { 0.0f, 1.0f, 0.0f };
 						}
 					}
 					else {
 						std::cerr << "Error: Expected 6 values, got " << count << std::endl;
-						// ±âº»°ª ¼³Á¤
+						// ê¸°ë³¸ê°’ ì„¤ì •
 						views.rowDir = { 1.0f, 0.0f, 0.0f };
 						views.colDir = { 0.0f, 1.0f, 0.0f };
 					}
 				}
 				else {
 					std::cerr << "ImageOrientationPatient tag not found" << std::endl;
-					// ±âº»°ª ¼³Á¤
+					// ê¸°ë³¸ê°’ ì„¤ì •
 					views.rowDir = { 1.0f, 0.0f, 0.0f };
 					views.colDir = { 0.0f, 1.0f, 0.0f };
 				}
 
 
 
+				OFString slopeStr, interceptStr;
 
+				// âš™ï¸ Rescale Slope (0028,1053)
+				if (dataset->findAndGetOFString(DCM_RescaleSlope, slopeStr).good()) {
+					m_rescaleSlope = std::stof(slopeStr.c_str());
+				}
+				else {
+					m_rescaleSlope = 1.0f; // ê¸°ë³¸ê°’
+				}
 
+				// âš™ï¸ Rescale Intercept (0028,1052)
+				if (dataset->findAndGetOFString(DCM_RescaleIntercept, interceptStr).good()) {
+					m_rescaleIntercept = std::stof(interceptStr.c_str());
+				}
+				else {
+					m_rescaleIntercept = -1024.0f; // ê¸°ë³¸ê°’
+				}
 
-
-
-
-
+				std::cout << "Rescale Slope: " << m_rescaleSlope
+					<< ", Intercept: " << m_rescaleIntercept << std::endl;
 
 
 			}
@@ -251,10 +260,10 @@ bool FileReader::LoadDICOMSeries(std::string folderPath, ID3D11Device* g_pd3dDev
 	m_volumeData.resize(m_width * m_height * m_depth);
 
 	//views[1].imageSize = DirectX::XMFLOAT3(m_width, m_height, m_depth);
-	//views[1].sliceIndex = 0; // ÃÊ±â ½½¶óÀÌ½º ÀÎµ¦½º (Ãà»ó ºä ±âÁØ)
+	//views[1].sliceIndex = 0; // ì´ˆê¸° ìŠ¬ë¼ì´ìŠ¤ ì¸ë±ìŠ¤ (ì¶•ìƒ ë·° ê¸°ì¤€)
 
 	views.imageSize = DirectX::XMFLOAT3(m_width, m_height, m_depth);
-	// views.sliceIndex = 0; // ÃÊ±â ½½¶óÀÌ½º ÀÎµ¦½º (Ãà»ó ºä ±âÁØ)
+	// views.sliceIndex = 0; // ì´ˆê¸° ìŠ¬ë¼ì´ìŠ¤ ì¸ë±ìŠ¤ (ì¶•ìƒ ë·° ê¸°ì¤€)
 
 
 	for (int i{}; i < m_depth; ++i) {
@@ -490,6 +499,36 @@ bool FileReader::NormalizeSlice(const std::vector<uint16_t>& rawSlice,
 	return true;
 }
 
+bool FileReader::NormalizeVolumeU16(
+	const std::vector<uint16_t>& rawVolume,
+	std::vector<uint16_t>& outVolume,
+	float rescaleSlope,
+	float rescaleIntercept,
+	float windowMinHU ,
+	float windowMaxHU )
+{
+	if (rawVolume.empty()) return false;
+
+	outVolume.resize(rawVolume.size());
+
+	for (size_t i = 0; i < rawVolume.size(); ++i)
+	{
+		// 1ï¸âƒ£ ì›ë³¸ í”½ì…€ì„ HU ë‹¨ìœ„ë¡œ ë³€í™˜
+		float hu = rescaleSlope * static_cast<float>(rawVolume[i]) + rescaleIntercept;
+
+		// 2ï¸âƒ£ ìœˆë„ìš° ë²”ìœ„ í´ë¨í”„
+		if (hu < windowMinHU) hu = windowMinHU;
+		if (hu > windowMaxHU) hu = windowMaxHU;
+
+		// 3ï¸âƒ£ 0~1 ì •ê·œí™” í›„ 0~65535ë¡œ ìŠ¤ì¼€ì¼
+		float norm = (hu - windowMinHU) / (windowMaxHU - windowMinHU);
+		outVolume[i] = static_cast<uint16_t>(norm * 65535.0f);
+	}
+
+	return true;
+}
+
+
 void FileReader::SliceIdxManage()
 {
 	currentIndex[1] = m_depth / 2;//a
@@ -527,7 +566,7 @@ void FileReader::UpdateAxialTexture(int z)
 	std::vector<uint8_t> slice = GenerateAxialSlice(z);
 	ID3D11Texture2D* texture = CreateTextureFromSlice(slice, m_width, m_height, d3dDevice);
 
-	// ±âÁ¸ ÅØ½ºÃ³°¡ ÀÖÀ¸¸é Release
+	// ê¸°ì¡´ í…ìŠ¤ì²˜ê°€ ìˆìœ¼ë©´ Release
 	auto it = axialTextureCache.find(z);
 	if (it != axialTextureCache.end()) {
 		if (it->second) it->second->Release();
@@ -541,7 +580,7 @@ void FileReader::UpdateCoronalTexture(int y)
 	std::vector<uint8_t> slice = GenerateCoronalSlice(y);
 	ID3D11Texture2D* texture = CreateTextureFromSlice(slice, m_width, m_depth, d3dDevice);
 
-	// ±âÁ¸ ÅØ½ºÃ³°¡ ÀÖÀ¸¸é Release
+	// ê¸°ì¡´ í…ìŠ¤ì²˜ê°€ ìˆìœ¼ë©´ Release
 	auto it = coronalTextureCache.find(y);
 	if (it != coronalTextureCache.end()) {
 		if (it->second) it->second->Release();
@@ -556,7 +595,7 @@ void FileReader::UpdateSagittalTexture(int x)
 	std::vector<uint8_t> slice = GenerateSagittalSlice(x);
 	ID3D11Texture2D* texture = CreateTextureFromSlice(slice, m_height, m_depth, d3dDevice);
 
-	// ±âÁ¸ ÅØ½ºÃ³°¡ ÀÖÀ¸¸é Release
+	// ê¸°ì¡´ í…ìŠ¤ì²˜ê°€ ìˆìœ¼ë©´ Release
 	auto it = sagittalTextureCache.find(x);
 	if (it != sagittalTextureCache.end()) {
 		if (it->second) it->second->Release();
@@ -608,7 +647,7 @@ ID3D11Texture2D* FileReader::CreateTextureFromSlice(const std::vector<uint8_t>& 
 
 	hr = g_pd3dDevice->CreateBuffer(&cbDesc, nullptr, &m_crosshairBuffer);
 	if (FAILED(hr)) {
-		cerr << "[?ëŸ¬] Crosshair ConstantBuffer ?ì„± ?¤íŒ¨!";
+		cerr << "[?ë¨®ìœ­] Crosshair ConstantBuffer ?ì•¹ê½¦ ?ã…½ë™£!";
 	}
 
 	return texture;

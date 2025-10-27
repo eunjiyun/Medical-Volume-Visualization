@@ -56,6 +56,8 @@ public:
     std::vector < ID3D11Texture2D*> axialTexture, coronalTexture, sagittalTexture;
     int windowCenter, windowWidth;
 
+	float m_rescaleSlope, m_rescaleIntercept;
+
     ID3D11Buffer* m_crosshairBuffer = nullptr;
 
     int sliceIndex[4], currentIndex[4];
@@ -97,6 +99,17 @@ public:
         std::vector<uint8_t>& outSlice,
         float windowCenter,
         float windowWidth);
+
+	// 📌 1. 볼륨 크기만큼 16비트 배열 확보
+	std::vector<uint16_t> normalizedU16Data/*(m_width * m_height * m_depth)*/;
+
+	bool NormalizeVolumeU16(
+		const std::vector<uint16_t>& rawVolume,
+		std::vector<uint16_t>& outVolume,
+		float rescaleSlope,
+		float rescaleIntercept,
+		float windowMinHU = -1000.0f,
+		float windowMaxHU = 3000.0f);
 
 
     ID3D11Texture2D* CreateTextureFromSlice(const std::vector<uint8_t>& slice, int width, int height, ID3D11Device* g_pd3dDevice);

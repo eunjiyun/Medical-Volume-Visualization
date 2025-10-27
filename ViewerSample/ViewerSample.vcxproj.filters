@@ -116,6 +116,8 @@
     <FxCompile Include="CubeWireframe.hlsl" />
     <FxCompile Include="prevVolumeVS.hlsl" />
     <FxCompile Include="prevVolumePS.hlsl" />
+    <FxCompile Include="VolumeRaymarchVS.hlsl" />
+    <FxCompile Include="VolumeRaymarchPS.hlsl" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="icon.ico">

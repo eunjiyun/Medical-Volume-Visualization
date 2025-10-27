@@ -294,11 +294,15 @@ private:
 
 	D3DCOLORVALUE m_BackColor = { 0.0f, 0.0f, 0.0f, 1.0f }; // Black, fully opaque
 public:
+
+	ComPtr<ID3D11ShaderResourceView> m_volumeSRV;   // 3D 볼륨 텍스처 SRV
+	ComPtr<ID3D11SamplerState> m_volumeSampler;     // 3D 볼륨 샘플러
+
 	ID3D11Device* m_pDevice;
 
 
-	ID3D11VertexShader*       m_vertexShader = nullptr;
-	ID3D11PixelShader*        m_pixelShader = nullptr;
+	ID3D11VertexShader*       m_vertexShader, *vsFullscreen;
+	ID3D11PixelShader*        m_pixelShader, *psRaymarch;
 	ID3D11PixelShader*        m_pixelShaderAxial, *m_pixelShaderCoronal, *m_pixelShaderSagittal;
 
 
@@ -313,7 +317,8 @@ public:
 
 	ID3D11Buffer*             m_vertexBuffer = nullptr;
 
-	ID3D11InputLayout*        m_inputLayout = nullptr;
+	ID3D11InputLayout*        m_inputLayout = nullptr;//layoutQuad
+	ID3D11InputLayout*layoutQuad{ nullptr };
 
 	ID3D11InputLayout*        m_volumeInputLayout = nullptr;
 
@@ -353,6 +358,9 @@ public:
 	VolumeConstants constants{};
 	VolumeConstants constantsPrev{};
 
+
+	XMMATRIX view, proj;
+
 public:
 
 	void RenderVolumeView(/*const D3D11_VIEWPORT& vp*/);
@@ -367,6 +375,11 @@ public:
 	void DrawSliceQuad();
 
 	void CreateDepthStencilBuffer();
+
+
+	ComPtr<ID3D11Buffer> m_quadVB;
+	void CreateTexture3D();
+	void FullScreenPassSet();
 
 
 	ID3D11Texture2D* m_texture = nullptr;
