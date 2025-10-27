@@ -1071,12 +1071,12 @@ void QDirect3D11Widget::FullScreenPassSet()
 	}
 
 	// ✅ 2️⃣ 풀스크린 사각형 정점 (좌표 + UV)
-	/*Vtx quad[4] = {
-		{{-1.f, -1.f}, {0.f, 1.f}},
-		{{-1.f,  1.f}, {0.f, 0.f}},
-		{{ 1.f, -1.f}, {1.f, 1.f}},
-		{{ 1.f,  1.f}, {1.f, 0.f}},
-	};*/
+	//Vtx quad[4] = {
+	//	{{-1.f, -1.f}, {0.f, 1.f}},
+	//	{{-1.f,  1.f}, {0.f, 0.f}},
+	//	{{ 1.f, -1.f}, {1.f, 1.f}},
+	//	{{ 1.f,  1.f}, {1.f, 0.f}},
+	//};
 	// 좌상단 사분면
 	Vtx quad[4] = {
 		{{-1.f,  0.f}, {0.f, 1.f}},
@@ -1162,18 +1162,37 @@ void QDirect3D11Widget::FullScreenPassSet()
 
 	XMMATRIX rotY = XMMatrixRotationY(XMConvertToRadians(10.0f));
 	XMMATRIX rotX = XMMatrixRotationX(XMConvertToRadians(-5.0f));
-	XMMATRIX trans = XMMatrixTranslation(0.0f, 0.0f, 0.0f);
+//	XMMATRIX trans = XMMatrixTranslation(0.0f, 0.0f, 0.0f);
 	//XMMATRIX scale = XMMatrixScaling(sx, sy, sz);
 	//XMMATRIX scale = XMMatrixScaling(100.0f * sx, 100.0f * sy, 100.0f * sz);
 	//XMMATRIX scale = XMMatrixScaling(50.0f, 50.0f, 50.0f);
-	XMMATRIX scale = XMMatrixScaling(100, 100, 100);
+	//XMMATRIX scale = XMMatrixScaling(100, 100, 100);
+
+
+
+	//XMMATRIX scale = XMMatrixScaling(
+	//	sx * fileReader->m_width,
+	//	sy * fileReader->m_height,
+	//	sz* fileReader->m_depth
+	//);
+	XMMATRIX trans = XMMatrixTranslation(0.0f, 0.0f, 0.0f);
+	////XMMATRIX W = XMMatrixTranspose(scale);
+	////XMMATRIX iW = XMMatrixInverse(nullptr, W);
+
+	XMMATRIX center = XMMatrixTranslation(-0.5f, -0.5f, -0.5f);
+
+	// ✅ 볼륨 월드 스케일: normalized box (0~1)
+	XMMATRIX scale = XMMatrixScaling(1.0f, 1.0f, 1.0f);
+
+	XMMATRIX W = center*scale * trans;
+	XMMATRIX iW = XMMatrixInverse(nullptr, W);
 
 
 	//XMMATRIX W = scale * rotY * rotX * trans;
 	//XMMATRIX iW = XMMatrixInverse(nullptr, W);
 
-	XMMATRIX W = XMMatrixIdentity();
-	XMMATRIX iW = XMMatrixInverse(nullptr, W);
+	//XMMATRIX W = XMMatrixIdentity();
+	//XMMATRIX iW = XMMatrixInverse(nullptr, W);
 
 	// ✅ 6️⃣ 상수 버퍼 데이터 채우기
 	CB cb{};
@@ -1191,10 +1210,15 @@ void QDirect3D11Widget::FullScreenPassSet()
 	//cb.CameraPosWS = XMFLOAT3(0.5f, 0.5f, -1.0f);
 	//cb.CameraPosWS = XMFLOAT3(0, 0, -2.0f); // z축 앞쪽
 
-	cb.CameraPosWS = XMFLOAT3(0.5f, 0.5f, -0.5f); // 살짝 앞쪽
+	//cb.CameraPosWS = XMFLOAT3(0.5f, 0.5f, -0.5f); // 살짝 앞쪽
+
+	cb.CameraPosWS = XMFLOAT3(0.5f, 0.5f, -0.2f);
 
 
-	
+
+	/*cb.CameraPosWS = XMFLOAT3(0.5f * sx,
+		0.5f * fileReader->m_height * sy,
+		-fileReader->m_depth * sz * 1.5f);*/
 	
 	
 	////cb.Step = 0.004f;    // 레이 스텝 크기
@@ -1202,13 +1226,18 @@ void QDirect3D11Widget::FullScreenPassSet()
 	//cb.Step = 0.001f;
 	//cb.MaxSteps = 1024;
 
-	cb.Step = 0.0008f;   // 0.002 → 0.0008 정도로 감소
-	cb.MaxSteps = 1024;  // 512보다 늘리기
+	//// 더 부드러운 적분을 위해
+	//cb.Step = 0.0012f;
+	//cb.MaxSteps = 4096;
+
+
+	cb.Step = 0.0005f;
+	cb.MaxSteps = 4096;
 
 
 
-	//cb.Opacity = 0.08f;
-	cb.Opacity = 0.12f;  // 약간만 높여보세요 (0.08 → 0.12)
+	cb.Opacity = 0.08f;
+	//cb.Opacity = 0.12f;  // 약간만 높여보세요 (0.08 → 0.12)
 
 
 	D3D11_MAPPED_SUBRESOURCE mapped{};

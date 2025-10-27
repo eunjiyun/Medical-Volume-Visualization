@@ -19,7 +19,7 @@
 //
 //float4 main(float4 pos : SV_POSITION, float2 uv : TEXCOORD0) : SV_Target
 //{
-//	// ① NDC → View space
+//	// ??NDC ??View space
 //	float4 ndc = float4(uv * 2 - 1, 0, 1);
 //	float4 rayStartVS = mul(ndc, InvProj);
 //	rayStartVS /= rayStartVS.w;
@@ -28,18 +28,18 @@
 //	float3 rayPosWS = CameraPosWS;*/
 //
 //
-//	// 실험용: 볼륨 로컬 좌표가 0~1이라 가정
-//	float3 rayPosWS = float3(0.5, 0.5, -1.0);   // 카메라를 볼륨 앞쪽에 배치
+//	// ?�험?? 볼륨 로컬 좌표가 0~1?�라 가??
+//	float3 rayPosWS = float3(0.5, 0.5, -1.0);   // 카메?��? 볼륨 ?�쪽??배치
 //	float3 rayDirWS = normalize(float3(0, 0, 1));
 //
 //
 //
 //
-//	//// ② 월드 → 볼륨 로컬로 변환
+//	//// ???�드 ??볼륨 로컬�?변??
 //	//rayPosWS = mul(float4(rayPosWS, 1), InvVolumeWorld).xyz;
 //	//rayDirWS = normalize(mul(float4(rayDirWS, 0), InvVolumeWorld).xyz);
 //
-//	// ③ Raymarch loop
+//	// ??Raymarch loop
 //	float4 acc = 0;
 //	for (int i = 0; i < MaxSteps; i++) {
 //	/*	float3 uvw = rayPosWS + rayDirWS * (i * Step);
@@ -48,15 +48,15 @@
 //		////float3 uvw = mul(float4(worldPos, 1.0), InvVolumeWorld).xyz;
 //		//float3 uvw = rayPosWS + rayDirWS * (i * Step);
 //		//if (any(uvw < 0.0) || any(uvw > 1.0))
-//		//	return float4(1, 0, 0, 1); // 레이 박스 밖 → 빨간색
+//		//	return float4(1, 0, 0, 1); // ?�이 박스 �???빨간??
 //
 //
 //		float3 uvw = rayPosWS + rayDirWS * (i * Step);
 //		if (any(uvw < 0.0) || any(uvw > 1.0))
-//			return float4(1, 0, 0, 1); // 밖 → 빨강
+//			return float4(1, 0, 0, 1); // �???빨강
 //
 //		float d = volumeTex.SampleLevel(samp, uvw, 0);
-//		if (d <= 0.001) return float4(0, 0, 1, 1); // 샘플값이 거의 없음 → 파랑
+//		if (d <= 0.001) return float4(0, 0, 1, 1); // ?�플값이 거의 ?�음 ???�랑
 //
 //
 //		 d = volumeTex.SampleLevel(samp, uvw, 0);
@@ -94,7 +94,7 @@ SamplerState samp : register(s0);
 
 //float4 main(float4 pos : SV_POSITION, float2 uv : TEXCOORD0) : SV_Target
 //{
-//	// ① 스크린→뷰→월드
+//	// ???�크린→뷰→?�드
 //	float4 ndc = float4(uv * 2 - 1, 0, 1);
 //	float4 viewDirVS = mul(ndc, InvProj);
 //	float4 viewPos = mul(ndc, InvProj);
@@ -103,22 +103,22 @@ SamplerState samp : register(s0);
 //
 //	float3 rayDirVS = normalize(viewPos.xyz);
 //	//float3 rayPosWS = CameraPosWS;
-//	float3 rayPosWS = float3(0.5, 0.5, -1.0);   // 카메라를 볼륨 앞쪽에 배치
+//	float3 rayPosWS = float3(0.5, 0.5, -1.0);   // 카메?��? 볼륨 ?�쪽??배치
 //	//float3 rayDirWS = normalize(mul(float4(rayDirVS, 0), InvView).xyz);
 //	float3 rayDirWS = normalize(mul(float4(viewDirVS.xyz, 0), InvView).xyz);
 //	//float3 rayDirWS = normalize(float3(0, 0, 1));
 //	float3 rayPosWS = CameraPosWS;
 //
-//	// ② 월드 → 볼륨 로컬
+//	// ???�드 ??볼륨 로컬
 //	//rayPosWS = mul(float4(rayPosWS, 1), InvVolumeWorld).xyz;
 //	//rayDirWS = normalize(mul(float4(rayDirWS, 0), InvVolumeWorld).xyz);
 //
-//	// 월드 → 로컬
+//	// ?�드 ??로컬
 //	float3 rayPosLocal = mul(float4(rayPosWS, 1), InvVolumeWorld).xyz;
 //	float3 rayDirLocal = normalize(mul(float4(rayDirWS, 0), InvVolumeWorld).xyz);
 //
 //
-//	// ③ 레이마칭
+//	// ???�이마칭
 //	float4 acc = 0;
 //	[loop]
 //	for (int i = 0; i < MaxSteps; i++) {
@@ -130,7 +130,7 @@ SamplerState samp : register(s0);
 //		/*if (any(uvw < 0.0) || any(uvw > 1.0))
 //			break;*/
 //		if (any(uvw < 0.0) || any(uvw > 1.0))
-//			continue; // return이 아니라 continue
+//			continue; // return???�니??continue
 //
 //
 //		float d = volumeTex.SampleLevel(samp, uvw, 0);
@@ -143,9 +143,29 @@ SamplerState samp : register(s0);
 //	return acc;
 //}
 
+float4 TransferFunction(float d)
+{
+	// HU normalized �� [0,1]
+	if (d < 0.15) return float4(0, 0, 0, 0);               // Air
+	if (d < 0.35) return float4(0.7, 0.6, 0.6, 0.03);      // Soft tissue
+	if (d < 0.6)  return float4(1.0, 0.85, 0.8, 0.1);      // Bone
+	return float4(1.0, 1.0, 1.0, 0.2);                     // Dense bone
+}
+
 float4 main(float4 pos : SV_POSITION, float2 uv : TEXCOORD0) : SV_Target
 {
-	// 1️⃣ 픽셀 기준 시야 레이 계산
+
+	// --- ����� ���� ---
+// �����䰡 ��ü â�� �»�� 1/4 �����̶��:
+float2 offset = float2(0.0, 0.0);   // �»��
+float2 scale = float2(0.5, 0.5);   // ��ü�� ���� ũ��
+
+
+// uv ���� (����Ʈ ���� ��ǥ�� ����ȭ)
+float2 localUV = (uv - offset) / scale;
+
+
+	// 1️⃣ ?��? 기�? ?�야 ?�이 계산
 	float4 ndc = float4(uv * 2 - 1, 1, 1);
 	float4 viewDirVS = mul(ndc, InvProj);
 	viewDirVS /= viewDirVS.w;
@@ -165,7 +185,7 @@ float4 main(float4 pos : SV_POSITION, float2 uv : TEXCOORD0) : SV_Target
 
 
 
-	// 2️⃣ 월드 → 볼륨 로컬
+	// 2️⃣ ?�드 ??볼륨 로컬
 	float3 rayPos = mul(float4(rayPosWS, 1), InvVolumeWorld).xyz;
 	float3 rayDir = normalize(mul(float4(rayDirWS, 0), InvVolumeWorld).xyz);
 
@@ -175,7 +195,7 @@ float4 main(float4 pos : SV_POSITION, float2 uv : TEXCOORD0) : SV_Target
 
 
 
-	// 볼륨 경계 (0~1 박스 기준)
+	// 볼륨 경계 (0~1 박스 기�?)
 	float3 boxMin = float3(0, 0, 0);
 	float3 boxMax = float3(1, 1, 1);
 
@@ -189,11 +209,11 @@ float4 main(float4 pos : SV_POSITION, float2 uv : TEXCOORD0) : SV_Target
 	float tNear = max(max(t1.x, t1.y), t1.z);
 	float tFar = min(min(t2.x, t2.y), t2.z);
 
-	// 교차 없으면 검정색
+	// 교차 ?�으�?검?�색
 	if (tNear > tFar || tFar < 0)
 		return float4(0, 0, 0, 1);
 
-	// Ray 시작점을 박스 진입점으로 이동
+	// Ray ?�작?�을 박스 진입?�으�??�동
 	rayPos += rayDir * max(tNear, 0.0);
 
 
@@ -203,7 +223,7 @@ float4 main(float4 pos : SV_POSITION, float2 uv : TEXCOORD0) : SV_Target
 
 
 
-	// 3️⃣ 누적 시작
+	// 3️⃣ ?�적 ?�작
 	float4 acc = 0;
 	[loop]
 	for (int i = 0; i < MaxSteps; i++)
@@ -212,10 +232,20 @@ float4 main(float4 pos : SV_POSITION, float2 uv : TEXCOORD0) : SV_Target
 		if (any(uvw < 0.0) || any(uvw > 1.0))
 			break;
 
-		float d = volumeTex.SampleLevel(samp, uvw, 0);
-	/*	float windowCenter = 0.3;
-		float windowWidth = 0.4;
-		d = saturate((d - (windowCenter - windowWidth * 0.5)) / windowWidth);*/
+	float d = volumeTex.SampleLevel(samp, uvw, 0);
+	///*	float windowCenter = 0.3;
+	//	float windowWidth = 0.4;
+	//	d = saturate((d - (windowCenter - windowWidth * 0.5)) / windowWidth);*/
+
+
+	//if (d > 0.0 && d < 0.001) return float4(1, 0, 0, 1);
+	//if (d >= 0.001 && d < 0.01) return float4(0, 1, 0, 1);
+	//if (d >= 0.01) return float4(0, 0, 1, 1);
+
+
+		d= saturate((d - 0.25) * 2.0);
+
+		//if (d < 0.01f) discard;  // �е� 0.01 ���ϰ��� ����� ���
 
 
 		float4 col = float4(d, d, d, d * Opacity);
