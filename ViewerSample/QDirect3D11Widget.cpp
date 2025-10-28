@@ -852,6 +852,31 @@ void QDirect3D11Widget::CreateTexture3D()
 		return;
 	}
 
+
+	
+
+
+	//// 1) 정규화 (HU -> 0~65535)  ※ 기본 HU 범위 예시: -1000 ~ 3000
+	////   C2572 오류(기본 인수 재정의)는 선언부(.h)에만 default 인수 두고
+	////   정의부(.cpp)에서는 default 제거하세요.
+	//fileReader->normalizedU16Data.resize(size_t(w) * h * d);
+	//const bool ok = fileReader->NormalizeVolumeU16(
+	//	fileReader->m_volumeData,
+	//	fileReader->normalizedU16Data,
+	//	fileReader->m_rescaleSlope,
+	//	fileReader->m_rescaleIntercept,
+	//	-1000.0f, 3000.0f
+	//);
+
+	// 뼈 중심 (CT Bone preset)
+	float windowCenter = 500.0f;
+	float windowWidth = 2000.0f;
+	/*float windowCenter = 1200.0f;
+	float windowWidth = 1200.0f;*/
+	float windowMinHU = windowCenter - windowWidth / 2.0f;  // -500
+	float windowMaxHU = windowCenter + windowWidth / 2.0f;  // +1500
+
+
 	// 1) 정규화 (HU -> 0~65535)  ※ 기본 HU 범위 예시: -1000 ~ 3000
 	//   C2572 오류(기본 인수 재정의)는 선언부(.h)에만 default 인수 두고
 	//   정의부(.cpp)에서는 default 제거하세요.
@@ -861,8 +886,11 @@ void QDirect3D11Widget::CreateTexture3D()
 		fileReader->normalizedU16Data,
 		fileReader->m_rescaleSlope,
 		fileReader->m_rescaleIntercept,
-		-1000.0f, 3000.0f
+		windowMinHU, windowMaxHU
 	);
+
+
+
 	if (!ok) {
 		OutputDebugStringA("❌ NormalizeVolumeU16 failed\n");
 		return;
