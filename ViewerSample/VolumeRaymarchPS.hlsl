@@ -78,16 +78,89 @@ SamplerState samp : register(s0);
 //	return float4(1.0, 1.0, 1.0, 5.0);  // 흰색
 //}
 
+//float4 TransferFunction(float density)
+//{
+//	if (density < 0.1)
+//		return float4(0, 0, 0, 0);
+//
+//	if (density < 0.3)
+//		return float4(0.7, 0.6, 0.5, 0.1);
+//
+//	if (density < 0.6)
+//		return float4(0.9, 0.8, 0.7, 0.5);
+//
+//	return float4(1.0, 0.95, 0.9, 1.0);
+//}
+
 float4 TransferFunction(float density)
 {
-	// ✅ 임계값 완전 제거
-	float3 color = float3(0.8, 0.7, 0.6);  // 베이지
-	float alpha = density * 5.0;  // 밀도에 비례
+	// ✅ 공기/배경 제거
+	if (density < 0.1)
+		return float4(0, 0, 0, 0);
 
-	return float4(color, alpha);
+	// ✅ 연조직
+	if (density < 0.3)
+	{
+		float t = (density - 0.1) / 0.2;
+		return float4(0.7, 0.5, 0.4, t * 0.3);
+	}
+
+	// ✅ 뼈
+	if (density < 0.6)
+	{
+		float t = (density - 0.3) / 0.3;
+		return float4(0.9, 0.8, 0.7, 0.5 + t * 0.4);
+	}
+
+	// ✅ 치아 (가장 밝고 불투명)
+	return float4(1.0, 0.95, 0.9, 0.9);
 }
 
 
+//float4 TransferFunction(float density)
+//{
+//	if (density < 0.15)
+//		return float4(0, 0, 0, 0);
+//
+//	if (density < 0.35)
+//	{
+//		float t = (density - 0.15) / 0.2;
+//		return float4(0.7, 0.5, 0.4, t * 0.3);  // ✅ 0.15 → 0.3
+//	}
+//
+//	if (density < 0.65)
+//	{
+//		float t = (density - 0.35) / 0.3;
+//		return float4(0.9, 0.8, 0.7, 0.5 + t * 0.5);  // ✅ 증가
+//	}
+//
+//	return float4(1.0, 1.0, 0.95, 1.5);  // ✅ 0.8 → 1.5
+//}
+
+
+//float4 TransferFunction(float density)
+//{
+//	// ✅ 공기/빈 공간 (임계값 높임)
+//	if (density < 0.3)
+//		return float4(0, 0, 0, 0);
+//
+//	// ✅ 연조직 - 어두운 베이지
+//	if (density < 0.5)
+//	{
+//		float t = (density - 0.3) / 0.2;
+//		return float4(0.7, 0.5, 0.4, t * 0.2);
+//	}
+//
+//	// ✅ 뼈 - 밝은 베이지
+//	if (density < 0.8)
+//	{
+//		float t = (density - 0.5) / 0.3;
+//		return float4(0.9, 0.8, 0.7, 0.3 + t * 0.4);
+//	}
+//
+//	// ✅ 치아 - 흰색 (높은 임계값)
+//	return float4(1.0, 1.0, 0.95, 0.8);
+//}
 
 float4 main(float4 pos : SV_POSITION, float2 uv : TEXCOORD0) : SV_Target
 {
@@ -296,6 +369,28 @@ rayPosWS = float3(0, 0, -3.0);
 		// 諛???섑뵆留?		
 		float density = volumeTex.SampleLevel(samp, uvw, 0).r;
 
+		//// ✅ 원본 값 확인
+		//return float4(density / 10.0, density / 10.0, density / 10.0, 1);
+
+
+		//// ✅ 밀도 분포 확인
+		//if (density < 0.3)
+		//	return float4(0, 0, 1, 1);  // 파랑 = 공기
+		//else if (density < 0.5)
+		//	return float4(0, 1, 0, 1);  // 초록 = 연조직
+		//else if (density < 0.8)
+		//	return float4(1, 1, 0, 1);  // 노랑 = 뼈
+		//else
+		//	return float4(1, 0, 0, 1);  // 빨강 = 치아
+
+
+
+		// ✅ 밀도 범위 확인 후 정규화
+		density = saturate(density / 255.0);  // 0~255 → 0~1
+
+
+
+
 		//// 諛?꾨? 10諛?利앺룺?댁꽌 ?쒖떆
 		//return float4(density * 10.0, density * 10.0, density * 10.0, 1);
 
@@ -311,10 +406,51 @@ rayPosWS = float3(0, 0, -3.0);
 		//// ??Transfer Function ?곸슜
 		//float4 colorAlpha = TransferFunction(density);
 
-		// ✅ 밀도를 3배로 증폭
-		density = saturate(density * 3.0);
+// 또는 ✅ 약하게
+		//density = saturate(density *1.2);
 
 		float4 colorAlpha = TransferFunction(density);
+
+
+		//// ✅ 고밀도(뼈/치아)에만 라이팅 추가
+		//if (density > 0.4)
+		//{
+		//	// 간단한 그라디언트 계산
+		//	float eps = 0.01;
+		//	float dx = volumeTex.SampleLevel(samp, uvw + float3(eps, 0, 0), 0).r
+		//		- volumeTex.SampleLevel(samp, uvw - float3(eps, 0, 0), 0).r;
+		//	float dy = volumeTex.SampleLevel(samp, uvw + float3(0, eps, 0), 0).r
+		//		- volumeTex.SampleLevel(samp, uvw - float3(0, eps, 0), 0).r;
+		//	float dz = volumeTex.SampleLevel(samp, uvw + float3(0, 0, eps), 0).r
+		//		- volumeTex.SampleLevel(samp, uvw - float3(0, 0, eps), 0).r;
+
+		//	float3 normal = normalize(float3(dx, dy, dz) + 1e-6);
+		//	float3 lightDir = normalize(float3(1, 1, -1));
+		//	float lighting = max(0.3, dot(normal, lightDir));
+
+		//	colorAlpha.rgb *= lighting;
+		//}
+
+
+		//if (density > 0.4)
+		//{
+		//	float eps = 0.01;
+		//	float dx = volumeTex.SampleLevel(samp, uvw + float3(eps, 0, 0), 0).r
+		//		- volumeTex.SampleLevel(samp, uvw - float3(eps, 0, 0), 0).r;
+		//	float dy = volumeTex.SampleLevel(samp, uvw + float3(0, eps, 0), 0).r
+		//		- volumeTex.SampleLevel(samp, uvw - float3(0, eps, 0), 0).r;
+		//	float dz = volumeTex.SampleLevel(samp, uvw + float3(0, 0, eps), 0).r
+		//		- volumeTex.SampleLevel(samp, uvw - float3(0, 0, eps), 0).r;
+
+		//	float3 normal = normalize(float3(dx, dy, dz) + 1e-6);
+		//	float3 lightDir = normalize(float3(1, 1, -1));
+
+		//	// ✅ 최소값을 높임 (0.3 → 0.7)
+		//	float lighting = max(0.7, dot(normal, lightDir));
+
+		//	colorAlpha.rgb *= lighting;
+		//}
+		//
 
 
 
@@ -324,7 +460,16 @@ rayPosWS = float3(0, 0, -3.0);
 
 
 		float3 color = colorAlpha.rgb;
-		float alpha = colorAlpha.a * stepSize;  // stepSize 怨깊븯湲?
+
+
+
+
+
+
+
+		//float alpha = colorAlpha.a * stepSize;  // stepSize 怨깊븯湲?
+		float alpha = colorAlpha.a * stepSize * 4.0;  // ✅ 투명도 강화 배율
+
 
 		//float4 colorAlpha = TransferFunction(density);
 		//float3 color = colorAlpha.rgb;
@@ -346,6 +491,9 @@ rayPosWS = float3(0, 0, -3.0);
 			//	break;
 
 			acc.rgb += (1.0 - acc.a) * alpha * color;
+
+			//acc.rgb = pow(acc.rgb, 1.0 / 2.2); // 감마 보정
+
 			acc.a += (1.0 - acc.a) * alpha;
 
 			if (acc.a >= 0.95)
