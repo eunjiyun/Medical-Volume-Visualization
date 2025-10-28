@@ -883,6 +883,8 @@ void QDirect3D11Widget::CreateTexture3D()
 	td.Format = DXGI_FORMAT_R16_FLOAT;
 	//td.Format = DXGI_FORMAT_R16_UNORM;
 	//td.Format = DXGI_FORMAT_R32_FLOAT;
+
+	//td.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
 	td.Usage = D3D11_USAGE_DEFAULT;
 	td.BindFlags = D3D11_BIND_SHADER_RESOURCE;
 
@@ -890,7 +892,7 @@ void QDirect3D11Widget::CreateTexture3D()
 	D3D11_SUBRESOURCE_DATA init{};
 	init.pSysMem = fileReader->normalizedU16Data.data();
 	init.SysMemPitch = w * sizeof(uint16_t);                  // 한 줄(바이트)
-	init.SysMemSlicePitch = w * h * sizeof(uint16_t);              // 한 장(바이트)
+	init.SysMemSlicePitch = w * h * sizeof(uint16_t) /** 4*/;       // 한 장(바이트)
 
 	// 4) 생성
 	Microsoft::WRL::ComPtr<ID3D11Texture3D> tex;
@@ -916,6 +918,54 @@ void QDirect3D11Widget::CreateTexture3D()
 		smp.MinLOD = 0;
 		smp.MaxLOD = D3D11_FLOAT32_MAX;
 		m_pDevice->CreateSamplerState(&smp, &m_volumeSampler);
+	}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	// ===== 1. 알파 블렌딩 상태 생성 =====
+	D3D11_BLEND_DESC blendDesc = {};
+	blendDesc.AlphaToCoverageEnable = FALSE;
+	blendDesc.IndependentBlendEnable = FALSE;
+
+	D3D11_RENDER_TARGET_BLEND_DESC rtBlend = {};
+	rtBlend.BlendEnable = TRUE;
+	rtBlend.SrcBlend = D3D11_BLEND_SRC_ALPHA;
+	rtBlend.DestBlend = D3D11_BLEND_INV_SRC_ALPHA;
+	rtBlend.BlendOp = D3D11_BLEND_OP_ADD;
+	rtBlend.SrcBlendAlpha = D3D11_BLEND_ONE;
+	rtBlend.DestBlendAlpha = D3D11_BLEND_ZERO;
+	rtBlend.BlendOpAlpha = D3D11_BLEND_OP_ADD;
+	rtBlend.RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
+
+	blendDesc.RenderTarget[0] = rtBlend;
+
+	hr = m_pDevice->CreateBlendState(&blendDesc, &m_alphaBlendState);
+	if (FAILED(hr)) {
+		qDebug() << "❌ Failed to create alpha blend state";
+	}
+
+
+	// ===== 2. 깊이 테스트 끈 상태 생성 =====
+	D3D11_DEPTH_STENCIL_DESC depthDesc = {};
+	depthDesc.DepthEnable = FALSE; // 깊이 테스트 끄기
+	depthDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ZERO;
+	depthDesc.DepthFunc = D3D11_COMPARISON_ALWAYS;
+	depthDesc.StencilEnable = FALSE;
+
+	hr = m_pDevice->CreateDepthStencilState(&depthDesc, &m_disableDepthState);
+	if (FAILED(hr)) {
+		qDebug() << "❌ Failed to create disable depth state";
 	}
 }
 
@@ -1047,6 +1097,10 @@ struct Vtx { XMFLOAT2 pos; XMFLOAT2 uv; }; // NDC용이 아니라 스크린→ND
 //}
 void QDirect3D11Widget::FullScreenPassSet()
 {
+
+	/*float blendFactor[4] = { 0, 0, 0, 0 };
+	m_pDeviceContext->OMSetBlendState(m_alphaBlendState.Get(), blendFactor, 0xffffffff);*/
+
 
 	D3D11_VIEWPORT vp{};
 	vp.TopLeftX = 0;
@@ -1384,40 +1438,40 @@ void QDirect3D11Widget::initializeRenderTargets()
 
 
 
-		//	// ===== 1. 알파 블렌딩 상태 생성 =====
-		//	D3D11_BLEND_DESC blendDesc = {};
-		//	blendDesc.AlphaToCoverageEnable = FALSE;
-		//	blendDesc.IndependentBlendEnable = FALSE;
+			//// ===== 1. 알파 블렌딩 상태 생성 =====
+			//D3D11_BLEND_DESC blendDesc = {};
+			//blendDesc.AlphaToCoverageEnable = FALSE;
+			//blendDesc.IndependentBlendEnable = FALSE;
 
-		//	D3D11_RENDER_TARGET_BLEND_DESC rtBlend = {};
-		//	rtBlend.BlendEnable = TRUE;
-		//	rtBlend.SrcBlend = D3D11_BLEND_SRC_ALPHA;
-		//	rtBlend.DestBlend = D3D11_BLEND_INV_SRC_ALPHA;
-		//	rtBlend.BlendOp = D3D11_BLEND_OP_ADD;
-		//	rtBlend.SrcBlendAlpha = D3D11_BLEND_ONE;
-		//	rtBlend.DestBlendAlpha = D3D11_BLEND_ZERO;
-		//	rtBlend.BlendOpAlpha = D3D11_BLEND_OP_ADD;
-		//	rtBlend.RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
+			//D3D11_RENDER_TARGET_BLEND_DESC rtBlend = {};
+			//rtBlend.BlendEnable = TRUE;
+			//rtBlend.SrcBlend = D3D11_BLEND_SRC_ALPHA;
+			//rtBlend.DestBlend = D3D11_BLEND_INV_SRC_ALPHA;
+			//rtBlend.BlendOp = D3D11_BLEND_OP_ADD;
+			//rtBlend.SrcBlendAlpha = D3D11_BLEND_ONE;
+			//rtBlend.DestBlendAlpha = D3D11_BLEND_ZERO;
+			//rtBlend.BlendOpAlpha = D3D11_BLEND_OP_ADD;
+			//rtBlend.RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
 
-		//	blendDesc.RenderTarget[0] = rtBlend;
+			//blendDesc.RenderTarget[0] = rtBlend;
 
-		//	HRESULT hr = m_pDevice->CreateBlendState(&blendDesc, &m_alphaBlendState);
-		//	if (FAILED(hr)) {
-		//		qDebug() << "❌ Failed to create alpha blend state";
-		//	}
+			//HRESULT hr = m_pDevice->CreateBlendState(&blendDesc, &m_alphaBlendState);
+			//if (FAILED(hr)) {
+			//	qDebug() << "❌ Failed to create alpha blend state";
+			//}
 
 
-		//	// ===== 2. 깊이 테스트 끈 상태 생성 =====
-		//	D3D11_DEPTH_STENCIL_DESC depthDesc = {};
-		//	depthDesc.DepthEnable = FALSE; // 깊이 테스트 끄기
-		//	depthDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ZERO;
-		//	depthDesc.DepthFunc = D3D11_COMPARISON_ALWAYS;
-		//	depthDesc.StencilEnable = FALSE;
+			//// ===== 2. 깊이 테스트 끈 상태 생성 =====
+			//D3D11_DEPTH_STENCIL_DESC depthDesc = {};
+			//depthDesc.DepthEnable = FALSE; // 깊이 테스트 끄기
+			//depthDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ZERO;
+			//depthDesc.DepthFunc = D3D11_COMPARISON_ALWAYS;
+			//depthDesc.StencilEnable = FALSE;
 
-		//	hr = m_pDevice->CreateDepthStencilState(&depthDesc, &m_disableDepthState);
-		//	if (FAILED(hr)) {
-		//		qDebug() << "❌ Failed to create disable depth state";
-		//	}
+			//hr = m_pDevice->CreateDepthStencilState(&depthDesc, &m_disableDepthState);
+			//if (FAILED(hr)) {
+			//	qDebug() << "❌ Failed to create disable depth state";
+			//}
 
 
 CreateTexture3D();
@@ -1885,6 +1939,185 @@ void QDirect3D11Widget::InitializeGraphics()
 
 void QDirect3D11Widget::RenderVolumeView()
 {
+
+
+
+	// ===== ✅ 볼륨 렌더링 (왼쪽 뷰처럼 축소 및 회전) =====
+	{
+		//		m_pDeviceContext->IASetInputLayout(m_prevVolumeInputLayout);
+		//		m_pDeviceContext->VSSetShader(m_volumeQuadVS, nullptr, 0);
+		//		m_pDeviceContext->PSSetShader(m_volumeQuadPS, nullptr, 0);
+		//		m_pDeviceContext->VSSetConstantBuffers(0, 1, &m_volumePrevConstantBuffer);
+		//		m_pDeviceContext->PSSetConstantBuffers(0, 1, &m_volumePrevConstantBuffer);
+		//
+		//		m_pDeviceContext->OMSetDepthStencilState(m_disableDepthState.Get(), 0);
+		//
+		//
+		//
+		//
+		//		//// === 기존 카메라 설정 ===
+		//		//XMMATRIX view = XMMatrixLookAtLH(
+		//		//	XMVectorSet(-0.3f, 0.3f, -1.2f, 0.0f),  // 카메라 위치
+		//		//	XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f),    // 바라보는 지점
+		//		//	XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f)     // 업 벡터
+		//		//);
+		//
+		//		//XMMATRIX proj = XMMatrixPerspectiveFovLH(XM_PIDIV4, 1.0f, 0.1f, 100.0f);
+		//
+		//
+		//
+		//
+		//		// === 볼륨 회전에 카메라 방향 반영 ===
+		//
+		////// 1️⃣ view 행렬의 역행렬 계산
+		////		XMMATRIX invView = XMMatrixInverse(nullptr, view);
+		////
+		////		// 2️⃣ 볼륨 스케일 적용
+		////		XMMATRIX volumeScale = XMMatrixScaling(0.55f, 0.55f, 0.55f);
+		////
+		////		// 3️⃣ 볼륨 중심 약간 이동 (턱이 화면 중앙으로)
+		////		XMMATRIX volumeOffset = XMMatrixTranslation(0.0f, -0.08f, 0.0f);
+		////
+		////		// 4️⃣ 최종 월드 행렬 구성
+		////		//    🔹 invView를 곱하면 카메라의 회전을 그대로 따라가게 됨
+		////		XMMATRIX volumeWorld = volumeScale * invView * volumeOffset;
+		//
+		//
+		//
+		//		float blendFactor[4] = { 0,0,0,0 };
+		//		m_pDeviceContext->OMSetBlendState(m_alphaBlendState.Get(), blendFactor, 0xffffffff);
+		//
+		//		float centerY = (fileReader->m_height - 1) * 0.5f;
+		//
+		//		//// 🟠 볼륨 크기 더 줄임
+		//		//XMMATRIX volScale = XMMatrixScaling(0.52f, 0.52f, 0.52f);
+		//
+		//		////// 🟠 볼륨 공통 회전 (왼쪽 뷰 기준)
+		//		////XMMATRIX volRotation =
+		//		////	XMMatrixRotationY(-XMConvertToRadians(10.0f)) *
+		//		////	XMMatrixRotationX(XMConvertToRadians(6.0f));
+		//
+		//		//// 🟠 중심 살짝 위로
+		//		//XMMATRIX centerOffset = XMMatrixTranslation(0.0f, -0.1f, 0.0f);
+		//
+		//		for (int y = fileReader->m_height - 1; y >= 0; --y)
+		//		{
+		//		/*	float offsetY = ((y - centerY) / centerY) * 0.4f;
+		//			offsetY *= fileReader->views.spacing.y * 0.7f;*/
+		//
+		//			float alpha = 1.0f / fileReader->m_height * 0.2f;
+		//
+		//			//XMMATRIX translation = XMMatrixTranslation(0.0f, offsetY, 0.0f);
+		//
+		//
+		//			////m_CoronalPlane.worldMatrix; 
+		//			//XMMATRIX world = volScale * translation * centerOffset;
+		//
+		//			//XMMATRIX world = volScale * translation * centerOffset;
+		//
+		//			//XMStoreFloat4x4(&constantsPrev.World, XMMatrixTranspose(world));
+		//
+		//
+		//			XMMATRIX scale = XMMatrixScaling(0.9f, 0.9f, 0.9f); // ← 여기서 크기 조절
+		//
+		//				// 2️⃣ 회전 — 플레인과 동일한 카메라 시점 정합
+		//			XMMATRIX volRotation =
+		//				XMMatrixRotationY(XMConvertToRadians(-10.0f)) *   // 오른쪽으로 살짝 회전
+		//				XMMatrixRotationX(XMConvertToRadians(6.0f));      // 위에서 약간 내려다봄
+		//
+		//			   // 3️⃣ 볼륨 중심 약간 이동 (턱 기준으로 정렬)
+		//			XMMATRIX volOffset = XMMatrixTranslation(0.0f, -0.08f, 0.0f);
+		//
+		//			// 4️⃣ 슬라이스 간 세로 offset (적층 높이)
+		//			float offsetY = ((y - centerY) / centerY) * 0.4f;
+		//			offsetY *= fileReader->views.spacing.y * 0.7f;
+		//
+		//
+		//			XMMATRIX translation = XMMatrixTranslation(0.0f, offsetY, 0.0f);
+		//
+		//			//XMMATRIX worldC = scale * XMMatrixTranslation(0.0f, 0.0f, 0.0f);
+		//
+		//
+		//
+		//			XMMATRIX invView = XMMatrixInverse(nullptr, view);
+		//			invView.r[3] = XMVectorSet(0, 0, 0, 1); // 위치 영향 제거, 회전만 적용
+		//
+		//		//	XMMATRIX volumeScale = XMMatrixScaling(0.55f, 0.55f, 0.55f);
+		//		//	XMMATRIX volumeOffset = XMMatrixTranslation(0.0f, -0.08f, 0.0f);
+		//		//	XMMATRIX volumeWorld = /*volumeScale **/ invView * volumeOffset;
+		//
+		//			  // 6️⃣ 최종 World 구성: 스케일 → 회전 → 슬라이스 위치 → 카메라 정합 → 오프셋
+		//			XMMATRIX volumeWorld =
+		//				scale *
+		//				volRotation *
+		//				translation *
+		//				invView *
+		//				volOffset;
+		//
+		//
+		//			XMStoreFloat4x4(&constantsPrev.View, XMMatrixTranspose(view));
+		//			XMStoreFloat4x4(&constantsPrev.Projection, XMMatrixTranspose(proj));
+		//			XMStoreFloat4x4(&constantsPrev.World, XMMatrixTranspose(volumeWorld));
+		//
+		//
+		//			constantsPrev.Color = XMFLOAT4(1, 1, 1, alpha);
+		//	
+		//			m_pDeviceContext->UpdateSubresource(m_volumePrevConstantBuffer, 0, nullptr, &constantsPrev, 0, 0);
+		//
+		//			ID3D11ShaderResourceView* srv = coronalTextureCacheSrv[y];
+		//			m_pDeviceContext->PSSetShaderResources(0, 1, &srv);
+		//
+		//			DrawSliceQuad();
+		//		}
+		//
+		//
+		//		m_pDeviceContext->OMSetBlendState(nullptr, blendFactor, 0xffffffff);
+		//		m_pDeviceContext->OMSetDepthStencilState(nullptr, 0);
+		//		m_pDeviceContext->VSSetShader(m_volumeVS, nullptr, 0);
+		//		m_pDeviceContext->PSSetShader(m_volumePS, nullptr, 0);
+
+
+		//// 레이마칭 전에 현재 상태 백업
+		//ID3D11VertexShader* oldVS = nullptr;
+		//ID3D11PixelShader*  oldPS = nullptr;
+		//m_pDeviceContext->VSGetShader(&oldVS, nullptr, nullptr);
+		//m_pDeviceContext->PSGetShader(&oldPS, nullptr, nullptr);
+		//
+		//
+		//// ✅ (1) 기존 상태 백업
+		//ComPtr<ID3D11DepthStencilState> prevDS;
+		//UINT prevStencilRef = 0;
+		//m_pDeviceContext->OMGetDepthStencilState(&prevDS, &prevStencilRef);
+
+		ComPtr<ID3D11BlendState> prevBS;
+		FLOAT prevBlendFactor[4] = { 0, 0, 0, 0 };
+		UINT prevSampleMask = 0xffffffff;
+		m_pDeviceContext->OMGetBlendState(&prevBS, prevBlendFactor, &prevSampleMask);
+
+		// ✅ (2) 볼륨 렌더링용 상태 설정
+		m_pDeviceContext->OMSetDepthStencilState(nullptr, 0);
+		m_pDeviceContext->OMSetBlendState(nullptr, nullptr, 0xffffffff);
+
+		// ✅ (3) 볼륨 렌더링 수행
+		FullScreenPassSet();
+
+		//// ✅ (4) 원래 상태 복원
+		//m_pDeviceContext->OMSetDepthStencilState(prevDS.Get(), prevStencilRef);
+		//m_pDeviceContext->OMSetBlendState(prevBS.Get(), prevBlendFactor, prevSampleMask);
+		//
+		//// 이전 상태 복원
+		//m_pDeviceContext->VSSetShader(oldVS, nullptr, 0);
+		//m_pDeviceContext->PSSetShader(oldPS, nullptr, 0);
+		////SAFE_RELEASE(oldVS);
+		////SAFE_RELEASE(oldPS);
+
+
+
+	}
+
+
+
+
 	m_pDeviceContext->ClearDepthStencilView(m_pDepthStencilView, D3D11_CLEAR_DEPTH, 1.0f, 0);
 	m_pDeviceContext->OMSetRenderTargets(1, &m_pSwapChainRTV, m_pDepthStencilView);
 
@@ -1976,184 +2209,7 @@ void QDirect3D11Widget::RenderVolumeView()
 		DrawPlane(m_SagittalPlane);
 	}
 
-	// ===== ✅ 볼륨 렌더링 (왼쪽 뷰처럼 축소 및 회전) =====
-	{
-//		m_pDeviceContext->IASetInputLayout(m_prevVolumeInputLayout);
-//		m_pDeviceContext->VSSetShader(m_volumeQuadVS, nullptr, 0);
-//		m_pDeviceContext->PSSetShader(m_volumeQuadPS, nullptr, 0);
-//		m_pDeviceContext->VSSetConstantBuffers(0, 1, &m_volumePrevConstantBuffer);
-//		m_pDeviceContext->PSSetConstantBuffers(0, 1, &m_volumePrevConstantBuffer);
-//
-//		m_pDeviceContext->OMSetDepthStencilState(m_disableDepthState.Get(), 0);
-//
-//
-//
-//
-//		//// === 기존 카메라 설정 ===
-//		//XMMATRIX view = XMMatrixLookAtLH(
-//		//	XMVectorSet(-0.3f, 0.3f, -1.2f, 0.0f),  // 카메라 위치
-//		//	XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f),    // 바라보는 지점
-//		//	XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f)     // 업 벡터
-//		//);
-//
-//		//XMMATRIX proj = XMMatrixPerspectiveFovLH(XM_PIDIV4, 1.0f, 0.1f, 100.0f);
-//
-//
-//
-//
-//		// === 볼륨 회전에 카메라 방향 반영 ===
-//
-////// 1️⃣ view 행렬의 역행렬 계산
-////		XMMATRIX invView = XMMatrixInverse(nullptr, view);
-////
-////		// 2️⃣ 볼륨 스케일 적용
-////		XMMATRIX volumeScale = XMMatrixScaling(0.55f, 0.55f, 0.55f);
-////
-////		// 3️⃣ 볼륨 중심 약간 이동 (턱이 화면 중앙으로)
-////		XMMATRIX volumeOffset = XMMatrixTranslation(0.0f, -0.08f, 0.0f);
-////
-////		// 4️⃣ 최종 월드 행렬 구성
-////		//    🔹 invView를 곱하면 카메라의 회전을 그대로 따라가게 됨
-////		XMMATRIX volumeWorld = volumeScale * invView * volumeOffset;
-//
-//
-//
-//		float blendFactor[4] = { 0,0,0,0 };
-//		m_pDeviceContext->OMSetBlendState(m_alphaBlendState.Get(), blendFactor, 0xffffffff);
-//
-//		float centerY = (fileReader->m_height - 1) * 0.5f;
-//
-//		//// 🟠 볼륨 크기 더 줄임
-//		//XMMATRIX volScale = XMMatrixScaling(0.52f, 0.52f, 0.52f);
-//
-//		////// 🟠 볼륨 공통 회전 (왼쪽 뷰 기준)
-//		////XMMATRIX volRotation =
-//		////	XMMatrixRotationY(-XMConvertToRadians(10.0f)) *
-//		////	XMMatrixRotationX(XMConvertToRadians(6.0f));
-//
-//		//// 🟠 중심 살짝 위로
-//		//XMMATRIX centerOffset = XMMatrixTranslation(0.0f, -0.1f, 0.0f);
-//
-//		for (int y = fileReader->m_height - 1; y >= 0; --y)
-//		{
-//		/*	float offsetY = ((y - centerY) / centerY) * 0.4f;
-//			offsetY *= fileReader->views.spacing.y * 0.7f;*/
-//
-//			float alpha = 1.0f / fileReader->m_height * 0.2f;
-//
-//			//XMMATRIX translation = XMMatrixTranslation(0.0f, offsetY, 0.0f);
-//
-//
-//			////m_CoronalPlane.worldMatrix; 
-//			//XMMATRIX world = volScale * translation * centerOffset;
-//
-//			//XMMATRIX world = volScale * translation * centerOffset;
-//
-//			//XMStoreFloat4x4(&constantsPrev.World, XMMatrixTranspose(world));
-//
-//
-//			XMMATRIX scale = XMMatrixScaling(0.9f, 0.9f, 0.9f); // ← 여기서 크기 조절
-//
-//				// 2️⃣ 회전 — 플레인과 동일한 카메라 시점 정합
-//			XMMATRIX volRotation =
-//				XMMatrixRotationY(XMConvertToRadians(-10.0f)) *   // 오른쪽으로 살짝 회전
-//				XMMatrixRotationX(XMConvertToRadians(6.0f));      // 위에서 약간 내려다봄
-//
-//			   // 3️⃣ 볼륨 중심 약간 이동 (턱 기준으로 정렬)
-//			XMMATRIX volOffset = XMMatrixTranslation(0.0f, -0.08f, 0.0f);
-//
-//			// 4️⃣ 슬라이스 간 세로 offset (적층 높이)
-//			float offsetY = ((y - centerY) / centerY) * 0.4f;
-//			offsetY *= fileReader->views.spacing.y * 0.7f;
-//
-//
-//			XMMATRIX translation = XMMatrixTranslation(0.0f, offsetY, 0.0f);
-//
-//			//XMMATRIX worldC = scale * XMMatrixTranslation(0.0f, 0.0f, 0.0f);
-//
-//
-//
-//			XMMATRIX invView = XMMatrixInverse(nullptr, view);
-//			invView.r[3] = XMVectorSet(0, 0, 0, 1); // 위치 영향 제거, 회전만 적용
-//
-//		//	XMMATRIX volumeScale = XMMatrixScaling(0.55f, 0.55f, 0.55f);
-//		//	XMMATRIX volumeOffset = XMMatrixTranslation(0.0f, -0.08f, 0.0f);
-//		//	XMMATRIX volumeWorld = /*volumeScale **/ invView * volumeOffset;
-//
-//			  // 6️⃣ 최종 World 구성: 스케일 → 회전 → 슬라이스 위치 → 카메라 정합 → 오프셋
-//			XMMATRIX volumeWorld =
-//				scale *
-//				volRotation *
-//				translation *
-//				invView *
-//				volOffset;
-//
-//
-//			XMStoreFloat4x4(&constantsPrev.View, XMMatrixTranspose(view));
-//			XMStoreFloat4x4(&constantsPrev.Projection, XMMatrixTranspose(proj));
-//			XMStoreFloat4x4(&constantsPrev.World, XMMatrixTranspose(volumeWorld));
-//
-//
-//			constantsPrev.Color = XMFLOAT4(1, 1, 1, alpha);
-//	
-//			m_pDeviceContext->UpdateSubresource(m_volumePrevConstantBuffer, 0, nullptr, &constantsPrev, 0, 0);
-//
-//			ID3D11ShaderResourceView* srv = coronalTextureCacheSrv[y];
-//			m_pDeviceContext->PSSetShaderResources(0, 1, &srv);
-//
-//			DrawSliceQuad();
-//		}
-//
-//
-//		m_pDeviceContext->OMSetBlendState(nullptr, blendFactor, 0xffffffff);
-//		m_pDeviceContext->OMSetDepthStencilState(nullptr, 0);
-//		m_pDeviceContext->VSSetShader(m_volumeVS, nullptr, 0);
-//		m_pDeviceContext->PSSetShader(m_volumePS, nullptr, 0);
-
-
-//// 레이마칭 전에 현재 상태 백업
-//ID3D11VertexShader* oldVS = nullptr;
-//ID3D11PixelShader*  oldPS = nullptr;
-//m_pDeviceContext->VSGetShader(&oldVS, nullptr, nullptr);
-//m_pDeviceContext->PSGetShader(&oldPS, nullptr, nullptr);
-//
-//
-//// ✅ (1) 기존 상태 백업
-//ComPtr<ID3D11DepthStencilState> prevDS;
-//UINT prevStencilRef = 0;
-//m_pDeviceContext->OMGetDepthStencilState(&prevDS, &prevStencilRef);
-//
-//ComPtr<ID3D11BlendState> prevBS;
-//FLOAT prevBlendFactor[4];
-//UINT prevSampleMask = 0xffffffff;
-//m_pDeviceContext->OMGetBlendState(&prevBS, prevBlendFactor, &prevSampleMask);
-//
-//// ✅ (2) 볼륨 렌더링용 상태 설정
-//m_pDeviceContext->OMSetDepthStencilState(nullptr, 0);
-//m_pDeviceContext->OMSetBlendState(nullptr, nullptr, 0xffffffff);
-
-// ✅ (3) 볼륨 렌더링 수행
-FullScreenPassSet();
-
-//// ✅ (4) 원래 상태 복원
-//m_pDeviceContext->OMSetDepthStencilState(prevDS.Get(), prevStencilRef);
-//m_pDeviceContext->OMSetBlendState(prevBS.Get(), prevBlendFactor, prevSampleMask);
-//
-//// 이전 상태 복원
-//m_pDeviceContext->VSSetShader(oldVS, nullptr, 0);
-//m_pDeviceContext->PSSetShader(oldPS, nullptr, 0);
-////SAFE_RELEASE(oldVS);
-////SAFE_RELEASE(oldPS);
-
-
-
-	}
-
-
-
-
-
-
+	
 
 
 	
