@@ -362,7 +362,8 @@ public:
 	XMMATRIX view, proj;
 
 public:
-
+	bool isPlaster{ false };
+	void plasterVolumeShow();
 	void RenderVolumeView(/*const D3D11_VIEWPORT& vp*/);
 	void InitializeVolumeCamera();
 	void InitializeVolumeShaders();

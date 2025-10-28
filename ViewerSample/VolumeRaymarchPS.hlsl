@@ -22,47 +22,44 @@ SamplerState samp : register(s0);
 
 
 
-//// Transfer Function: 諛?꾩뿉 ?곕씪 ?됱긽怨??뚰뙆 諛섑솚
-//float4 TransferFunction(float density)
+//// Transfer Function: 諛?꾩뿉 ?곕씪 ??�긽????�뙆 諛섑??//float4 TransferFunction(float density)
 //{
 //	// 공기
 //	//if (density < 0.1)
 //	if (density < 0.01)
 //		return float4(0, 0, 0, 0);
 //
-//	//// 연조직
-//	//if (density < 0.4)
+//	//// ?�조�?//	//if (density < 0.4)
 //	//{
 //	//	float t = (density - 0.1) / 0.3;
-//	//	return float4(0.7, 0.5, 0.4, t * 0.1);  // ✅ 0.05 → 0.5
+//	//	return float4(0.7, 0.5, 0.4, t * 0.1);  // ??0.05 ??0.5
 //	//}
-//	  // ✅ 범위 조정
-//	if (density < 0.2)  // 0.4 → 0.2
+//	  // ??범위 조정
+//	if (density < 0.2)  // 0.4 ??0.2
 //	{
 //		float t = (density - 0.01) / 0.19;
 //		return float4(0.7, 0.5, 0.4, t * 0.5);
 //	}
 //
-//	//// 뼈
-//	//if (density < 0.7)
+//	//// �?//	//if (density < 0.7)
 //	//{
 //	//	float t = (density - 0.4) / 0.3;
-//	//	return float4(1.0, 0.9, 0.8, t * 0.6);  // ✅ 0.3 → 3.0
+//	//	return float4(1.0, 0.9, 0.8, t * 0.6);  // ??0.3 ??3.0
 //	//}
-//	if (density < 0.5)  // 0.7 → 0.5
+//	if (density < 0.5)  // 0.7 ??0.5
 //	{
 //		float t = (density - 0.2) / 0.3;
 //		return float4(1.0, 0.9, 0.8, t * 3.0);
 //	}
 //
 //	//// 치아, 금속
-//	//return float4(1.0, 1.0, 1.0, 1.0);  // ✅ 0.5 → 5.0
+//	//return float4(1.0, 1.0, 1.0, 1.0);  // ??0.5 ??5.0
 //	return float4(1.0, 1.0, 1.0, 5.0);
 //}
 
 //float4 TransferFunction(float density)
 //{
-//	// ✅ 전체 범위 활용
+//	// ???�체 범위 ?�용
 //	if (density < 0.3)
 //	{
 //		float t = density / 0.3;
@@ -72,10 +69,10 @@ SamplerState samp : register(s0);
 //	if (density < 0.6)
 //	{
 //		float t = (density - 0.3) / 0.3;
-//		return float4(1.0, 0.9, 0.8, 2.0 + t * 3.0);  // 밝은 베이지
+//		return float4(1.0, 0.9, 0.8, 2.0 + t * 3.0);  // 밝�? 베이지
 //	}
 //
-//	return float4(1.0, 1.0, 1.0, 5.0);  // 흰색
+//	return float4(1.0, 1.0, 1.0, 5.0);  // ?�색
 //}
 
 //float4 TransferFunction(float density)
@@ -94,25 +91,25 @@ SamplerState samp : register(s0);
 
 float4 TransferFunction(float density)
 {
-	// ✅ 공기/배경 제거
+	// ??공기/배경 ?�거
 	if (density < 0.1)
 		return float4(0, 0, 0, 0);
 
-	// ✅ 연조직
+	// ???�조�?
 	if (density < 0.3)
 	{
 		float t = (density - 0.1) / 0.2;
 		return float4(0.7, 0.5, 0.4, t * 0.6);
 	}
 
-	// ✅ 뼈
+	// ??�?
 	if (density < 0.6)
 	{
 		float t = (density - 0.3) / 0.3;
 		return float4(0.9, 0.8, 0.7, 0.5 + t * 0.8);
 	}
 
-	// ✅ 치아 (가장 밝고 불투명)
+	// ??치아 (가??밝고 불투�?
 	return float4(1.0, 0.95, 0.9, 0.9);
 }
 
@@ -125,47 +122,47 @@ float4 TransferFunction(float density)
 //	if (density < 0.35)
 //	{
 //		float t = (density - 0.15) / 0.2;
-//		return float4(0.7, 0.5, 0.4, t * 0.3);  // ✅ 0.15 → 0.3
+//		return float4(0.7, 0.5, 0.4, t * 0.3);  // ??0.15 ??0.3
 //	}
 //
 //	if (density < 0.65)
 //	{
 //		float t = (density - 0.35) / 0.3;
-//		return float4(0.9, 0.8, 0.7, 0.5 + t * 0.5);  // ✅ 증가
+//		return float4(0.9, 0.8, 0.7, 0.5 + t * 0.5);  // ??증�?
 //	}
 //
-//	return float4(1.0, 1.0, 0.95, 1.5);  // ✅ 0.8 → 1.5
+//	return float4(1.0, 1.0, 0.95, 1.5);  // ??0.8 ??1.5
 //}
 
 
 //float4 TransferFunction(float density)
 //{
-//	// ✅ 공기/빈 공간 (임계값 높임)
+//	// ??공기/�?공간 (?�계�??�임)
 //	if (density < 0.3)
 //		return float4(0, 0, 0, 0);
 //
-//	// ✅ 연조직 - 어두운 베이지
+//	// ???�조�?- ?�두??베이지
 //	if (density < 0.5)
 //	{
 //		float t = (density - 0.3) / 0.2;
 //		return float4(0.7, 0.5, 0.4, t * 0.2);
 //	}
 //
-//	// ✅ 뼈 - 밝은 베이지
+//	// ??�?- 밝�? 베이지
 //	if (density < 0.8)
 //	{
 //		float t = (density - 0.5) / 0.3;
 //		return float4(0.9, 0.8, 0.7, 0.3 + t * 0.4);
 //	}
 //
-//	// ✅ 치아 - 흰색 (높은 임계값)
+//	// ??치아 - ?�색 (?��? ?�계�?
 //	return float4(1.0, 1.0, 0.95, 0.8);
 //}
 
 float4 main(float4 pos : SV_POSITION, float2 uv : TEXCOORD0) : SV_Target
 {
 
-	// --- 愿묒꽑 ?앹꽦 (湲곗〈 肄붾뱶 ?좎?) ---
+	// --- ?�묒�???�꽦 (湲곗???�붾�??�?) ---
 	float2 offset = float2(0.0, 0.0);
 	float2 scale = float2(0.5, 0.5);
 	float2 localUV = (uv - offset) / scale;
@@ -185,12 +182,10 @@ float4 main(float4 pos : SV_POSITION, float2 uv : TEXCOORD0) : SV_Target
 	float3 rayPosWS = CameraPosWS;
 
 
-	//return float4(rayPosWS / 10.0, 1);  // 10?쇰줈 ?섎닠???쒓컖??
+	//return float4(rayPosWS / 10.0, 1);  // 10??�줈 ??�닠????�컖??
 
 
-	//// CameraPosWS 臾댁떆?섍퀬 怨좎젙媛??ъ슜
-	///*float3*/ rayPosWS = float3(0, 0, -3.0);  // ?섎뱶肄붾뵫
-
+	//// CameraPosWS ?�댁???��??�좎?�媛?????	///*float3*/ rayPosWS = float3(0, 0, -3.0);  // ??�뱶?�붾�?
 	//float3 rayPos = mul(float4(rayPosWS, 1), InvVolumeWorld).xyz;
 	//return float4((rayPos + 2.0) / 4.0, 1);
 
@@ -198,7 +193,7 @@ float4 main(float4 pos : SV_POSITION, float2 uv : TEXCOORD0) : SV_Target
 
 
 
-	// ????以??뚯뒪??	//rayDirWS = -rayDirWS;
+	// ????�????��??	//rayDirWS = -rayDirWS;
 
 	//return float4(abs(rayDirWS), 1);
 
@@ -207,7 +202,7 @@ rayPosWS = float3(0, 0, -3.0);
 
 	float3 rayPos = mul(float4(rayPosWS, 1), InvVolumeWorld).xyz;
 
-	//// ??踰붿쐞 議곗젙?댁꽌 ?쒓컖??	//return float4(
+	//// ??踰붿??議곗???�꽌 ??�컖??	//return float4(
 	//	rayPos.x / 5.0 + 0.5,  // -2.5~2.5 ??0~1
 	//	rayPos.y / 5.0 + 0.5,
 	//	rayPos.z / 5.0 + 0.5,
@@ -224,24 +219,24 @@ rayPosWS = float3(0, 0, -3.0);
 	//return float4(abs(rayDir), 1);
 
 
-	//// ??移대찓???꾩튂 ?뺤씤
-	//return float4(rayPos, 1);//==>>?ш린媛 洹쇰낯?곸씤 臾몄젣??
+	//// ??移�?�???꾩튂 ?뺤씤
+	//return float4(rayPos, 1);//==>>??린媛? 洹쇰??곸씤 ?�몄???
 	//rayDir = -rayDir;
 
-	//// --- Ray-box 援먯감 ---
+	//// --- Ray-box ?�먯�?---
 	//float3 boxMin = float3(0, 0, 0);
 	//float3 boxMax = float3(1, 1, 1);
 
-	// ???섏젙 (volumeSize = 1.5 湲곗?)
+	// ????�젙 (volumeSize = 1.5 湲곗?)
 	float3 boxMin = float3(-0.75, -0.75, -0.75);
 	float3 boxMax = float3(0.75, 0.75, 0.75);
 
 
 
-	//// ??rayPos媛 諛뺤뒪 ?덉씤媛?
+	//// ??rayPos媛 諛뺤????�씤媛?
 	//if (all(rayPos >= boxMin) && all(rayPos <= boxMax))
-	//	return float4(1, 0, 0, 1);  // 鍮④컯 = ??	//else
-	//	return float4(0, 1, 0, 1);  // 珥덈줉 = 諛?
+	//	return float4(1, 0, 0, 1);  // ??���?= ??	//else
+	//	return float4(0, 1, 0, 1);  // ?�덈�?= �?
 
 
 
@@ -254,9 +249,9 @@ rayPosWS = float3(0, 0, -3.0);
 
 
 	//// ??tMin, tMax ?뺤씤
-	////return float4(abs(tMin) / 10.0, 1);  // tMin???됱긽?쇰줈
-	//// ?먮뒗
-	//return float4(abs(tMax) / 10.0, 1);  // tMax瑜??됱긽?쇰줈
+	////return float4(abs(tMin) / 10.0, 1);  // tMin????�긽??�줈
+	//// ?�?��
+	//return float4(abs(tMax) / 10.0, 1);  // tMax????�긽??�줈
 
 	float3 t1 = min(tMin, tMax);
 	float3 t2 = max(tMin, tMax);
@@ -269,153 +264,143 @@ rayPosWS = float3(0, 0, -3.0);
 	//// ??t2 ?뺤씤
 	// return float4(abs(t2) / 10.0, 1);
 
-	//// ??????異쒕젰
-	//return float4(tNear / 10.0, tFar / 10.0, 0, 1);
-	//// 鍮④컯 = tNear, 珥덈줉 = tFar
+	//// ???????�쒕??	//return float4(tNear / 10.0, tFar / 10.0, 0, 1);
+	//// ??���?= tNear, ?�덈�?= tFar
 
 
 
-	//// ???붾쾭源? 援먯감 ?щ?
+	//// ???붾쾭�? ?�먯�????
 	//if (tNear > tFar || tFar < 0)
-	//	return float4(1, 0, 0, 1);  // 鍮④컯 = 援먯감 ????	//else
-	//	return float4(0, 1, 0, 1);  // 珥덈줉 = 援먯감 ??
+	//	return float4(1, 0, 0, 1);  // ??���?= ?�먯�?????	//else
+	//	return float4(0, 1, 0, 1);  // ?�덈�?= ?�먯�???
 	tNear = max(tNear, 0.0);
 
 	float travelDist = tFar - tNear;
 
-	// ??諛뺤뒪 踰붿쐞??留욊쾶 ?섏젙
+	// ??諛뺤??踰붿???留욊�???�젙
 	if (all(rayPos >= boxMin) && all(rayPos <= boxMax))
 	{
-		tNear = 0.0;  // 移대찓?쇨? 諛뺤뒪 ??	
+		tNear = 0.0;  // 移�?�??? 諛뺤????	
 	}
 
-	// ??Step ?ш린 怨꾩궛
+	// ??Step ??�??�꾩�?	
 	float stepSize = travelDist / float(MaxSteps);
 
-	// ???쒖옉???ㅼ젙
+	// ????�옉????�젙
 	float3 startPos = rayPos + rayDir * tNear;
 
-	// ??startPos瑜?諛뺤뒪 ?덉쑝濡?媛뺤젣
-	startPos = clamp(startPos, boxMin, boxMax);
+	// ??startPos??諛뺤????�쑝�?媛뺤??	startPos = clamp(startPos, boxMin, boxMax);
 
-	//// ??startPos瑜??됱긽?쇰줈 ?쒖떆
+	//// ??startPos????�긽??�줈 ??�떆
 	//return float4((startPos + 0.75) / 1.5, 1);
 	//// [-0.75, 0.75] ??[0, 1] 蹂??
 
-	//// ??tNear 媛??뺤씤
+	//// ??tNear �??뺤씤
 	//return float4(tNear / 5.0, tNear / 5.0, tNear / 5.0, 1);
-	//// 0~5 踰붿쐞瑜?0~1濡??뺢퇋??
+	//// 0~5 踰붿?�瑜?0~1�??�?��??
 
-	//// ???붾쾭源? ?쒖옉 ?꾩튂 ?됱긽?쇰줈 ?쒖떆=>臾몄젣 諛쒓껄
-	//return float4(startPos, 1);
-
+	//// ???붾쾭�? ??�옉 ?꾩튂 ??�긽??�줈 ??�떆=>?�몄??諛쒓�?	//return float4(startPos, 1);
 
 
-	// ??泥??섑뵆 ?꾩튂
+
+	// ??�???�뵆 ?꾩튂
 	float3 currentPos = startPos;
 
 	//// ??UV 蹂??	//float3 uvw = (currentPos + 0.75) / 1.5;
-	// ???щ컮瑜?UV 蹂??	
+	// ????�?��?UV 蹂??	
 	float3 uvw = (startPos - boxMin) / (boxMax - boxMin);
 
 
-	//// UV 踰붿쐞 泥댄겕
-	//if (any(uvw < 0.0) || any(uvw > 1.0))
-	//	return float4(1, 0, 0, 1);  // 鍮④컙??= 踰붿쐞 諛?	//else
-	//	return float4(uvw, 1);  // 洹몃씪?붿뼵?몄뿬????
+	//// UV 踰붿??泥댄�?	//if (any(uvw < 0.0) || any(uvw > 1.0))
+	//	return float4(1, 0, 0, 1);  // ??���??= 踰붿??�?	//else
+	//	return float4(uvw, 1);  // 洹몃??붿뼵?몄뿬????
 
-	// 紐⑤뱺 ?붾쾭源?return 二쇱꽍泥섎━?섍퀬
-// 蹂쇰ⅷ ?곷텇 ?꾩뿉 異붽?:
+	// 紐⑤�??붾쾭�?return 二쇱꽍泥?�━??��?// 蹂쇰???곷텇 ?꾩뿉 ?�붽?:
 
-//// ???띿뒪泥?以묒븰媛??뺤씤
+//// ????�뒪�?以묒븰媛??뺤씤
 //	float testDensity = volumeTex.SampleLevel(samp, float3(0.5, 0.5, 0.5), 0).r;
 //	return float4(testDensity * 10.0, testDensity * 10.0, testDensity * 10.0, 1);
 
 
 	//float testDensity = volumeTex.SampleLevel(samp, float3(0.5, 0.5, 0.5), 0).r;
 
-	//// ??利앺룺 ?놁씠 ?먮낯 ?뺤씤
+	//// ??利앺�???�씠 ?�?�� ?뺤씤
 	//return float4(testDensity, testDensity, testDensity, 1);
 
 
-	// --- 蹂쇰ⅷ ?곷텇 ---
+	// --- 蹂쇰???곷텇 ---
 	float4 acc = float4(0, 0, 0, 0);
 
 	int sampleCount = 0;
 
-	//// 猷⑦봽 ?꾩뿉
+	//// ?�⑦�??꾩뿉
 	//return float4(MaxSteps / 256.0, 0, 0, 1);
 
 	[loop]
 	for (int i = 0; i < MaxSteps; i++)
 	{
-		//// ???꾩옱 ?꾩튂 怨꾩궛 (i???곕씪 ?꾩쭊)
+		//// ???꾩옱 ?꾩튂 ?�꾩�?(i???곕씪 ?꾩쭊)
 		//float3 uvw = startPos + rayDir * (i * stepSize);
 
-		// ???щ컮瑜?怨꾩궛
+		// ????�?��??�꾩�?		
 		float3 currentPos = startPos + rayDir * (i * stepSize);
 		float3 uvw = (currentPos - boxMin) / (boxMax - boxMin);
 
-		uvw.y = 1.0 - uvw.y;  // ✅ 추가
+		uvw.y = 1.0 - uvw.y;  // ??추�?
 
 
 
 
-		// 踰붿쐞 泥댄겕
-		if (any(uvw < 0.0) || any(uvw > 1.0))
+		// 踰붿??泥댄�?		if (any(uvw < 0.0) || any(uvw > 1.0))
 			break;
 
 
-		// 諛???섑뵆留?		
+		// 諛????�뵆�?		
 		float density = volumeTex.SampleLevel(samp, uvw, 0).r;
 
-		//// ✅ 원본 값 확인
+		//// ???�본 �??�인
 		//return float4(density / 10.0, density / 10.0, density / 10.0, 1);
 
 
-		//// ✅ 밀도 분포 확인
+		//// ??밀??분포 ?�인
 		//if (density < 0.3)
-		//	return float4(0, 0, 1, 1);  // 파랑 = 공기
+		//	return float4(0, 0, 1, 1);  // ?�랑 = 공기
 		//else if (density < 0.5)
-		//	return float4(0, 1, 0, 1);  // 초록 = 연조직
-		//else if (density < 0.8)
-		//	return float4(1, 1, 0, 1);  // 노랑 = 뼈
-		//else
+		//	return float4(0, 1, 0, 1);  // 초록 = ?�조�?		//else if (density < 0.8)
+		//	return float4(1, 1, 0, 1);  // ?�랑 = �?		//else
 		//	return float4(1, 0, 0, 1);  // 빨강 = 치아
 
 
 
-		// ✅ 밀도 범위 확인 후 정규화
-		density = saturate(density / 255.0);  // 0~255 → 0~1
+		// ??밀??범위 ?�인 ???�규??		density = saturate(density / 255.0);  // 0~255 ??0~1
 
 
 
 
-		//// 諛?꾨? 10諛?利앺룺?댁꽌 ?쒖떆
+		//// 諛?�? 10�?利앺�??�꽌 ??�떆
 		//return float4(density * 10.0, density * 10.0, density * 10.0, 1);
 
 
-		//  // ??諛??議곗젙 (?꾧퀎媛???텛湲?
-		//density = saturate((density - 0.05) * 2.0);  // 0.05 ?댄븯 ?쒓굅
+		//  // ??諛??議곗??(?꾧퀎媛????�湲?
+		//density = saturate((density - 0.05) * 2.0);  // 0.05 ??�븯 ??�굅
 
 
-		//// ??諛앷린 利앷?
-		////density = saturate((density - 0.1) * 2.0);  // 0.1 ?댄븯 ?쒓굅, 2諛?利앺룺
-
+		//// ??諛앷�?利앷?
+		////density = saturate((density - 0.1) * 2.0);  // 0.1 ??�븯 ??�굅, 2�?利앺�?
 
 		//// ??Transfer Function ?곸슜
 		//float4 colorAlpha = TransferFunction(density);
 
-// 또는 ✅ 약하게
-		//density = saturate(density *1.2);
+// ?�는 ???�하�?		
+density = saturate(density *1.2);
 
 		float4 colorAlpha = TransferFunction(density);
 
 
-		//// ✅ 고밀도(뼈/치아)에만 라이팅 추가
+		//// ??고�???�?치아)?�만 ?�이??추�?
 		//if (density > 0.4)
 		//{
-		//	// 간단한 그라디언트 계산
+		//	// 간단??그라?�언??계산
 		//	float eps = 0.01;
 		//	float dx = volumeTex.SampleLevel(samp, uvw + float3(eps, 0, 0), 0).r
 		//		- volumeTex.SampleLevel(samp, uvw - float3(eps, 0, 0), 0).r;
@@ -445,7 +430,7 @@ rayPosWS = float3(0, 0, -3.0);
 		//	float3 normal = normalize(float3(dx, dy, dz) + 1e-6);
 		//	float3 lightDir = normalize(float3(1, 1, -1));
 
-		//	// ✅ 최소값을 높임 (0.3 → 0.7)
+		//	// ??최소값을 ?�임 (0.3 ??0.7)
 		//	float lighting = max(0.7, dot(normal, lightDir));
 
 		//	colorAlpha.rgb *= lighting;
@@ -454,7 +439,7 @@ rayPosWS = float3(0, 0, -3.0);
 
 
 
-		//// ✅ 색상만 바로 리턴 (알파 무시)
+		//// ???�상�?바로 리턴 (?�파 무시)
 		//return float4(colorAlpha.rgb, 1.0);
 
 
@@ -467,13 +452,13 @@ rayPosWS = float3(0, 0, -3.0);
 
 
 
-		//float alpha = colorAlpha.a * stepSize;  // stepSize 怨깊븯湲?
-		float alpha = colorAlpha.a * stepSize * 4.0;  // ✅ 투명도 강화 배율
+		//float alpha = colorAlpha.a * stepSize;  // stepSize ?�깊�?��?
+		float alpha = colorAlpha.a * stepSize * 4.0;  // ???�명??강화 배율
 
 
 		//float4 colorAlpha = TransferFunction(density);
 		//float3 color = colorAlpha.rgb;
-		//float alpha = colorAlpha.a;  // ✅ stepSize 곱하지 않음!
+		//float alpha = colorAlpha.a;  // ??stepSize 곱하지 ?�음!
 
 
 	
@@ -482,7 +467,7 @@ rayPosWS = float3(0, 0, -3.0);
 		{
 			////float3 color = float3(density, density, density);
 
-			//// Front-to-back 釉붾젋??			
+			//// Front-to-back ?�붾???			
 			//acc.rgb += (1.0 - acc.a) * alpha * color;
 			//acc.a += (1.0 - acc.a) * alpha;
 
@@ -523,7 +508,7 @@ rayPosWS = float3(0, 0, -3.0);
 //
 //float4 main(float4 pos : SV_POSITION, float2 uv : TEXCOORD0) : SV_Target
 //{
-//	// --- 愿묒꽑 ?앹꽦 ---
+//	// --- ?�묒�???�꽦 ---
 //	float2 offset = float2(0.0, 0.0);
 //	float2 scale = float2(0.5, 0.5);
 //	float2 localUV = (uv - offset) / scale;
@@ -538,13 +523,13 @@ rayPosWS = float3(0, 0, -3.0);
 //
 //	float3 rayDirWS = normalize(mul(float4(viewDirVS.xyz, 0), InvView).xyz);
 //
-//	// ???섎뱶肄붾뵫 (?꾩떆)
+//	// ????�뱶?�붾�?(?꾩떆)
 //	float3 rayPosWS = float3(0, 0, -3.0);
 //
 //	float3 rayPos = mul(float4(rayPosWS, 1), InvVolumeWorld).xyz;
 //	float3 rayDir = normalize(mul(float4(rayDirWS, 0), InvVolumeWorld).xyz);
 //
-//	// --- Ray-box 援먯감 ---
+//	// --- Ray-box ?�먯�?---
 //	float3 boxMin = float3(-0.75, -0.75, -0.75);
 //	float3 boxMax = float3(0.75, 0.75, 0.75);
 //
@@ -567,7 +552,7 @@ rayPosWS = float3(0, 0, -3.0);
 //	float stepSize = travelDist / float(MaxSteps);
 //	float3 startPos = rayPos + rayDir * tNear;
 //
-//	// --- 蹂쇰ⅷ ?곷텇 ---
+//	// --- 蹂쇰???곷텇 ---
 //	float4 acc = float4(0, 0, 0, 0);
 //
 //	[loop]
@@ -577,20 +562,17 @@ rayPosWS = float3(0, 0, -3.0);
 //
 //		// ??UV 蹂??//		float3 uvw = (currentPos - boxMin) / (boxMax - boxMin);
 //
-//		// UV 踰붿쐞 泥댄겕
-//		if (any(uvw < 0.0) || any(uvw > 1.0))
-//			return float4(1, 0, 0, 1);  // 鍮④컙??= 踰붿쐞 諛?//		else
-//			return float4(uvw, 1);  // 洹몃씪?붿뼵?몄뿬????//
+//		// UV 踰붿??泥댄�?//		if (any(uvw < 0.0) || any(uvw > 1.0))
+//			return float4(1, 0, 0, 1);  // ??���??= 踰붿??�?//		else
+//			return float4(uvw, 1);  // 洹몃??붿뼵?몄뿬????//
 //		if (any(uvw < 0.0) || any(uvw > 1.0))
 //			break;
 //
 //		float density = volumeTex.SampleLevel(samp, uvw, 0).r;
 //
-//		// ??諛??利앺룺
-//		density = saturate(density * 3.0);
+//		// ??諛??利앺�?//		density = saturate(density * 3.0);
 //
-//		// ???뚰뙆 怨꾩궛
-//		float alpha = density * 10.0 * stepSize;
+//		// ????�뙆 ?�꾩�?//		float alpha = density * 10.0 * stepSize;
 //
 //		if (alpha > 0.001)
 //		{
