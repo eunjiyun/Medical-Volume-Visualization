@@ -1071,19 +1071,19 @@ void QDirect3D11Widget::FullScreenPassSet()
 	}
 
 	// ✅ 2️⃣ 풀스크린 사각형 정점 (좌표 + UV)
-	//Vtx quad[4] = {
-	//	{{-1.f, -1.f}, {0.f, 1.f}},
-	//	{{-1.f,  1.f}, {0.f, 0.f}},
-	//	{{ 1.f, -1.f}, {1.f, 1.f}},
-	//	{{ 1.f,  1.f}, {1.f, 0.f}},
-	//};
-	// 좌상단 사분면
 	Vtx quad[4] = {
+		{{-1.f, -1.f}, {0.f, 1.f}},
+		{{-1.f,  1.f}, {0.f, 0.f}},
+		{{ 1.f, -1.f}, {1.f, 1.f}},
+		{{ 1.f,  1.f}, {1.f, 0.f}},
+	};
+	// 좌상단 사분면
+	/*Vtx quad[4] = {
 		{{-1.f,  0.f}, {0.f, 1.f}},
 		{{-1.f,  1.f}, {0.f, 0.f}},
 		{{ 0.f,  0.f}, {1.f, 1.f}},
 		{{ 0.f,  1.f}, {1.f, 0.f}},
-	};
+	};*/
 
 
 	// ✅ 3️⃣ 정점 버퍼 생성 (한 번만 만들면 좋지만, 지금은 함수 내에서도 OK)
@@ -1142,7 +1142,7 @@ void QDirect3D11Widget::FullScreenPassSet()
 		(float)width() / (float)height(),
 		0.1f, 10.0f);*/
 	//XMMATRIX P = XMMatrixPerspectiveFovLH(XMConvertToRadians(45.0f), (float)width()/2 / ((float)height()/2), 0.1f, 100.0f);
-	XMMATRIX P = XMMatrixPerspectiveFovLH(XM_PIDIV4, (float)width() / 2 / ((float)height() / 2), 0.1f, 10.0f);
+	XMMATRIX P = XMMatrixPerspectiveFovLH(XM_PIDIV4, (float)width()  / ((float)height() ), 0.1f, 10.0f);
 
 
 
@@ -1214,6 +1214,15 @@ void QDirect3D11Widget::FullScreenPassSet()
 
 	cb.CameraPosWS = XMFLOAT3(0.5f, 0.5f, -0.2f);
 
+	//cb.CameraPosWS = XMFLOAT3(0.5f, 0.5f, -1.5f);
+
+
+	//cb.CameraPosWS = XMFLOAT3(0.5f, 0.5f, -2.0f);
+
+
+	//cb.CameraPosWS = XMFLOAT3(0.5f, 0.5f, 0.2f);
+
+
 
 
 	/*cb.CameraPosWS = XMFLOAT3(0.5f * sx,
@@ -1231,8 +1240,12 @@ void QDirect3D11Widget::FullScreenPassSet()
 	//cb.MaxSteps = 4096;
 
 
-	cb.Step = 0.0005f;
-	cb.MaxSteps = 4096;
+	//cb.Step = 0.0005f;
+
+	cb.Step = 0.001f;
+	//cb.MaxSteps = 4096;
+	// ✅ 권장값
+	cb.MaxSteps = 256;  // 또는 128~512 사이
 
 
 
