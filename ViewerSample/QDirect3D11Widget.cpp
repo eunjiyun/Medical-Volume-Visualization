@@ -869,8 +869,15 @@ void QDirect3D11Widget::CreateTexture3D()
 	//);
 
 	// 뼈 중심 (CT Bone preset)
+
+	/*float windowCenter = 1000.0f;
+	float windowWidth = 800.0f;*/
 	float windowCenter = 500.0f;
 	float windowWidth = 2000.0f;
+
+	//float windowCenter = 800.0f;
+	//float windowWidth = 1200.0f;
+
 	/*float windowCenter = 1200.0f;
 	float windowWidth = 1200.0f;*/
 	float windowMinHU = windowCenter - windowWidth / 2.0f;  // -500

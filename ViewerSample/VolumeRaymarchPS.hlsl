@@ -102,14 +102,14 @@ float4 TransferFunction(float density)
 	if (density < 0.3)
 	{
 		float t = (density - 0.1) / 0.2;
-		return float4(0.7, 0.5, 0.4, t * 0.3);
+		return float4(0.7, 0.5, 0.4, t * 0.6);
 	}
 
 	// ✅ 뼈
 	if (density < 0.6)
 	{
 		float t = (density - 0.3) / 0.3;
-		return float4(0.9, 0.8, 0.7, 0.5 + t * 0.4);
+		return float4(0.9, 0.8, 0.7, 0.5 + t * 0.8);
 	}
 
 	// ✅ 치아 (가장 밝고 불투명)
