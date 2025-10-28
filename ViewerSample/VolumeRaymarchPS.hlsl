@@ -56,8 +56,8 @@ float4 main(float4 pos : SV_POSITION, float2 uv : TEXCOORD0) : SV_Target
 	float2 offset = float2(0.0, 0.0);
 	float2 scale = float2(0.5, 0.5);
 	float2 localUV = (uv - offset) / scale;
-	float2 screenUV = localUV;
-	//screenUV = uv;
+	//float2 screenUV = localUV;
+	float2 screenUV = uv;
 
 	float2 ndc = screenUV * 2.0 - 1.0;
 	ndc.y = -ndc.y;
