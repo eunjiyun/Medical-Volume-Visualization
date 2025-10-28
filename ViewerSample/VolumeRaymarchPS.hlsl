@@ -22,29 +22,69 @@ SamplerState samp : register(s0);
 
 
 
-// Transfer Function: 諛?꾩뿉 ?곕씪 ?됱긽怨??뚰뙆 諛섑솚
+//// Transfer Function: 諛?꾩뿉 ?곕씪 ?됱긽怨??뚰뙆 諛섑솚
+//float4 TransferFunction(float density)
+//{
+//	// 공기
+//	//if (density < 0.1)
+//	if (density < 0.01)
+//		return float4(0, 0, 0, 0);
+//
+//	//// 연조직
+//	//if (density < 0.4)
+//	//{
+//	//	float t = (density - 0.1) / 0.3;
+//	//	return float4(0.7, 0.5, 0.4, t * 0.1);  // ✅ 0.05 → 0.5
+//	//}
+//	  // ✅ 범위 조정
+//	if (density < 0.2)  // 0.4 → 0.2
+//	{
+//		float t = (density - 0.01) / 0.19;
+//		return float4(0.7, 0.5, 0.4, t * 0.5);
+//	}
+//
+//	//// 뼈
+//	//if (density < 0.7)
+//	//{
+//	//	float t = (density - 0.4) / 0.3;
+//	//	return float4(1.0, 0.9, 0.8, t * 0.6);  // ✅ 0.3 → 3.0
+//	//}
+//	if (density < 0.5)  // 0.7 → 0.5
+//	{
+//		float t = (density - 0.2) / 0.3;
+//		return float4(1.0, 0.9, 0.8, t * 3.0);
+//	}
+//
+//	//// 치아, 금속
+//	//return float4(1.0, 1.0, 1.0, 1.0);  // ✅ 0.5 → 5.0
+//	return float4(1.0, 1.0, 1.0, 5.0);
+//}
+
+//float4 TransferFunction(float density)
+//{
+//	// ✅ 전체 범위 활용
+//	if (density < 0.3)
+//	{
+//		float t = density / 0.3;
+//		return float4(0.7, 0.5, 0.4, t * 2.0);  // 베이지
+//	}
+//
+//	if (density < 0.6)
+//	{
+//		float t = (density - 0.3) / 0.3;
+//		return float4(1.0, 0.9, 0.8, 2.0 + t * 3.0);  // 밝은 베이지
+//	}
+//
+//	return float4(1.0, 1.0, 1.0, 5.0);  // 흰색
+//}
+
 float4 TransferFunction(float density)
 {
-	// 공기
-	if (density < 0.1)
-		return float4(0, 0, 0, 0);
+	// ✅ 임계값 완전 제거
+	float3 color = float3(0.8, 0.7, 0.6);  // 베이지
+	float alpha = density * 5.0;  // 밀도에 비례
 
-	// 연조직
-	if (density < 0.4)
-	{
-		float t = (density - 0.1) / 0.3;
-		return float4(0.7, 0.5, 0.4, t * 0.1);  // ✅ 0.05 → 0.5
-	}
-
-	// 뼈
-	if (density < 0.7)
-	{
-		float t = (density - 0.4) / 0.3;
-		return float4(1.0, 0.9, 0.8, t * 0.6);  // ✅ 0.3 → 3.0
-	}
-
-	// 치아, 금속
-	return float4(1.0, 1.0, 1.0, 1.0);  // ✅ 0.5 → 5.0
+	return float4(color, alpha);
 }
 
 
@@ -260,17 +300,21 @@ rayPosWS = float3(0, 0, -3.0);
 		//return float4(density * 10.0, density * 10.0, density * 10.0, 1);
 
 
-		  // ??諛??議곗젙 (?꾧퀎媛???텛湲?
-		density = saturate((density - 0.05) * 2.0);  // 0.05 ?댄븯 ?쒓굅
+		//  // ??諛??議곗젙 (?꾧퀎媛???텛湲?
+		//density = saturate((density - 0.05) * 2.0);  // 0.05 ?댄븯 ?쒓굅
 
 
-		// ??諛앷린 利앷?
-		//density = saturate((density - 0.1) * 2.0);  // 0.1 ?댄븯 ?쒓굅, 2諛?利앺룺
+		//// ??諛앷린 利앷?
+		////density = saturate((density - 0.1) * 2.0);  // 0.1 ?댄븯 ?쒓굅, 2諛?利앺룺
 
 
-		// ??Transfer Function ?곸슜
+		//// ??Transfer Function ?곸슜
+		//float4 colorAlpha = TransferFunction(density);
+
+		// ✅ 밀도를 3배로 증폭
+		density = saturate(density * 3.0);
+
 		float4 colorAlpha = TransferFunction(density);
-
 
 
 
