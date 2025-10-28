@@ -25,26 +25,26 @@ SamplerState samp : register(s0);
 // Transfer Function: 諛?꾩뿉 ?곕씪 ?됱긽怨??뚰뙆 諛섑솚
 float4 TransferFunction(float density)
 {
-	// 怨듦린 (留ㅼ슦 ??? 諛??
+	// 공기
 	if (density < 0.1)
 		return float4(0, 0, 0, 0);
 
-	// ?곗“吏?(?쇰?, 洹쇱쑁)
+	// 연조직
 	if (density < 0.4)
 	{
-		float t = (density - 0.1) / 0.3;  // 0~1 ?뺢퇋??		
-		return float4(0.7, 0.5, 0.4, t * 0.05);  // ?댁깋, ?쏀븳 ?뚰뙆
+		float t = (density - 0.1) / 0.3;
+		return float4(0.7, 0.5, 0.4, t * 0.1);  // ✅ 0.05 → 0.5
 	}
 
-	// 堉?(以묎컙 諛??
+	// 뼈
 	if (density < 0.7)
 	{
 		float t = (density - 0.4) / 0.3;
-		return float4(1.0, 0.9, 0.8, t * 0.3);  // 諛앹? 踰좎씠吏, 媛뺥븳 ?뚰뙆
+		return float4(1.0, 0.9, 0.8, t * 0.6);  // ✅ 0.3 → 3.0
 	}
 
-	// 移섏븘, 湲덉냽 (?믪? 諛??
-	return float4(1.0, 1.0, 1.0, 0.5);  // ?곗깋
+	// 치아, 금속
+	return float4(1.0, 1.0, 1.0, 1.0);  // ✅ 0.5 → 5.0
 }
 
 
@@ -271,24 +271,39 @@ rayPosWS = float3(0, 0, -3.0);
 		// ??Transfer Function ?곸슜
 		float4 colorAlpha = TransferFunction(density);
 
-		  
+
+
+
+		//// ✅ 색상만 바로 리턴 (알파 무시)
+		//return float4(colorAlpha.rgb, 1.0);
+
 
 
 		float3 color = colorAlpha.rgb;
 		float alpha = colorAlpha.a * stepSize;  // stepSize 怨깊븯湲?
+
+		//float4 colorAlpha = TransferFunction(density);
+		//float3 color = colorAlpha.rgb;
+		//float alpha = colorAlpha.a;  // ✅ stepSize 곱하지 않음!
 
 
 	
 
 		if (alpha > 0.001)
 		{
-			//float3 color = float3(density, density, density);
+			////float3 color = float3(density, density, density);
 
-			// Front-to-back 釉붾젋??			
+			//// Front-to-back 釉붾젋??			
+			//acc.rgb += (1.0 - acc.a) * alpha * color;
+			//acc.a += (1.0 - acc.a) * alpha;
+
+			//// Early termination
+			//if (acc.a >= 0.95)
+			//	break;
+
 			acc.rgb += (1.0 - acc.a) * alpha * color;
 			acc.a += (1.0 - acc.a) * alpha;
 
-			// Early termination
 			if (acc.a >= 0.95)
 				break;
 		}
