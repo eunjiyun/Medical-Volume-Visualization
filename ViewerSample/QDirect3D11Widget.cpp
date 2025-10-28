@@ -1200,8 +1200,8 @@ void QDirect3D11Widget::FullScreenPassSet()
 	//XMMATRIX scale = XMMatrixScaling(1.0f, 1.0f, 1.0f);
 	XMMATRIX scale = XMMatrixScaling(volumeSize, volumeSize, volumeSize);
 
-	XMMATRIX W = scale * trans;
-	//XMMATRIX W = scale * rotX * trans;
+	//XMMATRIX W = scale * trans;
+	XMMATRIX W = scale * rotX * trans;
 
 
 	XMMATRIX iW = XMMatrixInverse(nullptr, W);
