@@ -1157,57 +1157,33 @@ void QDirect3D11Widget::FullScreenPassSet()
 		}
 	}
 
-	//// ✅ 4️⃣ 카메라/행렬 준비 (이미 사용 중인 view/proj 그대로)
-	//XMMATRIX V = view; // XMMatrixLookAtLH(...)
-	//XMMATRIX P = proj; // XMMatrixPerspectiveFovLH(...)
-
-	//// 🔧 임시 카메라 (볼륨 중앙을 보는 단순 뷰)
-	//XMVECTOR eye = XMVectorSet(0.0f, 0.0f, -2.0f, 0.0f);
-	//XMVECTOR at = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
-	//XMVECTOR up = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
-
-	//XMMATRIX V = XMMatrixLookAtLH(eye, at, up);
-	//XMMATRIX P = XMMatrixPerspectiveFovLH(XMConvertToRadians(60.0f),
-	//	(float)width() / (float)height(),
-	//	0.1f, 10.0f);
-
 	
-	//
-	//XMMATRIX iV = XMMatrixInverse(nullptr, V);
-	//XMMATRIX iP = XMMatrixInverse(nullptr, P);
-
-
 
 	//// 🔧 임시 카메라 (볼륨 중앙을 보는 단순 뷰)
-	//XMVECTOR eye = XMVectorSet(0.0f, 0.0f, -2.0f, 0.0f);
-	//XMVECTOR at = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
-	//XMVECTOR up = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
-	XMVECTOR eye = XMVectorSet(0, 0, -2.0f, 1);
-	XMVECTOR at = XMVectorSet(0, 0, 0, 1);
-	XMVECTOR up = XMVectorSet(0, 1, 0, 0);
 
+	//XMVECTOR eye = XMVectorSet(0, 0, -2.0f, 1);
+	//XMVECTOR at = XMVectorSet(0, 0, 0, 1);
+	//XMVECTOR up = XMVectorSet(0, 1, 0, 0);
 
-
-
-
-
+	XMVECTOR eye = XMVectorSet(0.0f, 0.0f, -3.0f, 1.0f);  // 조금 더 뒤로
+	XMVECTOR at = XMVectorSet(0.0f, 0.0f, 0.0f, 1.0f);
+	XMVECTOR up = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
 	XMMATRIX V = XMMatrixLookAtLH(eye, at, up);
-	/*XMMATRIX P = XMMatrixPerspectiveFovLH(XMConvertToRadians(60.0f),
+
+
+	//XMMATRIX P = XMMatrixPerspectiveFovLH(XM_PIDIV4, (float)width()  / ((float)height() ), 0.1f, 10.0f);
+	XMMATRIX P = XMMatrixPerspectiveFovLH(
+		XM_PIDIV4,
 		(float)width() / (float)height(),
-		0.1f, 10.0f);*/
-	//XMMATRIX P = XMMatrixPerspectiveFovLH(XMConvertToRadians(45.0f), (float)width()/2 / ((float)height()/2), 0.1f, 100.0f);
-	XMMATRIX P = XMMatrixPerspectiveFovLH(XM_PIDIV4, (float)width()  / ((float)height() ), 0.1f, 10.0f);
-
-
+		0.1f,
+		100.0f  // Far plane 증가
+	);
 
 
 	XMMATRIX iV = XMMatrixInverse(nullptr, V);
 	XMMATRIX iP = XMMatrixInverse(nullptr, P);
 
 	
-
-
-
 
 	// ✅ 5️⃣ 볼륨 월드 변환 구성
 	float sx = fileReader->views.spacing.x;
@@ -1216,37 +1192,16 @@ void QDirect3D11Widget::FullScreenPassSet()
 
 	XMMATRIX rotY = XMMatrixRotationY(XMConvertToRadians(10.0f));
 	XMMATRIX rotX = XMMatrixRotationX(XMConvertToRadians(-5.0f));
-//	XMMATRIX trans = XMMatrixTranslation(0.0f, 0.0f, 0.0f);
-	//XMMATRIX scale = XMMatrixScaling(sx, sy, sz);
-	//XMMATRIX scale = XMMatrixScaling(100.0f * sx, 100.0f * sy, 100.0f * sz);
-	//XMMATRIX scale = XMMatrixScaling(50.0f, 50.0f, 50.0f);
-	//XMMATRIX scale = XMMatrixScaling(100, 100, 100);
 
-
-
-	//XMMATRIX scale = XMMatrixScaling(
-	//	sx * fileReader->m_width,
-	//	sy * fileReader->m_height,
-	//	sz* fileReader->m_depth
-	//);
+	float volumeSize = 1.5f;
+	// ✅ center 변환 제거
 	XMMATRIX trans = XMMatrixTranslation(0.0f, 0.0f, 0.0f);
-	////XMMATRIX W = XMMatrixTranspose(scale);
-	////XMMATRIX iW = XMMatrixInverse(nullptr, W);
+	//XMMATRIX scale = XMMatrixScaling(1.0f, 1.0f, 1.0f);
+	XMMATRIX scale = XMMatrixScaling(volumeSize, volumeSize, volumeSize);
 
-	XMMATRIX center = XMMatrixTranslation(-0.5f, -0.5f, -0.5f);
-
-	// ✅ 볼륨 월드 스케일: normalized box (0~1)
-	XMMATRIX scale = XMMatrixScaling(1.0f, 1.0f, 1.0f);
-
-	XMMATRIX W = center*scale * trans;
+	XMMATRIX W = scale * trans;
 	XMMATRIX iW = XMMatrixInverse(nullptr, W);
 
-
-	//XMMATRIX W = scale * rotY * rotX * trans;
-	//XMMATRIX iW = XMMatrixInverse(nullptr, W);
-
-	//XMMATRIX W = XMMatrixIdentity();
-	//XMMATRIX iW = XMMatrixInverse(nullptr, W);
 
 	// ✅ 6️⃣ 상수 버퍼 데이터 채우기
 	CB cb{};
@@ -1256,52 +1211,23 @@ void QDirect3D11Widget::FullScreenPassSet()
 	cb.InvProj = XMMatrixTranspose(iP);
 	cb.VolumeWorld = XMMatrixTranspose(W);
 	cb.InvVolumeWorld = XMMatrixTranspose(iW);
-	//cb.CameraPosWS = XMFLOAT3(0, 0, -1.5f);  // 카메라 위치 (필요시 수정)
-	//cb.CameraPosWS = XMFLOAT3(0.0f, 0.0f, -2.0f);
-	//cb.CameraPosWS = XMFLOAT3(0, 0, -0.5f);
-	//cb.CameraPosWS = XMFLOAT3(0, 0, -0.3f);
-	//cb.CameraPosWS = XMFLOAT3(0.5f, 0.5f, -0.5f);
-	//cb.CameraPosWS = XMFLOAT3(0.5f, 0.5f, -1.0f);
-	//cb.CameraPosWS = XMFLOAT3(0, 0, -2.0f); // z축 앞쪽
-
-	//cb.CameraPosWS = XMFLOAT3(0.5f, 0.5f, -0.5f); // 살짝 앞쪽
-
-	cb.CameraPosWS = XMFLOAT3(0.5f, 0.5f, -0.2f);
-
-	//cb.CameraPosWS = XMFLOAT3(0.5f, 0.5f, -1.5f);
 
 
-	//cb.CameraPosWS = XMFLOAT3(0.5f, 0.5f, -2.0f);
+	////cb.CameraPosWS = XMFLOAT3(0.5f, 0.5f, -0.2f);
+	//cb.CameraPosWS = XMFLOAT3(0.0f, 0.0f, -2.0f);  // eye와 동일하게
 
+	// ✅ 실제 카메라 위치 사용
+	cb.CameraPosWS = XMFLOAT3(
+		XMVectorGetX(eye),
+		XMVectorGetY(eye),
+		XMVectorGetZ(eye)
+	);
 
-	//cb.CameraPosWS = XMFLOAT3(0.5f, 0.5f, 0.2f);
-
-
-
-
-	/*cb.CameraPosWS = XMFLOAT3(0.5f * sx,
-		0.5f * fileReader->m_height * sy,
-		-fileReader->m_depth * sz * 1.5f);*/
-	
-	
-	////cb.Step = 0.004f;    // 레이 스텝 크기
-	////cb.MaxSteps = 384;
-	//cb.Step = 0.001f;
-//	cb.MaxSteps = 1024;
-
-	//// 더 부드러운 적분을 위해
-	//cb.Step = 0.0012f;
-	//cb.MaxSteps = 4096;
-
-
-	//cb.Step = 0.0005f;
 
 	cb.Step = 0.001f;
 	//cb.MaxSteps = 512;
 	// ✅ 권장값
 	cb.MaxSteps = 256;  // 또는 128~512 사이
-
-
 
 	cb.Opacity = 0.08f;
 	//cb.Opacity = 0.12f;  // 약간만 높여보세요 (0.08 → 0.12)
