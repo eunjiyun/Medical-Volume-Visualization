@@ -1287,7 +1287,7 @@ void QDirect3D11Widget::FullScreenPassSet()
 	////cb.Step = 0.004f;    // 레이 스텝 크기
 	////cb.MaxSteps = 384;
 	//cb.Step = 0.001f;
-	//cb.MaxSteps = 1024;
+//	cb.MaxSteps = 1024;
 
 	//// 더 부드러운 적분을 위해
 	//cb.Step = 0.0012f;
@@ -1297,7 +1297,7 @@ void QDirect3D11Widget::FullScreenPassSet()
 	//cb.Step = 0.0005f;
 
 	cb.Step = 0.001f;
-	//cb.MaxSteps = 4096;
+	//cb.MaxSteps = 512;
 	// ✅ 권장값
 	cb.MaxSteps = 256;  // 또는 128~512 사이
 
