@@ -1191,7 +1191,8 @@ void QDirect3D11Widget::FullScreenPassSet()
 	float sz = fileReader->views.spacing.z;
 
 	XMMATRIX rotY = XMMatrixRotationY(XMConvertToRadians(10.0f));
-	XMMATRIX rotX = XMMatrixRotationX(XMConvertToRadians(-5.0f));
+	//XMMATRIX rotX = XMMatrixRotationX(XMConvertToRadians(-5.0f));
+	XMMATRIX rotX = XMMatrixRotationX(XM_PIDIV2);  // 90도 회전
 
 	float volumeSize = 1.5f;
 	// ✅ center 변환 제거
@@ -1200,6 +1201,9 @@ void QDirect3D11Widget::FullScreenPassSet()
 	XMMATRIX scale = XMMatrixScaling(volumeSize, volumeSize, volumeSize);
 
 	XMMATRIX W = scale * trans;
+	//XMMATRIX W = scale * rotX * trans;
+
+
 	XMMATRIX iW = XMMatrixInverse(nullptr, W);
 
 
