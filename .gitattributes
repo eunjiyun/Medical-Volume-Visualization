@@ -68,3 +68,15 @@
 *.cpp text eol=crlf
 *.h   text eol=crlf
 *.hlsl text eol=lf
+
+# 모든 텍스트 파일은 UTF-8 인코딩으로 관리
+* text eol=lf working-tree-encoding=UTF-8
+
+# 한글 포함된 코드 파일 강제 UTF-8
+*.h text working-tree-encoding=UTF-8
+*.cpp text working-tree-encoding=UTF-8
+*.cs text working-tree-encoding=UTF-8
+*.hlsl text working-tree-encoding=UTF-8
+*.glsl text working-tree-encoding=UTF-8
+*.json text working-tree-encoding=UTF-8
+*.txt text working-tree-encoding=UTF-8
