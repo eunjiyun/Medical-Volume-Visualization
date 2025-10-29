@@ -1,9 +1,9 @@
 
 cbuffer Crosshair : register(b0)
 {
-    float2 crossUV;         // ½ÊÀÚ¼± À§Ä¡ (0~1)
-    float crossThickness;   // ¼± µÎ²²
-    float4 crossColor;      // ½ÊÀÚ¼± »ö»ó
+    float2 crossUV;         // ï¿½ï¿½ï¿½Ú¼ï¿½ ï¿½ï¿½Ä¡ (0~1)
+    float crossThickness;   // ï¿½ï¿½ ï¿½Î²ï¿½
+    float4 crossColor;      // ï¿½ï¿½ï¿½Ú¼ï¿½ ï¿½ï¿½ï¿½ï¿½
 }
 
 SamplerState samp0 : register(s0);

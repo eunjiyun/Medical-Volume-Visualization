@@ -23,5 +23,5 @@ VS_OUTPUT VSMain(VS_INPUT input) {
 }
 
 float4 PSMain(VS_OUTPUT input) : SV_TARGET{
-	return lineColor;  // ´Ü»ö ¼±
+	return lineColor;  // ï¿½Ü»ï¿½ ï¿½ï¿½
 }

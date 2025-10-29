@@ -283,7 +283,7 @@ private:
 	//ID3D11RenderTargetView * m_pRTView;
 	SliceSeriesRtv m_RTViews;// m_RTViewsVolume, m_RTViewsAxial, m_RTViewsCoronal, m_RTViewsSagittal;
 	ID3D11RenderTargetView* m_pSwapChainRTV = nullptr;
-	//std::vector<ID3D11ShaderResourceView*> coronalTextureCacheSrv;
+	std::vector<ID3D11ShaderResourceView*> coronalTextureCacheSrv;
 	QTimer m_qTimer;
 
 	HWND m_hWnd;
@@ -362,7 +362,8 @@ public:
 	XMMATRIX view, proj;
 
 public:
-
+	bool isPlaster{ false };
+	void plasterVolumeShow();
 	void RenderVolumeView(/*const D3D11_VIEWPORT& vp*/);
 	void InitializeVolumeCamera();
 	void InitializeVolumeShaders();

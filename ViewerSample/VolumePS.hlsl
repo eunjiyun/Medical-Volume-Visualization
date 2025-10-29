@@ -18,15 +18,15 @@ struct VS_OUTPUT {
 
 
 float4 PSMain(VS_OUTPUT input) : SV_TARGET{
-//	////´Ü¼ø ÅØ½ºÃ³ »ùÇÃ¸µ (½½¶óÀÌ½º Æò¸é¿ë)
+//	////ï¿½Ü¼ï¿½ ï¿½Ø½ï¿½Ã³ ï¿½ï¿½ï¿½Ã¸ï¿½ (ï¿½ï¿½ï¿½ï¿½ï¿½Ì½ï¿½ ï¿½ï¿½ï¿½ï¿½)
 //	//float4 color = sliceTexture.Sample(samplerState, input.texcoord);
 //	//return color;
 //
 //
 //
-//	//   return float4(input.texcoord, 0.0f, 1.0f); // ÅØ½ºÃ³ ÁÂÇ¥ ½Ã°¢È­
+//	//   return float4(input.texcoord, 0.0f, 1.0f); // ï¿½Ø½ï¿½Ã³ ï¿½ï¿½Ç¥ ï¿½Ã°ï¿½È­
 //
-//	////return float4(1.0f, 0.0f, 0.0f, 1.0f); // »¡°£»ö
+//	////return float4(1.0f, 0.0f, 0.0f, 1.0f); // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 //
  //return float4(abs(input.texcoord.x), abs(input.texcoord.y), 0.0f, 1.0f);
 //	float4 color = sliceTexture.Sample(samplerState, input.texcoord);
