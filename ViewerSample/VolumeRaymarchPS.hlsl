@@ -180,8 +180,10 @@ rayPosWS = float3(0, 0, -3.0);
 	// ??Step ?ш린 怨꾩궛
 	float stepSize = travelDist / float(MaxSteps);
 
-	// ???쒖옉???ㅼ젙
-	float3 startPos = rayPos + rayDir * tNear;
+	// ✅ Jittering
+	float jitter = frac(sin(dot(uv * 1000.0, float2(12.9898, 78.233))) * 43758.5453);
+	// 시작점에 랜덤 오프셋
+	float3 startPos = rayPos + rayDir * (tNear + jitter * stepSize);
 
 	// ??startPos瑜?諛뺤뒪 ?덉쑝濡?媛뺤젣
 	startPos = clamp(startPos, boxMin, boxMax);
