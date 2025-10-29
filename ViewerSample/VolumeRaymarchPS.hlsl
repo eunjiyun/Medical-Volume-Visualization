@@ -22,147 +22,43 @@ SamplerState samp : register(s0);
 
 
 
-//// Transfer Function: è«›Â€?ê¾©ë¿‰ ?ê³•ì”ª ??±ê¸½????°ë™† è«›ì„‘??//float4 TransferFunction(float density)
-//{
-//	// ê³µê¸°
-//	//if (density < 0.1)
-//	if (density < 0.01)
-//		return float4(0, 0, 0, 0);
-//
-//	//// ?°ì¡°ì§?//	//if (density < 0.4)
-//	//{
-//	//	float t = (density - 0.1) / 0.3;
-//	//	return float4(0.7, 0.5, 0.4, t * 0.1);  // ??0.05 ??0.5
-//	//}
-//	  // ??ë²”ìœ„ ì¡°ì •
-//	if (density < 0.2)  // 0.4 ??0.2
-//	{
-//		float t = (density - 0.01) / 0.19;
-//		return float4(0.7, 0.5, 0.4, t * 0.5);
-//	}
-//
-//	//// ë¼?//	//if (density < 0.7)
-//	//{
-//	//	float t = (density - 0.4) / 0.3;
-//	//	return float4(1.0, 0.9, 0.8, t * 0.6);  // ??0.3 ??3.0
-//	//}
-//	if (density < 0.5)  // 0.7 ??0.5
-//	{
-//		float t = (density - 0.2) / 0.3;
-//		return float4(1.0, 0.9, 0.8, t * 3.0);
-//	}
-//
-//	//// ì¹˜ì•„, ê¸ˆì†
-//	//return float4(1.0, 1.0, 1.0, 1.0);  // ??0.5 ??5.0
-//	return float4(1.0, 1.0, 1.0, 5.0);
-//}
-
-//float4 TransferFunction(float density)
-//{
-//	// ???„ì²´ ë²”ìœ„ ?œìš©
-//	if (density < 0.3)
-//	{
-//		float t = density / 0.3;
-//		return float4(0.7, 0.5, 0.4, t * 2.0);  // ë² ì´ì§€
-//	}
-//
-//	if (density < 0.6)
-//	{
-//		float t = (density - 0.3) / 0.3;
-//		return float4(1.0, 0.9, 0.8, 2.0 + t * 3.0);  // ë°ì? ë² ì´ì§€
-//	}
-//
-//	return float4(1.0, 1.0, 1.0, 5.0);  // ?°ìƒ‰
-//}
-
-//float4 TransferFunction(float density)
-//{
-//	if (density < 0.1)
-//		return float4(0, 0, 0, 0);
-//
-//	if (density < 0.3)
-//		return float4(0.7, 0.6, 0.5, 0.1);
-//
-//	if (density < 0.6)
-//		return float4(0.9, 0.8, 0.7, 0.5);
-//
-//	return float4(1.0, 0.95, 0.9, 1.0);
-//}
-
 float4 TransferFunction(float density)
 {
-	// ??ê³µê¸°/ë°°ê²½ ?œê±°
+
+	// ? °ø±â/¹è°æ Á¦°Å
 	if (density < 0.1)
 		return float4(0, 0, 0, 0);
 
-	// ???°ì¡°ì§?
+	// ? ¿¬Á¶Á÷
+
 	if (density < 0.3)
 	{
 		float t = (density - 0.1) / 0.2;
 		return float4(0.7, 0.5, 0.4, t * 0.6);
 	}
 
-	// ??ë¼?
+
+	// ? »À
+
 	if (density < 0.6)
 	{
 		float t = (density - 0.3) / 0.3;
 		return float4(0.9, 0.8, 0.7, 0.5 + t * 0.8);
 	}
 
-	// ??ì¹˜ì•„ (ê°€??ë°ê³  ë¶ˆíˆ¬ëª?
+
+	// ? Ä¡¾Æ (°¡Àå ¹à°í ºÒÅõ¸í)
+
 	return float4(1.0, 0.95, 0.9, 0.9);
 }
 
 
-//float4 TransferFunction(float density)
-//{
-//	if (density < 0.15)
-//		return float4(0, 0, 0, 0);
-//
-//	if (density < 0.35)
-//	{
-//		float t = (density - 0.15) / 0.2;
-//		return float4(0.7, 0.5, 0.4, t * 0.3);  // ??0.15 ??0.3
-//	}
-//
-//	if (density < 0.65)
-//	{
-//		float t = (density - 0.35) / 0.3;
-//		return float4(0.9, 0.8, 0.7, 0.5 + t * 0.5);  // ??ì¦ê?
-//	}
-//
-//	return float4(1.0, 1.0, 0.95, 1.5);  // ??0.8 ??1.5
-//}
-
-
-//float4 TransferFunction(float density)
-//{
-//	// ??ê³µê¸°/ë¹?ê³µê°„ (?„ê³„ê°??’ì„)
-//	if (density < 0.3)
-//		return float4(0, 0, 0, 0);
-//
-//	// ???°ì¡°ì§?- ?´ë‘??ë² ì´ì§€
-//	if (density < 0.5)
-//	{
-//		float t = (density - 0.3) / 0.2;
-//		return float4(0.7, 0.5, 0.4, t * 0.2);
-//	}
-//
-//	// ??ë¼?- ë°ì? ë² ì´ì§€
-//	if (density < 0.8)
-//	{
-//		float t = (density - 0.5) / 0.3;
-//		return float4(0.9, 0.8, 0.7, 0.3 + t * 0.4);
-//	}
-//
-//	// ??ì¹˜ì•„ - ?°ìƒ‰ (?’ì? ?„ê³„ê°?
-//	return float4(1.0, 1.0, 0.95, 0.8);
-//}
-
 float4 main(float4 pos : SV_POSITION, float2 uv : TEXCOORD0) : SV_Target
 {
 
-	// --- ?¿ë¬’ê½???¹ê½¦ (æ¹²ê³—???„ë¶¾ë±??ì¢?) ---
+
+	// --- ê´‘ì„  ?ì„± (ê¸°ì¡´ ì½”ë“œ ? ì?) ---
+
 	float2 offset = float2(0.0, 0.0);
 	float2 scale = float2(0.5, 0.5);
 	float2 localUV = (uv - offset) / scale;
@@ -182,10 +78,13 @@ float4 main(float4 pos : SV_POSITION, float2 uv : TEXCOORD0) : SV_Target
 	float3 rayPosWS = CameraPosWS;
 
 
-	//return float4(rayPosWS / 10.0, 1);  // 10??°ì¤ˆ ??ë‹ ????“ì»–??
+
+	//return float4(rayPosWS / 10.0, 1);  // 10?¼ë¡œ ?˜ëˆ ???œê°??
 
 
-	//// CameraPosWS ?¾ëŒ???í€??¨ì¢?™åª›?????	///*float3*/ rayPosWS = float3(0, 0, -3.0);  // ??ë±¶?„ë¶¾ëµ?
+	//// CameraPosWS ë¬´ì‹œ?˜ê³  ê³ ì •ê°??¬ìš©
+	///*float3*/ rayPosWS = float3(0, 0, -3.0);  // ?˜ë“œì½”ë”©
+
 	//float3 rayPos = mul(float4(rayPosWS, 1), InvVolumeWorld).xyz;
 	//return float4((rayPos + 2.0) / 4.0, 1);
 
@@ -193,7 +92,9 @@ float4 main(float4 pos : SV_POSITION, float2 uv : TEXCOORD0) : SV_Target
 
 
 
-	// ????ä»????’ª??	//rayDirWS = -rayDirWS;
+
+	// ????ì¤??ŒìŠ¤??	//rayDirWS = -rayDirWS;
+
 
 	//return float4(abs(rayDirWS), 1);
 
@@ -202,7 +103,9 @@ rayPosWS = float3(0, 0, -3.0);
 
 	float3 rayPos = mul(float4(rayPosWS, 1), InvVolumeWorld).xyz;
 
-	//// ??è¸°ë¶¿??è­°ê³—???ê½Œ ??“ì»–??	//return float4(
+
+	//// ??ë²”ìœ„ ì¡°ì •?´ì„œ ?œê°??	//return float4(
+
 	//	rayPos.x / 5.0 + 0.5,  // -2.5~2.5 ??0~1
 	//	rayPos.y / 5.0 + 0.5,
 	//	rayPos.z / 5.0 + 0.5,
@@ -215,28 +118,32 @@ rayPosWS = float3(0, 0, -3.0);
 
 	float3 rayDir = normalize(mul(float4(rayDirWS, 0), InvVolumeWorld).xyz);
 
-	//// ??rayDir ?ëº¤ì”¤
+	//// ??rayDir ?•ì¸
 	//return float4(abs(rayDir), 1);
 
 
-	//// ??ç§»ë?ì°???ê¾©íŠ‚ ?ëº¤ì”¤
-	//return float4(rayPos, 1);//==>>??ë¦°åª›? æ´¹ì‡°??ê³¸ì”¤ ?¾ëª„???
+
+	//// ??ì¹´ë©”???„ì¹˜ ?•ì¸
+	//return float4(rayPos, 1);//==>>?¬ê¸°ê°€ ê·¼ë³¸?ì¸ ë¬¸ì œ??
 	//rayDir = -rayDir;
 
-	//// --- Ray-box ?´ë¨¯ê°?---
+	//// --- Ray-box êµì°¨ ---
 	//float3 boxMin = float3(0, 0, 0);
 	//float3 boxMax = float3(1, 1, 1);
 
-	// ????ì ™ (volumeSize = 1.5 æ¹²ê³—?)
+	// ???˜ì • (volumeSize = 1.5 ê¸°ì?)
+
 	float3 boxMin = float3(-0.75, -0.75, -0.75);
 	float3 boxMax = float3(0.75, 0.75, 0.75);
 
 
 
-	//// ??rayPosåª›Â€ è«›ëº¤????‰ì”¤åª›Â€?
+
+	//// ??rayPosê°€ ë°•ìŠ¤ ?ˆì¸ê°€?
 	//if (all(rayPos >= boxMin) && all(rayPos <= boxMax))
-	//	return float4(1, 0, 0, 1);  // ??‘£ì»?= ??	//else
-	//	return float4(0, 1, 0, 1);  // ?¥ëˆì¤?= è«?
+	//	return float4(1, 0, 0, 1);  // ë¹¨ê°• = ??	//else
+	//	return float4(0, 1, 0, 1);  // ì´ˆë¡ = ë°?
+
 
 
 
@@ -248,10 +155,12 @@ rayPosWS = float3(0, 0, -3.0);
 
 
 
-	//// ??tMin, tMax ?ëº¤ì”¤
-	////return float4(abs(tMin) / 10.0, 1);  // tMin????±ê¸½??°ì¤ˆ
-	//// ?ë¨?’—
-	//return float4(abs(tMax) / 10.0, 1);  // tMax????±ê¸½??°ì¤ˆ
+
+	//// ??tMin, tMax ?•ì¸
+	////return float4(abs(tMin) / 10.0, 1);  // tMin???‰ìƒ?¼ë¡œ
+	//// ?ëŠ”
+	//return float4(abs(tMax) / 10.0, 1);  // tMaxë¥??‰ìƒ?¼ë¡œ
+
 
 	float3 t1 = min(tMin, tMax);
 	float3 t2 = max(tMin, tMax);
@@ -259,148 +168,177 @@ rayPosWS = float3(0, 0, -3.0);
 	float tNear = max(max(t1.x, t1.y), t1.z);
 	float tFar = min(min(t2.x, t2.y), t2.z);
 
-	//// ??t1 ?ëº¤ì”¤
+	//// ??t1 ?•ì¸
 	////return float4(abs(t1) / 10.0, 1);
-	//// ??t2 ?ëº¤ì”¤
+	//// ??t2 ?•ì¸
 	// return float4(abs(t2) / 10.0, 1);
 
-	//// ???????°ì’•??	//return float4(tNear / 10.0, tFar / 10.0, 0, 1);
-	//// ??‘£ì»?= tNear, ?¥ëˆì¤?= tFar
+
+	//// ??????ì¶œë ¥
+	//return float4(tNear / 10.0, tFar / 10.0, 0, 1);
+	//// ë¹¨ê°• = tNear, ì´ˆë¡ = tFar
 
 
 
-	//// ???ë¶¾ì¾­æº? ?´ë¨¯ê°????
+	//// ???”ë²„ê¹? êµì°¨ ?¬ë?
 	//if (tNear > tFar || tFar < 0)
-	//	return float4(1, 0, 0, 1);  // ??‘£ì»?= ?´ë¨¯ê°?????	//else
-	//	return float4(0, 1, 0, 1);  // ?¥ëˆì¤?= ?´ë¨¯ê°???
+	//	return float4(1, 0, 0, 1);  // ë¹¨ê°• = êµì°¨ ????	//else
+	//	return float4(0, 1, 0, 1);  // ì´ˆë¡ = êµì°¨ ??
+
 	tNear = max(tNear, 0.0);
 
 	float travelDist = tFar - tNear;
 
-	// ??è«›ëº¤??è¸°ë¶¿???ï§ìšŠì¾???ì ™
+
+	// ??ë°•ìŠ¤ ë²”ìœ„??ë§ê²Œ ?˜ì •
 	if (all(rayPos >= boxMin) && all(rayPos <= boxMax))
 	{
-		tNear = 0.0;  // ç§»ë?ì°??? è«›ëº¤????	
+		tNear = 0.0;  // ì¹´ë©”?¼ê? ë°•ìŠ¤ ??	
 	}
 
-	// ??Step ??ë¦??¨ê¾©ê¶?	
+	// ??Step ?¬ê¸° ê³„ì‚°
 	float stepSize = travelDist / float(MaxSteps);
 
-	// ????–ì˜‰????¼ì ™
+	// ???œì‘???¤ì •
 	float3 startPos = rayPos + rayDir * tNear;
 
-	// ??startPos??è«›ëº¤????‰ì‘æ¿?åª›ëº¤??	startPos = clamp(startPos, boxMin, boxMax);
+	// ??startPosë¥?ë°•ìŠ¤ ?ˆìœ¼ë¡?ê°•ì œ
+	startPos = clamp(startPos, boxMin, boxMax);
 
-	//// ??startPos????±ê¸½??°ì¤ˆ ??–ë–†
+	//// ??startPosë¥??‰ìƒ?¼ë¡œ ?œì‹œ
+
 	//return float4((startPos + 0.75) / 1.5, 1);
-	//// [-0.75, 0.75] ??[0, 1] è¹‚Â€??
+	//// [-0.75, 0.75] ??[0, 1] ë³€??
 
-	//// ??tNear åª??ëº¤ì”¤
+
+	//// ??tNear ê°??•ì¸
 	//return float4(tNear / 5.0, tNear / 5.0, tNear / 5.0, 1);
-	//// 0~5 è¸°ë¶¿?ç‘œ?0~1æ¿??ëº?‡‹??
+	//// 0~5 ë²”ìœ„ë¥?0~1ë¡??•ê·œ??
 
-	//// ???ë¶¾ì¾­æº? ??–ì˜‰ ?ê¾©íŠ‚ ??±ê¸½??°ì¤ˆ ??–ë–†=>?¾ëª„??è«›ì’“ê»?	//return float4(startPos, 1);
+	//// ???”ë²„ê¹? ?œì‘ ?„ì¹˜ ?‰ìƒ?¼ë¡œ ?œì‹œ=>ë¬¸ì œ ë°œê²¬
+	//return float4(startPos, 1);
 
 
 
-	// ??ï§???‘ëµ† ?ê¾©íŠ‚
+	// ??ì²??˜í”Œ ?„ì¹˜
 	float3 currentPos = startPos;
 
-	//// ??UV è¹‚Â€??	//float3 uvw = (currentPos + 0.75) / 1.5;
-	// ????ì»?‘œ?UV è¹‚Â€??	
+	//// ??UV ë³€??	//float3 uvw = (currentPos + 0.75) / 1.5;
+	// ???¬ë°”ë¥?UV ë³€??	
 	float3 uvw = (startPos - boxMin) / (boxMax - boxMin);
 
 
-	//// UV è¸°ë¶¿??ï§£ëŒ„ê²?	//if (any(uvw < 0.0) || any(uvw > 1.0))
-	//	return float4(1, 0, 0, 1);  // ??‘£ì»??= è¸°ë¶¿??è«?	//else
-	//	return float4(uvw, 1);  // æ´¹ëªƒ??ë¶¿ë¼µ?ëª„ë¿¬????
+	//// UV ë²”ìœ„ ì²´í¬
+	//if (any(uvw < 0.0) || any(uvw > 1.0))
+	//	return float4(1, 0, 0, 1);  // ë¹¨ê°„??= ë²”ìœ„ ë°?	//else
+	//	return float4(uvw, 1);  // ê·¸ë¼?”ì–¸?¸ì—¬????
 
-	// ï§â‘¤ë±??ë¶¾ì¾­æº?return äºŒì‡±ê½ï§£?â”??í€?// è¹‚ì‡°???ê³·í…‡ ?ê¾©ë¿‰ ?°ë¶½?:
+	// ëª¨ë“  ?”ë²„ê¹?return ì£¼ì„ì²˜ë¦¬?˜ê³ 
+// ë³¼ë¥¨ ?ë¶„ ?„ì— ì¶”ê?:
 
-//// ????¿ë’ªï§?ä»¥ë¬’ë¸°åª›??ëº¤ì”¤
+//// ???ìŠ¤ì²?ì¤‘ì•™ê°??•ì¸
+
 //	float testDensity = volumeTex.SampleLevel(samp, float3(0.5, 0.5, 0.5), 0).r;
 //	return float4(testDensity * 10.0, testDensity * 10.0, testDensity * 10.0, 1);
 
 
 	//float testDensity = volumeTex.SampleLevel(samp, float3(0.5, 0.5, 0.5), 0).r;
 
-	//// ??ï§ì•ºë£???ì”  ?ë¨?‚¯ ?ëº¤ì”¤
+
+	//// ??ì¦í­ ?†ì´ ?ë³¸ ?•ì¸
 	//return float4(testDensity, testDensity, testDensity, 1);
 
 
-	// --- è¹‚ì‡°???ê³·í…‡ ---
+	// --- ë³¼ë¥¨ ?ë¶„ ---
+
 	float4 acc = float4(0, 0, 0, 0);
 
 	int sampleCount = 0;
 
-	//// ?·â‘¦ë´??ê¾©ë¿‰
+
+	//// ë£¨í”„ ?„ì—
+
 	//return float4(MaxSteps / 256.0, 0, 0, 1);
 
 	[loop]
 	for (int i = 0; i < MaxSteps; i++)
 	{
-		//// ???ê¾©ì˜± ?ê¾©íŠ‚ ?¨ê¾©ê¶?(i???ê³•ì”ª ?ê¾©ì­Š)
+
+		//// ???„ì¬ ?„ì¹˜ ê³„ì‚° (i???°ë¼ ?„ì§„)
 		//float3 uvw = startPos + rayDir * (i * stepSize);
 
-		// ????ì»?‘œ??¨ê¾©ê¶?		
+		// ???¬ë°”ë¥?ê³„ì‚°
 		float3 currentPos = startPos + rayDir * (i * stepSize);
 		float3 uvw = (currentPos - boxMin) / (boxMax - boxMin);
 
-		uvw.y = 1.0 - uvw.y;  // ??ì¶”ê?
+		uvw.y = 1.0 - uvw.y;  // ? Ãß°¡
 
 
 
 
-		// è¸°ë¶¿??ï§£ëŒ„ê²?		if (any(uvw < 0.0) || any(uvw > 1.0))
+
+
+		// ë²”ìœ„ ì²´í¬
+		if (any(uvw < 0.0) || any(uvw > 1.0))
 			break;
 
 
-		// è«›Â€????‘ëµ†ï§?		
+		// ë°€???˜í”Œë§?		
 		float density = volumeTex.SampleLevel(samp, uvw, 0).r;
 
-		//// ???ë³¸ ê°??•ì¸
+		//// ? ¿øº» °ª È®ÀÎ
 		//return float4(density / 10.0, density / 10.0, density / 10.0, 1);
 
 
-		//// ??ë°€??ë¶„í¬ ?•ì¸
+		//// ? ¹Ğµµ ºĞÆ÷ È®ÀÎ
 		//if (density < 0.3)
-		//	return float4(0, 0, 1, 1);  // ?Œë‘ = ê³µê¸°
+		//	return float4(0, 0, 1, 1);  // ÆÄ¶û = °ø±â
 		//else if (density < 0.5)
-		//	return float4(0, 1, 0, 1);  // ì´ˆë¡ = ?°ì¡°ì§?		//else if (density < 0.8)
-		//	return float4(1, 1, 0, 1);  // ?¸ë‘ = ë¼?		//else
-		//	return float4(1, 0, 0, 1);  // ë¹¨ê°• = ì¹˜ì•„
+		//	return float4(0, 1, 0, 1);  // ÃÊ·Ï = ¿¬Á¶Á÷
+		//else if (density < 0.8)
+		//	return float4(1, 1, 0, 1);  // ³ë¶û = »À
+		//else
+		//	return float4(1, 0, 0, 1);  // »¡°­ = Ä¡¾Æ
 
 
 
-		// ??ë°€??ë²”ìœ„ ?•ì¸ ???•ê·œ??		density = saturate(density / 255.0);  // 0~255 ??0~1
+		// ? ¹Ğµµ ¹üÀ§ È®ÀÎ ÈÄ Á¤±ÔÈ­
+		density = saturate(density / 255.0);  // 0~255 ¡æ 0~1
 
 
 
 
-		//// è«›Â€?ê¾? 10è«?ï§ì•ºë£??ê½Œ ??–ë–†
+
+
+		//// ë°€?„ë? 10ë°?ì¦í­?´ì„œ ?œì‹œ
 		//return float4(density * 10.0, density * 10.0, density * 10.0, 1);
 
 
-		//  // ??è«›Â€??è­°ê³—??(?ê¾§í€åª›????›æ¹²?
-		//density = saturate((density - 0.05) * 2.0);  // 0.05 ??„ë¸¯ ??“êµ…
+		//  // ??ë°€??ì¡°ì • (?„ê³„ê°???¶”ê¸?
+		//density = saturate((density - 0.05) * 2.0);  // 0.05 ?´í•˜ ?œê±°
 
 
-		//// ??è«›ì•·ë¦?ï§ì•·?
-		////density = saturate((density - 0.1) * 2.0);  // 0.1 ??„ë¸¯ ??“êµ…, 2è«?ï§ì•ºë£?
+		//// ??ë°ê¸° ì¦ê?
+		////density = saturate((density - 0.1) * 2.0);  // 0.1 ?´í•˜ ?œê±°, 2ë°?ì¦í­
 
-		//// ??Transfer Function ?ê³¸ìŠœ
+
+		//// ??Transfer Function ?ìš©
 		//float4 colorAlpha = TransferFunction(density);
 
-// ?ëŠ” ???½í•˜ê²?		
-density = saturate(density *1.2);
+
+// ¶Ç´Â ? ¾àÇÏ°Ô
+		//density = saturate(density *1.2);
+
 
 		float4 colorAlpha = TransferFunction(density);
 
 
-		//// ??ê³ ë???ë¼?ì¹˜ì•„)?ë§Œ ?¼ì´??ì¶”ê?
+
+		//// ? °í¹Ğµµ(»À/Ä¡¾Æ)¿¡¸¸ ¶óÀÌÆÃ Ãß°¡
 		//if (density > 0.4)
 		//{
-		//	// ê°„ë‹¨??ê·¸ë¼?”ì–¸??ê³„ì‚°
+		//	// °£´ÜÇÑ ±×¶óµğ¾ğÆ® °è»ê
+
 		//	float eps = 0.01;
 		//	float dx = volumeTex.SampleLevel(samp, uvw + float3(eps, 0, 0), 0).r
 		//		- volumeTex.SampleLevel(samp, uvw - float3(eps, 0, 0), 0).r;
@@ -430,7 +368,9 @@ density = saturate(density *1.2);
 		//	float3 normal = normalize(float3(dx, dy, dz) + 1e-6);
 		//	float3 lightDir = normalize(float3(1, 1, -1));
 
-		//	// ??ìµœì†Œê°’ì„ ?’ì„ (0.3 ??0.7)
+
+		//	// ? ÃÖ¼Ò°ªÀ» ³ôÀÓ (0.3 ¡æ 0.7)
+
 		//	float lighting = max(0.7, dot(normal, lightDir));
 
 		//	colorAlpha.rgb *= lighting;
@@ -439,7 +379,9 @@ density = saturate(density *1.2);
 
 
 
-		//// ???‰ìƒë§?ë°”ë¡œ ë¦¬í„´ (?ŒíŒŒ ë¬´ì‹œ)
+
+		//// ? »ö»ó¸¸ ¹Ù·Î ¸®ÅÏ (¾ËÆÄ ¹«½Ã)
+
 		//return float4(colorAlpha.rgb, 1.0);
 
 
@@ -452,13 +394,17 @@ density = saturate(density *1.2);
 
 
 
-		//float alpha = colorAlpha.a * stepSize;  // stepSize ?¨ê¹Šë¸?¹²?
-		float alpha = colorAlpha.a * stepSize * 4.0;  // ???¬ëª…??ê°•í™” ë°°ìœ¨
+
+		//float alpha = colorAlpha.a * stepSize;  // stepSize ê³±í•˜ê¸?
+		float alpha = colorAlpha.a * stepSize * 4.0;  // ? Åõ¸íµµ °­È­ ¹èÀ²
+
 
 
 		//float4 colorAlpha = TransferFunction(density);
 		//float3 color = colorAlpha.rgb;
-		//float alpha = colorAlpha.a;  // ??stepSize ê³±í•˜ì§€ ?ŠìŒ!
+
+		//float alpha = colorAlpha.a;  // ? stepSize °öÇÏÁö ¾ÊÀ½!
+
 
 
 	
@@ -467,7 +413,9 @@ density = saturate(density *1.2);
 		{
 			////float3 color = float3(density, density, density);
 
-			//// Front-to-back ?‰ë¶¾???			
+
+			//// Front-to-back ë¸”ë Œ??			
+
 			//acc.rgb += (1.0 - acc.a) * alpha * color;
 			//acc.a += (1.0 - acc.a) * alpha;
 
@@ -477,7 +425,7 @@ density = saturate(density *1.2);
 
 			acc.rgb += (1.0 - acc.a) * alpha * color;
 
-			//acc.rgb = pow(acc.rgb, 1.0 / 2.2); // ê°ë§ˆ ë³´ì •
+			//acc.rgb = pow(acc.rgb, 1.0 / 2.2); // °¨¸¶ º¸Á¤
 
 			acc.a += (1.0 - acc.a) * alpha;
 
@@ -508,7 +456,9 @@ density = saturate(density *1.2);
 //
 //float4 main(float4 pos : SV_POSITION, float2 uv : TEXCOORD0) : SV_Target
 //{
-//	// --- ?¿ë¬’ê½???¹ê½¦ ---
+
+//	// --- ê´‘ì„  ?ì„± ---
+
 //	float2 offset = float2(0.0, 0.0);
 //	float2 scale = float2(0.5, 0.5);
 //	float2 localUV = (uv - offset) / scale;
@@ -523,13 +473,17 @@ density = saturate(density *1.2);
 //
 //	float3 rayDirWS = normalize(mul(float4(viewDirVS.xyz, 0), InvView).xyz);
 //
-//	// ????ë±¶?„ë¶¾ëµ?(?ê¾©ë–†)
+
+//	// ???˜ë“œì½”ë”© (?„ì‹œ)
+
 //	float3 rayPosWS = float3(0, 0, -3.0);
 //
 //	float3 rayPos = mul(float4(rayPosWS, 1), InvVolumeWorld).xyz;
 //	float3 rayDir = normalize(mul(float4(rayDirWS, 0), InvVolumeWorld).xyz);
 //
-//	// --- Ray-box ?´ë¨¯ê°?---
+
+//	// --- Ray-box êµì°¨ ---
+
 //	float3 boxMin = float3(-0.75, -0.75, -0.75);
 //	float3 boxMax = float3(0.75, 0.75, 0.75);
 //
@@ -552,7 +506,9 @@ density = saturate(density *1.2);
 //	float stepSize = travelDist / float(MaxSteps);
 //	float3 startPos = rayPos + rayDir * tNear;
 //
-//	// --- è¹‚ì‡°???ê³·í…‡ ---
+
+//	// --- ë³¼ë¥¨ ?ë¶„ ---
+
 //	float4 acc = float4(0, 0, 0, 0);
 //
 //	[loop]
@@ -560,19 +516,26 @@ density = saturate(density *1.2);
 //	{
 //		float3 currentPos = startPos + rayDir * (i * stepSize);
 //
-//		// ??UV è¹‚Â€??//		float3 uvw = (currentPos - boxMin) / (boxMax - boxMin);
+//		// ??UV ë³€??//		float3 uvw = (currentPos - boxMin) / (boxMax - boxMin);
 //
-//		// UV è¸°ë¶¿??ï§£ëŒ„ê²?//		if (any(uvw < 0.0) || any(uvw > 1.0))
-//			return float4(1, 0, 0, 1);  // ??‘£ì»??= è¸°ë¶¿??è«?//		else
-//			return float4(uvw, 1);  // æ´¹ëªƒ??ë¶¿ë¼µ?ëª„ë¿¬????//
+
+//		// UV ë²”ìœ„ ì²´í¬
+//		if (any(uvw < 0.0) || any(uvw > 1.0))
+//			return float4(1, 0, 0, 1);  // ë¹¨ê°„??= ë²”ìœ„ ë°?//		else
+//			return float4(uvw, 1);  // ê·¸ë¼?”ì–¸?¸ì—¬????//
+
 //		if (any(uvw < 0.0) || any(uvw > 1.0))
 //			break;
 //
 //		float density = volumeTex.SampleLevel(samp, uvw, 0).r;
 //
-//		// ??è«›Â€??ï§ì•ºë£?//		density = saturate(density * 3.0);
+
+//		// ??ë°€??ì¦í­
+//		density = saturate(density * 3.0);
 //
-//		// ????°ë™† ?¨ê¾©ê¶?//		float alpha = density * 10.0 * stepSize;
+//		// ???ŒíŒŒ ê³„ì‚°
+//		float alpha = density * 10.0 * stepSize;
+
 //
 //		if (alpha > 0.001)
 //		{
