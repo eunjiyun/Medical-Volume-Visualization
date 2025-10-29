@@ -49,6 +49,7 @@ public:
     uint16_t sliceSize = m_width * m_height;
     std::vector<uint16_t> rawSlice;
 
+	OFString rawName;   // DCMTK에서 사용하는 문자열 타입 (내부적으로 std::string 기반)
 
     OFString patientName, birthDate, studyDate, kvp;
     OFString patientID, patientMF, patientAge;

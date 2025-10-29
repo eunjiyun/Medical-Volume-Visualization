@@ -2,6 +2,7 @@
 #include <dcmtk/dcmdata/dcfilefo.h>
 #include <dcmtk/dcmdata/dcdeftag.h>
 #include <dcmtk/ofstd/ofcond.h>
+#include "dcmtk/ofstd/ofchrenc.h" // 문자셋 변환기
 
 #include <dcmtk/dcmdata/dctypes.h>
 //#include <dcmtk/config/osconfig.h>  
@@ -22,6 +23,21 @@ FileReader::FileReader()
 
 	std::cout << "[FileReader] Initialized with empty volume and file list." << std::endl;
 }
+
+
+std::string convertCP949ToUTF8(const std::string& euckr)
+{
+	int lenW = MultiByteToWideChar(949, 0, euckr.c_str(), -1, NULL, 0);
+	std::wstring wstr(lenW, 0);
+	MultiByteToWideChar(949, 0, euckr.c_str(), -1, &wstr[0], lenW);
+
+	int lenU8 = WideCharToMultiByte(CP_UTF8, 0, wstr.c_str(), -1, NULL, 0, NULL, NULL);
+	std::string utf8(lenU8, 0);
+	WideCharToMultiByte(CP_UTF8, 0, wstr.c_str(), -1, &utf8[0], lenU8, NULL, NULL);
+
+	return utf8;
+}
+
 
 
 bool FileReader::LoadDICOMSeries(std::string folderPath, ID3D11Device* g_pd3dDevice)
@@ -47,11 +63,17 @@ bool FileReader::LoadDICOMSeries(std::string folderPath, ID3D11Device* g_pd3dDev
 
 			if (entry.path().string() == m_filePaths.front())
 			{
+		
 
 				DcmFileFormat file;
 				OFCondition status = file.loadFile(/*folderPath + "0000.dcm"*/entry.path().string());
 
 				DcmDataset* dataset = file.getDataset();
+
+				
+
+				//dataset->convertToUTF8();  // DCMTK 3.6.7 이상
+				//dataset->putAndInsertString(DCM_SpecificCharacterSet, "ISO_IR 192"); // UTF-8
 
 				OFString widthStr, heightStr;
 				dataset->findAndGetOFString(DCM_Columns, widthStr);   // (0028,0011)
@@ -63,11 +85,19 @@ bool FileReader::LoadDICOMSeries(std::string folderPath, ID3D11Device* g_pd3dDev
 
 				std::cout << "Width: " << m_width << ", Height: " << m_height << std::endl;
 
+				OFString rawName;
+				if (dataset->findAndGetOFString(DCM_PatientName, rawName).good())
+				{
+					std::string utf8Name = convertCP949ToUTF8(rawName.c_str());
+					patientName = utf8Name.c_str(); // ✅ OFString은 std::string에서 바로 대입 가능
+				}
+
+
 
 				OFString wcStr, wwStr;
 				if (dataset->findAndGetOFString(DCM_WindowCenter, wcStr).good() &&
 					dataset->findAndGetOFString(DCM_WindowWidth, wwStr).good() &&
-					dataset->findAndGetOFString(DCM_PatientName, patientName).good() &&
+					/*dataset->findAndGetOFString(DCM_PatientName, patientName).good() &&*/
 					dataset->findAndGetOFString(DCM_PatientBirthDate, birthDate).good() &&
 					dataset->findAndGetOFString(DCM_StudyDate, studyDate).good() &&
 					dataset->findAndGetOFString(DCM_PatientID, patientID).good() &&
@@ -76,6 +106,11 @@ bool FileReader::LoadDICOMSeries(std::string folderPath, ID3D11Device* g_pd3dDev
 
 					windowCenter = std::stof(wcStr.c_str());
 					windowWidth = std::stof(wwStr.c_str());
+
+				/*	std::string utf8Name = convertCP949ToUTF8(rawName.c_str());
+					patientName = utf8Name.c_str();*/
+
+			
 
 
 					/* patientName = std::stof(wcStr.c_str());
