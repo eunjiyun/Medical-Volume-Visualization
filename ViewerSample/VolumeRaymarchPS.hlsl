@@ -92,28 +92,54 @@ SamplerState samp : register(s0);
 //	return float4(1.0, 0.95, 0.9, 1.0);
 //}
 
+//float4 TransferFunction(float density)
+//{
+//	// ✅ 공기/배경 제거
+//	if (density < 0.1)
+//		return float4(0, 0, 0, 0);
+//
+//	// ✅ 연조직
+//	if (density < 0.3)
+//	{
+//		float t = (density - 0.1) / 0.2;
+//		return float4(0.7, 0.5, 0.4, t * 0.6);
+//	}
+//
+//	// ✅ 뼈
+//	if (density < 0.6)
+//	{
+//		float t = (density - 0.3) / 0.3;
+//		return float4(0.9, 0.8, 0.7, 0.5 + t * 0.8);
+//	}
+//
+//	// ✅ 치아 (가장 밝고 불투명)
+//	return float4(1.0, 0.95, 0.9, 0.9);
+//}
+
+
+
 float4 TransferFunction(float density)
 {
-	// ✅ 공기/배경 제거
-	if (density < 0.1)
+	// ✅ 0.001 이하만 제거 (거의 전부 사용)
+	if (density < 0.001)
 		return float4(0, 0, 0, 0);
 
-	// ✅ 연조직
-	if (density < 0.3)
+	// ✅ 연조직 - 어두운 베이지
+	if (density < 0.01)
 	{
-		float t = (density - 0.1) / 0.2;
-		return float4(0.7, 0.5, 0.4, t * 0.6);
+		float t = (density - 0.001) / 0.009;
+		return float4(0.6, 0.45, 0.35, t * 0.5);
 	}
 
-	// ✅ 뼈
-	if (density < 0.6)
+	// ✅ 뼈 - 밝은 베이지
+	if (density < 0.05)
 	{
-		float t = (density - 0.3) / 0.3;
-		return float4(0.9, 0.8, 0.7, 0.5 + t * 0.8);
+		float t = (density - 0.01) / 0.04;
+		return float4(0.88, 0.78, 0.68, 0.6 + t * 1.0);
 	}
 
-	// ✅ 치아 (가장 밝고 불투명)
-	return float4(1.0, 0.95, 0.9, 0.9);
+	// ✅ 치아 - 아이보리 (매우 밝고 불투명)
+	return float4(0.98, 0.95, 0.90, 2.0);
 }
 
 
