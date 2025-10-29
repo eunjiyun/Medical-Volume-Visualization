@@ -6,5 +6,6 @@
         <file>images/left2Bar.png</file>
         <file>images/leftPatientInfoBar.png</file>
         <file>images/left2_1Bar.png</file>
+        <file>images/volumeToggleBtn.png</file>
     </qresource>
 </RCC>
