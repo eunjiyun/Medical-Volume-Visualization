@@ -22,102 +22,6 @@ SamplerState samp : register(s0);
 
 
 
-//// Transfer Function: 諛?꾩뿉 ?곕씪 ?됱긽怨??뚰뙆 諛섑솚
-//float4 TransferFunction(float density)
-//{
-//	// 공기
-//	//if (density < 0.1)
-//	if (density < 0.01)
-//		return float4(0, 0, 0, 0);
-//
-//	//// 연조직
-//	//if (density < 0.4)
-//	//{
-//	//	float t = (density - 0.1) / 0.3;
-//	//	return float4(0.7, 0.5, 0.4, t * 0.1);  // ✅ 0.05 → 0.5
-//	//}
-//	  // ✅ 범위 조정
-//	if (density < 0.2)  // 0.4 → 0.2
-//	{
-//		float t = (density - 0.01) / 0.19;
-//		return float4(0.7, 0.5, 0.4, t * 0.5);
-//	}
-//
-//	//// 뼈
-//	//if (density < 0.7)
-//	//{
-//	//	float t = (density - 0.4) / 0.3;
-//	//	return float4(1.0, 0.9, 0.8, t * 0.6);  // ✅ 0.3 → 3.0
-//	//}
-//	if (density < 0.5)  // 0.7 → 0.5
-//	{
-//		float t = (density - 0.2) / 0.3;
-//		return float4(1.0, 0.9, 0.8, t * 3.0);
-//	}
-//
-//	//// 치아, 금속
-//	//return float4(1.0, 1.0, 1.0, 1.0);  // ✅ 0.5 → 5.0
-//	return float4(1.0, 1.0, 1.0, 5.0);
-//}
-
-//float4 TransferFunction(float density)
-//{
-//	// ✅ 전체 범위 활용
-//	if (density < 0.3)
-//	{
-//		float t = density / 0.3;
-//		return float4(0.7, 0.5, 0.4, t * 2.0);  // 베이지
-//	}
-//
-//	if (density < 0.6)
-//	{
-//		float t = (density - 0.3) / 0.3;
-//		return float4(1.0, 0.9, 0.8, 2.0 + t * 3.0);  // 밝은 베이지
-//	}
-//
-//	return float4(1.0, 1.0, 1.0, 5.0);  // 흰색
-//}
-
-//float4 TransferFunction(float density)
-//{
-//	if (density < 0.1)
-//		return float4(0, 0, 0, 0);
-//
-//	if (density < 0.3)
-//		return float4(0.7, 0.6, 0.5, 0.1);
-//
-//	if (density < 0.6)
-//		return float4(0.9, 0.8, 0.7, 0.5);
-//
-//	return float4(1.0, 0.95, 0.9, 1.0);
-//}
-
-//float4 TransferFunction(float density)
-//{
-//	// ✅ 공기/배경 제거
-//	if (density < 0.1)
-//		return float4(0, 0, 0, 0);
-//
-//	// ✅ 연조직
-//	if (density < 0.3)
-//	{
-//		float t = (density - 0.1) / 0.2;
-//		return float4(0.7, 0.5, 0.4, t * 0.6);
-//	}
-//
-//	// ✅ 뼈
-//	if (density < 0.6)
-//	{
-//		float t = (density - 0.3) / 0.3;
-//		return float4(0.9, 0.8, 0.7, 0.5 + t * 0.8);
-//	}
-//
-//	// ✅ 치아 (가장 밝고 불투명)
-//	return float4(1.0, 0.95, 0.9, 0.9);
-//}
-
-
-
 float4 TransferFunction(float density)
 {
 	// ✅ 0.001 이하만 제거 (거의 전부 사용)
@@ -128,65 +32,23 @@ float4 TransferFunction(float density)
 	if (density < 0.01)
 	{
 		float t = (density - 0.001) / 0.009;
-		return float4(0.6, 0.45, 0.35, t * 0.5);
+		//return float4(0.6, 0.45, 0.35, t * 0.5);
+		return float4(0.5, 0.35, 0.25, t * 0.4);  // 0.5 → 0.4
 	}
 
 	// ✅ 뼈 - 밝은 베이지
 	if (density < 0.05)
 	{
 		float t = (density - 0.01) / 0.04;
-		return float4(0.88, 0.78, 0.68, 0.6 + t * 1.0);
+		//return float4(0.88, 0.78, 0.68, 0.6 + t * 1.0);
+		return float4(0.85, 0.70, 0.55, 0.5 + t * 0.8);  // 노란 베이지
 	}
 
 	// ✅ 치아 - 아이보리 (매우 밝고 불투명)
-	return float4(0.98, 0.95, 0.90, 2.0);
+	//return float4(0.98, 0.95, 0.90, 2.0);
+	return float4(0.98, 0.95, 0.92, 2.2);  // 2.0 → 2.2
 }
 
-
-//float4 TransferFunction(float density)
-//{
-//	if (density < 0.15)
-//		return float4(0, 0, 0, 0);
-//
-//	if (density < 0.35)
-//	{
-//		float t = (density - 0.15) / 0.2;
-//		return float4(0.7, 0.5, 0.4, t * 0.3);  // ✅ 0.15 → 0.3
-//	}
-//
-//	if (density < 0.65)
-//	{
-//		float t = (density - 0.35) / 0.3;
-//		return float4(0.9, 0.8, 0.7, 0.5 + t * 0.5);  // ✅ 증가
-//	}
-//
-//	return float4(1.0, 1.0, 0.95, 1.5);  // ✅ 0.8 → 1.5
-//}
-
-
-//float4 TransferFunction(float density)
-//{
-//	// ✅ 공기/빈 공간 (임계값 높임)
-//	if (density < 0.3)
-//		return float4(0, 0, 0, 0);
-//
-//	// ✅ 연조직 - 어두운 베이지
-//	if (density < 0.5)
-//	{
-//		float t = (density - 0.3) / 0.2;
-//		return float4(0.7, 0.5, 0.4, t * 0.2);
-//	}
-//
-//	// ✅ 뼈 - 밝은 베이지
-//	if (density < 0.8)
-//	{
-//		float t = (density - 0.5) / 0.3;
-//		return float4(0.9, 0.8, 0.7, 0.3 + t * 0.4);
-//	}
-//
-//	// ✅ 치아 - 흰색 (높은 임계값)
-//	return float4(1.0, 1.0, 0.95, 0.8);
-//}
 
 float4 main(float4 pos : SV_POSITION, float2 uv : TEXCOORD0) : SV_Target
 {
@@ -414,6 +276,10 @@ rayPosWS = float3(0, 0, -3.0);
 		// ✅ 밀도 범위 확인 후 정규화
 		density = saturate(density / 255.0);  // 0~255 → 0~1
 
+		//// Transfer Function에서 치아 알파 조정
+		//if (density > 0.05)
+		//	return float4(0.98, 0.95, 0.90, 1.5);  // ✅ 2.0 → 1.5
+
 
 
 
@@ -520,6 +386,9 @@ rayPosWS = float3(0, 0, -3.0);
 
 			//acc.rgb = pow(acc.rgb, 1.0 / 2.2); // 감마 보정
 
+
+
+
 			acc.a += (1.0 - acc.a) * alpha;
 
 			if (acc.a >= 0.95)
@@ -541,7 +410,16 @@ rayPosWS = float3(0, 0, -3.0);
 	}
 
 
-	return float4(acc.rgb, acc.a);
+	//// Post-processing
+	//acc.rgb *= 1.2;  // ✅ 1.4 → 1.2 (약간만)
+	//acc.rgb = (acc.rgb - 0.5) * 1.25 + 0.5;
+	//acc.rgb = pow(saturate(acc.rgb), 1.0 / 2.2);
+
+	//return float4(acc.rgb, acc.a);
+
+	// ✅ 감마 보정만 (선택)
+	acc.rgb = pow(saturate(acc.rgb), 1.0 / 2.2);
+	return float4(acc.rgb, 1.0);
 
 }
 
