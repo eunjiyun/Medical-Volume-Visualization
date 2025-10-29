@@ -110,6 +110,23 @@ public:
 	};
 
 
+
+	float m_rotationX = 0.0f;  // X축 회전 (pitch)
+	float m_rotationY = 0.0f;  // Y축 회전 (yaw)
+
+	POINT m_lastMousePos = { 0, 0 };
+	bool m_isDragging = false;
+
+public:
+	//// 마우스 입력 처리
+	//void OnMouseDown(int x, int y);
+	//void OnMouseUp();
+	//void OnMouseMove(int x, int y);
+
+	void UpdateVolumeMatrix();
+	void Render();
+
+
 public:
 	QDirect3D11Widget(QWidget * parent);
 	~QDirect3D11Widget();
@@ -203,8 +220,15 @@ private:
 
 public:
 
+
 	void mouseMoveEvent(QMouseEvent* event);
 	void mouseReleaseEvent(QMouseEvent* event);
+
+
+	// 마우스 입력 처리
+	void OnMouseDown(int x, int y);
+	void OnMouseUp();
+	void OnMouseMove(int x, int y);
 
 
 	// Qt Events
@@ -246,6 +270,7 @@ private slots:
 	void onAxialScroll(int value);
 	void onCoronalScroll(int value);
 	void onSagittalScroll(int value);
+
 
 
 
@@ -360,7 +385,7 @@ public:
 
 
 	XMMATRIX view, proj;
-
+	CB cb{};
 public:
 	bool isPlaster{ false };
 	void plasterVolumeShow();

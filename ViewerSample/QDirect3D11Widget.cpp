@@ -485,20 +485,14 @@ QDirect3D11Widget::QDirect3D11Widget(QWidget* parent)
 
 
 
-
-
-
-
-
-
-
-
 	// 시그널 연결
 	connect(scrollAxial, &QScrollBar::valueChanged, this, &QDirect3D11Widget::onAxialScroll);
 	connect(scrollCoronal, &QScrollBar::valueChanged, this, &QDirect3D11Widget::onCoronalScroll);
 	connect(scrollSagittal, &QScrollBar::valueChanged, this, &QDirect3D11Widget::onSagittalScroll);
 
-
+	connect(scrollSagittal, &QScrollBar::valueChanged, this, &QDirect3D11Widget::OnMouseDown);
+	connect(scrollSagittal, &QScrollBar::valueChanged, this, &QDirect3D11Widget::OnMouseUp);
+	connect(scrollSagittal, &QScrollBar::valueChanged, this, &QDirect3D11Widget::OnMouseMove);
 }
 
 QDirect3D11Widget::~QDirect3D11Widget()
@@ -1018,118 +1012,7 @@ struct CB
 };
 struct Vtx { XMFLOAT2 pos; XMFLOAT2 uv; }; // NDC용이 아니라 스크린→NDC는 셰이더에서 변환
 
-//void QDirect3D11Widget::FullScreenPassSet()
-//{
-//	
-//	ComPtr<ID3D11Buffer> cbRay;
-//
-//	D3D11_BUFFER_DESC cbd{};
-//	cbd.ByteWidth = sizeof(CB);
-//	cbd.Usage = D3D11_USAGE_DYNAMIC;
-//	cbd.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-//	cbd.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
-//	m_pDevice->CreateBuffer(&cbd, nullptr, &cbRay);
-//
-//
-//	
-//	Vtx quad[4] = {
-//		{{-1.f, -1.f}, {0.f, 1.f}},
-//		{{-1.f,  1.f}, {0.f, 0.f}},
-//		{{ 1.f, -1.f}, {1.f, 1.f}},
-//		{{ 1.f,  1.f}, {1.f, 0.f}},
-//	};
-//
-//
-//	// 카메라/행렬 준비 (이미 쓰고 계신 View/Proj 사용)
-//	XMMATRIX V = view;      // XMMatrixLookAtLH(...)
-//	XMMATRIX P = proj;      // XMMatrixPerspectiveFovLH(...) or Ortho
-//	XMMATRIX iV = XMMatrixInverse(nullptr, V);
-//	XMMATRIX iP = XMMatrixInverse(nullptr, P);
-//
-//	// 볼륨을 -0.5~+0.5 박스로 쓰기 위해 적당히 스케일/오프셋
-//	//XMMATRIX W = volumeWorld;                  // 예: 스케일*회전*이동
-//
-//	float sx = fileReader->views.spacing.x; // PixelSpacing X
-//	float sy = fileReader->views.spacing.y; // PixelSpacing Y
-//	float sz = fileReader->views.spacing.z; // SliceThickness
-//	//XMMATRIX W = XMMatrixScaling(sx, sy, sz);
-//
-//
-//	XMMATRIX rotY = XMMatrixRotationY(XMConvertToRadians(10.0f));
-//	XMMATRIX rotX = XMMatrixRotationX(XMConvertToRadians(-5.0f));
-//	XMMATRIX trans = XMMatrixTranslation(0.0f, 0.0f, 0.0f);
-//	XMMATRIX scale = XMMatrixScaling(sx, sy, sz);
-//	XMMATRIX W = scale * rotY * rotX * trans;
-//
-//
-//	//XMMATRIX W = XMMatrixIdentity();
-//	//XMMATRIX W = XMMatrixTranslation(0.0f, 0.0f, 0.0f);
-//
-//	XMMATRIX iW = XMMatrixInverse(nullptr, W);
-//
-//	CB cb{};
-//	cb.View = XMMatrixTranspose(V);
-//	cb.Proj = XMMatrixTranspose(P);
-//	cb.InvView = XMMatrixTranspose(iV);
-//	cb.InvProj = XMMatrixTranspose(iP);
-//	cb.VolumeWorld = XMMatrixTranspose(W);
-//	cb.InvVolumeWorld = XMMatrixTranspose(iW);
-//	cb.CameraPosWS = {/*eye.x,eye.y,eye.z*/ };
-//	cb.Step = 0.004f;        // 화질/성능 트레이드오프
-//	cb.MaxSteps = 384;           // 데이터 두께에 따라
-//	cb.Opacity = 0.08f;         // 투명도 스케일
-//
-//	D3D11_MAPPED_SUBRESOURCE m{};
-//	m_pDeviceContext->Map(cbRay.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &m);
-//	memcpy(m.pData, &cb, sizeof(cb));
-//	m_pDeviceContext->Unmap(cbRay.Get(), 0);
-//
-//	// 파이프라인 바인딩
-//	m_pDeviceContext->IASetInputLayout(layoutQuad);
-//	m_pDeviceContext->VSSetShader(vsFullscreen, nullptr, 0);
-//	m_pDeviceContext->PSSetShader(psRaymarch, nullptr, 0);
-//	ID3D11Buffer* cbs[] = { cbRay.Get() };
-//	m_pDeviceContext->VSSetConstantBuffers(0, 1, cbs);
-//	m_pDeviceContext->PSSetConstantBuffers(0, 1, cbs);
-//	ID3D11ShaderResourceView* srvs[] = { m_volumeSRV.Get() };
-//	m_pDeviceContext->PSSetShaderResources(0, 1, srvs);
-//	ID3D11SamplerState* samps[] = { m_volumeSampler.Get() };
-//	m_pDeviceContext->PSSetSamplers(0, 1, samps);
-//
-//
-//
-//	// ✅ 정점 버퍼 생성 (한 번만 해도 됨)
-//	D3D11_BUFFER_DESC vbd{};
-//	vbd.ByteWidth = sizeof(quad);
-//	vbd.Usage = D3D11_USAGE_DEFAULT;
-//	vbd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
-//
-//	D3D11_SUBRESOURCE_DATA initVB{};
-//	initVB.pSysMem = quad;
-//
-//	HRESULT hrVB = m_pDevice->CreateBuffer(&vbd, &initVB, &m_quadVB);
-//	if (FAILED(hrVB)) {
-//		OutputDebugStringA("❌ Failed to create fullscreen quad vertex buffer\n");
-//	}
-//
-//
-//
-//	UINT stride = sizeof(Vtx);
-//	UINT offset = 0;
-//	m_pDeviceContext->IASetVertexBuffers(0, 1, &m_quadVB, &stride, &offset);
-//	m_pDeviceContext->IASetInputLayout(layoutQuad);
-//	m_pDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
-//
-//
-//
-//
-//	//// 블렌딩/깊이: 화면 합성만 할 거면 깊이는 끄거나 쓰지 않아도 됩니다.
-//	//m_pDeviceContext->DrawIndexed(6, 0, 0);
-//
-//	// 3️⃣ 셰이더, 텍스처, 상수 버퍼 바인딩 후
-//	m_pDeviceContext->Draw(4, 0);
-//
-//}
+
 void QDirect3D11Widget::FullScreenPassSet()
 {
 
@@ -1204,6 +1087,7 @@ void QDirect3D11Widget::FullScreenPassSet()
 	XMVECTOR at = XMVectorSet(0.0f, 0.0f, 0.0f, 1.0f);
 	XMVECTOR up = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
 	XMMATRIX V = XMMatrixLookAtLH(eye, at, up);
+	//XMMATRIX V = view;
 
 
 	//XMMATRIX P = XMMatrixPerspectiveFovLH(XM_PIDIV4, (float)width()  / ((float)height() ), 0.1f, 10.0f);
@@ -1213,6 +1097,8 @@ void QDirect3D11Widget::FullScreenPassSet()
 		0.1f,
 		100.0f  // Far plane 증가
 	);
+
+	//XMMATRIX P = proj;
 
 
 	XMMATRIX iV = XMMatrixInverse(nullptr, V);
@@ -1243,7 +1129,7 @@ void QDirect3D11Widget::FullScreenPassSet()
 
 
 	// ✅ 6️⃣ 상수 버퍼 데이터 채우기
-	CB cb{};
+	
 	cb.View = XMMatrixTranspose(V);
 	cb.Proj = XMMatrixTranspose(P);
 	cb.InvView = XMMatrixTranspose(iV);
@@ -1307,6 +1193,72 @@ void QDirect3D11Widget::FullScreenPassSet()
 	m_pDeviceContext->Draw(4, 0);
 
 }
+
+
+//==============================================================
+// 마우스 입력 처리
+void QDirect3D11Widget::OnMouseDown(int x, int y)
+{
+	m_isDragging = true;
+	m_lastMousePos.x = x;
+	m_lastMousePos.y = y;
+}
+
+void QDirect3D11Widget::OnMouseUp()
+{
+	m_isDragging = false;
+}
+
+void QDirect3D11Widget::OnMouseMove(int x, int y)
+{
+	if (!m_isDragging)
+		return;
+
+	// 마우스 이동량 계산
+	int deltaX = x - m_lastMousePos.x;
+	int deltaY = y - m_lastMousePos.y;
+
+	// 회전 속도 조절
+	float sensitivity = 0.5f;
+	m_rotationY += deltaX * sensitivity * XM_PI / 180.0f;
+	m_rotationX += deltaY * sensitivity * XM_PI / 180.0f;
+
+	// X축 회전 제한 (-90도 ~ +90도)
+	m_rotationX = std::clamp(m_rotationX, -XM_PIDIV2, XM_PIDIV2);
+
+	m_lastMousePos.x = x;
+	m_lastMousePos.y = y;
+}
+
+void QDirect3D11Widget::UpdateVolumeMatrix()
+{
+	// 1. 볼륨을 원점 중심으로
+	XMMATRIX translation = XMMatrixTranslation(0, 0, 0);
+
+	// 2. 스케일
+	float volumeSize = 1.5f;
+	XMMATRIX scale = XMMatrixScaling(volumeSize, volumeSize, volumeSize);
+
+	// 3. 회전 (Y축 먼저, X축 나중에)
+	XMMATRIX rotX = XMMatrixRotationX(m_rotationX);
+	XMMATRIX rotY = XMMatrixRotationY(m_rotationY);
+
+	// 4. 최종 행렬
+	XMMATRIX volumeWorld = scale * rotY * rotX * translation;
+
+	//CB cb{};
+
+	// 5. Constant Buffer 업데이트
+	cb.VolumeWorld = XMMatrixTranspose(volumeWorld);
+	cb.InvVolumeWorld = XMMatrixTranspose(XMMatrixInverse(nullptr, volumeWorld));
+}
+//======================================================================================
+
+
+
+
+
+
 
 
 void QDirect3D11Widget::initializeRenderTargets()
@@ -1916,69 +1868,18 @@ void QDirect3D11Widget::plasterVolumeShow()
 
 
 
-
-	//// === 기존 카메라 설정 ===
-	//XMMATRIX view = XMMatrixLookAtLH(
-	//	XMVectorSet(-0.3f, 0.3f, -1.2f, 0.0f),  // 카메라 위치
-	//	XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f),    // 바라보는 지점
-	//	XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f)     // 업 벡터
-	//);
-
-	//XMMATRIX proj = XMMatrixPerspectiveFovLH(XM_PIDIV4, 1.0f, 0.1f, 100.0f);
-
-
-
-
-	// === 볼륨 회전에 카메라 방향 반영 ===
-
-//// 1️⃣ view 행렬의 역행렬 계산
-//		XMMATRIX invView = XMMatrixInverse(nullptr, view);
-//
-//		// 2️⃣ 볼륨 스케일 적용
-//		XMMATRIX volumeScale = XMMatrixScaling(0.55f, 0.55f, 0.55f);
-//
-//		// 3️⃣ 볼륨 중심 약간 이동 (턱이 화면 중앙으로)
-//		XMMATRIX volumeOffset = XMMatrixTranslation(0.0f, -0.08f, 0.0f);
-//
-//		// 4️⃣ 최종 월드 행렬 구성
-//		//    🔹 invView를 곱하면 카메라의 회전을 그대로 따라가게 됨
-//		XMMATRIX volumeWorld = volumeScale * invView * volumeOffset;
-
-
-
 	float blendFactor[4] = { 0,0,0,0 };
 	m_pDeviceContext->OMSetBlendState(m_alphaBlendState.Get(), blendFactor, 0xffffffff);
 
 	float centerY = (fileReader->m_height - 1) * 0.5f;
 
-	//// 🟠 볼륨 크기 더 줄임
-	//XMMATRIX volScale = XMMatrixScaling(0.52f, 0.52f, 0.52f);
-
-	////// 🟠 볼륨 공통 회전 (왼쪽 뷰 기준)
-	////XMMATRIX volRotation =
-	////	XMMatrixRotationY(-XMConvertToRadians(10.0f)) *
-	////	XMMatrixRotationX(XMConvertToRadians(6.0f));
-
-	//// 🟠 중심 살짝 위로
-	//XMMATRIX centerOffset = XMMatrixTranslation(0.0f, -0.1f, 0.0f);
+	
 
 	for (int y = fileReader->m_height - 1; y >= 0; --y)
 	{
-		/*	float offsetY = ((y - centerY) / centerY) * 0.4f;
-			offsetY *= fileReader->views.spacing.y * 0.7f;*/
-
 		float alpha = 1.0f / fileReader->m_height * 0.2f;
 
-		//XMMATRIX translation = XMMatrixTranslation(0.0f, offsetY, 0.0f);
-
-
-		////m_CoronalPlane.worldMatrix; 
-		//XMMATRIX world = volScale * translation * centerOffset;
-
-		//XMMATRIX world = volScale * translation * centerOffset;
-
-		//XMStoreFloat4x4(&constantsPrev.World, XMMatrixTranspose(world));
-
+	
 
 		XMMATRIX scale = XMMatrixScaling(0.9f, 0.9f, 0.9f); // ← 여기서 크기 조절
 
@@ -1997,16 +1898,10 @@ void QDirect3D11Widget::plasterVolumeShow()
 
 		XMMATRIX translation = XMMatrixTranslation(0.0f, offsetY, 0.0f);
 
-		//XMMATRIX worldC = scale * XMMatrixTranslation(0.0f, 0.0f, 0.0f);
-
-
+		
 
 		XMMATRIX invView = XMMatrixInverse(nullptr, view);
 		invView.r[3] = XMVectorSet(0, 0, 0, 1); // 위치 영향 제거, 회전만 적용
-
-	//	XMMATRIX volumeScale = XMMatrixScaling(0.55f, 0.55f, 0.55f);
-	//	XMMATRIX volumeOffset = XMMatrixTranslation(0.0f, -0.08f, 0.0f);
-	//	XMMATRIX volumeWorld = /*volumeScale **/ invView * volumeOffset;
 
 		  // 6️⃣ 최종 World 구성: 스케일 → 회전 → 슬라이스 위치 → 카메라 정합 → 오프셋
 		XMMATRIX volumeWorld =
@@ -2038,227 +1933,14 @@ void QDirect3D11Widget::plasterVolumeShow()
 	void QDirect3D11Widget::RenderVolumeView()
 	{
 
-
-
-		// ===== ✅ 볼륨 렌더링 (왼쪽 뷰처럼 축소 및 회전) =====
-		//{
-		//			m_pDeviceContext->IASetInputLayout(m_prevVolumeInputLayout);
-		//			m_pDeviceContext->VSSetShader(m_volumeQuadVS, nullptr, 0);
-		//			m_pDeviceContext->PSSetShader(m_volumeQuadPS, nullptr, 0);
-		//			m_pDeviceContext->VSSetConstantBuffers(0, 1, &m_volumePrevConstantBuffer);
-		//			m_pDeviceContext->PSSetConstantBuffers(0, 1, &m_volumePrevConstantBuffer);
-		//	
-		//			m_pDeviceContext->OMSetDepthStencilState(m_disableDepthState.Get(), 0);
-		//	
-		//	
-		//	
-		//	
-		//			//// === 기존 카메라 설정 ===
-		//			//XMMATRIX view = XMMatrixLookAtLH(
-		//			//	XMVectorSet(-0.3f, 0.3f, -1.2f, 0.0f),  // 카메라 위치
-		//			//	XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f),    // 바라보는 지점
-		//			//	XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f)     // 업 벡터
-		//			//);
-		//	
-		//			//XMMATRIX proj = XMMatrixPerspectiveFovLH(XM_PIDIV4, 1.0f, 0.1f, 100.0f);
-		//	
-		//	
-		//	
-		//	
-		//			// === 볼륨 회전에 카메라 방향 반영 ===
-		//	
-		//	//// 1️⃣ view 행렬의 역행렬 계산
-		//	//		XMMATRIX invView = XMMatrixInverse(nullptr, view);
-		//	//
-		//	//		// 2️⃣ 볼륨 스케일 적용
-		//	//		XMMATRIX volumeScale = XMMatrixScaling(0.55f, 0.55f, 0.55f);
-		//	//
-		//	//		// 3️⃣ 볼륨 중심 약간 이동 (턱이 화면 중앙으로)
-		//	//		XMMATRIX volumeOffset = XMMatrixTranslation(0.0f, -0.08f, 0.0f);
-		//	//
-		//	//		// 4️⃣ 최종 월드 행렬 구성
-		//	//		//    🔹 invView를 곱하면 카메라의 회전을 그대로 따라가게 됨
-		//	//		XMMATRIX volumeWorld = volumeScale * invView * volumeOffset;
-		//	
-		//	
-		//	
-		//			float blendFactor[4] = { 0,0,0,0 };
-		//			m_pDeviceContext->OMSetBlendState(m_alphaBlendState.Get(), blendFactor, 0xffffffff);
-		//	
-		//			float centerY = (fileReader->m_height - 1) * 0.5f;
-		//	
-		//			//// 🟠 볼륨 크기 더 줄임
-		//			//XMMATRIX volScale = XMMatrixScaling(0.52f, 0.52f, 0.52f);
-		//	
-		//			////// 🟠 볼륨 공통 회전 (왼쪽 뷰 기준)
-		//			////XMMATRIX volRotation =
-		//			////	XMMatrixRotationY(-XMConvertToRadians(10.0f)) *
-		//			////	XMMatrixRotationX(XMConvertToRadians(6.0f));
-		//	
-		//			//// 🟠 중심 살짝 위로
-		//			//XMMATRIX centerOffset = XMMatrixTranslation(0.0f, -0.1f, 0.0f);
-		//	
-		//			for (int y = fileReader->m_height - 1; y >= 0; --y)
-		//			{
-		//			/*	float offsetY = ((y - centerY) / centerY) * 0.4f;
-		//				offsetY *= fileReader->views.spacing.y * 0.7f;*/
-		//	
-		//				float alpha = 1.0f / fileReader->m_height * 0.2f;
-		//	
-		//				//XMMATRIX translation = XMMatrixTranslation(0.0f, offsetY, 0.0f);
-		//	
-		//	
-		//				////m_CoronalPlane.worldMatrix; 
-		//				//XMMATRIX world = volScale * translation * centerOffset;
-		//	
-		//				//XMMATRIX world = volScale * translation * centerOffset;
-		//	
-		//				//XMStoreFloat4x4(&constantsPrev.World, XMMatrixTranspose(world));
-		//	
-		//	
-		//				XMMATRIX scale = XMMatrixScaling(0.9f, 0.9f, 0.9f); // ← 여기서 크기 조절
-		//	
-		//					// 2️⃣ 회전 — 플레인과 동일한 카메라 시점 정합
-		//				XMMATRIX volRotation =
-		//					XMMatrixRotationY(XMConvertToRadians(-10.0f)) *   // 오른쪽으로 살짝 회전
-		//					XMMatrixRotationX(XMConvertToRadians(6.0f));      // 위에서 약간 내려다봄
-		//	
-		//				   // 3️⃣ 볼륨 중심 약간 이동 (턱 기준으로 정렬)
-		//				XMMATRIX volOffset = XMMatrixTranslation(0.0f, -0.08f, 0.0f);
-		//	
-		//				// 4️⃣ 슬라이스 간 세로 offset (적층 높이)
-		//				float offsetY = ((y - centerY) / centerY) * 0.4f;
-		//				offsetY *= fileReader->views.spacing.y * 0.7f;
-		//	
-		//	
-		//				XMMATRIX translation = XMMatrixTranslation(0.0f, offsetY, 0.0f);
-		//	
-		//				//XMMATRIX worldC = scale * XMMatrixTranslation(0.0f, 0.0f, 0.0f);
-		//	
-		//	
-		//	
-		//				XMMATRIX invView = XMMatrixInverse(nullptr, view);
-		//				invView.r[3] = XMVectorSet(0, 0, 0, 1); // 위치 영향 제거, 회전만 적용
-		//	
-		//			//	XMMATRIX volumeScale = XMMatrixScaling(0.55f, 0.55f, 0.55f);
-		//			//	XMMATRIX volumeOffset = XMMatrixTranslation(0.0f, -0.08f, 0.0f);
-		//			//	XMMATRIX volumeWorld = /*volumeScale **/ invView * volumeOffset;
-		//	
-		//				  // 6️⃣ 최종 World 구성: 스케일 → 회전 → 슬라이스 위치 → 카메라 정합 → 오프셋
-		//				XMMATRIX volumeWorld =
-		//					scale *
-		//					volRotation *
-		//					translation *
-		//					invView *
-		//					volOffset;
-		//	
-		//	
-		//				XMStoreFloat4x4(&constantsPrev.View, XMMatrixTranspose(view));
-		//				XMStoreFloat4x4(&constantsPrev.Projection, XMMatrixTranspose(proj));
-		//				XMStoreFloat4x4(&constantsPrev.World, XMMatrixTranspose(volumeWorld));
-		//	
-		//	
-		//				constantsPrev.Color = XMFLOAT4(1, 1, 1, alpha);
-		//		
-		//				m_pDeviceContext->UpdateSubresource(m_volumePrevConstantBuffer, 0, nullptr, &constantsPrev, 0, 0);
-		//	
-		//				ID3D11ShaderResourceView* srv = coronalTextureCacheSrv[y];
-		//				m_pDeviceContext->PSSetShaderResources(0, 1, &srv);
-		//	
-		//				DrawSliceQuad();
-		//		
-
-		if (isPlaster)
-			plasterVolumeShow();
-		else {
-
-		///*	float blendFactor[4] = { 0,0,0,0 };
-		//	m_pDeviceContext->OMSetBlendState(nullptr, blendFactor, 0xffffffff);
-		//	m_pDeviceContext->OMSetDepthStencilState(nullptr, 0);*/
-		//	m_pDeviceContext->VSSetShader(m_volumeVS, nullptr, 0);
-		//	m_pDeviceContext->PSSetShader(m_volumePS, nullptr, 0);
-
-
-			//// 레이마칭 전에 현재 상태 백업
-			//ID3D11VertexShader* oldVS = nullptr;
-			//ID3D11PixelShader*  oldPS = nullptr;
-			//m_pDeviceContext->VSGetShader(&oldVS, nullptr, nullptr);
-			//m_pDeviceContext->PSGetShader(&oldPS, nullptr, nullptr);
-			//
-			//
-			//// ✅ (1) 기존 상태 백업
-			//ComPtr<ID3D11DepthStencilState> prevDS;
-			//UINT prevStencilRef = 0;
-			//m_pDeviceContext->OMGetDepthStencilState(&prevDS, &prevStencilRef);
-
-			ComPtr<ID3D11BlendState> prevBS;
-			FLOAT prevBlendFactor[4] = { 0, 0, 0, 0 };
-			UINT prevSampleMask = 0xffffffff;
-			m_pDeviceContext->OMGetBlendState(&prevBS, prevBlendFactor, &prevSampleMask);
-
-			// ✅ (2) 볼륨 렌더링용 상태 설정
-			m_pDeviceContext->OMSetDepthStencilState(nullptr, 0);
-			m_pDeviceContext->OMSetBlendState(nullptr, nullptr, 0xffffffff);
-
-			// ✅ (3) 볼륨 렌더링 수행
-			FullScreenPassSet();
-
-			//// ✅ (4) 원래 상태 복원
-			//m_pDeviceContext->OMSetDepthStencilState(prevDS.Get(), prevStencilRef);
-			//m_pDeviceContext->OMSetBlendState(prevBS.Get(), prevBlendFactor, prevSampleMask);
-			//
-			//// 이전 상태 복원
-			//m_pDeviceContext->VSSetShader(oldVS, nullptr, 0);
-			//m_pDeviceContext->PSSetShader(oldPS, nullptr, 0);
-			////SAFE_RELEASE(oldVS);
-			////SAFE_RELEASE(oldPS);
-
-
-
-		}
-
-
-
-
-
-		m_pDeviceContext->ClearDepthStencilView(m_pDepthStencilView, D3D11_CLEAR_DEPTH, 1.0f, 0);
-		m_pDeviceContext->OMSetRenderTargets(1, &m_pSwapChainRTV, m_pDepthStencilView);
-
-		m_pDeviceContext->VSSetShader(m_volumeVS, nullptr, 0);
-		m_pDeviceContext->PSSetShader(m_volumePS, nullptr, 0);
-		m_pDeviceContext->VSSetConstantBuffers(0, 1, &m_volumeConstantBuffer);
-		m_pDeviceContext->PSSetConstantBuffers(0, 1, &m_volumeConstantBuffer);
-
-
-		//XMMATRIX view = XMMatrixLookAtLH(
-		//	XMVectorSet(-0.3f, 0.3f, -1.2f, 0.0f),  // ← 거의 정면에 가까운 위치 // 카메라 위치 (eye)
-		//	XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f),    // 원점 바라봄                // 바라보는 대상 (target)
-		//	XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f)     // 업 벡터                    // 위쪽 방향 (up)
-		//);
-
-		// 🎯 기존보다 살짝 사선 시점으로
-		//XMVECTOR eye = XMVectorSet(0.6f, 0.5f, -1.0f, 0.0f);     // 오른쪽 위 뒤에서
-		//XMVECTOR target = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);   // 원점(볼륨 중심)
-		//XMVECTOR up = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);       // Y축 기준 위쪽
-
-	// ✅ 카메라 위치 조정 (조금 더 정면 + 가까이)
-	//	XMVECTOR eye = XMVectorSet(-0.45f, 0.25f, -0.9f, 0.0f);  // ← 왼쪽·위로 살짝, 거리 짧게
-
 		XMVECTOR eye = XMVectorSet(-0.2f, 0.2f, -1.0f, 0.0f);  // 더 정면, 더 낮게
 
 		XMVECTOR target = XMVectorZero();                        // 원점(볼륨 중심)
 		XMVECTOR up = XMVectorSet(0.0f, 1.0f, -0.05f, 0.0f);
 
 
-
-
 		view = XMMatrixLookAtLH(eye, target, up);
-		//XMMATRIX proj = XMMatrixPerspectiveFovLH(XM_PIDIV4, 1.0f, 0.1f, 100.0f);
 
-
-		//// Orthographic Projection으로 변경
-		//float viewWidth = 2.0f;   // 화면에 보일 가로 범위
-		//float viewHeight = 2.0f;  // 화면에 보일 세로 범위
 		float nearZ = 0.01f;
 		float farZ = 100.0f;
 
@@ -2272,6 +1954,45 @@ void QDirect3D11Widget::plasterVolumeShow()
 
 
 
+		if (isPlaster)
+			plasterVolumeShow();
+		else {
+
+		
+
+			ComPtr<ID3D11BlendState> prevBS;
+			FLOAT prevBlendFactor[4] = { 0, 0, 0, 0 };
+			UINT prevSampleMask = 0xffffffff;
+			m_pDeviceContext->OMGetBlendState(&prevBS, prevBlendFactor, &prevSampleMask);
+
+			// ✅ (2) 볼륨 렌더링용 상태 설정
+			m_pDeviceContext->OMSetDepthStencilState(nullptr, 0);
+			m_pDeviceContext->OMSetBlendState(nullptr, nullptr, 0xffffffff);
+
+			// ✅ (3) 볼륨 렌더링 수행
+			FullScreenPassSet();
+
+		}
+
+
+		m_pDeviceContext->ClearDepthStencilView(m_pDepthStencilView, D3D11_CLEAR_DEPTH, 1.0f, 0);
+		m_pDeviceContext->OMSetRenderTargets(1, &m_pSwapChainRTV, m_pDepthStencilView);
+
+		m_pDeviceContext->VSSetShader(m_volumeVS, nullptr, 0);
+		m_pDeviceContext->PSSetShader(m_volumePS, nullptr, 0);
+		m_pDeviceContext->VSSetConstantBuffers(0, 1, &m_volumeConstantBuffer);
+		m_pDeviceContext->PSSetConstantBuffers(0, 1, &m_volumeConstantBuffer);
+
+
+
+	
+
+
+
+
+
+
+
 		XMStoreFloat4x4(&constants.View, XMMatrixTranspose(view));
 		XMStoreFloat4x4(&constants.Projection, XMMatrixTranspose(proj));
 
@@ -2280,9 +2001,6 @@ void QDirect3D11Widget::plasterVolumeShow()
 
 		// ---- Axial (XY plane, z=0)
 		{
-			/*XMMATRIX world = scale * XMMatrixTranslation(0.0f, 0.0f, 0.0f);
-			XMStoreFloat4x4(&constants.World, XMMatrixTranspose(world));*/
-
 			constants.World = m_CoronalPlane.worldMatrix; // ✅ 저장된 World Matrix 사용
 			constants.Color = XMFLOAT4(0.0f, 1.0f, 1.0f, 1.0f); // 청록
 			m_pDeviceContext->UpdateSubresource(m_volumeConstantBuffer, 0, nullptr, &constants, 0, 0);
@@ -2291,10 +2009,6 @@ void QDirect3D11Widget::plasterVolumeShow()
 
 		// ---- Coronal (XZ plane, y=0)
 		{
-			/*XMMATRIX world = scale * XMMatrixRotationX(XM_PIDIV2);
-			XMStoreFloat4x4(&constants.World, XMMatrixTranspose(world));*/
-
-
 			constants.World = m_AxialPlane.worldMatrix;  // ✅ 저장된 World Matrix 사용
 			constants.Color = XMFLOAT4(1.0f, 0.0f, 1.0f, 1.0f); // 자홍
 			m_pDeviceContext->UpdateSubresource(m_volumeConstantBuffer, 0, nullptr, &constants, 0, 0);
@@ -2303,18 +2017,11 @@ void QDirect3D11Widget::plasterVolumeShow()
 
 		// ---- Sagittal (YZ plane, x=0)
 		{
-			/*XMMATRIX world = scale * XMMatrixRotationY(XM_PIDIV2);
-			XMStoreFloat4x4(&constants.World, XMMatrixTranspose(world));*/
-
 			constants.World = m_SagittalPlane.worldMatrix; // ✅ 저장된 World Matrix 사용
 			constants.Color = XMFLOAT4(1.0f, 1.0f, 0.0f, 1.0f); // 노랑
 			m_pDeviceContext->UpdateSubresource(m_volumeConstantBuffer, 0, nullptr, &constants, 0, 0);
 			DrawPlane(m_SagittalPlane);
 		}
-
-
-
-
 
 	}
 
@@ -4301,10 +4008,37 @@ void QDirect3D11Widget::plasterVolumeShow()
 
 
 	void QDirect3D11Widget::mouseMoveEvent(QMouseEvent* event) {
-		/*ImGuiIO& io = ImGui::GetIO();
-		io.MousePos = ImVec2(event->pos().x(), event->pos().y());*/
-	}
+		QPoint currentPos = event->pos();
 
+		if (m_isDragging)
+		{
+			// 이동량 계산
+			int deltaX = currentPos.x() - m_lastMousePos.x();
+			int deltaY = currentPos.y() - m_lastMousePos.y();
+
+			// 회전 속도 조절
+			float sensitivity = 0.5f;
+			m_rotationY += deltaX * sensitivity * XM_PI / 180.0f;
+			m_rotationX += deltaY * sensitivity * XM_PI / 180.0f;
+
+			// X축 회전 제한 (-90도 ~ +90도)
+			m_rotationX = qBound(-XM_PIDIV2, m_rotationX, XM_PIDIV2);
+
+			// 시그널 발생
+			emit rotationChanged(m_rotationX, m_rotationY);
+
+			// 다시 그리기
+			update();
+		}
+		else if (m_isRightDragging)
+		{
+			// 우클릭 드래그 (팬 이동 등)
+			// 필요시 구현
+		}
+
+		m_lastMousePos = currentPos;
+		event->accept();
+	}
 
 
 	void QDirect3D11Widget::mouseReleaseEvent(QMouseEvent* event) {
