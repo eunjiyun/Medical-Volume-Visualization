@@ -394,14 +394,28 @@
 														<height>40</height>
 													</size>
 												</property>
-												<property name="font">
-													<font>
-														<family>NanumSquare</family>
-														<pointsize>10</pointsize>
-													</font>
+												<property name="checkable">
+													<bool>true</bool>
+												</property>
+												<property name="styleSheet">
+													<string notr="true">QPushButton {
+    border: none;
+    padding: 0px;
+    background: transparent;
+    image: url(:/images/colorInvert.png);
+}
+QPushButton:checked {
+    image: url(:/images/colorInvert2.png);
+}
+QPushButton:hover {
+    background: transparent;
+}
+QPushButton:pressed {
+    background: transparent;
+}</string>
 												</property>
 												<property name="text">
-													<string>색상반전</string>
+													<string/>
 												</property>
 											</widget>
 										</item>
