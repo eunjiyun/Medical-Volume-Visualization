@@ -370,16 +370,90 @@
 										</size>
 									</property>
 									<property name="pixmap">
-										<pixmap>:/images/left2Bar.png</pixmap>
+										<pixmap>:/images/left2_1Bar.png</pixmap>
 									</property>
 									<property name="scaledContents">
 										<bool>true</bool>
 									</property>
 									<property name="alignment">
-										<set>Qt::AlignCenter</set>
+										 <set>Qt::AlignTop | Qt::AlignHCenter</set>
+
 									</property>
 								</widget>
 							</item>
+							<item>
+    <widget class="QWidget" name="buttonPanel">
+        <property name="minimumSize">
+            <size>
+                <width>190</width>
+                <height>0</height>
+            </size>
+        </property>
+        <property name="maximumSize">
+            <size>
+                <width>190</width>
+                <height>16777215</height>
+            </size>
+        </property>
+        <property name="styleSheet">
+            <string notr="true">background-color: rgb(240, 240, 240);</string>
+        </property>
+        <layout class="QVBoxLayout" name="verticalLayout">
+            <property name="spacing">
+                <number>6</number>
+            </property>
+            <property name="alignment">
+                <set>Qt::AlignTop</set>
+            </property>
+
+            <!-- 버튼 1 -->
+            <item>
+                <widget class="QPushButton" name="btnColorInvert">
+                    <property name="text">
+                        <string>볼륨 전환</string>
+                    </property>
+                </widget>
+            </item>
+
+            <!-- 버튼 2 -->
+            <item>
+                <widget class="QPushButton" name="btnViewHead">
+                    <property name="text">
+                        <string>두부 보기</string>
+                    </property>
+                </widget>
+            </item>
+
+            <!-- 버튼 3 -->
+            <item>
+                <widget class="QPushButton" name="btnGraphAdjust">
+                    <property name="text">
+                        <string>그래프 조정</string>
+                    </property>
+                </widget>
+            </item>
+
+            <!-- 버튼 4 -->
+            <item>
+                <widget class="QPushButton" name="btnAutoAdjust">
+                    <property name="text">
+                        <string>자동 조정</string>
+                    </property>
+                </widget>
+            </item>
+
+            <!-- 버튼 5 -->
+            <item>
+                <widget class="QPushButton" name="btnReset">
+                    <property name="text">
+                        <string>초기화</string>
+                    </property>
+                </widget>
+            </item>
+        </layout>
+    </widget>
+</item>
+
 						</layout>
 					</widget>
 				</item>

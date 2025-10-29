@@ -30,7 +30,11 @@ PSOutput PSMain(VSOutput input)
     float4 base = tex.Sample(samp0, uv);
     bool isCross = abs(uv.x - crossUV.x) < crossThickness || abs(uv.y - crossUV.y) < crossThickness;
 
-	o.color0 = isCross ? crossColor : base;
+	//o.color0 = isCross ? crossColor : base;
+
+	// 파란색으로 고정: R=0, G=0, B=1, A=1
+	o.color0 = isCross ? float4(0.0, 0.0, 1.0, 1.0) : base;
+
 
     return o;
 }

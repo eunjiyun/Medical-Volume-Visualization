@@ -35,6 +35,23 @@ void ViewerSample::connectSlots()
 	connect(m_pScene, &QDirect3D11Widget::deviceInitialized, this, &ViewerSample::init);
 	connect(m_pScene, &QDirect3D11Widget::ticked, this, &ViewerSample::tick);
 	connect(m_pScene, &QDirect3D11Widget::rendered, this, &ViewerSample::render);
+
+	connect(ui->btnColorInvert, &QPushButton::clicked, this, &ViewerSample::onBtnColorInvertClicked);
+}
+
+
+// 예: MainWindow.cpp
+void ViewerSample::onBtnColorInvertClicked() {
+	// 여기에 원하는 동작을 구현
+	qDebug() << "볼륨 전환 버튼이 클릭되었습니다!";
+	// 예: dx 값을 변경하거나 뷰 업데이트
+
+	if (m_pScene->isPlaster)
+		m_pScene->isPlaster = false;
+	else
+		m_pScene->isPlaster = true;
+
+	update();
 }
 
 void ViewerSample::init(bool success)

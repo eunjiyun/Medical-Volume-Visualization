@@ -3075,7 +3075,11 @@ void QDirect3D11Widget::plasterVolumeShow()
 		py[0] = event->pos().y(); // 클릭된 y 좌표
 
 
-		qDebug() << "px:" << px << "py:" << py;
+		//qDebug() << "px:" << px << "py:" << py;
+
+		QPoint relativePos = event->pos(); // 위젯 기준 상대 좌표
+		qDebug() << "Clicked at relative position:" << relativePos;
+
 
 
 		//float scale = this->devicePixelRatioF();
