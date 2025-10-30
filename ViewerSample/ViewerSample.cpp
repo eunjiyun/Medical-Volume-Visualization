@@ -17,6 +17,8 @@ ViewerSample::ViewerSample(QWidget* parent)
 	m_pScene = ui->view;
 	adjustWindowSize();
 	connectSlots();
+
+
 }
 
 ViewerSample::~ViewerSample() = default;
@@ -37,6 +39,8 @@ void ViewerSample::connectSlots()
 	connect(m_pScene, &QDirect3D11Widget::rendered, this, &ViewerSample::render);
 
 	connect(ui->btnColorInvert, &QPushButton::clicked, this, &ViewerSample::onBtnColorInvertClicked);
+	// ✅ 시그널 연결
+	connect(m_pScene, &QDirect3D11Widget::onRotationChanged,this, &ViewerSample::onRotationChanged);
 }
 
 

@@ -37,8 +37,18 @@ QDirect3D11Widget::QDirect3D11Widget(QWidget* parent)
 	, m_volumeVS(nullptr)           // ← 추가
 	, m_volumePS(nullptr)           // ← 추가
 	, m_volumeConstantBuffer(nullptr)  // ← 추가
+
+	, m_rotationX(0.0f)
+	, m_rotationY(0.0f)
+	, m_cameraDistance(3.0f)
 {
+	setMouseTracking(false);
 	qDebug() << "[QDirect3D11Widget::QDirect3D11Widget] - Widget Handle: " << m_hWnd;
+
+	// ✅ 포커스 받을 수 있게 설정
+	setFocusPolicy(Qt::StrongFocus);
+
+
 
 	QPalette pal = palette();
 	pal.setColor(QPalette::Window, Qt::black);
@@ -2781,6 +2791,23 @@ void QDirect3D11Widget::plasterVolumeShow()
 
 	void QDirect3D11Widget::mousePressEvent(QMouseEvent* event)
 	{
+		// 왼쪽 버튼인지 확인
+		if (event->button() == Qt::LeftButton)
+		{
+			m_isDragging = true;
+			m_lastMousePos.x = event->pos().x();  // 현재 위치 저장
+			m_lastMousePos.y = event->pos().y();  // 현재 위치 저장
+
+			qDebug() << "Mouse Pressed at:" << event->pos();
+		}
+
+		// ✅ 반드시 호출!
+		event->accept();
+
+
+
+
+
 		px[0] = event->pos().x(); // 클릭된 x 좌표
 		py[0] = event->pos().y(); // 클릭된 y 좌표
 
@@ -4005,38 +4032,54 @@ void QDirect3D11Widget::plasterVolumeShow()
 
 
 
+	void QDirect3D11Widget::onRotationChanged(float x, float y)
+	{
+		qDebug() << "Rotation changed:"
+			<< "X=" << x * 180.0f / XM_PI
+			<< "Y=" << y * 180.0f / XM_PI;
 
-
+		//// 상태바 업데이트
+		//statusBar()->showMessage(
+			QString("X=%1° Y=%2°")
+			.arg(x * 180.0f / XM_PI, 0, 'f', 1)
+			.arg(y * 180.0f / XM_PI, 0, 'f', 1)
+		);
+	}
+	
 	void QDirect3D11Widget::mouseMoveEvent(QMouseEvent* event) {
 		QPoint currentPos = event->pos();
 
 		if (m_isDragging)
 		{
-			// 이동량 계산
-			int deltaX = currentPos.x() - m_lastMousePos.x();
-			int deltaY = currentPos.y() - m_lastMousePos.y();
+			QPoint currentPos = event->pos();
 
-			// 회전 속도 조절
+			// 델타 계산
+			int deltaX = currentPos.x() - m_lastMousePos.x;
+			int deltaY = currentPos.y() - m_lastMousePos.y;
+
+			// 회전 적용
 			float sensitivity = 0.5f;
 			m_rotationY += deltaX * sensitivity * XM_PI / 180.0f;
 			m_rotationX += deltaY * sensitivity * XM_PI / 180.0f;
 
-			// X축 회전 제한 (-90도 ~ +90도)
-			m_rotationX = qBound(-XM_PIDIV2, m_rotationX, XM_PIDIV2);
+			// X축 제한 (-90 ~ +90도)
+			m_rotationX = std::clamp(m_rotationX, -XM_PIDIV2, XM_PIDIV2);
+
+			// 위치 갱신
+			m_lastMousePos.x = currentPos.x;
+			m_lastMousePos.y = currentPos.y;
 
 			// 시그널 발생
-			emit rotationChanged(m_rotationX, m_rotationY);
+			emit onRotationChanged(m_rotationX, m_rotationY);
+
+			// 로그
+			qDebug() << QString("Rotation: X=%1° Y=%2°")
+				.arg(m_rotationX * 180.0f / XM_PI, 0, 'f', 1)
+				.arg(m_rotationY * 180.0f / XM_PI, 0, 'f', 1);
 
 			// 다시 그리기
 			update();
 		}
-		else if (m_isRightDragging)
-		{
-			// 우클릭 드래그 (팬 이동 등)
-			// 필요시 구현
-		}
-
-		m_lastMousePos = currentPos;
 		event->accept();
 	}
 
@@ -4045,6 +4088,16 @@ void QDirect3D11Widget::plasterVolumeShow()
 		/*ImGuiIO& io = ImGui::GetIO();
 		if (event->button() == Qt::LeftButton)
 			io.MouseDown[0] = false;*/
+
+
+		if (event->button() == Qt::LeftButton)
+		{
+			m_isDragging = false;
+
+			qDebug() << "Mouse Released at:" << event->pos();
+		}
+
+		event->accept();
 	}
 
 
@@ -4246,20 +4299,31 @@ void QDirect3D11Widget::plasterVolumeShow()
 
 	void QDirect3D11Widget::wheelEvent(QWheelEvent* event)
 	{
-		if (event->angleDelta().x() == 0)
-		{
-			// TODO: Update your camera position based on the delta value.
-		}
-		else if (event->angleDelta().x() !=
-			0) // horizontal scrolling - mice with another side scroller.
-		{
-			// m_pCamera->MouseWheelH += (float)(event->angleDelta().y() / WHEEL_DELTA);
-		}
-		else if (event->angleDelta().y() != 0)
-		{
-			// m_pCamera->MouseWheel += (float)(event->angleDelta().y() / WHEEL_DELTA);
-		}
+		//if (event->angleDelta().x() == 0)
+		//{
+		//	// TODO: Update your camera position based on the delta value.
+		//}
+		//else if (event->angleDelta().x() !=
+		//	0) // horizontal scrolling - mice with another side scroller.
+		//{
+		//	// m_pCamera->MouseWheelH += (float)(event->angleDelta().y() / WHEEL_DELTA);
+		//}
+		//else if (event->angleDelta().y() != 0)
+		//{
+		//	// m_pCamera->MouseWheel += (float)(event->angleDelta().y() / WHEEL_DELTA);
+		//}
 
+		int delta = event->angleDelta().y();
+
+		// 줌
+		float zoomFactor = delta / 1200.0f;
+		m_cameraDistance *= (1.0f - zoomFactor);
+		m_cameraDistance = std::clamp(m_cameraDistance, 1.0f, 10.0f);
+
+		qDebug() << "Zoom:" << m_cameraDistance;
+
+		update();
+		event->accept();
 		QWidget::wheelEvent(event);
 	}
 

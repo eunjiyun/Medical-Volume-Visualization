@@ -20,7 +20,7 @@ public slots:
     void tick();
     void render();
 	void onBtnColorInvertClicked();
-
+	void onRotationChanged(float x, float y);
 
 private:
     Ui::ViewerSampleClass* ui;

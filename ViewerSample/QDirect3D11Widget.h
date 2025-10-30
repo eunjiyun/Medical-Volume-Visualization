@@ -109,7 +109,7 @@ public:
 	{0.5f, 0.5f}
 	};
 
-
+	float m_cameraDistance;
 
 	float m_rotationX = 0.0f;  // X축 회전 (pitch)
 	float m_rotationY = 0.0f;  // Y축 회전 (yaw)
@@ -142,7 +142,27 @@ public:
 
 	void LoadDICOMSeries();
 
+
 	void mousePressEvent(QMouseEvent* event);
+
+	void onRotationChanged(float x, float y);
+	void mouseMoveEvent(QMouseEvent* event);
+	void mouseReleaseEvent(QMouseEvent* event);
+
+	// 마우스 입력 처리
+	void OnMouseDown(int x, int y);
+	void OnMouseUp();
+	void OnMouseMove(int x, int y);
+
+
+
+
+
+
+
+
+
+
 	int GetClickedViewIndex(int px, int py, int width, int height);
 	ViewGeometry GetAxialGeometry();
 	ViewGeometry GetCoronalGeometry();
@@ -218,17 +238,9 @@ private:
 	XMFLOAT2 GetCrossUVFromPatientCoord(int viewIndex, XMFLOAT3 patientCoord);
 
 
-public:
 
 
-	void mouseMoveEvent(QMouseEvent* event);
-	void mouseReleaseEvent(QMouseEvent* event);
 
-
-	// 마우스 입력 처리
-	void OnMouseDown(int x, int y);
-	void OnMouseUp();
-	void OnMouseMove(int x, int y);
 
 
 	// Qt Events
