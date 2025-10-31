@@ -29,6 +29,20 @@ using Microsoft::WRL::ComPtr;
 #include <directxmath.h>
 using namespace DirectX;
 
+
+
+struct CB
+{
+	DirectX::XMMATRIX View;
+	DirectX::XMMATRIX Proj;
+	DirectX::XMMATRIX InvView;
+	DirectX::XMMATRIX InvProj;
+	DirectX::XMMATRIX VolumeWorld;     // 볼륨의 월드 변환(스케일/회전/이동)
+	DirectX::XMMATRIX InvVolumeWorld;
+	DirectX::XMFLOAT3 CameraPosWS;     float Step;      // 샘플 간격 (예: 0.002~0.01)
+	int   MaxSteps;                    float Opacity;   float _pad0; float _pad1;
+};
+
 class FileReader;
 
 
@@ -114,8 +128,10 @@ public:
 	float m_rotationX = 0.0f;  // X축 회전 (pitch)
 	float m_rotationY = 0.0f;  // Y축 회전 (yaw)
 
-	POINT m_lastMousePos = { 0, 0 };
+	QPoint m_lastMousePos = { 0, 0 };
 	bool m_isDragging = false;
+	QPoint currentPos;
+	XMMATRIX m_accumulatedRotation;  // ✅ 누적 회전 행렬
 
 public:
 	//// 마우스 입력 처리
@@ -145,16 +161,20 @@ public:
 
 	void mousePressEvent(QMouseEvent* event);
 
-	void onRotationChanged(float x, float y);
+	
 	void mouseMoveEvent(QMouseEvent* event);
 	void mouseReleaseEvent(QMouseEvent* event);
 
 	// 마우스 입력 처리
-	void OnMouseDown(int x, int y);
-	void OnMouseUp();
-	void OnMouseMove(int x, int y);
+	//void OnMouseDown(int x, int y);
+	//void OnMouseUp();
 
 
+
+
+	//void OnMouseMove(int x, int y);
+
+	//void onRotationChanged(float x, float y);
 
 
 
@@ -239,10 +259,6 @@ private:
 
 
 
-
-
-
-
 	// Qt Events
 private:
 	bool           event(QEvent * event) override;
@@ -261,6 +277,9 @@ private:
 #endif
 
 signals:
+	// ✅ 2. signals: 섹션 추가
+	void rotationChanged(float x, float y);  // ✅ 3. 시그널 선언 (구현 X)
+
 	void deviceInitialized(bool success);
 
 	void eventHandled();
@@ -398,6 +417,11 @@ public:
 
 	XMMATRIX view, proj;
 	CB cb{};
+
+	XMVECTOR eye /*= XMVectorSet(0.0f, 0.0f, -3.0f, 1.0f)*/;  // 조금 더 뒤로
+	XMVECTOR at /*= XMVectorSet(0.0f, 0.0f, 0.0f, 1.0f)*/;
+	XMVECTOR up /*= XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f)*/;
+	XMMATRIX v, iv, p, ip, rotx, trans, scale, w, iw,s;
 public:
 	bool isPlaster{ false };
 	void plasterVolumeShow();

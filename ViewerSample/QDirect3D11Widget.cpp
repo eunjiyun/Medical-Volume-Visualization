@@ -1,4 +1,4 @@
-﻿
+
 #include "QDirect3D11Widget.h"
 #include <QDebug>
 #include <QEvent>
@@ -7,6 +7,7 @@
 
 #include <wrl/client.h>
 #include <vector>
+#include <algorithm>
 #include "FileReader.h"
 
 #include "imgui.h"
@@ -21,6 +22,18 @@ using Microsoft::WRL::ComPtr;
 
 constexpr int FPS_LIMIT = 60.0f;
 constexpr int MS_PER_FRAME = (int)((1.0f / FPS_LIMIT) * 1000.0f);
+
+
+
+// 헤더 또는 cpp 상단에
+template<typename T>
+T Max3(T a, T b, T c)
+{
+	T temp = (a > b) ? a : b;
+	return (temp > c) ? temp : c;
+}
+
+
 
 QDirect3D11Widget::QDirect3D11Widget(QWidget* parent)
 	: QWidget(parent)
@@ -494,15 +507,23 @@ QDirect3D11Widget::QDirect3D11Widget(QWidget* parent)
 
 
 
+	
+
+
+
 
 	// 시그널 연결
 	connect(scrollAxial, &QScrollBar::valueChanged, this, &QDirect3D11Widget::onAxialScroll);
 	connect(scrollCoronal, &QScrollBar::valueChanged, this, &QDirect3D11Widget::onCoronalScroll);
 	connect(scrollSagittal, &QScrollBar::valueChanged, this, &QDirect3D11Widget::onSagittalScroll);
 
-	connect(scrollSagittal, &QScrollBar::valueChanged, this, &QDirect3D11Widget::OnMouseDown);
-	connect(scrollSagittal, &QScrollBar::valueChanged, this, &QDirect3D11Widget::OnMouseUp);
-	connect(scrollSagittal, &QScrollBar::valueChanged, this, &QDirect3D11Widget::OnMouseMove);
+	//connect(scrollSagittal, &QScrollBar::valueChanged, this, &QDirect3D11Widget::OnMouseDown);
+	//connect(scrollSagittal, &QScrollBar::valueChanged, this, &QDirect3D11Widget::OnMouseUp);
+
+
+
+
+	//connect(scrollSagittal, &QScrollBar::valueChanged, this, &QDirect3D11Widget::OnMouseMove);
 }
 
 QDirect3D11Widget::~QDirect3D11Widget()
@@ -634,7 +655,76 @@ bool QDirect3D11Widget::init()
 
 	LoadDICOMSeries();  // 최초 표시 시 DICOM 로드
 
+	//// 🔧 임시 카메라 (볼륨 중앙을 보는 단순 뷰)
 
+
+
+	eye = XMVectorSet(0.0f, 0.0f, -3.0f, 1.0f);  // 조금 더 뒤로
+	at = XMVectorSet(0.0f, 0.0f, 0.0f, 1.0f);
+	up = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
+
+	v = XMMatrixLookAtLH(eye, at, up);
+
+	p = XMMatrixPerspectiveFovLH(
+		XM_PIDIV4,
+		(float)width() / (float)height(),
+		0.1f,
+		100.0f  // Far plane 증가
+	);
+
+
+	iv = XMMatrixInverse(nullptr, v);
+	ip = XMMatrixInverse(nullptr, p);
+
+	rotx = XMMatrixRotationX(XM_PIDIV2);  // 90도 회전
+
+	float volumeSize = 1.5f;
+
+	// ✅ center 변환 제거
+	trans = XMMatrixTranslation(0.0f, 0.0f, 0.0f);
+
+
+
+
+
+
+
+	// DICOM에서 읽어온 값
+	float voxelSpacingX = fileReader->views.spacing.x;  // mm
+	float voxelSpacingY = fileReader->views.spacing.y;  // mm
+	float voxelSpacingZ = fileReader->views.spacing.z;  // mm (슬라이스 간격)
+
+	// 실제 물리적 크기
+	float physicalWidth = fileReader->m_width * voxelSpacingX;   // 512 * 0.4 = 204.8mm
+	float physicalHeight = fileReader->m_height * voxelSpacingY; // 512 * 0.4 = 204.8mm
+	float physicalDepth = fileReader->m_depth * voxelSpacingZ;   // 632 * 0.3 = 189.6mm
+
+
+
+	// 최대 크기
+	float maxPhysical = Max3(physicalWidth, physicalHeight, physicalDepth);
+
+	// 정규화된 스케일
+	float scaleX = physicalWidth / maxPhysical;
+	float scaleY = physicalHeight / maxPhysical;
+	float scaleZ = physicalDepth / maxPhysical;
+
+	// 스케일 행렬
+	float overallSize = 1.5f;
+	s = XMMatrixScaling(
+		scaleX,
+		scaleY,
+		scaleZ
+	);
+
+
+
+
+
+	// scale = XMMatrixScaling(volumeSize, volumeSize, volumeSize);
+
+	w = s * rotx * trans;
+	iw = XMMatrixInverse(nullptr, w);
 
 	initializeRenderTargets();
 	//	initializeVolumeRenderTargets();
@@ -1009,17 +1099,7 @@ void QDirect3D11Widget::CreateTexture3D()
 }
 
 
-struct CB
-{
-	DirectX::XMMATRIX View;
-	DirectX::XMMATRIX Proj;
-	DirectX::XMMATRIX InvView;
-	DirectX::XMMATRIX InvProj;
-	DirectX::XMMATRIX VolumeWorld;     // 볼륨의 월드 변환(스케일/회전/이동)
-	DirectX::XMMATRIX InvVolumeWorld;
-	DirectX::XMFLOAT3 CameraPosWS;     float Step;      // 샘플 간격 (예: 0.002~0.01)
-	int   MaxSteps;                    float Opacity;   float _pad0; float _pad1;
-};
+
 struct Vtx { XMFLOAT2 pos; XMFLOAT2 uv; }; // NDC용이 아니라 스크린→NDC는 셰이더에서 변환
 
 
@@ -1087,65 +1167,60 @@ void QDirect3D11Widget::FullScreenPassSet()
 
 
 
-	//// 🔧 임시 카메라 (볼륨 중앙을 보는 단순 뷰)
-
-	//XMVECTOR eye = XMVectorSet(0, 0, -2.0f, 1);
-	//XMVECTOR at = XMVectorSet(0, 0, 0, 1);
-	//XMVECTOR up = XMVectorSet(0, 1, 0, 0);
-
-	XMVECTOR eye = XMVectorSet(0.0f, 0.0f, -3.0f, 1.0f);  // 조금 더 뒤로
-	XMVECTOR at = XMVectorSet(0.0f, 0.0f, 0.0f, 1.0f);
-	XMVECTOR up = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
-	XMMATRIX V = XMMatrixLookAtLH(eye, at, up);
-	//XMMATRIX V = view;
+	////// 🔧 임시 카메라 (볼륨 중앙을 보는 단순 뷰)
 
 
-	//XMMATRIX P = XMMatrixPerspectiveFovLH(XM_PIDIV4, (float)width()  / ((float)height() ), 0.1f, 10.0f);
-	XMMATRIX P = XMMatrixPerspectiveFovLH(
-		XM_PIDIV4,
-		(float)width() / (float)height(),
-		0.1f,
-		100.0f  // Far plane 증가
-	);
-
-	//XMMATRIX P = proj;
+	//XMVECTOR eye = XMVectorSet(0.0f, 0.0f, -3.0f, 1.0f);  // 조금 더 뒤로
+	//XMVECTOR at = XMVectorSet(0.0f, 0.0f, 0.0f, 1.0f);
+	//XMVECTOR up = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
+	//XMMATRIX V = XMMatrixLookAtLH(eye, at, up);
+	////XMMATRIX V = view;
 
 
-	XMMATRIX iV = XMMatrixInverse(nullptr, V);
-	XMMATRIX iP = XMMatrixInverse(nullptr, P);
+	////XMMATRIX P = XMMatrixPerspectiveFovLH(XM_PIDIV4, (float)width()  / ((float)height() ), 0.1f, 10.0f);
+	//XMMATRIX P = XMMatrixPerspectiveFovLH(
+	//	XM_PIDIV4,
+	//	(float)width() / (float)height(),
+	//	0.1f,
+	//	100.0f  // Far plane 증가
+	//);
+
+	////XMMATRIX P = proj;
+
+
+	//XMMATRIX iV = XMMatrixInverse(nullptr, V);
+	//XMMATRIX iP = XMMatrixInverse(nullptr, P);
 
 
 
-	// ✅ 5️⃣ 볼륨 월드 변환 구성
-	float sx = fileReader->views.spacing.x;
-	float sy = fileReader->views.spacing.y;
-	float sz = fileReader->views.spacing.z;
+	//// ✅ 5️⃣ 볼륨 월드 변환 구성
+	//float sx = fileReader->views.spacing.x;
+	//float sy = fileReader->views.spacing.y;
+	//float sz = fileReader->views.spacing.z;
 
-	XMMATRIX rotY = XMMatrixRotationY(XMConvertToRadians(10.0f));
-	//XMMATRIX rotX = XMMatrixRotationX(XMConvertToRadians(-5.0f));
-	XMMATRIX rotX = XMMatrixRotationX(XM_PIDIV2);  // 90도 회전
+	//XMMATRIX rotX = XMMatrixRotationX(XM_PIDIV2);  // 90도 회전
 
-	float volumeSize = 1.5f;
-	// ✅ center 변환 제거
-	XMMATRIX trans = XMMatrixTranslation(0.0f, 0.0f, 0.0f);
-	//XMMATRIX scale = XMMatrixScaling(1.0f, 1.0f, 1.0f);
-	XMMATRIX scale = XMMatrixScaling(volumeSize, volumeSize, volumeSize);
+	//float volumeSize = 1.5f;
+	//// ✅ center 변환 제거
+	//XMMATRIX trans = XMMatrixTranslation(0.0f, 0.0f, 0.0f);
+	////XMMATRIX scale = XMMatrixScaling(1.0f, 1.0f, 1.0f);
+	//XMMATRIX scale = XMMatrixScaling(volumeSize, volumeSize, volumeSize);
 
-	//XMMATRIX W = scale * trans;
-	XMMATRIX W = scale * rotX * trans;
+	////XMMATRIX W = scale * trans;
+	//XMMATRIX W = scale * rotX * trans;
 
 
-	XMMATRIX iW = XMMatrixInverse(nullptr, W);
+	//XMMATRIX iW = XMMatrixInverse(nullptr, W);
 
 
 	// ✅ 6️⃣ 상수 버퍼 데이터 채우기
 	
-	cb.View = XMMatrixTranspose(V);
-	cb.Proj = XMMatrixTranspose(P);
-	cb.InvView = XMMatrixTranspose(iV);
-	cb.InvProj = XMMatrixTranspose(iP);
-	cb.VolumeWorld = XMMatrixTranspose(W);
-	cb.InvVolumeWorld = XMMatrixTranspose(iW);
+	cb.View = XMMatrixTranspose(v);
+	cb.Proj = XMMatrixTranspose(p);
+	cb.InvView = XMMatrixTranspose(iv);
+	cb.InvProj = XMMatrixTranspose(ip);
+	cb.VolumeWorld = XMMatrixTranspose(w);
+	cb.InvVolumeWorld = XMMatrixTranspose(iw);
 
 
 	////cb.CameraPosWS = XMFLOAT3(0.5f, 0.5f, -0.2f);
@@ -1207,60 +1282,76 @@ void QDirect3D11Widget::FullScreenPassSet()
 
 //==============================================================
 // 마우스 입력 처리
-void QDirect3D11Widget::OnMouseDown(int x, int y)
-{
-	m_isDragging = true;
-	m_lastMousePos.x = x;
-	m_lastMousePos.y = y;
-}
+//void QDirect3D11Widget::OnMouseDown(int x, int y)
+//{
+//	m_isDragging = true;
+//	
+//	m_lastMousePos = currentPos;
+//}
 
-void QDirect3D11Widget::OnMouseUp()
-{
-	m_isDragging = false;
-}
+//void QDirect3D11Widget::OnMouseUp()
+//{
+//	m_isDragging = false;
+//}
 
-void QDirect3D11Widget::OnMouseMove(int x, int y)
-{
-	if (!m_isDragging)
-		return;
-
-	// 마우스 이동량 계산
-	int deltaX = x - m_lastMousePos.x;
-	int deltaY = y - m_lastMousePos.y;
-
-	// 회전 속도 조절
-	float sensitivity = 0.5f;
-	m_rotationY += deltaX * sensitivity * XM_PI / 180.0f;
-	m_rotationX += deltaY * sensitivity * XM_PI / 180.0f;
-
-	// X축 회전 제한 (-90도 ~ +90도)
-	m_rotationX = std::clamp(m_rotationX, -XM_PIDIV2, XM_PIDIV2);
-
-	m_lastMousePos.x = x;
-	m_lastMousePos.y = y;
-}
+//void QDirect3D11Widget::OnMouseMove(int x, int y)
+//{
+//	//QPoint currentPos = event->pos();
+//	if (m_isDragging)
+//	{
+//		// 델타 계산 (y()는 함수입니다!)
+//		int deltaX = x - m_lastMousePos.x;
+//		int deltaY = y - m_lastMousePos.y;
+//
+//		// 회전 적용
+//		float sensitivity = 0.5f;
+//		m_rotationY += deltaX * sensitivity * XM_PI / 180.0f;
+//		m_rotationX += deltaY * sensitivity * XM_PI / 180.0f;
+//
+//		// X축 제한 (-90 ~ +90도)
+//		m_rotationX = std::clamp(m_rotationX, -XM_PIDIV2, XM_PIDIV2);
+//
+//		// 위치 갱신
+//		m_lastMousePos.x = x;
+//		m_lastMousePos.y = y;
+//
+//		// 시그널 발생
+//		emit onRotationChanged(m_rotationX, m_rotationY);
+//
+//		// 로그
+//		qDebug() << QString("Rotation: X=%1° Y=%2°")
+//			.arg(m_rotationX * 180.0f / XM_PI, 0, 'f', 1)
+//			.arg(m_rotationY * 180.0f / XM_PI, 0, 'f', 1);
+//
+//		// 다시 그리기
+//		update();
+//	}
+//	event->accept();
+//}
 
 void QDirect3D11Widget::UpdateVolumeMatrix()
 {
 	// 1. 볼륨을 원점 중심으로
 	XMMATRIX translation = XMMatrixTranslation(0, 0, 0);
 
-	// 2. 스케일
-	float volumeSize = 1.5f;
-	XMMATRIX scale = XMMatrixScaling(volumeSize, volumeSize, volumeSize);
+	//// 2. 스케일
+	//float volumeSize = 1.5f;
+	//XMMATRIX scale = XMMatrixScaling(volumeSize, volumeSize, volumeSize);
 
 	// 3. 회전 (Y축 먼저, X축 나중에)
 	XMMATRIX rotX = XMMatrixRotationX(m_rotationX);
 	XMMATRIX rotY = XMMatrixRotationY(m_rotationY);
 
 	// 4. 최종 행렬
-	XMMATRIX volumeWorld = scale * rotY * rotX * translation;
+	XMMATRIX volumeWorld = s * rotY * rotX * translation;
 
 	//CB cb{};
+	v = XMMatrixTranspose(volumeWorld);;
+	iv= XMMatrixTranspose(XMMatrixInverse(nullptr, volumeWorld));
 
-	// 5. Constant Buffer 업데이트
-	cb.VolumeWorld = XMMatrixTranspose(volumeWorld);
-	cb.InvVolumeWorld = XMMatrixTranspose(XMMatrixInverse(nullptr, volumeWorld));
+	//// 5. Constant Buffer 업데이트
+	//cb.VolumeWorld = XMMatrixTranspose(volumeWorld);
+	//cb.InvVolumeWorld = XMMatrixTranspose(XMMatrixInverse(nullptr, volumeWorld));
 }
 //======================================================================================
 
@@ -2795,11 +2886,22 @@ void QDirect3D11Widget::plasterVolumeShow()
 		if (event->button() == Qt::LeftButton)
 		{
 			m_isDragging = true;
-			m_lastMousePos.x = event->pos().x();  // 현재 위치 저장
-			m_lastMousePos.y = event->pos().y();  // 현재 위치 저장
+			
+
+			m_lastMousePos = event->pos();
 
 			qDebug() << "Mouse Pressed at:" << event->pos();
 		}
+
+		if (event->button() == Qt::RightButton) {}
+		if (event->button() == Qt::MiddleButton) {}
+
+		// ✅ 키보드 조합
+		Qt::KeyboardModifiers modifiers = event->modifiers();
+
+		if (modifiers & Qt::ShiftModifier) {}   // Shift
+		if (modifiers & Qt::ControlModifier) {} // Ctrl
+		if (modifiers & Qt::AltModifier) {}     // Alt
 
 		// ✅ 반드시 호출!
 		event->accept();
@@ -3152,6 +3254,8 @@ void QDirect3D11Widget::plasterVolumeShow()
 			//qDebug() << "Viewport" << i << ":" << vp.Width << "x" << vp.Height; // ✅ 로그
 
 			if (0 == i) {
+
+				
 
 				RenderVolumeView();
 			}
@@ -4032,51 +4136,64 @@ void QDirect3D11Widget::plasterVolumeShow()
 
 
 
-	void QDirect3D11Widget::onRotationChanged(float x, float y)
-	{
-		qDebug() << "Rotation changed:"
-			<< "X=" << x * 180.0f / XM_PI
-			<< "Y=" << y * 180.0f / XM_PI;
+	//void QDirect3D11Widget::onRotationChanged(float x, float y)
+	//{
+	//	qDebug() << "Rotation changed:"
+	//		<< "X=" << x * 180.0f / XM_PI
+	//		<< "Y=" << y * 180.0f / XM_PI;
 
-		//// 상태바 업데이트
-		//statusBar()->showMessage(
-			QString("X=%1° Y=%2°")
-			.arg(x * 180.0f / XM_PI, 0, 'f', 1)
-			.arg(y * 180.0f / XM_PI, 0, 'f', 1)
-		);
-	}
+	//	//// 상태바 업데이트
+	//	//statusBar()->showMessage(
+	//		QString("X=%1° Y=%2°")
+	//		.arg(x * 180.0f / XM_PI, 0, 'f', 1)
+	//		.arg(y * 180.0f / XM_PI, 0, 'f', 1)
+	//	/*)*/;
+	//}
+
+
+
+
 	
-	void QDirect3D11Widget::mouseMoveEvent(QMouseEvent* event) {
-		QPoint currentPos = event->pos();
-
+	void QDirect3D11Widget::mouseMoveEvent(QMouseEvent* event)
+	{
 		if (m_isDragging)
 		{
 			QPoint currentPos = event->pos();
 
 			// 델타 계산
-			int deltaX = currentPos.x() - m_lastMousePos.x;
-			int deltaY = currentPos.y() - m_lastMousePos.y;
+			int deltaX = currentPos.x() - m_lastMousePos.x();
+			int deltaY = currentPos.y() - m_lastMousePos.y();
 
 			// 회전 적용
 			float sensitivity = 0.5f;
 			m_rotationY += deltaX * sensitivity * XM_PI / 180.0f;
 			m_rotationX += deltaY * sensitivity * XM_PI / 180.0f;
 
+
+			//// ✅ 로컬 축 기준 회전 (자전!)
+			//// 현재 회전 상태의 로컬 Y축 기준 회전
+			//XMMATRIX localRotY = XMMatrixRotationY(deltaRotY);
+
+
+
 			// X축 제한 (-90 ~ +90도)
 			m_rotationX = std::clamp(m_rotationX, -XM_PIDIV2, XM_PIDIV2);
 
 			// 위치 갱신
-			m_lastMousePos.x = currentPos.x;
-			m_lastMousePos.y = currentPos.y;
+			m_lastMousePos = currentPos;
 
 			// 시그널 발생
-			emit onRotationChanged(m_rotationX, m_rotationY);
+			emit rotationChanged(m_rotationX, m_rotationY);
 
 			// 로그
 			qDebug() << QString("Rotation: X=%1° Y=%2°")
 				.arg(m_rotationX * 180.0f / XM_PI, 0, 'f', 1)
 				.arg(m_rotationY * 180.0f / XM_PI, 0, 'f', 1);
 
+
+
+			UpdateVolumeMatrix();
+			FullScreenPassSet();
 			// 다시 그리기
 			update();
 		}
@@ -4274,6 +4391,8 @@ void QDirect3D11Widget::plasterVolumeShow()
 
 			// 렌더링 업데이트
 			update();
+
+
 
 			RenderVolumeView(); // 강제 호출로 확인
 		}
