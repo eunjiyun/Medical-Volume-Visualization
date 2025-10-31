@@ -4162,7 +4162,7 @@ void QDirect3D11Widget::plasterVolumeShow()
 	
 	void QDirect3D11Widget::mouseMoveEvent(QMouseEvent* event)
 	{
-		if (m_isDragging)
+		if (m_isDragging && 0==clickedViewIndex)
 		{
 			QPoint currentPos = event->pos();
 			int deltaX = currentPos.x() - m_lastMousePos.x();
