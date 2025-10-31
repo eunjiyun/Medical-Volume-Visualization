@@ -131,7 +131,11 @@ public:
 	QPoint m_lastMousePos = { 0, 0 };
 	bool m_isDragging = false;
 	QPoint currentPos;
-	XMMATRIX m_accumulatedRotation;  // ✅ 누적 회전 행렬
+
+
+	XMVECTOR m_rotation;  // 쿼터니언
+//	QPoint m_lastMousePos;
+//	bool m_isDragging;
 
 public:
 	//// 마우스 입력 처리
@@ -164,6 +168,7 @@ public:
 	
 	void mouseMoveEvent(QMouseEvent* event);
 	void mouseReleaseEvent(QMouseEvent* event);
+	void mouseDoubleClickEvent(QMouseEvent* event);
 
 	// 마우스 입력 처리
 	//void OnMouseDown(int x, int y);
@@ -421,7 +426,7 @@ public:
 	XMVECTOR eye /*= XMVectorSet(0.0f, 0.0f, -3.0f, 1.0f)*/;  // 조금 더 뒤로
 	XMVECTOR at /*= XMVectorSet(0.0f, 0.0f, 0.0f, 1.0f)*/;
 	XMVECTOR up /*= XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f)*/;
-	XMMATRIX v, iv, p, ip, rotx, trans, scale, w, iw,s;
+	XMMATRIX v, iv, p, ip, rotx, trans, /*scale,*/ w, iw,s;
 public:
 	bool isPlaster{ false };
 	void plasterVolumeShow();

@@ -54,6 +54,7 @@ QDirect3D11Widget::QDirect3D11Widget(QWidget* parent)
 	, m_rotationX(0.0f)
 	, m_rotationY(0.0f)
 	, m_cameraDistance(3.0f)
+	,  m_rotation(XMQuaternionIdentity())  // ✅ 이거 있어야 함!
 {
 	setMouseTracking(false);
 	qDebug() << "[QDirect3D11Widget::QDirect3D11Widget] - Widget Handle: " << m_hWnd;
@@ -712,9 +713,9 @@ bool QDirect3D11Widget::init()
 	// 스케일 행렬
 	float overallSize = 1.5f;
 	s = XMMatrixScaling(
-		scaleX,
-		scaleY,
-		scaleZ
+		scaleX*overallSize,
+		scaleY*overallSize,
+		scaleZ*overallSize
 	);
 
 
@@ -1334,20 +1335,29 @@ void QDirect3D11Widget::UpdateVolumeMatrix()
 	// 1. 볼륨을 원점 중심으로
 	XMMATRIX translation = XMMatrixTranslation(0, 0, 0);
 
-	//// 2. 스케일
-	//float volumeSize = 1.5f;
-	//XMMATRIX scale = XMMatrixScaling(volumeSize, volumeSize, volumeSize);
+	//// 스케일
+	//float overallSize = 1.5f;
+	//XMMATRIX scale = XMMatrixScaling(
+	//	0.81f * overallSize,
+	//	0.81f * overallSize,
+	//	1.0f * overallSize
+	//);
 
-	// 3. 회전 (Y축 먼저, X축 나중에)
-	XMMATRIX rotX = XMMatrixRotationX(m_rotationX);
-	XMMATRIX rotY = XMMatrixRotationY(m_rotationY);
+	//// 3. 회전 (Y축 먼저, X축 나중에)
+	//XMMATRIX rotX = XMMatrixRotationX(m_rotationX);
+	//XMMATRIX rotY = XMMatrixRotationY(m_rotationY);
 
-	// 4. 최종 행렬
-	XMMATRIX volumeWorld = s * rotY * rotX * translation;
+	  // ✅ 쿼터니언 → 행렬
+	XMMATRIX rotation = XMMatrixRotationQuaternion(m_rotation);
+
+	//// 4. 최종 행렬
+	//XMMATRIX volumeWorld = s * rotY * rotX * translation;
+
+	XMMATRIX volumeWorld = s * rotation/**rotx*/;
 
 	//CB cb{};
-	v = XMMatrixTranspose(volumeWorld);;
-	iv= XMMatrixTranspose(XMMatrixInverse(nullptr, volumeWorld));
+	w = XMMatrixTranspose(volumeWorld);;
+	iw= XMMatrixTranspose(XMMatrixInverse(nullptr, volumeWorld));
 
 	//// 5. Constant Buffer 업데이트
 	//cb.VolumeWorld = XMMatrixTranspose(volumeWorld);
@@ -2886,9 +2896,8 @@ void QDirect3D11Widget::plasterVolumeShow()
 		if (event->button() == Qt::LeftButton)
 		{
 			m_isDragging = true;
-			
-
 			m_lastMousePos = event->pos();
+			setCursor(Qt::ClosedHandCursor);
 
 			qDebug() << "Mouse Pressed at:" << event->pos();
 		}
@@ -4159,42 +4168,74 @@ void QDirect3D11Widget::plasterVolumeShow()
 		if (m_isDragging)
 		{
 			QPoint currentPos = event->pos();
-
-			// 델타 계산
 			int deltaX = currentPos.x() - m_lastMousePos.x();
 			int deltaY = currentPos.y() - m_lastMousePos.y();
 
-			// 회전 적용
-			float sensitivity = 0.5f;
-			m_rotationY += deltaX * sensitivity * XM_PI / 180.0f;
-			m_rotationX += deltaY * sensitivity * XM_PI / 180.0f;
+			// ✅ 델타가 0이면 스킵
+			if (deltaX == 0 && deltaY == 0)
+			{
+				event->accept();
+				return;
+			}
+
+			float sensitivity = 0.005f;
+			float deltaRotY = deltaX * sensitivity;
+			float deltaRotX = deltaY * sensitivity;
+
+			// ✅ 로컬 축 기준 회전 (쿼터니언)
+			// 현재 Y축
+			XMMATRIX currentMat = XMMatrixRotationQuaternion(m_rotation);
 
 
-			//// ✅ 로컬 축 기준 회전 (자전!)
-			//// 현재 회전 상태의 로컬 Y축 기준 회전
-			//XMMATRIX localRotY = XMMatrixRotationY(deltaRotY);
+			// ✅ 로컬 축 (반드시 정규화!)
+			XMVECTOR localY = XMVector3Normalize(
+				XMVector3TransformNormal(XMVectorSet(0, 1, 0, 0), currentMat)
+			);
+			XMVECTOR localX = XMVector3Normalize(
+				XMVector3TransformNormal(XMVectorSet(1, 0, 0, 0), currentMat)
+			);
+
+			// 델타 회전 (쿼터니언)
+			//XMVECTOR deltaQuatY = XMQuaternionRotationAxis(localY, deltaRotY);
+			// ✅ 올바른 순서 확인 (axis, angle)
 
 
+				// ✅ 델타 회전 쿼터니언
+			XMVECTOR deltaQuatY = XMQuaternionRotationAxis(localY, deltaRotY);
+			XMVECTOR deltaQuatX = XMQuaternionRotationAxis(localX, deltaRotX);
 
-			// X축 제한 (-90 ~ +90도)
-			m_rotationX = std::clamp(m_rotationX, -XM_PIDIV2, XM_PIDIV2);
+			// ✅ 한 번에 합치기 (더 안정적)
+			XMVECTOR deltaQuat = XMQuaternionMultiply(deltaQuatX, deltaQuatY);
+			m_rotation = XMQuaternionMultiply(deltaQuat, m_rotation);
+			m_rotation = XMQuaternionNormalize(m_rotation);
 
-			// 위치 갱신
+			// ✅ 디버그 출력
+			XMFLOAT4 rotDebug;
+			XMStoreFloat4(&rotDebug, m_rotation);
+			qDebug() << "Quat:" << rotDebug.x << rotDebug.y << rotDebug.z << rotDebug.w;
+
+
 			m_lastMousePos = currentPos;
-
-			// 시그널 발생
-			emit rotationChanged(m_rotationX, m_rotationY);
-
-			// 로그
-			qDebug() << QString("Rotation: X=%1° Y=%2°")
-				.arg(m_rotationX * 180.0f / XM_PI, 0, 'f', 1)
-				.arg(m_rotationY * 180.0f / XM_PI, 0, 'f', 1);
-
-
 
 			UpdateVolumeMatrix();
 			FullScreenPassSet();
-			// 다시 그리기
+			update();
+		}
+		event->accept();
+	}
+
+	void QDirect3D11Widget::mouseDoubleClickEvent(QMouseEvent* event)
+	{
+		if (event->button() == Qt::LeftButton)
+		{
+			// ✅ 리셋
+			m_rotation = XMQuaternionIdentity();
+
+			qDebug() << "Rotation Reset!";
+
+			UpdateVolumeMatrix();
+			//w *= rotx;
+			FullScreenPassSet();
 			update();
 		}
 		event->accept();
@@ -4210,6 +4251,7 @@ void QDirect3D11Widget::plasterVolumeShow()
 		if (event->button() == Qt::LeftButton)
 		{
 			m_isDragging = false;
+			setCursor(Qt::ArrowCursor);
 
 			qDebug() << "Mouse Released at:" << event->pos();
 		}
