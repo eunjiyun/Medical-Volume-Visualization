@@ -4164,59 +4164,101 @@ void QDirect3D11Widget::plasterVolumeShow()
 	{
 		if (m_isDragging && 0==clickedViewIndex)
 		{
+			//QPoint currentPos = event->pos();
+			//int deltaX = currentPos.x() - m_lastMousePos.x();
+			//int deltaY = currentPos.y() - m_lastMousePos.y();
+
+			//// ✅ 델타가 0이면 스킵
+			//if (deltaX == 0 && deltaY == 0)
+			//{
+			//	event->accept();
+			//	return;
+			//}
+
+			//float sensitivity = 0.005f;
+			//float deltaRotY = deltaX * sensitivity;
+			//float deltaRotX = deltaY * sensitivity;
+
+			//// ✅ 로컬 축 기준 회전 (쿼터니언)
+			//// 현재 Y축
+			//XMMATRIX currentMat = XMMatrixRotationQuaternion(m_rotation);
+
+
+			//// ✅ 로컬 축 (반드시 정규화!)
+			//XMVECTOR localY = XMVector3Normalize(
+			//	XMVector3TransformNormal(XMVectorSet(0, 1, 0, 0), currentMat)
+			//);
+			//XMVECTOR localX = XMVector3Normalize(
+			//	XMVector3TransformNormal(XMVectorSet(1, 0, 0, 0), currentMat)
+			//);
+
+			//// 델타 회전 (쿼터니언)
+			////XMVECTOR deltaQuatY = XMQuaternionRotationAxis(localY, deltaRotY);
+			//// ✅ 올바른 순서 확인 (axis, angle)
+
+
+			//	// ✅ 델타 회전 쿼터니언
+			//XMVECTOR deltaQuatY = XMQuaternionRotationAxis(localY, deltaRotY);
+			//XMVECTOR deltaQuatX = XMQuaternionRotationAxis(localX, deltaRotX);
+
+			//// ✅ 한 번에 합치기 (더 안정적)
+			//XMVECTOR deltaQuat = XMQuaternionMultiply(deltaQuatX, deltaQuatY);
+			//m_rotation = XMQuaternionMultiply(deltaQuat, m_rotation);
+			//m_rotation = XMQuaternionNormalize(m_rotation);
+
+			//// ✅ 디버그 출력
+			//XMFLOAT4 rotDebug;
+			//XMStoreFloat4(&rotDebug, m_rotation);
+			//qDebug() << "Quat:" << rotDebug.x << rotDebug.y << rotDebug.z << rotDebug.w;
+
+
+			//m_lastMousePos = currentPos;
+
+			//UpdateVolumeMatrix();
+			//FullScreenPassSet();
+			//update();
+
+
+
+
+
 			QPoint currentPos = event->pos();
 			int deltaX = currentPos.x() - m_lastMousePos.x();
 			int deltaY = currentPos.y() - m_lastMousePos.y();
 
-			// ✅ 델타가 0이면 스킵
-			if (deltaX == 0 && deltaY == 0)
-			{
-				event->accept();
-				return;
-			}
+			if (deltaX == 0 && deltaY == 0) { event->accept(); return; }
 
 			float sensitivity = 0.005f;
-			float deltaRotY = deltaX * sensitivity;
-			float deltaRotX = deltaY * sensitivity;
 
-			// ✅ 로컬 축 기준 회전 (쿼터니언)
-			// 현재 Y축
+			// --- 회전 각도 ---
+			float yaw = deltaX * sensitivity;    // 좌우
+			float pitch = deltaY * sensitivity;  // 상하
+
+			// --- 축 ---
+			XMVECTOR worldY = XMVectorSet(0, 1, 0, 0); // ✅ 절대축 / 고정
 			XMMATRIX currentMat = XMMatrixRotationQuaternion(m_rotation);
 
-
-			// ✅ 로컬 축 (반드시 정규화!)
-			XMVECTOR localY = XMVector3Normalize(
-				XMVector3TransformNormal(XMVectorSet(0, 1, 0, 0), currentMat)
-			);
+			// ✅ pitch는 로컬 X축
 			XMVECTOR localX = XMVector3Normalize(
 				XMVector3TransformNormal(XMVectorSet(1, 0, 0, 0), currentMat)
 			);
 
-			// 델타 회전 (쿼터니언)
-			//XMVECTOR deltaQuatY = XMQuaternionRotationAxis(localY, deltaRotY);
-			// ✅ 올바른 순서 확인 (axis, angle)
+			// ✅ 쿼터니언 생성
+			XMVECTOR qYaw = XMQuaternionRotationAxis(worldY, yaw);
+			XMVECTOR qPitch = XMQuaternionRotationAxis(localX, pitch);
 
+			// ✅ 중요: 순서 yaw → pitch → current
+			m_rotation = XMQuaternionMultiply(qPitch,
+				XMQuaternionMultiply(qYaw, m_rotation));
 
-				// ✅ 델타 회전 쿼터니언
-			XMVECTOR deltaQuatY = XMQuaternionRotationAxis(localY, deltaRotY);
-			XMVECTOR deltaQuatX = XMQuaternionRotationAxis(localX, deltaRotX);
-
-			// ✅ 한 번에 합치기 (더 안정적)
-			XMVECTOR deltaQuat = XMQuaternionMultiply(deltaQuatX, deltaQuatY);
-			m_rotation = XMQuaternionMultiply(deltaQuat, m_rotation);
 			m_rotation = XMQuaternionNormalize(m_rotation);
-
-			// ✅ 디버그 출력
-			XMFLOAT4 rotDebug;
-			XMStoreFloat4(&rotDebug, m_rotation);
-			qDebug() << "Quat:" << rotDebug.x << rotDebug.y << rotDebug.z << rotDebug.w;
-
 
 			m_lastMousePos = currentPos;
 
 			UpdateVolumeMatrix();
 			FullScreenPassSet();
 			update();
+
 		}
 		event->accept();
 	}
