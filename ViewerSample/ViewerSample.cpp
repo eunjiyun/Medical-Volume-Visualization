@@ -40,7 +40,7 @@ void ViewerSample::connectSlots()
 
 	connect(ui->btnColorInvert, &QPushButton::clicked, this, &ViewerSample::onBtnColorInvertClicked);
 	// ✅ 시그널 연결
-	connect(m_pScene, &QDirect3D11Widget::onRotationChanged,this, &ViewerSample::onRotationChanged);
+
 }
 
 
