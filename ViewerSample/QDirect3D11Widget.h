@@ -134,6 +134,8 @@ public:
 
 
 	XMVECTOR m_rotation;  // 쿼터니언
+	XMVECTOR m_initialRotation;
+
 //	QPoint m_lastMousePos;
 //	bool m_isDragging;
 

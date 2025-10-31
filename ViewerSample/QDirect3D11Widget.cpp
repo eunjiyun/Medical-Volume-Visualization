@@ -54,13 +54,26 @@ QDirect3D11Widget::QDirect3D11Widget(QWidget* parent)
 	, m_rotationX(0.0f)
 	, m_rotationY(0.0f)
 	, m_cameraDistance(3.0f)
-	,  m_rotation(XMQuaternionIdentity())  // ✅ 이거 있어야 함!
+	//,  m_rotation(XMQuaternionIdentity())  // ✅ 이거 있어야 함!
 {
 	setMouseTracking(false);
 	qDebug() << "[QDirect3D11Widget::QDirect3D11Widget] - Widget Handle: " << m_hWnd;
 
 	// ✅ 포커스 받을 수 있게 설정
 	setFocusPolicy(Qt::StrongFocus);
+
+ // ✅ 초기 회전: X축 90도 (Coronal 뷰)
+	m_initialRotation = XMQuaternionRotationAxis(
+		XMVectorSet(1, 0, 0, 0),  // X축
+		-XM_PIDIV2                  // 90도
+	);
+
+
+
+
+
+	// 현재 회전도 초기값으로 설정
+	m_rotation = m_initialRotation;
 
 
 
@@ -4145,22 +4158,6 @@ void QDirect3D11Widget::plasterVolumeShow()
 
 
 
-	//void QDirect3D11Widget::onRotationChanged(float x, float y)
-	//{
-	//	qDebug() << "Rotation changed:"
-	//		<< "X=" << x * 180.0f / XM_PI
-	//		<< "Y=" << y * 180.0f / XM_PI;
-
-	//	//// 상태바 업데이트
-	//	//statusBar()->showMessage(
-	//		QString("X=%1° Y=%2°")
-	//		.arg(x * 180.0f / XM_PI, 0, 'f', 1)
-	//		.arg(y * 180.0f / XM_PI, 0, 'f', 1)
-	//	/*)*/;
-	//}
-
-
-
 
 	
 	void QDirect3D11Widget::mouseMoveEvent(QMouseEvent* event)
@@ -4229,7 +4226,7 @@ void QDirect3D11Widget::plasterVolumeShow()
 		if (event->button() == Qt::LeftButton)
 		{
 			// ✅ 리셋
-			m_rotation = XMQuaternionIdentity();
+			m_rotation = m_initialRotation;
 
 			qDebug() << "Rotation Reset!";
 
