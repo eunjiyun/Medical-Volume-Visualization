@@ -701,7 +701,7 @@ bool QDirect3D11Widget::init()
 
 
 
-	float volumeSize = 1.5f;
+//	float volumeSize = 1.5f;
 
 	// ✅ center 변환 제거
 	trans = XMMatrixTranslation(0.0f, 0.0f, 0.0f);
@@ -729,13 +729,13 @@ bool QDirect3D11Widget::init()
 
 	// 정규화된 스케일
 	float scaleX = physicalWidth / maxPhysical;
-	float scaleY = physicalHeight / maxPhysical;
-	float scaleZ = physicalDepth / maxPhysical;
-	//float scaleY = physicalDepth / maxPhysical;
-	//float scaleZ = physicalHeight / maxPhysical;
+	/*float scaleY = physicalHeight / maxPhysical;
+	float scaleZ = physicalDepth / maxPhysical;*/
+	float scaleY = physicalDepth / maxPhysical;
+	float scaleZ = physicalHeight / maxPhysical;
 
 	// 스케일 행렬
-	float overallSize = 1.5f;
+	float overallSize = 1.7f;
 	scale = XMMatrixScaling(
 		scaleX*overallSize,
 		scaleY*overallSize,
@@ -1255,8 +1255,8 @@ void QDirect3D11Widget::FullScreenPassSet()
 	// ✅ 실제 카메라 위치 사용
 	cb.CameraPosWS = XMFLOAT3(
 		XMVectorGetX(eye),
-		XMVectorGetY(eye),
-		XMVectorGetZ(eye)
+		XMVectorGetY(up),
+		XMVectorGetZ(at)
 	);
 
 
