@@ -61,7 +61,7 @@
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>C:\Qt\Qt5.10.1\5.10.1\msvc2017_64\include;C:\Projects\sample\Q3DViewer\SDK\Debug\include;C:\Projects\sample\imgui-master\imgui-master;C:\Projects\sample\imgui-master\imgui-master\backends;C:\projects\vcpkg\installed\x64-windows\include;C:\Projects\vcpkg\vcpkg\installed\x64-windows\include\dcmtk;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Qt\Qt5.10.1\5.10.1\msvc2017_64\include;C:\Projects\CTViewerSample\SDK\DCMTK\Debug\include;C:\Projects\sample\imgui-master\imgui-master;C:\Projects\sample\imgui-master\imgui-master\backends;C:\projects\vcpkg\installed\x64-windows\include;C:\Projects\vcpkg\vcpkg\installed\x64-windows\include\dcmtk;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <PreprocessorDefinitions>%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -105,7 +105,7 @@
       <Optimization>MaxSpeed</Optimization>
     </ClCompile>
     <Link>
-      <SubSystem>Console</SubSystem>
+      <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>false</GenerateDebugInformation>
     </Link>
   </ItemDefinitionGroup>

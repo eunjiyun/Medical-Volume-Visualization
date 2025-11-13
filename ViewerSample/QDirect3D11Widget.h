@@ -428,7 +428,7 @@ public:
 	XMVECTOR eye /*= XMVectorSet(0.0f, 0.0f, -3.0f, 1.0f)*/;  // 조금 더 뒤로
 	XMVECTOR at /*= XMVectorSet(0.0f, 0.0f, 0.0f, 1.0f)*/;
 	XMVECTOR up /*= XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f)*/;
-	XMMATRIX v, iv, p, ip, rotx, trans, /*scale,*/ w, iw,s;
+	XMMATRIX v, iv, p, ip, rotx,roty, trans, /*scale,*/ w, iw,scale;
 public:
 	bool isPlaster{ false };
 	void plasterVolumeShow();

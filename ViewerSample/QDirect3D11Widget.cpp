@@ -63,13 +63,17 @@ QDirect3D11Widget::QDirect3D11Widget(QWidget* parent)
 	setFocusPolicy(Qt::StrongFocus);
 
  // ✅ 초기 회전: X축 90도 (Coronal 뷰)
-	m_initialRotation = XMQuaternionRotationAxis(
+	XMVECTOR rotX = XMQuaternionRotationAxis(
 		XMVectorSet(1, 0, 0, 0),  // X축
-		-XM_PIDIV2                  // 90도
+-		XM_PIDIV2                  // 90도
+//		XM_PIDIV2 +XM_PI      // 270도 (180도 + 90도)
 	);
 
-
-
+	XMVECTOR rotY = XMQuaternionRotationAxis(
+		XMVectorSet(0, 0, 1, 0),
+		XM_PI  // Y축 180도
+	);
+	m_initialRotation = XMQuaternionMultiply(rotX, rotY);
 
 
 	// 현재 회전도 초기값으로 설정
@@ -690,7 +694,12 @@ bool QDirect3D11Widget::init()
 	iv = XMMatrixInverse(nullptr, v);
 	ip = XMMatrixInverse(nullptr, p);
 
-	rotx = XMMatrixRotationX(XM_PIDIV2);  // 90도 회전
+	rotx = XMMatrixRotationX(-XM_PIDIV2);  // 90도 회전
+	roty = XMMatrixRotationY(XM_PI);  // 90도 회전
+
+
+
+
 
 	float volumeSize = 1.5f;
 
@@ -722,10 +731,12 @@ bool QDirect3D11Widget::init()
 	float scaleX = physicalWidth / maxPhysical;
 	float scaleY = physicalHeight / maxPhysical;
 	float scaleZ = physicalDepth / maxPhysical;
+	//float scaleY = physicalDepth / maxPhysical;
+	//float scaleZ = physicalHeight / maxPhysical;
 
 	// 스케일 행렬
 	float overallSize = 1.5f;
-	s = XMMatrixScaling(
+	scale = XMMatrixScaling(
 		scaleX*overallSize,
 		scaleY*overallSize,
 		scaleZ*overallSize
@@ -737,7 +748,8 @@ bool QDirect3D11Widget::init()
 
 	// scale = XMMatrixScaling(volumeSize, volumeSize, volumeSize);
 
-	w = s * rotx * trans;
+    w = scale * roty*rotx /** trans*/;
+	//w = scale;
 	iw = XMMatrixInverse(nullptr, w);
 
 	initializeRenderTargets();
@@ -1348,17 +1360,7 @@ void QDirect3D11Widget::UpdateVolumeMatrix()
 	// 1. 볼륨을 원점 중심으로
 	XMMATRIX translation = XMMatrixTranslation(0, 0, 0);
 
-	//// 스케일
-	//float overallSize = 1.5f;
-	//XMMATRIX scale = XMMatrixScaling(
-	//	0.81f * overallSize,
-	//	0.81f * overallSize,
-	//	1.0f * overallSize
-	//);
 
-	//// 3. 회전 (Y축 먼저, X축 나중에)
-	//XMMATRIX rotX = XMMatrixRotationX(m_rotationX);
-	//XMMATRIX rotY = XMMatrixRotationY(m_rotationY);
 
 	  // ✅ 쿼터니언 → 행렬
 	XMMATRIX rotation = XMMatrixRotationQuaternion(m_rotation);
@@ -1366,15 +1368,12 @@ void QDirect3D11Widget::UpdateVolumeMatrix()
 	//// 4. 최종 행렬
 	//XMMATRIX volumeWorld = s * rotY * rotX * translation;
 
-	XMMATRIX volumeWorld = s * rotation/**rotx*/;
+	XMMATRIX volumeWorld = scale * rotation/**rotx*/;
 
 	//CB cb{};
 	w = XMMatrixTranspose(volumeWorld);;
 	iw= XMMatrixTranspose(XMMatrixInverse(nullptr, volumeWorld));
 
-	//// 5. Constant Buffer 업데이트
-	//cb.VolumeWorld = XMMatrixTranspose(volumeWorld);
-	//cb.InvVolumeWorld = XMMatrixTranspose(XMMatrixInverse(nullptr, volumeWorld));
 }
 //======================================================================================
 
@@ -2437,16 +2436,6 @@ void QDirect3D11Widget::plasterVolumeShow()
 
 		if (FAILED(hr))
 			OutputDebugStringA("❌ Failed to create raymarch input layout\n");
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -4164,64 +4153,6 @@ void QDirect3D11Widget::plasterVolumeShow()
 	{
 		if (m_isDragging && 0==clickedViewIndex)
 		{
-			//QPoint currentPos = event->pos();
-			//int deltaX = currentPos.x() - m_lastMousePos.x();
-			//int deltaY = currentPos.y() - m_lastMousePos.y();
-
-			//// ✅ 델타가 0이면 스킵
-			//if (deltaX == 0 && deltaY == 0)
-			//{
-			//	event->accept();
-			//	return;
-			//}
-
-			//float sensitivity = 0.005f;
-			//float deltaRotY = deltaX * sensitivity;
-			//float deltaRotX = deltaY * sensitivity;
-
-			//// ✅ 로컬 축 기준 회전 (쿼터니언)
-			//// 현재 Y축
-			//XMMATRIX currentMat = XMMatrixRotationQuaternion(m_rotation);
-
-
-			//// ✅ 로컬 축 (반드시 정규화!)
-			//XMVECTOR localY = XMVector3Normalize(
-			//	XMVector3TransformNormal(XMVectorSet(0, 1, 0, 0), currentMat)
-			//);
-			//XMVECTOR localX = XMVector3Normalize(
-			//	XMVector3TransformNormal(XMVectorSet(1, 0, 0, 0), currentMat)
-			//);
-
-			//// 델타 회전 (쿼터니언)
-			////XMVECTOR deltaQuatY = XMQuaternionRotationAxis(localY, deltaRotY);
-			//// ✅ 올바른 순서 확인 (axis, angle)
-
-
-			//	// ✅ 델타 회전 쿼터니언
-			//XMVECTOR deltaQuatY = XMQuaternionRotationAxis(localY, deltaRotY);
-			//XMVECTOR deltaQuatX = XMQuaternionRotationAxis(localX, deltaRotX);
-
-			//// ✅ 한 번에 합치기 (더 안정적)
-			//XMVECTOR deltaQuat = XMQuaternionMultiply(deltaQuatX, deltaQuatY);
-			//m_rotation = XMQuaternionMultiply(deltaQuat, m_rotation);
-			//m_rotation = XMQuaternionNormalize(m_rotation);
-
-			//// ✅ 디버그 출력
-			//XMFLOAT4 rotDebug;
-			//XMStoreFloat4(&rotDebug, m_rotation);
-			//qDebug() << "Quat:" << rotDebug.x << rotDebug.y << rotDebug.z << rotDebug.w;
-
-
-			//m_lastMousePos = currentPos;
-
-			//UpdateVolumeMatrix();
-			//FullScreenPassSet();
-			//update();
-
-
-
-
-
 			QPoint currentPos = event->pos();
 			int deltaX = currentPos.x() - m_lastMousePos.x();
 			int deltaY = currentPos.y() - m_lastMousePos.y();
