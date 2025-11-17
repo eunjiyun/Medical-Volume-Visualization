@@ -698,11 +698,6 @@ bool QDirect3D11Widget::init()
 	roty = XMMatrixRotationY(XM_PI);  // 90도 회전
 
 
-
-
-
-//	float volumeSize = 1.5f;
-
 	// ✅ center 변환 제거
 	trans = XMMatrixTranslation(0.0f, 0.0f, 0.0f);
 
@@ -4163,7 +4158,7 @@ void QDirect3D11Widget::plasterVolumeShow()
 
 			// --- 회전 각도 ---
 			float yaw = deltaX * sensitivity;    // 좌우
-			float pitch = deltaY * sensitivity;  // 상하
+			float pitch = -deltaY * sensitivity;  // 상하
 
 			// --- 축 ---
 			XMVECTOR worldY = XMVectorSet(0, 1, 0, 0); // ✅ 절대축 / 고정
