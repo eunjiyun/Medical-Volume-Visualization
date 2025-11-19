@@ -3017,8 +3017,8 @@ void QDirect3D11Widget::plasterVolumeShow()
 		{
 			m_isDragging = true;
 
-			m_arcball.SetRotation(m_rotation);  // ✅ 현재 회전값 동기화
-			m_arcball.OnBegin(event->pos().x(), event->pos().y());
+		//	m_arcball.SetRotation(m_rotation);  // ✅ 현재 회전값 동기화
+		//	m_arcball.OnBegin(event->pos().x(), event->pos().y());
 			m_lastMousePos = event->pos();
 			setCursor(Qt::ClosedHandCursor);
 
@@ -4230,9 +4230,9 @@ void QDirect3D11Widget::UpdateSlicePlanePositions() {
 
 	{
 		// ===== Axial 평면 =====
-		float totalDepth = fileReader->m_depth * spacing.z;
-		float axialZ = origin.z + fileReader->currentIndex[1] * spacing.z;
-		float normalizedZ = -(axialZ - origin.z - totalDepth * 0.5f) / totalDepth;
+		float totalDepth = fileReader->m_height * spacing.y;
+		float axialZ = origin.y + fileReader->currentIndex[2] * spacing.y;
+		float normalizedZ = -(axialZ - origin.y - totalDepth * 0.5f) / totalDepth;
 		normalizedZ *= 1.9f;
 
 		XMMATRIX axialLocal =
@@ -4242,20 +4242,22 @@ void QDirect3D11Widget::UpdateSlicePlanePositions() {
 
 		// ✅ inverse 변환 적용
 		XMMATRIX axialWorld = axialLocal * invVolumeWorld;
-		XMStoreFloat4x4(&m_AxialPlane.worldMatrix, XMMatrixTranspose(axialWorld));
+		//XMStoreFloat4x4(&m_AxialPlane.worldMatrix, XMMatrixTranspose(axialWorld));
+		XMStoreFloat4x4(&m_CoronalPlane.worldMatrix, XMMatrixTranspose(axialWorld));
 	}
 
 	{
 		// ===== Coronal 평면 =====
-		float totalHeight = fileReader->m_height * spacing.y;
-		float coronalY = origin.y + fileReader->currentIndex[2] * spacing.y;
-		float normalizedY = (coronalY - origin.y - totalHeight * 0.5f) / totalHeight;
+		float totalHeight = fileReader->m_depth * spacing.z;
+		float coronalY = origin.z + fileReader->currentIndex[1] * spacing.z;
+		float normalizedY = (coronalY - origin.z - totalHeight * 0.5f) / totalHeight;
 		normalizedY *= 1.9f;
 
 		XMMATRIX coronalLocal = planeScaleMatrix * XMMatrixTranslation(0.0f, 0.0f, normalizedY);
 
 		XMMATRIX coronalWorld = coronalLocal * invVolumeWorld;
-		XMStoreFloat4x4(&m_CoronalPlane.worldMatrix, XMMatrixTranspose(coronalWorld));
+		//XMStoreFloat4x4(&m_CoronalPlane.worldMatrix, XMMatrixTranspose(coronalWorld));
+		XMStoreFloat4x4(&m_AxialPlane.worldMatrix, XMMatrixTranspose(coronalWorld));
 	}
 
 	{
@@ -4555,7 +4557,7 @@ void QDirect3D11Widget::UpdateSlicePlanePositions() {
 		{
 			// ✅ 리셋
 			m_rotation = m_initialRotation;
-			m_arcball.Init(width(), height());
+		//	m_arcball.Init(width(), height());
 
 			qDebug() << "Rotation Reset!";
 
@@ -4578,7 +4580,7 @@ void QDirect3D11Widget::UpdateSlicePlanePositions() {
 		{
 			m_isDragging = false;
 			setCursor(Qt::ArrowCursor);
-			m_arcball.OnEnd();
+		//	m_arcball.OnEnd();
 			qDebug() << "Mouse Released at:" << event->pos();
 		}
 

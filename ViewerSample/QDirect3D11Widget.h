@@ -105,7 +105,7 @@ public:
 	QScrollBar* scrollCoronal;
 	QScrollBar* scrollSagittal;
 
-	ArcBall m_arcball;
+	//ArcBall m_arcball;
 
 	QLabel* labelVolume;
 	QLabel* labelAxial;
