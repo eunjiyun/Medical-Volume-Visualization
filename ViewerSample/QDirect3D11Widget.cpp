@@ -4265,7 +4265,7 @@ void QDirect3D11Widget::UpdateSlicePlanePositions() {
 		float totalWidth = fileReader->m_width * spacing.x;
 		float sagittalX = origin.x + fileReader->currentIndex[3] * spacing.x;
 		float normalizedX = (sagittalX - origin.x - totalWidth * 0.5f) / totalWidth;
-		normalizedX *= 1.9f;
+		normalizedX *=- 1.9f;
 
 		XMMATRIX sagittalLocal =
 			planeScaleMatrix *
