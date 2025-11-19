@@ -4233,7 +4233,7 @@ void QDirect3D11Widget::UpdateSlicePlanePositions() {
 		float totalDepth = fileReader->m_height * spacing.y;
 		float axialZ = origin.y + fileReader->currentIndex[2] * spacing.y;
 		float normalizedZ = -(axialZ - origin.y - totalDepth * 0.5f) / totalDepth;
-		normalizedZ *= 1.9f;
+		normalizedZ *= 2.2f;
 
 		XMMATRIX axialLocal =
 			planeScaleMatrix*
@@ -4251,7 +4251,7 @@ void QDirect3D11Widget::UpdateSlicePlanePositions() {
 		float totalHeight = fileReader->m_depth * spacing.z;
 		float coronalY = origin.z + fileReader->currentIndex[1] * spacing.z;
 		float normalizedY = (coronalY - origin.z - totalHeight * 0.5f) / totalHeight;
-		normalizedY *= 1.9f;
+		normalizedY *= 2.2f;
 
 		XMMATRIX coronalLocal = planeScaleMatrix * XMMatrixTranslation(0.0f, 0.0f, normalizedY);
 
@@ -4265,7 +4265,7 @@ void QDirect3D11Widget::UpdateSlicePlanePositions() {
 		float totalWidth = fileReader->m_width * spacing.x;
 		float sagittalX = origin.x + fileReader->currentIndex[3] * spacing.x;
 		float normalizedX = (sagittalX - origin.x - totalWidth * 0.5f) / totalWidth;
-		normalizedX *=- 1.9f;
+		normalizedX *=- 2.2f;
 
 		XMMATRIX sagittalLocal =
 			planeScaleMatrix *
