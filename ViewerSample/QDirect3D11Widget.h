@@ -14,6 +14,7 @@
 #include<stdexcept>
 #include<unordered_map>
 #include<vector>
+#include "ArcBall.h"
 using namespace std;
 
 using Microsoft::WRL::ComPtr;
@@ -103,6 +104,8 @@ public:
 	QScrollBar* scrollAxial;
 	QScrollBar* scrollCoronal;
 	QScrollBar* scrollSagittal;
+
+	ArcBall m_arcball;
 
 	QLabel* labelVolume;
 	QLabel* labelAxial;

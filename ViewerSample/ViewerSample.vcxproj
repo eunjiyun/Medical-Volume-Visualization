@@ -113,6 +113,7 @@
     <QtRcc Include="ViewerSample.qrc" />
     <QtUic Include="ViewerSample.ui" />
     <QtMoc Include="ViewerSample.h" />
+    <ClCompile Include="ArcBall.cpp" />
     <ClCompile Include="FileReader.cpp" />
     <ClCompile Include="imgui.cpp" />
     <ClCompile Include="imgui_demo.cpp" />
@@ -131,6 +132,7 @@
     <QtMoc Include="QDirect3D11Widget.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="ArcBall.h" />
     <ClInclude Include="FileReader.h" />
     <ClInclude Include="imconfig.h" />
     <ClInclude Include="imgui.h" />

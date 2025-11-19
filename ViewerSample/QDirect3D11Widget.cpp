@@ -73,13 +73,77 @@ QDirect3D11Widget::QDirect3D11Widget(QWidget* parent)
 		XMVectorSet(0, 0, 1, 0),
 		XM_PI  // Y축 180도
 	);
+
+
+
+	////// ✅ Scout line 카메라 각도에 맞춘 추가 회전
+	////float pitchAngle = atan2f(0.2f, 1.0f);  // 약 11도 (위에서 내려다봄)
+	////float yawAngle = atan2f(0.2f, 1.0f);    // 약 11도 (왼쪽에서 봄)
+
+	////XMMATRIX additionalRotX = XMMatrixRotationX(-pitchAngle);  // 위에서 내려다보는 각도
+	////XMMATRIX additionalRotY = XMMatrixRotationY(-yawAngle);    // 왼쪽에서 보는 각도
+
+	//// ✅ Scout line 카메라 각도에 맞춘 추가 회전 (쿼터니언 버전)
+	//float pitchAngle = atan2f(0.2f, 1.0f);  // 약 11도
+	//float yawAngle = atan2f(0.2f, 1.0f);    // 약 11도
+
+	//XMVECTOR tiltPitch = XMQuaternionRotationAxis(
+	//	XMVectorSet(1, 0, 0, 0),  // X축
+	//	-pitchAngle               // 위에서 내려다봄
+	//);
+
+	//XMVECTOR tiltYaw = XMQuaternionRotationAxis(
+	//	XMVectorSet(0, 1, 0, 0),  // Y축
+	//	-yawAngle                 // 왼쪽에서 봄
+	//);
+
+
+
+
 	m_initialRotation = XMQuaternionMultiply(rotX, rotY);
+
+	//m_initialRotation = XMQuaternionMultiply(m_initialRotation, tiltPitch);
+	//m_initialRotation = XMQuaternionMultiply(m_initialRotation, tiltYaw);
+	//m_initialRotation = XMQuaternionNormalize(m_initialRotation);
+	
+
 
 
 	// 현재 회전도 초기값으로 설정
 	m_rotation = m_initialRotation;
 
+	//// ✅ 초기 회전: X축 90도 (Coronal 뷰)
+	//XMVECTOR rotX = XMQuaternionRotationAxis(
+	//	XMVectorSet(1, 0, 0, 0),
+	//	-XM_PIDIV2
+	//);
 
+	//XMVECTOR rotY = XMQuaternionRotationAxis(
+	//	XMVectorSet(0, 0, 1, 0),
+	//	XM_PI
+	//);
+
+	//// ✅ 이미지에 맞춘 추가 회전 (각도 조정)
+	//float pitchAngle =- 0.2f;  // 약 17도 (더 위에서 내려다봄)
+	//float yawAngle =- 0.3f;   // 약 8도 (살짝 왼쪽에서)
+
+	//XMVECTOR tiltPitch = XMQuaternionRotationAxis(
+	//	XMVectorSet(1, 0, 0, 0),
+	//	-pitchAngle
+	//);
+
+	//XMVECTOR tiltYaw = XMQuaternionRotationAxis(
+	//	XMVectorSet(0, 1, 0, 0),
+	//	-yawAngle
+	//);
+
+	//// ✅ 합치기
+	//m_initialRotation = XMQuaternionMultiply(rotX, rotY);
+	//m_initialRotation = XMQuaternionMultiply(tiltPitch, m_initialRotation);
+	//m_initialRotation = XMQuaternionMultiply(tiltYaw, m_initialRotation);
+	//m_initialRotation = XMQuaternionNormalize(m_initialRotation);
+
+	//m_rotation = m_initialRotation;
 
 	QPalette pal = palette();
 	pal.setColor(QPalette::Window, Qt::black);
@@ -676,10 +740,20 @@ bool QDirect3D11Widget::init()
 	//// 🔧 임시 카메라 (볼륨 중앙을 보는 단순 뷰)
 
 
+	//eye = XMVectorSet(-0.2f, 0.2f, -1.0f, 0.0f);  // 더 정면, 더 낮게
+//
+////	XMVECTOR target = XMVectorZero();                        // 원점(볼륨 중심)
+//	 up = XMVectorSet(0.0f, 1.0f, -0.05f, 0.0f);
+//
+//	//view = XMMatrixLookAtLH(eye, target, up);
+
+
 
 	eye = XMVectorSet(0.0f, 0.0f, -3.0f, 1.0f);  // 조금 더 뒤로
 	at = XMVectorSet(0.0f, 0.0f, 0.0f, 1.0f);
 	up = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
+
+
 
 	v = XMMatrixLookAtLH(eye, at, up);
 
@@ -694,8 +768,20 @@ bool QDirect3D11Widget::init()
 	iv = XMMatrixInverse(nullptr, v);
 	ip = XMMatrixInverse(nullptr, p);
 
+
+
+
+
+
 	rotx = XMMatrixRotationX(-XM_PIDIV2);  // 90도 회전
 	roty = XMMatrixRotationY(XM_PI);  // 90도 회전
+
+
+
+
+
+
+
 
 
 	// ✅ center 변환 제거
@@ -730,7 +816,7 @@ bool QDirect3D11Widget::init()
 	float scaleZ = physicalHeight / maxPhysical;
 
 	// 스케일 행렬
-	float overallSize = 1.7f;
+	float overallSize = 1.5f;
 	scale = XMMatrixScaling(
 		scaleX*overallSize,
 		scaleY*overallSize,
@@ -740,12 +826,37 @@ bool QDirect3D11Widget::init()
 
 
 
-
 	// scale = XMMatrixScaling(volumeSize, volumeSize, volumeSize);
 
-    w = scale * roty*rotx /** trans*/;
+	w = scale * roty*rotx /** trans*/;
 	//w = scale;
+
 	iw = XMMatrixInverse(nullptr, w);
+
+
+
+
+
+
+
+	//// ✅ Scout line 카메라 각도에 맞춘 추가 회전
+	//float pitchAngle = atan2f(0.2f, 1.0f);  // 약 11도 (위에서 내려다봄)
+	//float yawAngle = atan2f(0.2f, 1.0f);    // 약 11도 (왼쪽에서 봄)
+
+	//XMMATRIX additionalRotX = XMMatrixRotationX(-pitchAngle);  // 위에서 내려다보는 각도
+	//XMMATRIX additionalRotY = XMMatrixRotationY(-yawAngle);    // 왼쪽에서 보는 각도
+
+	//// ✅ 최종 world 행렬
+	//w = scale * roty * rotx * additionalRotY * additionalRotX;
+	//iw = XMMatrixInverse(nullptr, w);
+
+
+
+
+
+
+
+
 
 	initializeRenderTargets();
 	//	initializeVolumeRenderTargets();
@@ -2051,10 +2162,12 @@ void QDirect3D11Widget::plasterVolumeShow()
 	void QDirect3D11Widget::RenderVolumeView()
 	{
 
-		XMVECTOR eye = XMVectorSet(-0.2f, 0.2f, -1.0f, 0.0f);  // 더 정면, 더 낮게
+		//XMVECTOR eye = XMVectorSet(-0.2f, 0.2f, -1.0f, 0.0f);  // 더 정면, 더 낮게
+		XMVECTOR eye = XMVectorSet(0.0f, 0.0f, -1.0f, 0.0f);  // 더 정면, 더 낮게
 
 		XMVECTOR target = XMVectorZero();                        // 원점(볼륨 중심)
-		XMVECTOR up = XMVectorSet(0.0f, 1.0f, -0.05f, 0.0f);
+		//XMVECTOR up = XMVectorSet(0.0f, 1.0f, -0.05f, 0.0f);
+		XMVECTOR up = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
 
 
 		view = XMMatrixLookAtLH(eye, target, up);
@@ -2884,15 +2997,28 @@ void QDirect3D11Widget::plasterVolumeShow()
 
 
 
+	
 
 
 
 	void QDirect3D11Widget::mousePressEvent(QMouseEvent* event)
 	{
 		// 왼쪽 버튼인지 확인
-		if (event->button() == Qt::LeftButton)
+		/*if (event->button() == Qt::LeftButton)
 		{
 			m_isDragging = true;
+			m_lastMousePos = event->pos();
+			setCursor(Qt::ClosedHandCursor);
+
+			qDebug() << "Mouse Pressed at:" << event->pos();
+		}*/
+
+		if (event->button() == Qt::LeftButton /*&& clickedViewIndex == 0*/)
+		{
+			m_isDragging = true;
+
+			m_arcball.SetRotation(m_rotation);  // ✅ 현재 회전값 동기화
+			m_arcball.OnBegin(event->pos().x(), event->pos().y());
 			m_lastMousePos = event->pos();
 			setCursor(Qt::ClosedHandCursor);
 
@@ -3952,81 +4078,202 @@ void QDirect3D11Widget::plasterVolumeShow()
 		qDebug() << "Bounding cube initialized successfully!";
 	}
 
-	// ========================================
-	// 3. 슬라이스 평면 위치 업데이트
-	// ========================================
-	void QDirect3D11Widget::UpdateSlicePlanePositions() {
-		if (!fileReader) return;
+	//// ========================================
+	//// 3. 슬라이스 평면 위치 업데이트
+	//// ========================================
+	//void QDirect3D11Widget::UpdateSlicePlanePositions() {
+	//	if (!fileReader) return;
 
 
-		XMFLOAT3 origin = fileReader->views.origin;
-		XMFLOAT3 spacing = fileReader->views.spacing;
+	//	XMFLOAT3 origin = fileReader->views.origin;
+	//	XMFLOAT3 spacing = fileReader->views.spacing;
 
-		// ⚙️ 공통 스케일
-		//XMMATRIX scale = XMMatrixScaling(0.9f, 0.9f, 0.9f);
+	//	// ⚙️ 공통 스케일
+	//	//XMMATRIX scale = XMMatrixScaling(0.9f, 0.9f, 0.9f);
 
-		{
-			// ===== Axial 평면 (XY 평면, Z축 이동) =====
-			float totalDepth = fileReader->m_depth * spacing.z;
-			float axialZ = origin.z + fileReader->currentIndex[1] * spacing.z;
-			float normalizedZ = -(axialZ - origin.z - totalDepth * 0.5f) / totalDepth;
+	//	{
+	//		// ===== Axial 평면 (XY 평면, Z축 이동) =====
+	//		float totalDepth = fileReader->m_depth * spacing.z;
+	//		float axialZ = origin.z + fileReader->currentIndex[1] * spacing.z;
+	//		float normalizedZ = -(axialZ - origin.z - totalDepth * 0.5f) / totalDepth;
 
-			// 🔹 평면 이동 범위 확장 (예: 1.5배 정도)
-			normalizedZ *= 1.9f;
+	//		// 🔹 평면 이동 범위 확장 (예: 1.5배 정도)
+	//		normalizedZ *= 1.9f;
 
-			XMMATRIX axialWorld = /*scale **/
-				XMMatrixRotationX(XM_PIDIV2) *
-				XMMatrixTranslation(0.0f, normalizedZ, 0.0f);
-			//XMStoreFloat4x4(&m_axialPlane.worldMatrix, axialWorld);
-			XMStoreFloat4x4(&m_AxialPlane.worldMatrix, XMMatrixTranspose(axialWorld));
+	//		XMMATRIX axialWorld = /*scale **/
+	//			XMMatrixRotationX(XM_PIDIV2) *
+	//			XMMatrixTranslation(0.0f, normalizedZ, 0.0f);
+	//		//XMStoreFloat4x4(&m_axialPlane.worldMatrix, axialWorld);
+	//		XMStoreFloat4x4(&m_AxialPlane.worldMatrix, XMMatrixTranspose(axialWorld));
 
-			//XMStoreFloat4x4(&constants.World, axialWorld);
-			//m_pDeviceContext->UpdateSubresource(m_volumeConstantBuffer, 0, nullptr, &constants, 0, 0);
-			qDebug() << "Axial Z:" << normalizedZ << "(slice" << fileReader->currentIndex[1] << "/" << fileReader->m_depth << ")";
+	//		//XMStoreFloat4x4(&constants.World, axialWorld);
+	//		//m_pDeviceContext->UpdateSubresource(m_volumeConstantBuffer, 0, nullptr, &constants, 0, 0);
+	//		qDebug() << "Axial Z:" << normalizedZ << "(slice" << fileReader->currentIndex[1] << "/" << fileReader->m_depth << ")";
 
-			//DrawPlane(m_axialPlane);
-		}
-		{
-			// ===== Coronal 평면 (XZ 평면, Y축 이동) =====
-			float totalHeight = fileReader->m_height * spacing.y;
-			float coronalY = origin.y + fileReader->currentIndex[2] * spacing.y;
-			float normalizedY = (coronalY - origin.y - totalHeight * 0.5f) / totalHeight;
-			normalizedY *= 1.9f;
+	//		//DrawPlane(m_axialPlane);
+	//	}
+	//	{
+	//		// ===== Coronal 평면 (XZ 평면, Y축 이동) =====
+	//		float totalHeight = fileReader->m_height * spacing.y;
+	//		float coronalY = origin.y + fileReader->currentIndex[2] * spacing.y;
+	//		float normalizedY = (coronalY - origin.y - totalHeight * 0.5f) / totalHeight;
+	//		normalizedY *= 1.9f;
 
-			XMMATRIX coronalWorld = /*scale **/ XMMatrixTranslation(0.0f, 0.0f, normalizedY);
+	//		XMMATRIX coronalWorld = /*scale **/ XMMatrixTranslation(0.0f, 0.0f, normalizedY);
 
-			//XMStoreFloat4x4(&m_coronalPlane.worldMatrix, coronalWorld);
-			XMStoreFloat4x4(&m_CoronalPlane.worldMatrix, XMMatrixTranspose(coronalWorld));
+	//		//XMStoreFloat4x4(&m_coronalPlane.worldMatrix, coronalWorld);
+	//		XMStoreFloat4x4(&m_CoronalPlane.worldMatrix, XMMatrixTranspose(coronalWorld));
 
 
-			//XMStoreFloat4x4(&constants.World,  coronalWorld);
-			//m_pDeviceContext->UpdateSubresource(m_volumeConstantBuffer, 0, nullptr, &constants, 0, 0);
-			qDebug() << "Coronal Y:" << normalizedY << "(slice" << fileReader->currentIndex[2] << "/" << fileReader->m_height << ")";
+	//		//XMStoreFloat4x4(&constants.World,  coronalWorld);
+	//		//m_pDeviceContext->UpdateSubresource(m_volumeConstantBuffer, 0, nullptr, &constants, 0, 0);
+	//		qDebug() << "Coronal Y:" << normalizedY << "(slice" << fileReader->currentIndex[2] << "/" << fileReader->m_height << ")";
 
-			//DrawPlane(m_coronalPlane);
-		}
-		{
-			// ===== Sagittal 평면 (YZ 평면, X축 이동) =====
-			float totalWidth = fileReader->m_width * spacing.x;
-			float sagittalX = origin.x + fileReader->currentIndex[3] * spacing.x;
-			float normalizedX = (sagittalX - origin.x - totalWidth * 0.5f) / totalWidth;
+	//		//DrawPlane(m_coronalPlane);
+	//	}
+	//	{
+	//		// ===== Sagittal 평면 (YZ 평면, X축 이동) =====
+	//		float totalWidth = fileReader->m_width * spacing.x;
+	//		float sagittalX = origin.x + fileReader->currentIndex[3] * spacing.x;
+	//		float normalizedX = (sagittalX - origin.x - totalWidth * 0.5f) / totalWidth;
 
-			// 🔹 평면 이동 범위 확장 (예: 1.5배 정도)
-			normalizedX *= 1.9f;
+	//		// 🔹 평면 이동 범위 확장 (예: 1.5배 정도)
+	//		normalizedX *= 1.9f;
 
-			XMMATRIX sagittalWorld =/* scale **/
-				XMMatrixRotationY(XM_PIDIV2) *
-				XMMatrixTranslation(normalizedX, 0.0f, 0.0f);
-			//XMStoreFloat4x4(&m_sagittalPlane.worldMatrix, sagittalWorld);
-			XMStoreFloat4x4(&m_SagittalPlane.worldMatrix, XMMatrixTranspose(sagittalWorld));
+	//		XMMATRIX sagittalWorld =/* scale **/
+	//			XMMatrixRotationY(XM_PIDIV2) *
+	//			XMMatrixTranslation(normalizedX, 0.0f, 0.0f);
+	//		//XMStoreFloat4x4(&m_sagittalPlane.worldMatrix, sagittalWorld);
+	//		XMStoreFloat4x4(&m_SagittalPlane.worldMatrix, XMMatrixTranspose(sagittalWorld));
 
-			//XMStoreFloat4x4(&constants.World, sagittalWorld);
-			//m_pDeviceContext->UpdateSubresource(m_volumeConstantBuffer, 0, nullptr, &constants, 0, 0);
-			qDebug() << "Sagittal X:" << normalizedX << "(slice" << fileReader->currentIndex[3] << "/" << fileReader->m_width << ")";
+	//		//XMStoreFloat4x4(&constants.World, sagittalWorld);
+	//		//m_pDeviceContext->UpdateSubresource(m_volumeConstantBuffer, 0, nullptr, &constants, 0, 0);
+	//		qDebug() << "Sagittal X:" << normalizedX << "(slice" << fileReader->currentIndex[3] << "/" << fileReader->m_width << ")";
 
-			//DrawPlane(m_sagittalPlane);
-		}
+	//		//DrawPlane(m_sagittalPlane);
+	//	}
+	//}
+
+
+	//void QDirect3D11Widget::UpdateSlicePlanePositions() {
+	//	if (!fileReader) return;
+
+	//	XMFLOAT3 origin = fileReader->views.origin;
+	//	XMFLOAT3 spacing = fileReader->views.spacing;
+
+	//	// ✅ 볼륨 회전 행렬 가져오기
+	//	XMMATRIX volumeRotation = XMMatrixRotationQuaternion(m_rotation);
+	//	XMMATRIX volumeTransform = scale * volumeRotation;  // scale 변수가 멤버라면
+	//	{
+	//		// ===== Axial 평면 =====
+	//		float totalDepth = fileReader->m_depth * spacing.z;
+	//		float axialZ = origin.z + fileReader->currentIndex[1] * spacing.z;
+	//		float normalizedZ = -(axialZ - origin.z - totalDepth * 0.5f) / totalDepth;
+	//		normalizedZ *= 1.9f;
+
+	//		XMMATRIX axialLocal =
+	//			XMMatrixRotationX(XM_PIDIV2) *
+	//			XMMatrixTranslation(0.0f, normalizedZ, 0.0f);
+
+	//		// ✅ 로컬 변환 후 볼륨 회전 적용
+	//		XMMATRIX axialWorld = axialLocal * volumeRotation;
+	//		XMStoreFloat4x4(&m_AxialPlane.worldMatrix, XMMatrixTranspose(axialWorld));
+	//	}
+
+	//	{
+	//		// ===== Coronal 평면 =====
+	//		float totalHeight = fileReader->m_height * spacing.y;
+	//		float coronalY = origin.y + fileReader->currentIndex[2] * spacing.y;
+	//		float normalizedY = (coronalY - origin.y - totalHeight * 0.5f) / totalHeight;
+	//		normalizedY *= 1.9f;
+
+	//		XMMATRIX coronalLocal = XMMatrixTranslation(0.0f, 0.0f, normalizedY);
+
+	//		// ✅ 로컬 변환 후 볼륨 회전 적용
+	//		XMMATRIX coronalWorld = coronalLocal * volumeRotation;
+	//		XMStoreFloat4x4(&m_CoronalPlane.worldMatrix, XMMatrixTranspose(coronalWorld));
+	//	}
+
+	//	{
+	//		// ===== Sagittal 평면 =====
+	//		float totalWidth = fileReader->m_width * spacing.x;
+	//		float sagittalX = origin.x + fileReader->currentIndex[3] * spacing.x;
+	//		float normalizedX = (sagittalX - origin.x - totalWidth * 0.5f) / totalWidth;
+	//		normalizedX *= 1.9f;
+
+	//		XMMATRIX sagittalLocal =
+	//			XMMatrixRotationY(XM_PIDIV2) *
+	//			XMMatrixTranslation(normalizedX, 0.0f, 0.0f);
+
+	//		// ✅ 로컬 변환 후 볼륨 회전 적용
+	//		XMMATRIX sagittalWorld = sagittalLocal * volumeRotation;
+	//		XMStoreFloat4x4(&m_SagittalPlane.worldMatrix, XMMatrixTranspose(sagittalWorld));
+	//	}
+	//}
+
+
+void QDirect3D11Widget::UpdateSlicePlanePositions() {
+	if (!fileReader) return;
+
+	XMFLOAT3 origin = fileReader->views.origin;
+	XMFLOAT3 spacing = fileReader->views.spacing;
+
+	// ✅ 볼륨과 동일하게 inverse 변환 사용
+	XMMATRIX volumeRotation = XMMatrixRotationQuaternion(m_rotation);
+	XMMATRIX volumeWorld = scale * volumeRotation;
+	XMMATRIX invVolumeWorld = XMMatrixInverse(nullptr, volumeWorld);
+
+
+	// ✅ Scout line 평면 크기 조절 (1.5~2.0 정도로 조절)
+	float planeScale = 1.15f;
+	XMMATRIX planeScaleMatrix = XMMatrixScaling(planeScale, planeScale, planeScale);
+
+	{
+		// ===== Axial 평면 =====
+		float totalDepth = fileReader->m_depth * spacing.z;
+		float axialZ = origin.z + fileReader->currentIndex[1] * spacing.z;
+		float normalizedZ = -(axialZ - origin.z - totalDepth * 0.5f) / totalDepth;
+		normalizedZ *= 1.9f;
+
+		XMMATRIX axialLocal =
+			planeScaleMatrix*
+			XMMatrixRotationX(XM_PIDIV2) *
+			XMMatrixTranslation(0.0f, normalizedZ, 0.0f);
+
+		// ✅ inverse 변환 적용
+		XMMATRIX axialWorld = axialLocal * invVolumeWorld;
+		XMStoreFloat4x4(&m_AxialPlane.worldMatrix, XMMatrixTranspose(axialWorld));
 	}
+
+	{
+		// ===== Coronal 평면 =====
+		float totalHeight = fileReader->m_height * spacing.y;
+		float coronalY = origin.y + fileReader->currentIndex[2] * spacing.y;
+		float normalizedY = (coronalY - origin.y - totalHeight * 0.5f) / totalHeight;
+		normalizedY *= 1.9f;
+
+		XMMATRIX coronalLocal = planeScaleMatrix * XMMatrixTranslation(0.0f, 0.0f, normalizedY);
+
+		XMMATRIX coronalWorld = coronalLocal * invVolumeWorld;
+		XMStoreFloat4x4(&m_CoronalPlane.worldMatrix, XMMatrixTranspose(coronalWorld));
+	}
+
+	{
+		// ===== Sagittal 평면 =====
+		float totalWidth = fileReader->m_width * spacing.x;
+		float sagittalX = origin.x + fileReader->currentIndex[3] * spacing.x;
+		float normalizedX = (sagittalX - origin.x - totalWidth * 0.5f) / totalWidth;
+		normalizedX *= 1.9f;
+
+		XMMATRIX sagittalLocal =
+			planeScaleMatrix *
+			XMMatrixRotationY(XM_PIDIV2) *
+			XMMatrixTranslation(normalizedX, 0.0f, 0.0f);
+
+		XMMATRIX sagittalWorld = sagittalLocal * invVolumeWorld;
+		XMStoreFloat4x4(&m_SagittalPlane.worldMatrix, XMMatrixTranspose(sagittalWorld));
+	}
+}
 
 	// ========================================
 	// 4. 바운딩 큐브 렌더링
@@ -4144,47 +4391,160 @@ void QDirect3D11Widget::plasterVolumeShow()
 
 
 	
+	//void QDirect3D11Widget::mouseMoveEvent(QMouseEvent* event)
+	//{
+	//	if (m_isDragging && 0==clickedViewIndex)
+	//	{
+	//		QPoint currentPos = event->pos();
+	//		int deltaX = currentPos.x() - m_lastMousePos.x();
+	//		int deltaY = currentPos.y() - m_lastMousePos.y();
+
+	//		if (deltaX == 0 && deltaY == 0) { event->accept(); return; }
+
+	//		float sensitivity = 0.005f;
+
+	//		// --- 회전 각도 ---
+	//		float yaw = deltaX * sensitivity;    // 좌우
+	//		float pitch = -deltaY * sensitivity;  // 상하
+
+	//		// --- 축 ---
+	//		XMVECTOR worldY = XMVectorSet(0, 1, 0, 0); // ✅ 절대축 / 고정
+	//		XMMATRIX currentMat = XMMatrixRotationQuaternion(m_rotation);
+
+	//		// ✅ pitch는 로컬 X축
+	//		XMVECTOR localX = XMVector3Normalize(
+	//			XMVector3TransformNormal(XMVectorSet(1, 0, 0, 0), currentMat)
+	//		);
+
+	//		// ✅ 쿼터니언 생성
+	//		XMVECTOR qYaw = XMQuaternionRotationAxis(worldY, yaw);
+	//		XMVECTOR qPitch = XMQuaternionRotationAxis(localX, pitch);
+
+	//		// ✅ 중요: 순서 yaw → pitch → current
+	//		m_rotation = XMQuaternionMultiply(qPitch,
+	//			XMQuaternionMultiply(qYaw, m_rotation));
+
+	//		m_rotation = XMQuaternionNormalize(m_rotation);
+
+	//		m_lastMousePos = currentPos;
+
+	//		UpdateVolumeMatrix();
+	//		FullScreenPassSet();
+	//		update();
+
+	//	}
+	//	event->accept();
+	//}
+
+
+	//void QDirect3D11Widget::mouseMoveEvent(QMouseEvent* event)
+	//{
+	//	if (m_isDragging && 0 == clickedViewIndex)
+	//	{
+	//		QPoint currentPos = event->pos();
+	//		int deltaX = currentPos.x() - m_lastMousePos.x();
+	//		int deltaY = currentPos.y() - m_lastMousePos.y();
+	//		if (deltaX == 0 && deltaY == 0) { event->accept(); return; }
+
+	//		float sensitivity = 0.005f;
+	//		float yaw = deltaX * sensitivity;
+	//		float pitch = -deltaY * sensitivity;
+
+	//		// ✅ 둘 다 월드(뷰) 기준 고정 축 사용
+	//		XMVECTOR worldY = XMVectorSet(0, 1, 0, 0); // Yaw: 월드 Y
+	//		XMVECTOR worldX = XMVectorSet(1, 0, 0, 0); // Pitch: 월드 X
+
+	//		XMVECTOR qYaw = XMQuaternionRotationAxis(worldY, yaw);
+	//		XMVECTOR qPitch = XMQuaternionRotationAxis(worldX, pitch);
+
+	//		// ✅ 순서: pitch와 yaw를 먼저 합친 후 기존 회전에 적용
+	//		XMVECTOR deltaRotation = XMQuaternionMultiply(qPitch, qYaw);
+	//		m_rotation = XMQuaternionMultiply(deltaRotation, m_rotation);
+	//		m_rotation = XMQuaternionNormalize(m_rotation);
+
+	//		m_lastMousePos = currentPos;
+	//		UpdateVolumeMatrix();
+	//		FullScreenPassSet();
+	//		update();
+	//	}
+	//	event->accept();
+	//}
+
+	//void QDirect3D11Widget::mouseMoveEvent(QMouseEvent* event)
+	//{
+	//	if (m_isDragging && clickedViewIndex == 0)
+	//	{
+	//		m_arcball.OnMove(event->pos().x(), event->pos().y());
+	//		m_rotation = m_arcball.GetRotationQuat();
+
+
+	//		m_lastMousePos = currentPos;
+	//		UpdateVolumeMatrix();
+	//		FullScreenPassSet();
+	//		update();
+	//	}
+	//	event->accept();
+	//}
+
+
+	// 마우스 좌표를 -1~1로 정규화 후 구 표면 점으로 변환
+	XMVECTOR ScreenToArcball(float x, float y, float width, float height)
+	{
+		float nx = (2.0f * x / width) - 1.0f;
+		float ny = 1.0f - (2.0f * y / height); // Y 반전
+
+		float lengthSq = nx * nx + ny * ny;
+
+		if (lengthSq <= 1.0f) {
+			// 구 안쪽: z = sqrt(1 - x² - y²)
+			return XMVectorSet(nx, ny, sqrtf(1.0f - lengthSq), 0);
+		}
+		else {
+			// 구 바깥: 정규화해서 구 표면에 투영
+			float length = sqrtf(lengthSq);
+			return XMVectorSet(nx / length, ny / length, 0, 0);
+		}
+	}
+
+
+
 	void QDirect3D11Widget::mouseMoveEvent(QMouseEvent* event)
 	{
-		if (m_isDragging && 0==clickedViewIndex)
+		if (m_isDragging && 0 == clickedViewIndex)
 		{
 			QPoint currentPos = event->pos();
-			int deltaX = currentPos.x() - m_lastMousePos.x();
-			int deltaY = currentPos.y() - m_lastMousePos.y();
 
-			if (deltaX == 0 && deltaY == 0) { event->accept(); return; }
+			// 시작점과 끝점을 구 표면 좌표로 변환
+			XMVECTOR v0 = ScreenToArcball(m_lastMousePos.x(), m_lastMousePos.y(),
+				width(), height());
+			XMVECTOR v1 = ScreenToArcball(currentPos.x(), currentPos.y(),
+				width(), height());
 
-			float sensitivity = 0.005f;
+			// 두 벡터 사이의 회전축과 각도 계산
+			XMVECTOR axis = XMVector3Cross(v0, v1);
 
-			// --- 회전 각도 ---
-			float yaw = deltaX * sensitivity;    // 좌우
-			float pitch = -deltaY * sensitivity;  // 상하
+			if (XMVector3Length(axis).m128_f32[0] > 0.0001f)
+			{
+				axis = XMVector3Normalize(axis);
+				float dot = XMVector3Dot(v0, v1).m128_f32[0];
+				dot = std::clamp(dot, -1.0f, 1.0f);
+				float angle = acosf(dot);
 
-			// --- 축 ---
-			XMVECTOR worldY = XMVectorSet(0, 1, 0, 0); // ✅ 절대축 / 고정
-			XMMATRIX currentMat = XMMatrixRotationQuaternion(m_rotation);
+				// 쿼터니언 생성 및 적용
+				XMVECTOR qDelta = XMQuaternionRotationAxis(axis, angle);
+				m_rotation = XMQuaternionMultiply(qDelta, m_rotation);
 
-			// ✅ pitch는 로컬 X축
-			XMVECTOR localX = XMVector3Normalize(
-				XMVector3TransformNormal(XMVectorSet(1, 0, 0, 0), currentMat)
-			);
-
-			// ✅ 쿼터니언 생성
-			XMVECTOR qYaw = XMQuaternionRotationAxis(worldY, yaw);
-			XMVECTOR qPitch = XMQuaternionRotationAxis(localX, pitch);
-
-			// ✅ 중요: 순서 yaw → pitch → current
-			m_rotation = XMQuaternionMultiply(qPitch,
-				XMQuaternionMultiply(qYaw, m_rotation));
-
-			m_rotation = XMQuaternionNormalize(m_rotation);
+				// 이걸로 바꿔보기 (오른쪽에 곱함)
+				//m_rotation = XMQuaternionMultiply(m_rotation, qDelta);
+				m_rotation = XMQuaternionNormalize(m_rotation);
+			}
 
 			m_lastMousePos = currentPos;
-
 			UpdateVolumeMatrix();
+
+			UpdateSlicePlanePositions();  // ✅ 추가
 			FullScreenPassSet();
 			update();
-
 		}
 		event->accept();
 	}
@@ -4195,6 +4555,7 @@ void QDirect3D11Widget::plasterVolumeShow()
 		{
 			// ✅ 리셋
 			m_rotation = m_initialRotation;
+			m_arcball.Init(width(), height());
 
 			qDebug() << "Rotation Reset!";
 
@@ -4217,7 +4578,7 @@ void QDirect3D11Widget::plasterVolumeShow()
 		{
 			m_isDragging = false;
 			setCursor(Qt::ArrowCursor);
-
+			m_arcball.OnEnd();
 			qDebug() << "Mouse Released at:" << event->pos();
 		}
 
