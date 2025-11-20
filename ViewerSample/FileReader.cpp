@@ -66,7 +66,7 @@ bool FileReader::LoadDICOMSeries(std::string folderPath, ID3D11Device* g_pd3dDev
 		
 
 				DcmFileFormat file;
-				OFCondition status = file.loadFile(/*folderPath + "0000.dcm"*/entry.path().string());
+				OFCondition status = file.loadFile(/*folderPath + "0000.dcm"*/entry.path().string().c_str());
 
 				DcmDataset* dataset = file.getDataset();
 

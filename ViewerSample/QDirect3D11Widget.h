@@ -41,8 +41,35 @@ struct CB
 	DirectX::XMMATRIX VolumeWorld;     // 볼륨의 월드 변환(스케일/회전/이동)
 	DirectX::XMMATRIX InvVolumeWorld;
 	DirectX::XMFLOAT3 CameraPosWS;     float Step;      // 샘플 간격 (예: 0.002~0.01)
-	int   MaxSteps;                    float Opacity;   float _pad0; float _pad1;
+	int   MaxSteps;                   DirectX::XMFLOAT3 Voxel;
+
+	DirectX::XMFLOAT4 HuParams;  // x=Slope, y=Intercept, z=Min, w=Max
 };
+
+
+//
+//cbuffer CB : register(b0)
+//{
+//	matrix View;
+//	matrix Proj;
+//	matrix InvView;
+//	matrix InvProj;
+//	matrix VolumeWorld;
+//	matrix InvVolumeWorld;
+//	float3 CameraPosWS;
+//	float Step;
+//	int   MaxSteps;
+//	float3 Voxel;
+//	//float Pad0;
+//
+//	//// 🔽 추가
+//	//float  HuSlope;        // RescaleSlope
+//	//float  HuIntercept;    // RescaleIntercept
+//	//float  HuMin;          // 윈도우/TF용 HU 최소값 (예: -1000)
+//	//float  HuMax;          // 윈도우/TF용 HU 최대값 (예: 3000)
+//
+//	float4 HuParams;  // x=Slope, y=Intercept, z=Min, w=Max
+//};
 
 class FileReader;
 
@@ -88,6 +115,15 @@ struct VolumeConstants {
 
 
 	DirectX::XMFLOAT4 Voxel;  // 선택사항: 와이어프레임 색상 등
+	
+	//float Pad0;
+	// // 🔽 추가
+	//float  HuSlope;        // RescaleSlope
+	//float  HuIntercept;    // RescaleIntercept
+	//float  HuMin;          // 윈도우/TF용 HU 최소값 (예: -1000)
+	//float  HuMax;          // 윈도우/TF용 HU 최대값 (예: 3000)
+
+	DirectX::XMFLOAT4 HuParams;
 };
 
 struct SlicePlane {

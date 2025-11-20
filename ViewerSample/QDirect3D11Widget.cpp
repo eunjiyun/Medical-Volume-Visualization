@@ -1123,6 +1123,7 @@ void QDirect3D11Widget::CreateTexture3D()
 	);
 
 
+	
 
 	if (!ok) {
 		OutputDebugStringA("❌ NormalizeVolumeU16 failed\n");
@@ -1364,8 +1365,6 @@ void QDirect3D11Widget::FullScreenPassSet()
 		XMVectorGetY(up),
 		XMVectorGetZ(at)
 	);
-
-
 	cb.Step = 0.001f;
 	//cb.MaxSteps = 512;
 	// ✅ 권장값
@@ -1375,8 +1374,38 @@ void QDirect3D11Widget::FullScreenPassSet()
 	//cb.MaxSteps = 768;  // 512 → 768 (더 부드럽게)
 	cb.MaxSteps = 1536;
 
-	cb.Opacity = 0.08f;
+	//cb.Opacity = 0.08f;
 	//cb.Opacity = 0.12f;  // 약간만 높여보세요 (0.08 → 0.12)
+
+
+
+			
+
+		//constantsPrev.HuMin = fileReader->windowCenter- fileReader->windowWidth/2.0;
+		//constantsPrev.HuMax = fileReader->windowCenter + fileReader->windowWidth / 2.0;
+		//constantsPrev.HuSlope = fileReader->m_rescaleSlope;
+		//constantsPrev.HuIntercept = fileReader->m_rescaleIntercept;
+
+		cb.Voxel = XMFLOAT3(fileReader->m_width, fileReader->m_height, fileReader->m_depth);
+	
+		cb.HuParams.x= fileReader->m_rescaleSlope;
+		cb.HuParams.y= fileReader->m_rescaleIntercept;
+		cb.HuParams.z = fileReader->windowCenter - fileReader->windowWidth / 2.0;
+		cb.HuParams.w = fileReader->windowCenter +fileReader->windowWidth / 2.0;
+
+
+		// cb 설정 후, Map 전에
+		qDebug() << "HuParams: Slope=" << cb.HuParams.x
+			<< "Intercept=" << cb.HuParams.y
+			<< "Min=" << cb.HuParams.z
+			<< "Max=" << cb.HuParams.w;
+
+		qDebug() << "Voxel:" << (int)cb.Voxel.x
+			<< "x" << (int)cb.Voxel.y
+			<< "x" << (int)cb.Voxel.z;
+
+		qDebug() << "Window: Center=" << fileReader->windowCenter
+			<< "Width=" << fileReader->windowWidth;
 
 
 	D3D11_MAPPED_SUBRESOURCE mapped{};
@@ -2146,9 +2175,28 @@ void QDirect3D11Widget::plasterVolumeShow()
 		XMStoreFloat4x4(&constantsPrev.World, XMMatrixTranspose(volumeWorld));
 
 
-	//	constantsPrev.Voxel = XMFLOAT4(1, 1, 1, alpha);
+	////	constantsPrev.Voxel = XMFLOAT4(1, 1, 1, alpha);
 
-		constantsPrev.Voxel = XMFLOAT4(fileReader->m_width, fileReader->m_height, fileReader->m_depth, alpha);
+	//	constantsPrev.Voxel = XMFLOAT4(fileReader->m_width, fileReader->m_height, fileReader->m_depth, alpha);
+
+	//	//constantsPrev.HuMin = fileReader->windowCenter- fileReader->windowWidth/2.0;
+	//	//constantsPrev.HuMax = fileReader->windowCenter + fileReader->windowWidth / 2.0;
+	//	//constantsPrev.HuSlope = fileReader->m_rescaleSlope;
+	//	//constantsPrev.HuIntercept = fileReader->m_rescaleIntercept;
+
+	//	constantsPrev.HuParams.x= fileReader->m_rescaleSlope;
+	//	constantsPrev.HuParams.y= fileReader->m_rescaleIntercept;
+	//	constantsPrev.HuParams.z = fileReader->windowCenter - fileReader->windowWidth / 2.0;
+	//	constantsPrev.HuParams.w = fileReader->windowCenter +fileReader->windowWidth / 2.0;
+
+
+	//	qDebug() << "===== HU PARAMS =====";
+	//	qDebug() << "Slope      :" << constantsPrev.HuParams.x;
+	//	qDebug() << "Intercept  :" << constantsPrev.HuParams.y;
+	//	qDebug() << "HU Min     :" << constantsPrev.HuParams.z;
+	//	qDebug() << "HU Max     :" << constantsPrev.HuParams.w;
+	//	qDebug() << "======================";
+
 
 		m_pDeviceContext->UpdateSubresource(m_volumePrevConstantBuffer, 0, nullptr, &constantsPrev, 0, 0);
 
