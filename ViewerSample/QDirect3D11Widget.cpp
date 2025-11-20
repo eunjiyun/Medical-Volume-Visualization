@@ -2146,7 +2146,9 @@ void QDirect3D11Widget::plasterVolumeShow()
 		XMStoreFloat4x4(&constantsPrev.World, XMMatrixTranspose(volumeWorld));
 
 
-		constantsPrev.Color = XMFLOAT4(1, 1, 1, alpha);
+	//	constantsPrev.Voxel = XMFLOAT4(1, 1, 1, alpha);
+
+		constantsPrev.Voxel = XMFLOAT4(fileReader->m_width, fileReader->m_height, fileReader->m_depth, alpha);
 
 		m_pDeviceContext->UpdateSubresource(m_volumePrevConstantBuffer, 0, nullptr, &constantsPrev, 0, 0);
 
@@ -2227,13 +2229,15 @@ void QDirect3D11Widget::plasterVolumeShow()
 		XMStoreFloat4x4(&constants.View, XMMatrixTranspose(view));
 		XMStoreFloat4x4(&constants.Projection, XMMatrixTranspose(proj));
 
+	//	constants.Voxel = XMFLOAT4(fileReader->m_width, fileReader->m_height, fileReader->m_depth, 1.0f);
+
 		// ⚙️ 공통 스케일 (크기 조정)
 		//XMMATRIX worldScale = XMMatrixScaling(0.55f, 0.55f, 0.55f);
 
 		// ---- Axial (XY plane, z=0)
 		{
 			constants.World = m_CoronalPlane.worldMatrix; // ✅ 저장된 World Matrix 사용
-			constants.Color = XMFLOAT4(0.0f, 1.0f, 1.0f, 1.0f); // 청록
+			constants.Voxel = XMFLOAT4(0.0f, 1.0f, 1.0f, 1.0f); // 청록
 			m_pDeviceContext->UpdateSubresource(m_volumeConstantBuffer, 0, nullptr, &constants, 0, 0);
 			DrawPlane(m_CoronalPlane);
 		}
@@ -2241,7 +2245,7 @@ void QDirect3D11Widget::plasterVolumeShow()
 		// ---- Coronal (XZ plane, y=0)
 		{
 			constants.World = m_AxialPlane.worldMatrix;  // ✅ 저장된 World Matrix 사용
-			constants.Color = XMFLOAT4(1.0f, 0.0f, 1.0f, 1.0f); // 자홍
+			constants.Voxel = XMFLOAT4(1.0f, 0.0f, 1.0f, 1.0f); // 자홍
 			m_pDeviceContext->UpdateSubresource(m_volumeConstantBuffer, 0, nullptr, &constants, 0, 0);
 			DrawPlane(m_AxialPlane);
 		}
@@ -2249,7 +2253,7 @@ void QDirect3D11Widget::plasterVolumeShow()
 		// ---- Sagittal (YZ plane, x=0)
 		{
 			constants.World = m_SagittalPlane.worldMatrix; // ✅ 저장된 World Matrix 사용
-			constants.Color = XMFLOAT4(1.0f, 1.0f, 0.0f, 1.0f); // 노랑
+			constants.Voxel = XMFLOAT4(1.0f, 1.0f, 0.0f, 1.0f); // 노랑
 			m_pDeviceContext->UpdateSubresource(m_volumeConstantBuffer, 0, nullptr, &constants, 0, 0);
 			DrawPlane(m_SagittalPlane);
 		}
@@ -4295,7 +4299,7 @@ void QDirect3D11Widget::UpdateSlicePlanePositions() {
 				origin.y + height * 0.5f,
 				origin.z + depth * 0.5f);
 		XMStoreFloat4x4(&cubeConstants.World, cubeWorld);
-		cubeConstants.Color = XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f);
+		cubeConstants.Voxel = XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f);
 
 		// Constant Buffer 업데이트
 		m_pDeviceContext->UpdateSubresource(m_volumeConstantBuffer, 0, nullptr,

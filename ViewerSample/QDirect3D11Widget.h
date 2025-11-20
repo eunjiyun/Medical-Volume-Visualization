@@ -85,7 +85,9 @@ struct VolumeConstants {
 	DirectX::XMFLOAT4X4 World;
 	DirectX::XMFLOAT4X4 View;
 	DirectX::XMFLOAT4X4 Projection;
-	DirectX::XMFLOAT4 Color;  // 선택사항: 와이어프레임 색상 등
+
+
+	DirectX::XMFLOAT4 Voxel;  // 선택사항: 와이어프레임 색상 등
 };
 
 struct SlicePlane {

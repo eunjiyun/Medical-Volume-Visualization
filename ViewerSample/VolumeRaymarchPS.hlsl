@@ -10,9 +10,7 @@ cbuffer CB : register(b0)
 	float3 CameraPosWS;
 	float Step;
 	int   MaxSteps;
-	float Opacity;
-	float pad0;
-	float pad1;
+	float3 Voxel;
 };
 
 Texture3D<float> volumeTex : register(t0);
@@ -306,50 +304,35 @@ rayPosWS = float3(0, 0, -3.0);
 		float4 colorAlpha = TransferFunction(density);
 
 
-		//// ✅ 고밀도(뼈/치아)에만 라이팅 추가
-		//if (density > 0.4)
-		//{
-		//	// 간단한 그라디언트 계산
-		//	float eps = 0.01;
-		//	float dx = volumeTex.SampleLevel(samp, uvw + float3(eps, 0, 0), 0).r
-		//		- volumeTex.SampleLevel(samp, uvw - float3(eps, 0, 0), 0).r;
-		//	float dy = volumeTex.SampleLevel(samp, uvw + float3(0, eps, 0), 0).r
-		//		- volumeTex.SampleLevel(samp, uvw - float3(0, eps, 0), 0).r;
-		//	float dz = volumeTex.SampleLevel(samp, uvw + float3(0, 0, eps), 0).r
-		//		- volumeTex.SampleLevel(samp, uvw - float3(0, 0, eps), 0).r;
+		float3 eps = float3(1.0 / Voxel.x, 1.0 / Voxel.y, 1.0 / Voxel.z);   // (width, height, depth)
 
-		//	float3 normal = normalize(float3(dx, dy, dz) + 1e-6);
-		//	float3 lightDir = normalize(float3(1, 1, -1));
-		//	float lighting = max(0.3, dot(normal, lightDir));
+	//	float3 eps = float3(1.0 / 794, 1.0 / 794, 1.0 /632 );   // (width, height, depth)
+		float dx = volumeTex.SampleLevel(samp, uvw + float3(eps.x, 0, 0), 0).r -
+			volumeTex.SampleLevel(samp, uvw - float3(eps.x, 0, 0), 0).r;
 
-		//	colorAlpha.rgb *= lighting;
-		//}
+		float dy = volumeTex.SampleLevel(samp, uvw + float3(0, eps.y, 0), 0).r -
+			volumeTex.SampleLevel(samp, uvw - float3(0, eps.y, 0), 0).r;
 
+		float dz = volumeTex.SampleLevel(samp, uvw + float3(0, 0, eps.z), 0).r -
+			volumeTex.SampleLevel(samp, uvw - float3(0, 0, eps.z), 0).r;
 
-		//if (density > 0.4)
-		//{
-		//	float eps = 0.01;
-		//	float dx = volumeTex.SampleLevel(samp, uvw + float3(eps, 0, 0), 0).r
-		//		- volumeTex.SampleLevel(samp, uvw - float3(eps, 0, 0), 0).r;
-		//	float dy = volumeTex.SampleLevel(samp, uvw + float3(0, eps, 0), 0).r
-		//		- volumeTex.SampleLevel(samp, uvw - float3(0, eps, 0), 0).r;
-		//	float dz = volumeTex.SampleLevel(samp, uvw + float3(0, 0, eps), 0).r
-		//		- volumeTex.SampleLevel(samp, uvw - float3(0, 0, eps), 0).r;
+		// Normal (Gradient)
+		float3 N = normalize(float3(dx, dy, dz) + 1e-6);
 
-		//	float3 normal = normalize(float3(dx, dy, dz) + 1e-6);
-		//	float3 lightDir = normalize(float3(1, 1, -1));
+		// Light direction (tweakable)
+		float3 L = normalize(float3(0.6, 0.7, -0.4));
 
-		//	// ✅ 최소값을 높임 (0.3 → 0.7)
-		//	float lighting = max(0.7, dot(normal, lightDir));
+		// Lambert
+		float lambert = max(dot(N, L), 0.0);
 
-		//	colorAlpha.rgb *= lighting;
-		//}
-		//
+		// Ambient + Lambert 조명 적용
+		float lighting = 0.25 + lambert * 1.1;
+
+		// 색상에 조명 적용
+		colorAlpha.rgb *= lighting;
 
 
-
-		//// ✅ 색상만 바로 리턴 (알파 무시)
-		//return float4(colorAlpha.rgb, 1.0);
+	
 
 
 
