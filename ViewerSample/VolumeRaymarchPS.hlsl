@@ -442,16 +442,18 @@ rayPosWS = float3(0, 0, -3.0);
 			volumeTex.SampleLevel(samp, uvw + float3(0, 0, eps.z), 0).r -
 			volumeTex.SampleLevel(samp, uvw - float3(0, 0, eps.z), 0).r;
 
-		// 5) Normal 생성
+		// 조명 계산 부분에서
 		float3 N = normalize(float3(dx, dy, dz) + 1e-6);
-
-		// 6) Lighting
 		float3 L = normalize(float3(0.5, 0.7, -0.5));
-		float lambert = max(dot(N, L), 0.0);
+		float3 V = -rayDir;  // 뷰 방향
+		float3 H = normalize(L + V);  // 하프 벡터
 
-		// 2. 조명 밝기 높이기
-		float lighting = 0.45 + lambert * 0.75;  // 0.35 → 0.45
+		float lambert = max(dot(N, L), 0.0);
+		float spec = pow(max(dot(N, H), 0.0), 48.0);  // 광택
+
+		float lighting = 0.45 + lambert * 0.75;
 		colorAlpha.rgb *= lighting;
+		colorAlpha.rgb += spec * float3(0.2, 0.18, 0.15);  // 따뜻한 하이라이트
 
 
 		float3 color = colorAlpha.rgb;
