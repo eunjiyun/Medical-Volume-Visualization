@@ -124,31 +124,57 @@ float4 TransferFunction(float density)
 
 
 
+//float4 TransferFunctionHU(float hu, float huNorm)
+//{
+//	// 공기/배경 완전 제거
+//	if (hu < 300.0)
+//		return float4(0, 0, 0, 0);
+//
+//	// 연조직 - 거의 투명
+//	if (hu < 600.0)
+//	{
+//		float t = saturate((hu - 300.0) / 300.0);
+//		return float4(0.4, 0.35, 0.3, t * 0.02);  // 거의 안 보이게
+//	}
+//
+//	// 해면골 - 반투명
+//	if (hu < 1200.0)
+//	{
+//		float t = saturate((hu - 600.0) / 600.0);
+//		float3 col = lerp(float3(0.78, 0.68, 0.58), float3(0.88, 0.78, 0.68), t);
+//		return float4(col, 0.5 + t * 1.0);  // alpha 높임
+//	}
+//
+//	// 피질골/치아 - 불투명
+//	float t = saturate((hu - 1200.0) / 1500.0);
+//	float3 col = lerp(float3(0.92, 0.87, 0.80), float3(0.98, 0.95, 0.90), t);
+//	return float4(col, 2.0 + t * 1.5);  // alpha 더 높임
+//}
+
+
+
+// 1. TF에서 alpha 더 높이기
 float4 TransferFunctionHU(float hu, float huNorm)
 {
-	// 공기/배경 완전 제거
-	if (hu < 300.0)
+	if (hu < 450.0)  // 400 → 450 (노이즈 더 제거)
 		return float4(0, 0, 0, 0);
 
-	// 연조직 - 거의 투명
-	if (hu < 600.0)
+	if (hu < 750.0)
 	{
-		float t = saturate((hu - 300.0) / 300.0);
-		return float4(0.4, 0.35, 0.3, t * 0.02);  // 거의 안 보이게
+		float t = saturate((hu - 450.0) / 300.0);
+		return float4(0.5, 0.42, 0.36, t * 0.005);  // 거의 투명
 	}
 
-	// 해면골 - 반투명
-	if (hu < 1200.0)
+	if (hu < 1300.0)
 	{
-		float t = saturate((hu - 600.0) / 600.0);
-		float3 col = lerp(float3(0.78, 0.68, 0.58), float3(0.88, 0.78, 0.68), t);
-		return float4(col, 0.5 + t * 1.0);  // alpha 높임
+		float t = saturate((hu - 750.0) / 550.0);
+		float3 col = lerp(float3(0.82, 0.72, 0.62), float3(0.92, 0.82, 0.72), t);
+		return float4(col, 0.8 + t * 1.5);  // alpha 높임
 	}
 
-	// 피질골/치아 - 불투명
-	float t = saturate((hu - 1200.0) / 1500.0);
-	float3 col = lerp(float3(0.92, 0.87, 0.80), float3(0.98, 0.95, 0.90), t);
-	return float4(col, 2.0 + t * 1.5);  // alpha 더 높임
+	float t = saturate((hu - 1300.0) / 1200.0);
+	float3 col = lerp(float3(0.94, 0.89, 0.82), float3(0.99, 0.96, 0.92), t);
+	return float4(col, 3.0 + t * 2.0);  // 더 불투명
 }
 float4 main(float4 pos : SV_POSITION, float2 uv : TEXCOORD0) : SV_Target
 {
@@ -394,11 +420,11 @@ rayPosWS = float3(0, 0, -3.0);
 		float4 colorAlpha = TransferFunctionHU(hu, huNorm);
 
 
-		// 색상이 있는지 확인 - 빨강 채널만 강조
-		if (colorAlpha.a > 0.1)
-		{
-			colorAlpha.rgb = float3(0.9, 0.7, 0.5);  // 강제로 베이지색
-		}
+		//// 색상이 있는지 확인 - 빨강 채널만 강조
+		//if (colorAlpha.a > 0.1)
+		//{
+		//	colorAlpha.rgb = float3(0.9, 0.7, 0.5);  // 강제로 베이지색
+		//}
 
 		// 3) eps 계산
 		float3 eps = float3(1.0 / Voxel.x, 1.0 / Voxel.y, 1.0 / Voxel.z);
@@ -416,25 +442,25 @@ rayPosWS = float3(0, 0, -3.0);
 			volumeTex.SampleLevel(samp, uvw + float3(0, 0, eps.z), 0).r -
 			volumeTex.SampleLevel(samp, uvw - float3(0, 0, eps.z), 0).r;
 
-		//// 5) Normal 생성
-		//float3 N = normalize(float3(dx, dy, dz) + 1e-6);
+		// 5) Normal 생성
+		float3 N = normalize(float3(dx, dy, dz) + 1e-6);
 
-		//// 6) Lighting
-		//float3 L = normalize(float3(0.6, 0.7, -0.4));
-		//float lambert = max(dot(N, L), 0.0);
+		// 6) Lighting
+		float3 L = normalize(float3(0.5, 0.7, -0.5));
+		float lambert = max(dot(N, L), 0.0);
 
-		//// 7) Apply light
-		//float lighting = 0.25 + lambert * 1.1;
-		//colorAlpha.rgb *= lighting;
+		// 2. 조명 밝기 높이기
+		float lighting = 0.45 + lambert * 0.75;  // 0.35 → 0.45
+		colorAlpha.rgb *= lighting;
 
 
-		// 조명 대신 고정 밝기
-		colorAlpha.rgb *= 1.2;
+		float3 color = colorAlpha.rgb;
+		float alpha = colorAlpha.a * stepSize * 8.0;
 	
 
 
 
-		float3 color = colorAlpha.rgb;
+	//	float3 color = colorAlpha.rgb;
 
 
 
@@ -448,8 +474,8 @@ rayPosWS = float3(0, 0, -3.0);
 
 
 
-		// 변경
-		float alpha = colorAlpha.a * stepSize * 8.0;   // 4.0 → 8.0
+		//// 변경
+		//float alpha = colorAlpha.a * stepSize * 8.0;   // 4.0 → 8.0
 
 
 		//float4 colorAlpha = TransferFunction(density);
@@ -519,8 +545,15 @@ rayPosWS = float3(0, 0, -3.0);
 	acc.rgb = pow(saturate(acc.rgb), 1.0 / 2.2);
 
 
-	// 베이지 색조 추가
-	acc.rgb *= float3(1.0, 0.95, 0.88);  // 약간 따뜻한 톤
+	//// 베이지 색조 추가
+	//acc.rgb *= float3(1.0, 0.95, 0.88);  // 약간 따뜻한 톤
+
+
+	// 3. 후처리에서 밝기 추가
+	acc.rgb = pow(saturate(acc.rgb), 1.0 / 2.2);
+	acc.rgb *= 1.15;  // 밝기 증가
+	acc.rgb *= float3(1.0, 0.95, 0.88);
+	acc.rgb = saturate(acc.rgb);
 
 
 	return float4(acc.rgb, 1.0);
