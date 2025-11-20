@@ -254,82 +254,40 @@ rayPosWS = float3(0, 0, -3.0);
 			break;
 
 
-		// 諛???섑뵆留?		
-		float density = volumeTex.SampleLevel(samp, uvw, 0).r;
+		// 1) Raw 기반 density
+		float raw = volumeTex.SampleLevel(samp, uvw, 0).r;
+		float density = raw / 255.0;    // TF 전용
 
-		//// ✅ 원본 값 확인
-		//return float4(density / 10.0, density / 10.0, density / 10.0, 1);
-
-
-		//// ✅ 밀도 분포 확인
-		//if (density < 0.3)
-		//	return float4(0, 0, 1, 1);  // 파랑 = 공기
-		//else if (density < 0.5)
-		//	return float4(0, 1, 0, 1);  // 초록 = 연조직
-		//else if (density < 0.8)
-		//	return float4(1, 1, 0, 1);  // 노랑 = 뼈
-		//else
-		//	return float4(1, 0, 0, 1);  // 빨강 = 치아
-
-
-
-		// ✅ 밀도 범위 확인 후 정규화
-		density = saturate(density / 255.0);  // 0~255 → 0~1
-
-		//// Transfer Function에서 치아 알파 조정
-		//if (density > 0.05)
-		//	return float4(0.98, 0.95, 0.90, 1.5);  // ✅ 2.0 → 1.5
-
-
-
-
-		//// 諛?꾨? 10諛?利앺룺?댁꽌 ?쒖떆
-		//return float4(density * 10.0, density * 10.0, density * 10.0, 1);
-
-
-		//  // ??諛??議곗젙 (?꾧퀎媛???텛湲?
-		//density = saturate((density - 0.05) * 2.0);  // 0.05 ?댄븯 ?쒓굅
-
-
-		//// ??諛앷린 利앷?
-		////density = saturate((density - 0.1) * 2.0);  // 0.1 ?댄븯 ?쒓굅, 2諛?利앺룺
-
-
-		//// ??Transfer Function ?곸슜
-		//float4 colorAlpha = TransferFunction(density);
-
-// 또는 ✅ 약하게
-		//density = saturate(density *1.2);
-
+		// 2) TF 적용
 		float4 colorAlpha = TransferFunction(density);
 
+		// 3) eps 계산
+		float3 eps = float3(1.0 / Voxel.x, 1.0 / Voxel.y, 1.0 / Voxel.z);
 
-		float3 eps = float3(1.0 / Voxel.x, 1.0 / Voxel.y, 1.0 / Voxel.z);   // (width, height, depth)
-
-	//	float3 eps = float3(1.0 / 794, 1.0 / 794, 1.0 /632 );   // (width, height, depth)
-		float dx = volumeTex.SampleLevel(samp, uvw + float3(eps.x, 0, 0), 0).r -
+		// 4) raw 기반 gradient
+		float dx =
+			volumeTex.SampleLevel(samp, uvw + float3(eps.x, 0, 0), 0).r -
 			volumeTex.SampleLevel(samp, uvw - float3(eps.x, 0, 0), 0).r;
 
-		float dy = volumeTex.SampleLevel(samp, uvw + float3(0, eps.y, 0), 0).r -
+		float dy =
+			volumeTex.SampleLevel(samp, uvw + float3(0, eps.y, 0), 0).r -
 			volumeTex.SampleLevel(samp, uvw - float3(0, eps.y, 0), 0).r;
 
-		float dz = volumeTex.SampleLevel(samp, uvw + float3(0, 0, eps.z), 0).r -
+		float dz =
+			volumeTex.SampleLevel(samp, uvw + float3(0, 0, eps.z), 0).r -
 			volumeTex.SampleLevel(samp, uvw - float3(0, 0, eps.z), 0).r;
 
-		// Normal (Gradient)
+		// 5) Normal 생성
 		float3 N = normalize(float3(dx, dy, dz) + 1e-6);
 
-		// Light direction (tweakable)
+		// 6) Lighting
 		float3 L = normalize(float3(0.6, 0.7, -0.4));
-
-		// Lambert
 		float lambert = max(dot(N, L), 0.0);
 
-		// Ambient + Lambert 조명 적용
+		// 7) Apply light
 		float lighting = 0.25 + lambert * 1.1;
-
-		// 색상에 조명 적용
 		colorAlpha.rgb *= lighting;
+
 
 
 	
@@ -408,91 +366,3 @@ rayPosWS = float3(0, 0, -3.0);
 
 }
 
-
-//
-//float4 main(float4 pos : SV_POSITION, float2 uv : TEXCOORD0) : SV_Target
-//{
-//	// --- 愿묒꽑 ?앹꽦 ---
-//	float2 offset = float2(0.0, 0.0);
-//	float2 scale = float2(0.5, 0.5);
-//	float2 localUV = (uv - offset) / scale;
-//	float2 screenUV = localUV;
-//
-//	float2 ndc = screenUV * 2.0 - 1.0;
-//	ndc.y = -ndc.y;
-//
-//	float4 ndcPos = float4(ndc, 1, 1);
-//	float4 viewDirVS = mul(ndcPos, InvProj);
-//	viewDirVS /= viewDirVS.w;
-//
-//	float3 rayDirWS = normalize(mul(float4(viewDirVS.xyz, 0), InvView).xyz);
-//
-//	// ???섎뱶肄붾뵫 (?꾩떆)
-//	float3 rayPosWS = float3(0, 0, -3.0);
-//
-//	float3 rayPos = mul(float4(rayPosWS, 1), InvVolumeWorld).xyz;
-//	float3 rayDir = normalize(mul(float4(rayDirWS, 0), InvVolumeWorld).xyz);
-//
-//	// --- Ray-box 援먯감 ---
-//	float3 boxMin = float3(-0.75, -0.75, -0.75);
-//	float3 boxMax = float3(0.75, 0.75, 0.75);
-//
-//	float3 invDir = 1.0 / (rayDir + 1e-6);
-//	float3 tMin = (boxMin - rayPos) * invDir;
-//	float3 tMax = (boxMax - rayPos) * invDir;
-//
-//	float3 t1 = min(tMin, tMax);
-//	float3 t2 = max(tMin, tMax);
-//
-//	float tNear = max(max(t1.x, t1.y), t1.z);
-//	float tFar = min(min(t2.x, t2.y), t2.z);
-//
-//	if (tNear > tFar || tFar < 0)
-//		return float4(0, 0, 0, 1);
-//
-//	tNear = max(tNear, 0.0);
-//
-//	float travelDist = tFar - tNear;
-//	float stepSize = travelDist / float(MaxSteps);
-//	float3 startPos = rayPos + rayDir * tNear;
-//
-//	// --- 蹂쇰ⅷ ?곷텇 ---
-//	float4 acc = float4(0, 0, 0, 0);
-//
-//	[loop]
-//	for (int i = 0; i < MaxSteps; i++)
-//	{
-//		float3 currentPos = startPos + rayDir * (i * stepSize);
-//
-//		// ??UV 蹂??//		float3 uvw = (currentPos - boxMin) / (boxMax - boxMin);
-//
-//		// UV 踰붿쐞 泥댄겕
-//		if (any(uvw < 0.0) || any(uvw > 1.0))
-//			return float4(1, 0, 0, 1);  // 鍮④컙??= 踰붿쐞 諛?//		else
-//			return float4(uvw, 1);  // 洹몃씪?붿뼵?몄뿬????//
-//		if (any(uvw < 0.0) || any(uvw > 1.0))
-//			break;
-//
-//		float density = volumeTex.SampleLevel(samp, uvw, 0).r;
-//
-//		// ??諛??利앺룺
-//		density = saturate(density * 3.0);
-//
-//		// ???뚰뙆 怨꾩궛
-//		float alpha = density * 10.0 * stepSize;
-//
-//		if (alpha > 0.001)
-//		{
-//			float value = density * 2.0;
-//			float3 color = float3(value, value, value);
-//
-//			acc.rgb += (1.0 - acc.a) * alpha * color;
-//			acc.a += (1.0 - acc.a) * alpha;
-//
-//			if (acc.a >= 0.95)
-//				break;
-//		}
-//	}
-//
-//	return float4(acc.rgb, 1.0);
-//}
