@@ -1106,8 +1106,8 @@ void QDirect3D11Widget::CreateTexture3D()
 
 	/*float windowCenter = 1200.0f;
 	float windowWidth = 1200.0f;*/
-	float windowMinHU = windowCenter - windowWidth / 2.0f;  // -500
-	float windowMaxHU = windowCenter + windowWidth / 2.0f;  // +1500
+	float windowMinHU = fileReader->windowCenter - fileReader->windowWidth / 2.0f;  // -500
+	float windowMaxHU = fileReader->windowCenter + fileReader->windowWidth / 2.0f;  // +1500
 
 
 	// 1) 정규화 (HU -> 0~65535)  ※ 기본 HU 범위 예시: -1000 ~ 3000
@@ -1142,19 +1142,41 @@ void QDirect3D11Widget::CreateTexture3D()
 	td.MipLevels = 1;
 	// ✔ 권장: R16_FLOAT (샘플링/필터링/호환성 안전)
 	//   R16_UNORM도 가능하지만 드라이버/샘플링측 이슈 줄이려면 FLOAT이 편합니다.
-	td.Format = DXGI_FORMAT_R16_FLOAT;
+	//td.Format = DXGI_FORMAT_R16_FLOAT;
 	//td.Format = DXGI_FORMAT_R16_UNORM;
+	td.Format = DXGI_FORMAT_R32_FLOAT;
+
 	//td.Format = DXGI_FORMAT_R32_FLOAT;
 
-	//td.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+	//td.Format = DXGI_FORMAT_R16_UINT;
+	//td.Format = DXGI_FORMAT_R16_SINT;
+
 	td.Usage = D3D11_USAGE_DEFAULT;
 	td.BindFlags = D3D11_BIND_SHADER_RESOURCE;
 
-	// 3) 초기 데이터(피치/슬라이스피치) — "바이트" 기준
+	//// 3) 초기 데이터(피치/슬라이스피치) — "바이트" 기준
+	//D3D11_SUBRESOURCE_DATA init{};
+	//init.pSysMem = fileReader->normalizedU16Data.data();
+	//init.SysMemPitch = w * sizeof(uint16_t);                  // 한 줄(바이트)
+	//init.SysMemSlicePitch = w * h * sizeof(uint16_t) /** 4*/;       // 한 장(바이트)
+
+	// 16비트 normalized 값을 float로 변환하여 업로드
+	std::vector<float> floatData(w * h * d);
+
+	for (int i = 0; i < w * h * d; ++i)
+	{
+		floatData[i] = static_cast<float>(fileReader->normalizedU16Data[i] / 65535.0f);
+
+
+	}
+
 	D3D11_SUBRESOURCE_DATA init{};
-	init.pSysMem = fileReader->normalizedU16Data.data();
-	init.SysMemPitch = w * sizeof(uint16_t);                  // 한 줄(바이트)
-	init.SysMemSlicePitch = w * h * sizeof(uint16_t) /** 4*/;       // 한 장(바이트)
+	init.pSysMem = floatData.data();
+	init.SysMemPitch = w * sizeof(float);
+	init.SysMemSlicePitch = w * h * sizeof(float);
+
+
+
 
 	// 4) 생성
 	Microsoft::WRL::ComPtr<ID3D11Texture3D> tex;
