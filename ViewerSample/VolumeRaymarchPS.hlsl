@@ -548,10 +548,10 @@ rayPosWS = float3(0, 0, -3.0);
 	//// 베이지 색조 추가
 	//acc.rgb *= float3(1.0, 0.95, 0.88);  // 약간 따뜻한 톤
 
-
-	// 3. 후처리에서 밝기 추가
+// 후처리 부분 수정
 	acc.rgb = pow(saturate(acc.rgb), 1.0 / 2.2);
-	acc.rgb *= 1.15;  // 밝기 증가
+	acc.rgb *= 0.95;  // 1.15 → 0.95 (밝기 줄임)
+	acc.rgb = (acc.rgb - 0.5) * 1.3 + 0.5;  // 콘트라스트 더 높임
 	acc.rgb *= float3(1.0, 0.95, 0.88);
 	acc.rgb = saturate(acc.rgb);
 
