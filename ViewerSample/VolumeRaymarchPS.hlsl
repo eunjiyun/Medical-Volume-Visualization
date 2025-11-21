@@ -179,7 +179,14 @@ rayPosWS = float3(0, 0, -3.0);
 			break;
 		float raw = volumeTex.SampleLevel(samp, uvw, 0).r;
 		float r16 = raw * 65535.0;
-		float hu = r16 * HuParams.x + HuParams.y;
+		//float hu = r16 * HuParams.x + HuParams.y;
+		float hu = raw * (HuParams.w - HuParams.z) + HuParams.z;
+
+		// TransferFunctionHU 호출 전에
+		if (i == MaxSteps / 2)  // 중간 샘플만
+		{
+			return float4(raw, hu / 3000.0, 0, 1);  // raw(R), hu/3000(G) 값 확인
+		}
 
 		float4 colorAlpha = TransferFunctionHU(hu);
 		float huNorm = raw; // 0~1
@@ -244,9 +251,6 @@ rayPosWS = float3(0, 0, -3.0);
 		//	if (acc.a >= 0.95)
 		//		break;
 		//}
-
-
-		
 	}
 
 
@@ -266,8 +270,5 @@ rayPosWS = float3(0, 0, -3.0);
 
 
 	return float4(acc.rgb, 1.0);
-
-
-
 }
 

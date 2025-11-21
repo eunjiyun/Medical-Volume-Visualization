@@ -1123,8 +1123,6 @@ void QDirect3D11Widget::CreateTexture3D()
 	);
 
 
-	
-
 	if (!ok) {
 		OutputDebugStringA("❌ NormalizeVolumeU16 failed\n");
 		return;
