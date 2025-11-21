@@ -83,8 +83,6 @@ float4 main(float4 pos : SV_POSITION, float2 uv : TEXCOORD0) : SV_Target
 {
 
 
-
-	// --- 愿묒꽑 ?앹꽦 (湲곗〈 肄붾뱶 ?좎?) ---
 	float2 offset = float2(0.0, 0.0);
 	float2 scale = float2(0.5, 0.5);
 	float2 localUV = (uv - offset) / scale;
@@ -113,8 +111,6 @@ rayPosWS = float3(0, 0, -3.0);
 
 	float3 rayDir = normalize(mul(float4(rayDirWS, 0), InvVolumeWorld).xyz);
 
-
-	// ???섏젙 (volumeSize = 1.5 湲곗?)
 	float3 boxMin = float3(-0.75, -0.75, -0.75);
 	float3 boxMax = float3(0.75, 0.75, 0.75);
 
@@ -141,13 +137,11 @@ rayPosWS = float3(0, 0, -3.0);
 
 	float travelDist = tFar - tNear;
 
-	// ??諛뺤뒪 踰붿쐞??留욊쾶 ?섏젙
 	if (all(rayPos >= boxMin) && all(rayPos <= boxMax))
 	{
-		tNear = 0.0;  // 移대찓?쇨? 諛뺤뒪 ??	
+		tNear = 0.0;  
 	}
 
-	// ??Step ?ш린 怨꾩궛
 	float stepSize = travelDist / float(MaxSteps);
 
 	// ✅ Jittering
@@ -155,35 +149,29 @@ rayPosWS = float3(0, 0, -3.0);
 	// 시작점에 랜덤 오프셋
 	float3 startPos = rayPos + rayDir * (tNear + jitter * stepSize);
 
-	// ??startPos瑜?諛뺤뒪 ?덉쑝濡?媛뺤젣
 	startPos = clamp(startPos, boxMin, boxMax);
 
-	
 
-	// ??泥??섑뵆 ?꾩튂
 	float3 currentPos = startPos;
 
-	//// ??UV 蹂??	//float3 uvw = (currentPos + 0.75) / 1.5;
-	// ???щ컮瑜?UV 蹂??	
+		//float3 uvw = (currentPos + 0.75) / 1.5;
+
 	float3 uvw = (startPos - boxMin) / (boxMax - boxMin);
 
-
-	
-	// --- 蹂쇰ⅷ ?곷텇 ---
 	float4 acc = float4(0, 0, 0, 0);
 
 	int sampleCount = 0;
 
-	//// 猷⑦봽 ?꾩뿉
+
 	//return float4(MaxSteps / 256.0, 0, 0, 1);
 
 	[loop]
 	for (int i = 0; i < MaxSteps; i++)
 	{
-		//// ???꾩옱 ?꾩튂 怨꾩궛 (i???곕씪 ?꾩쭊)
+	
 		//float3 uvw = startPos + rayDir * (i * stepSize);
 
-		// ???щ컮瑜?怨꾩궛
+
 		float3 currentPos = startPos + rayDir * (i * stepSize);
 		float3 uvw = (currentPos - boxMin) / (boxMax - boxMin);
 

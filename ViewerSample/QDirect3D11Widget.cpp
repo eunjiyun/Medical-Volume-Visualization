@@ -1207,16 +1207,6 @@ void QDirect3D11Widget::CreateTexture3D()
 
 
 
-
-
-
-
-
-
-
-
-
-
 	// ===== 1. 알파 블렌딩 상태 생성 =====
 	D3D11_BLEND_DESC blendDesc = {};
 	blendDesc.AlphaToCoverageEnable = FALSE;
@@ -4402,8 +4392,6 @@ void QDirect3D11Widget::UpdateSlicePlanePositions() {
 		m_pDeviceContext->IASetVertexBuffers(0, 1, &plane.vertexBuffer, &stride, &offset);
 		m_pDeviceContext->IASetIndexBuffer(plane.indexBuffer, DXGI_FORMAT_R32_UINT, 0);
 		m_pDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_LINELIST);
-
-
 		m_pDeviceContext->DrawIndexed(8, 0, 0); // 2 triangles = 6 indices
 
 	}
@@ -4921,9 +4909,6 @@ void QDirect3D11Widget::UpdateSlicePlanePositions() {
 		//painter.drawLine(halfW, 0, halfW, h);
 		//painter.drawLine(0, halfH, w, halfH);
 
-
-
-
 	}
 
 	void QDirect3D11Widget::resizeEvent(QResizeEvent* event)
@@ -4961,8 +4946,6 @@ void QDirect3D11Widget::UpdateSlicePlanePositions() {
 		sliceInfoSagittal->move(w + labelMargin, h + labelMargin + sliceInfoOffset);
 
 		QWidget::resizeEvent(event);
-
-
 
 	}
 
