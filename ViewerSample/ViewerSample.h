@@ -21,6 +21,10 @@ public slots:
     void render();
 	void onBtnColorInvertClicked();
 	void huValueChanged(int value);
+
+
+	void huCenterChanged(int value);  // Window Center
+	void huWidthChanged(int value);   // Window Width
 	
 private:
     Ui::ViewerSampleClass* ui;

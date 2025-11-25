@@ -176,7 +176,7 @@ void ViewerSample::init(bool success)
 
 
 	ui->huSlider->setMinimum(114);
-	ui->huSlider->setMaximum(4528);
+	ui->huSlider->setMaximum(3200);
 	ui->huSlider->setValue(1751);
 
 
