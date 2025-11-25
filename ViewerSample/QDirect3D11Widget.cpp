@@ -591,7 +591,19 @@ QDirect3D11Widget::QDirect3D11Widget(QWidget* parent)
 
 	
 
+	  // HU 슬라이더 (slider1)
+	connect(ui.slider1, &QSlider::valueChanged, this, [this](int value) {
+		float huCenter = -1024.0f + value * 5.0f; // 예: -1024 ~ 3071
+		ui.labelValue1->setText(QString::number((int)huCenter));
+		UpdateHUWindow(huCenter, m_huWidth);
+		});
 
+	// Width 슬라이더 (slider2 - 선택적)
+	connect(ui.slider2, &QSlider::valueChanged, this, [this](int value) {
+		m_huWidth = value * 10.0f; // 예: 0 ~ 4000
+		ui.labelValue2->setText(QString::number((int)m_huWidth));
+		UpdateHUWindow(m_huCenter, m_huWidth);
+		});
 
 
 	// 시그널 연결
