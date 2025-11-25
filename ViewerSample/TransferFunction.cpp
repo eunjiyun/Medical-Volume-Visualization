@@ -73,69 +73,15 @@ bool TransferFunction::Initialize(float center, float width, ID3D11Device* devic
 
 void TransferFunction::SetHUWindow(float center, float width, ID3D11Device* g_pd3dDevice)
 {
-	//// HU 윈도우 레벨 설정
-	//float minHU = center - width / 2.0f;
-	//float maxHU = center + width / 2.0f;
-
-	//m_controlPoints.clear();
-
-	////// 3개 포인트로 간단한 TF 생성
-	////m_controlPoints.push_back({ 0.0f, 0, 0, 0, 0 });      // 최소값: 투명
-	////m_controlPoints.push_back({ 0.5f, 1, 1, 1, 0.8f });   // 중간값: 불투명
-	////m_controlPoints.push_back({ 1.0f, 1, 1, 1, 1.0f });   // 최대값: 완전 불투명
-
-	// // 실제 의료 영상에서 많이 쓰는 설정
-	//m_controlPoints.push_back({ 0.0f,  0.0f, 0.0f, 0.0f, 0.0f });   // 최소값: 완전 투명
-	//m_controlPoints.push_back({ 0.2f,  0.3f, 0.3f, 0.3f, 0.1f });   // 어두운 부분: 약간 보임
-	//m_controlPoints.push_back({ 0.4f,  0.8f, 0.8f, 0.7f, 0.4f });   // 중간 부분
-	//m_controlPoints.push_back({ 0.6f,  1.0f, 0.9f, 0.8f, 0.7f });   // 밝은 부분
-	//m_controlPoints.push_back({ 1.0f,  1.0f, 1.0f, 1.0f, 1.0f });   // 최대값: 완전 불투명
-
-
-	//UpdateTexture(g_pd3dDevice);
-
-
+	// ⭐ Transfer Function은 항상 고정
 	m_controlPoints.clear();
-
-	float minHU = center - width / 2.0f;
-	float maxHU = center + width / 2.0f;
-
-	
-
-	// ⭐ 윈도우 범위로 정규화
-	auto HUtoNorm = [&](float hu) -> float {
-		return saturate((hu - minHU) / width);
-	};
-
-	// TransferFunctionHU 로직 그대로 적용
-	// -400 이하: 투명
-	if (minHU <= -400.0f) {
-		m_controlPoints.push_back({ HUtoNorm(-400.0f), 0.0f, 0.0f, 0.0f, 0.0f });
-	}
-
-	// -400 ~ 200: 연조직
-	if (maxHU >= -400.0f && minHU <= 200.0f) {
-		m_controlPoints.push_back({ HUtoNorm(200.0f), 0.6f, 0.5f, 0.4f, 0.05f });
-	}
-
-	// 200 ~ 700: 뼈 시작
-	if (maxHU >= 200.0f && minHU <= 700.0f) {
-		m_controlPoints.push_back({ HUtoNorm(700.0f), 0.85f, 0.75f, 0.65f, 0.4f });
-	}
-
-	// 700 ~ 1300: 단단한 뼈
-	if (maxHU >= 700.0f && minHU <= 1300.0f) {
-		m_controlPoints.push_back({ HUtoNorm(1300.0f), 0.92f, 0.88f, 0.82f, 1.1f });
-	}
-
-	// 1300 이상: 치아
-	if (maxHU >= 1300.0f) {
-		m_controlPoints.push_back({ HUtoNorm(3000.0f), 0.98f, 0.95f, 0.90f, 2.0f });
-	}
+	m_controlPoints.push_back({ 0.0f,   0.0f, 0.0f, 0.0f, 0.0f });
+	m_controlPoints.push_back({ 0.176f, 0.6f, 0.5f, 0.4f, 0.05f });
+	m_controlPoints.push_back({ 0.324f, 0.85f, 0.75f, 0.65f, 0.4f });
+	m_controlPoints.push_back({ 0.5f,   0.92f, 0.88f, 0.82f, 1.1f });
+	m_controlPoints.push_back({ 1.0f,   0.98f, 0.95f, 0.90f, 2.0f });
 
 	UpdateTexture(g_pd3dDevice);
-
-
 }
 
 void TransferFunction::UpdateTexture(ID3D11Device* device)

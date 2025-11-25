@@ -20,6 +20,7 @@ public slots:
     void tick();
     void render();
 	void onBtnColorInvertClicked();
+	void huValueChanged(int value);
 	
 private:
     Ui::ViewerSampleClass* ui;

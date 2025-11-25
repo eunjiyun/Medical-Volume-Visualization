@@ -76,74 +76,13 @@ QDirect3D11Widget::QDirect3D11Widget(QWidget* parent)
 
 
 
-	////// ✅ Scout line 카메라 각도에 맞춘 추가 회전
-	////float pitchAngle = atan2f(0.2f, 1.0f);  // 약 11도 (위에서 내려다봄)
-	////float yawAngle = atan2f(0.2f, 1.0f);    // 약 11도 (왼쪽에서 봄)
-
-	////XMMATRIX additionalRotX = XMMatrixRotationX(-pitchAngle);  // 위에서 내려다보는 각도
-	////XMMATRIX additionalRotY = XMMatrixRotationY(-yawAngle);    // 왼쪽에서 보는 각도
-
-	//// ✅ Scout line 카메라 각도에 맞춘 추가 회전 (쿼터니언 버전)
-	//float pitchAngle = atan2f(0.2f, 1.0f);  // 약 11도
-	//float yawAngle = atan2f(0.2f, 1.0f);    // 약 11도
-
-	//XMVECTOR tiltPitch = XMQuaternionRotationAxis(
-	//	XMVectorSet(1, 0, 0, 0),  // X축
-	//	-pitchAngle               // 위에서 내려다봄
-	//);
-
-	//XMVECTOR tiltYaw = XMQuaternionRotationAxis(
-	//	XMVectorSet(0, 1, 0, 0),  // Y축
-	//	-yawAngle                 // 왼쪽에서 봄
-	//);
-
-
-
-
 	m_initialRotation = XMQuaternionMultiply(rotX, rotY);
-
-	//m_initialRotation = XMQuaternionMultiply(m_initialRotation, tiltPitch);
-	//m_initialRotation = XMQuaternionMultiply(m_initialRotation, tiltYaw);
-	//m_initialRotation = XMQuaternionNormalize(m_initialRotation);
-	
-
 
 
 	// 현재 회전도 초기값으로 설정
 	m_rotation = m_initialRotation;
 
-	//// ✅ 초기 회전: X축 90도 (Coronal 뷰)
-	//XMVECTOR rotX = XMQuaternionRotationAxis(
-	//	XMVectorSet(1, 0, 0, 0),
-	//	-XM_PIDIV2
-	//);
 
-	//XMVECTOR rotY = XMQuaternionRotationAxis(
-	//	XMVectorSet(0, 0, 1, 0),
-	//	XM_PI
-	//);
-
-	//// ✅ 이미지에 맞춘 추가 회전 (각도 조정)
-	//float pitchAngle =- 0.2f;  // 약 17도 (더 위에서 내려다봄)
-	//float yawAngle =- 0.3f;   // 약 8도 (살짝 왼쪽에서)
-
-	//XMVECTOR tiltPitch = XMQuaternionRotationAxis(
-	//	XMVectorSet(1, 0, 0, 0),
-	//	-pitchAngle
-	//);
-
-	//XMVECTOR tiltYaw = XMQuaternionRotationAxis(
-	//	XMVectorSet(0, 1, 0, 0),
-	//	-yawAngle
-	//);
-
-	//// ✅ 합치기
-	//m_initialRotation = XMQuaternionMultiply(rotX, rotY);
-	//m_initialRotation = XMQuaternionMultiply(tiltPitch, m_initialRotation);
-	//m_initialRotation = XMQuaternionMultiply(tiltYaw, m_initialRotation);
-	//m_initialRotation = XMQuaternionNormalize(m_initialRotation);
-
-	//m_rotation = m_initialRotation;
 
 	QPalette pal = palette();
 	pal.setColor(QPalette::Window, Qt::black);
@@ -173,7 +112,7 @@ QDirect3D11Widget::QDirect3D11Widget(QWidget* parent)
 	labelCoronal = new QLabel("Coronal(C)", this);
 	labelSagittal = new QLabel("Sagittal(S)", this);
 
-
+	//huSlider = slider1;
 
 	// Axial 스크롤바 - 보라/마젠타
 	scrollAxial->setStyleSheet(
@@ -558,53 +497,8 @@ QDirect3D11Widget::QDirect3D11Widget(QWidget* parent)
 	sliceInfoCoronal->adjustSize();
 	sliceInfoSagittal->adjustSize();
 
-	//// ✅ World Matrix 초기화
-	//XMStoreFloat4x4(&m_axialPlane.worldMatrix, XMMatrixIdentity());
-	//XMStoreFloat4x4(&m_coronalPlane.worldMatrix, XMMatrixIdentity());
-	//XMStoreFloat4x4(&m_sagittalPlane.worldMatrix, XMMatrixIdentity());
-
-
-//	//=======================================================
-//	XMMATRIX scale = XMMatrixScaling(0.8f, 0.8f, 0.8f); // ← 여기서 크기 조절
-//
-//// ---- Axial (XY plane, z=0)
-//	
-//		XMMATRIX worldA = scale * XMMatrixTranslation(0.0f, 0.0f, 0.0f);
-//		XMStoreFloat4x4(&m_axialPlane.worldMatrix, XMMatrixTranspose(worldA));
-//	
-//
-//	// ---- Coronal (XZ plane, y=0)
-//	
-//		XMMATRIX worldC = scale * XMMatrixRotationX(XM_PIDIV2);
-//		XMStoreFloat4x4(&m_coronalPlane.worldMatrix, XMMatrixTranspose(worldC));
-//
-//	
-//	
-//		XMMATRIX worldS = scale * XMMatrixRotationY(XM_PIDIV2);
-//		XMStoreFloat4x4(&m_sagittalPlane.worldMatrix, XMMatrixTranspose(worldS));
-//	
-//
-//
-//		//===============================================================
-
-
-
 	
 
-	//  // HU 슬라이더 (slider1)
-	//connect(ui.slider1, &QSlider::valueChanged, this, [this](int value) {
-	//	float huCenter = -1024.0f + value * 5.0f; // 예: -1024 ~ 3071
-	//	ui.labelValue1->setText(QString::number((int)huCenter));
-	//	UpdateHUWindow(huCenter, m_huWidth);
-	//	});
-
-
-	//// Width 슬라이더 (slider2 - 선택적)
-	//connect(ui.slider2, &QSlider::valueChanged, this, [this](int value) {
-	//	m_huWidth = value * 10.0f; // 예: 0 ~ 4000
-	//	ui.labelValue2->setText(QString::number((int)m_huWidth));
-	//	UpdateHUWindow(m_huCenter, m_huWidth);
-	//	});
 
 
 	// 시그널 연결

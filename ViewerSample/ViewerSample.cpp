@@ -18,7 +18,6 @@ ViewerSample::ViewerSample(QWidget* parent)
 	adjustWindowSize();
 	connectSlots();
 
-
 }
 
 ViewerSample::~ViewerSample() = default;
@@ -41,6 +40,8 @@ void ViewerSample::connectSlots()
 	connect(ui->btnColorInvert, &QPushButton::clicked, this, &ViewerSample::onBtnColorInvertClicked);
 	// ✅ 시그널 연결
 
+	connect(ui->huSlider, &QSlider::valueChanged, this, &ViewerSample::huValueChanged);
+
 }
 
 
@@ -54,6 +55,63 @@ void ViewerSample::onBtnColorInvertClicked() {
 		m_pScene->isPlaster = false;
 	else
 		m_pScene->isPlaster = true;
+
+	update();
+}
+
+void ViewerSample::huValueChanged(int value)
+{
+	// ⭐ 구현 추가!
+	float huCenter = -1024.0f + (value * 4.024f);//2927
+
+	ui->labelValue1->setText(QString::number((int)huCenter));
+
+	// ⭐ 3. Null 체크
+	if (!m_pScene || !m_pScene->fileReader || !m_pScene->GetTransferFunction()) {
+		return;
+	}
+
+	//if (m_pScene->fileReader && m_pScene->GetTransferFunction()) {
+	//	m_pScene->GetTransferFunction()->SetHUWindow(
+	//		huCenter, m_pScene->fileReader->windowWidth, m_pScene->m_pDevice
+	//	);
+	//}
+
+
+	// ⭐ 3. FileReader에 저장 (다음 렌더링 때 반영됨)
+	if (m_pScene && m_pScene->fileReader) {
+		m_pScene->fileReader->windowCenter = huCenter;
+		// windowWidth는 고정 또는 다른 슬라이더로 조절
+		// m_pScene->fileReader->windowWidth = 2000.0f;
+	}
+
+
+	//cb.HuParams.x = fileReader->m_rescaleSlope;
+	//cb.HuParams.y = fileReader->m_rescaleIntercept;
+	//cb.HuParams.z = fileReader->windowCenter - fileReader->windowWidth / 2.0;
+	//cb.HuParams.w = fileReader->windowCenter + fileReader->windowWidth / 2.0;
+
+
+
+	//// ⭐ Constant Buffer에 center/width 전달
+	//VolumeParams params;
+	//params.HuParams.z = huCenter;
+	//params.HuParams.w = 2000.0f;  // width
+
+	//m_pScene->m_pImmediateContext->UpdateSubresource(
+	//	m_constantBuffer, 0, nullptr, &params, 0, 0
+	//);
+
+
+
+
+	//m_pScene->cb.HuParams.z = huCenter - fileReader->windowWidth / 2.0;
+	//m_pScene->cb.HuParams.w = huCenter + fileReader->windowWidth / 2.0;
+
+
+	//m_pScene->m_pDeviceContext->UpdateSubresource(
+	//	m_constantBuffer, 0, nullptr, &params, 0, 0
+	//);
 
 	update();
 }
@@ -114,6 +172,12 @@ void ViewerSample::init(bool success)
 		"<b>" + studyDate + "</b>";
 	ui->label_examDate->setTextFormat(Qt::RichText);
 	ui->label_examDate->setText(richTextstudyDate);
+
+
+
+	ui->huSlider->setMinimum(114);
+	ui->huSlider->setMaximum(4528);
+	ui->huSlider->setValue(1751);
 
 
 	disconnect(m_pScene, &QDirect3D11Widget::deviceInitialized, this, &ViewerSample::init);

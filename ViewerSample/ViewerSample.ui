@@ -461,7 +461,7 @@ QLabel {
                     </widget>
                 </item>
                 <item>
-                    <widget class="QSlider" name="slider1">
+                    <widget class="QSlider" name="huSlider">
                         <property name="orientation">
                             <enum>Qt::Horizontal</enum>
                         </property>

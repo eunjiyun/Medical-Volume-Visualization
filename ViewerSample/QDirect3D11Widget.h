@@ -159,6 +159,9 @@ public:
 	QLabel* sliceInfoCoronal;
 	QLabel* sliceInfoSagittal;
 
+//	QSlider* huSlider, brightnessSlider, contrastSlider, sharpnessSlider;
+	
+
 	//DirectX::XMFLOAT3 currentPatientCoord[4];
 	DirectX::XMFLOAT2 currentUV[4] = {
 	{0.0f, 0.0f},
@@ -313,6 +316,12 @@ private:
 	XMFLOAT3 GetPatientCoordFromClick(int viewIndex, XMFLOAT2 uv);
 	XMFLOAT2 GetCrossUVFromPatientCoord(int viewIndex, XMFLOAT3 patientCoord);
 
+public:
+
+	// ⭐ Getter 함수 추가
+	TransferFunction* GetTransferFunction() {
+		return m_transferFunction;
+	}
 
 
 	// Qt Events
@@ -358,7 +367,9 @@ private slots:
 	void onCoronalScroll(int value);
 	void onSagittalScroll(int value);
 
-
+	////// ⭐ 슬라이더 슬롯 추가
+	//void OnHUChanged(int value);  // HU Center
+	////void OnBrightnessChanged(int value);  // HU Width (선택사항)
 
 
 
@@ -387,10 +398,10 @@ public:
 	std::unordered_map<ID3D11Texture2D*, ID3D11RenderTargetView*> rtvCache;
 	std::unordered_map<ID3D11Texture2D*, ID3D11ShaderResourceView*> srvCache;
 
-
+	ID3D11DeviceContext *    m_pDeviceContext;
 private:
 
-	ID3D11DeviceContext *    m_pDeviceContext;
+
 	IDXGISwapChain *         m_pSwapChain;
 	//ID3D11RenderTargetView * m_pRTView;
 	SliceSeriesRtv m_RTViews;// m_RTViewsVolume, m_RTViewsAxial, m_RTViewsCoronal, m_RTViewsSagittal;
