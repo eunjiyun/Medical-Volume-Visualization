@@ -11,5 +11,17 @@
         <file>images/left2_3Bar.png</file>
         <file>images/left2_4Bar.png</file>
         <file>images/left2_2Bar.png</file>
+        <file>images/brightnessIcon.png</file>
+        <file>images/color1.png</file>
+        <file>images/color2.png</file>
+        <file>images/color3.png</file>
+        <file>images/color4.png</file>
+        <file>images/contrastIcon.png</file>
+        <file>images/huIcon.png</file>
+        <file>images/oIcon.png</file>
+        <file>images/qIcon.png</file>
+        <file>images/sharpnessIcon.png</file>
+        <file>images/squareIcon.png</file>
+        <file>images/color1_1.png</file>
     </qresource>
 </RCC>
