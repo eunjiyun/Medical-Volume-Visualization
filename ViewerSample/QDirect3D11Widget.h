@@ -15,6 +15,8 @@
 #include<unordered_map>
 #include<vector>
 #include "ArcBall.h"
+
+#include "TransferFunction.h"
 using namespace std;
 
 using Microsoft::WRL::ComPtr;
@@ -143,6 +145,7 @@ public:
 	QScrollBar* scrollCoronal;
 	QScrollBar* scrollSagittal;
 
+
 	//ArcBall m_arcball;
 
 	QLabel* labelVolume;
@@ -176,6 +179,11 @@ public:
 
 	XMVECTOR m_rotation;  // 쿼터니언
 	XMVECTOR m_initialRotation;
+
+
+	// ⭐ Transfer Function 추가
+	TransferFunction* m_transferFunction;
+	ID3D11SamplerState* m_tfSampler;
 
 //	QPoint m_lastMousePos;
 //	bool m_isDragging;
@@ -401,6 +409,7 @@ public:
 
 	ComPtr<ID3D11ShaderResourceView> m_volumeSRV;   // 3D 볼륨 텍스처 SRV
 	ComPtr<ID3D11SamplerState> m_volumeSampler;     // 3D 볼륨 샘플러
+	ComPtr < ID3D11Texture1D> m_transferFunctionTexture; // ← 이게 핵심!
 
 	ID3D11Device* m_pDevice;
 
@@ -476,6 +485,8 @@ public:
 	void RenderVolumeView(/*const D3D11_VIEWPORT& vp*/);
 	void InitializeVolumeCamera();
 	void InitializeVolumeShaders();
+
+	bool InitializeTFVolume();
 
 	void InitializeSlicePlanes();
 	void InitializeBoundingCube();

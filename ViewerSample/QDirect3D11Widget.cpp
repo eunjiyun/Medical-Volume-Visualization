@@ -591,19 +591,20 @@ QDirect3D11Widget::QDirect3D11Widget(QWidget* parent)
 
 	
 
-	  // HU 슬라이더 (slider1)
-	connect(ui.slider1, &QSlider::valueChanged, this, [this](int value) {
-		float huCenter = -1024.0f + value * 5.0f; // 예: -1024 ~ 3071
-		ui.labelValue1->setText(QString::number((int)huCenter));
-		UpdateHUWindow(huCenter, m_huWidth);
-		});
+	//  // HU 슬라이더 (slider1)
+	//connect(ui.slider1, &QSlider::valueChanged, this, [this](int value) {
+	//	float huCenter = -1024.0f + value * 5.0f; // 예: -1024 ~ 3071
+	//	ui.labelValue1->setText(QString::number((int)huCenter));
+	//	UpdateHUWindow(huCenter, m_huWidth);
+	//	});
 
-	// Width 슬라이더 (slider2 - 선택적)
-	connect(ui.slider2, &QSlider::valueChanged, this, [this](int value) {
-		m_huWidth = value * 10.0f; // 예: 0 ~ 4000
-		ui.labelValue2->setText(QString::number((int)m_huWidth));
-		UpdateHUWindow(m_huCenter, m_huWidth);
-		});
+
+	//// Width 슬라이더 (slider2 - 선택적)
+	//connect(ui.slider2, &QSlider::valueChanged, this, [this](int value) {
+	//	m_huWidth = value * 10.0f; // 예: 0 ~ 4000
+	//	ui.labelValue2->setText(QString::number((int)m_huWidth));
+	//	UpdateHUWindow(m_huCenter, m_huWidth);
+	//	});
 
 
 	// 시그널 연결
@@ -625,6 +626,10 @@ QDirect3D11Widget::~QDirect3D11Widget()
 	if (m_volumeVS) m_volumeVS->Release();
 	if (m_volumePS) m_volumePS->Release();
 	if (m_volumeConstantBuffer) m_volumeConstantBuffer->Release();
+
+
+	if (m_transferFunction) delete m_transferFunction;
+	if (m_tfSampler) m_tfSampler->Release();
 }
 
 void QDirect3D11Widget::release()
@@ -878,11 +883,15 @@ bool QDirect3D11Widget::init()
 	// ✅ 4. Depth Stencil Buffer 생성 (여기서 호출!)
 	CreateDepthStencilBuffer();
 
+
+
+
 	InitShaders();
 	InitializeVolumeShaders();    // 셰이더 컴파일
 	InitializeSlicePlanes();      // ← 1번
 	InitializeBoundingCube();     // ← 2번
 	InitializeVolumeCamera();     // 카메라 설정
+	InitializeTFVolume();
 
 
 	scrollAxial->setRange(0, fileReader->m_depth - 1);
@@ -929,7 +938,7 @@ void QDirect3D11Widget::LoadDICOMSeries()
 	fileReader = new FileReader();
 
 	fileReader->LoadDICOMSeries((std::string)"D:\\Data\\sez\\DICOM", m_pDevice);
-	// fileReader->LoadDICOMSeries((std::string)"D:\\Data\\DCM", m_pDevice);
+	 //fileReader->LoadDICOMSeries((std::string)"D:\\Data\\KimHanBit\\ct", m_pDevice);
 
 }
 
@@ -1441,11 +1450,22 @@ void QDirect3D11Widget::FullScreenPassSet()
 	m_pDeviceContext->VSSetConstantBuffers(0, 1, cbs);
 	m_pDeviceContext->PSSetConstantBuffers(0, 1, cbs);
 
-	ID3D11ShaderResourceView* srvs[] = { m_volumeSRV.Get() };
-	m_pDeviceContext->PSSetShaderResources(0, 1, srvs);
+	//ID3D11ShaderResourceView* srvs[] = { m_volumeSRV.Get() };
 
-	ID3D11SamplerState* samps[] = { m_volumeSampler.Get() };
-	m_pDeviceContext->PSSetSamplers(0, 1, samps);
+	// ⭐ 텍스처 바인딩
+	ID3D11ShaderResourceView* srvs[2] = {
+		 m_volumeSRV.Get(),                          // t0
+		m_transferFunction->GetSRV()          // t1
+	};
+	m_pDeviceContext->PSSetShaderResources(0, 2, srvs);
+
+
+	// ⭐ Sampler 바인딩
+	ID3D11SamplerState* samplers[2] = {
+		m_volumeSampler.Get(),    // s0
+		m_tfSampler         // s1
+	};
+	m_pDeviceContext->PSSetSamplers(0, 2, samplers);
 
 	// ✅ 8️⃣ 드로우
 	m_pDeviceContext->Draw(4, 0);
@@ -2262,6 +2282,8 @@ void QDirect3D11Widget::plasterVolumeShow()
 			m_pDeviceContext->OMSetDepthStencilState(nullptr, 0);
 			m_pDeviceContext->OMSetBlendState(nullptr, nullptr, 0xffffffff);
 
+			UpdateVolumeMatrix();
+
 			// ✅ (3) 볼륨 렌더링 수행
 			FullScreenPassSet();
 
@@ -2275,15 +2297,6 @@ void QDirect3D11Widget::plasterVolumeShow()
 		m_pDeviceContext->PSSetShader(m_volumePS, nullptr, 0);
 		m_pDeviceContext->VSSetConstantBuffers(0, 1, &m_volumeConstantBuffer);
 		m_pDeviceContext->PSSetConstantBuffers(0, 1, &m_volumeConstantBuffer);
-
-
-
-	
-
-
-
-
-
 
 
 		XMStoreFloat4x4(&constants.View, XMMatrixTranspose(view));
@@ -2635,6 +2648,37 @@ void QDirect3D11Widget::plasterVolumeShow()
 		InitializeVolumeCamera();
 	}
 
+	bool QDirect3D11Widget::InitializeTFVolume()
+	{
+		/*m_device = device;
+		m_deviceContext = context;
+*/
+		// 기존 초기화...
+		// CreateVolumeTexture();
+		// CreateShaders();
+
+		// ⭐ Transfer Function 초기화
+		m_transferFunction = new TransferFunction();
+		if (!m_transferFunction->Initialize(fileReader->windowCenter, fileReader->windowWidth,m_pDevice)) {
+			return false;
+		}
+
+		// ⭐ TF Sampler 생성
+		D3D11_SAMPLER_DESC tfSampDesc = {};
+		tfSampDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+		tfSampDesc.AddressU = D3D11_TEXTURE_ADDRESS_CLAMP;
+		tfSampDesc.AddressV = D3D11_TEXTURE_ADDRESS_CLAMP;
+		tfSampDesc.AddressW = D3D11_TEXTURE_ADDRESS_CLAMP;
+		tfSampDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
+		tfSampDesc.MinLOD = 0;
+		tfSampDesc.MaxLOD = D3D11_FLOAT32_MAX;
+
+		HRESULT hr = m_pDevice->CreateSamplerState(&tfSampDesc, &m_tfSampler);
+		if (FAILED(hr)) return false;
+
+		return true;
+	}
+
 
 	void QDirect3D11Widget::InitShaders()
 	{
@@ -2645,8 +2689,6 @@ void QDirect3D11Widget::plasterVolumeShow()
 		ComPtr<ID3DBlob> errorBlob;
 
 
-
-		// 1. Vertex Shader ?뚮똾???
 		HRESULT hr = D3DCompileFromFile(
 			L"VertexShader.hlsl", nullptr, nullptr,
 			"VSMain", "vs_5_0",
@@ -2680,9 +2722,6 @@ void QDirect3D11Widget::plasterVolumeShow()
 			psBlob->GetBufferPointer(), psBlob->GetBufferSize(),
 			nullptr, &m_pixelShader));
 
-
-
-		// 4. ??낆젾 ??됱뵠?袁⑹뜍 ??밴쉐
 		D3D11_INPUT_ELEMENT_DESC layout[] = {
 			{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0,
 			  D3D11_INPUT_PER_VERTEX_DATA, 0 },
@@ -2710,10 +2749,10 @@ void QDirect3D11Widget::plasterVolumeShow()
 
 
 		Vertex vertices[] = {
-			{ -1.0f,  1.0f, 0.0f, 0.0f, 0.0f }, // ?ル슣湲?
-			{  1.0f,  1.0f, 0.0f, 1.0f, 0.0f }, // ?怨쀪맒
-			{ -1.0f, -1.0f, 0.0f, 0.0f, 1.0f }, // ?ル슦釉?
-			{  1.0f, -1.0f, 0.0f, 1.0f, 1.0f }  // ?怨좊릭
+			{ -1.0f,  1.0f, 0.0f, 0.0f, 0.0f }, 
+			{  1.0f,  1.0f, 0.0f, 1.0f, 0.0f }, 
+			{ -1.0f, -1.0f, 0.0f, 0.0f, 1.0f }, 
+			{  1.0f, -1.0f, 0.0f, 1.0f, 1.0f }  
 		};
 
 		D3D11_BUFFER_DESC bd = {};
@@ -3501,7 +3540,7 @@ void QDirect3D11Widget::plasterVolumeShow()
 
 		m_pSwapChain->Present(1, 0);
 
-		emit rendered(); // Qt ??볥젃??
+		emit rendered();
 	}
 
 	void QDirect3D11Widget::DrawFullScreenQuad()
@@ -4621,6 +4660,9 @@ void QDirect3D11Widget::UpdateSlicePlanePositions() {
 		{
 			// ✅ 리셋
 			m_rotation = m_initialRotation;
+
+
+
 		//	m_arcball.Init(width(), height());
 
 			qDebug() << "Rotation Reset!";

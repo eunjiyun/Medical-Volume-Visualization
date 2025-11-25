@@ -1,52 +1,165 @@
 #include "TransferFunction.h"
 
-
-void TransferFunction::SetHUWindow(float center, float width, ID3D11Device* g_pd3dDevice)
+TransferFunction::TransferFunction()
+	: m_tfTexture(nullptr)
+	, m_tfSRV(nullptr)
 {
-	// HU 윈도우 레벨 설정
-	float minHU = center - width / 2.0f;
-	float maxHU = center + width / 2.0f;
+}
+
+TransferFunction::~TransferFunction()
+{
+	if (m_tfSRV) m_tfSRV->Release();
+	if (m_tfTexture) m_tfTexture->Release();
+}
+
+float saturate(float x) {
+	if (x < 0.0f) return 0.0f;
+	if (x > 1.0f) return 1.0f;
+	return x;
+}
+
+bool TransferFunction::Initialize(float center, float width, ID3D11Device* device)
+{
+	//// 기본 컨트롤 포인트 설정 (간단한 램프)
+	//m_controlPoints.clear();
+	//m_controlPoints.push_back({ 0.0f, 0.0f, 0.0f, 0.0f, 0.0f });   // 투명
+	//m_controlPoints.push_back({ 0.3f, 0.5f, 0.5f, 0.5f, 0.2f });
+	//m_controlPoints.push_back({ 0.7f, 1.0f, 1.0f, 1.0f, 0.8f });
+	//m_controlPoints.push_back({ 1.0f, 1.0f, 1.0f, 1.0f, 1.0f });   // 불투명
 
 	m_controlPoints.clear();
 
-	//// 3개 포인트로 간단한 TF 생성
-	//m_controlPoints.push_back({ 0.0f, 0, 0, 0, 0 });      // 최소값: 투명
-	//m_controlPoints.push_back({ 0.5f, 1, 1, 1, 0.8f });   // 중간값: 불투명
-	//m_controlPoints.push_back({ 1.0f, 1, 1, 1, 1.0f });   // 최대값: 완전 불투명
+	float minHU = center - width / 2.0f;
+	float maxHU = center + width / 2.0f;
 
-	 // 실제 의료 영상에서 많이 쓰는 설정
-	m_controlPoints.push_back({ 0.0f,  0.0f, 0.0f, 0.0f, 0.0f });   // 최소값: 완전 투명
-	m_controlPoints.push_back({ 0.2f,  0.3f, 0.3f, 0.3f, 0.1f });   // 어두운 부분: 약간 보임
-	m_controlPoints.push_back({ 0.4f,  0.8f, 0.8f, 0.7f, 0.4f });   // 중간 부분
-	m_controlPoints.push_back({ 0.6f,  1.0f, 0.9f, 0.8f, 0.7f });   // 밝은 부분
-	m_controlPoints.push_back({ 1.0f,  1.0f, 1.0f, 1.0f, 1.0f });   // 최대값: 완전 불투명
+	// ⭐ 윈도우 범위로 정규화
+	auto HUtoNorm = [&](float hu) -> float {
+		return saturate((hu - minHU) / width);
+	};
+
+	// TransferFunctionHU 로직 그대로 적용
+	// -400 이하: 투명
+	if (minHU <= -400.0f) {
+		m_controlPoints.push_back({ HUtoNorm(-400.0f), 0.0f, 0.0f, 0.0f, 0.0f });
+	}
+
+	// -400 ~ 200: 연조직
+	if (maxHU >= -400.0f && minHU <= 200.0f) {
+		m_controlPoints.push_back({ HUtoNorm(200.0f), 0.6f, 0.5f, 0.4f, 0.05f });
+	}
+
+	// 200 ~ 700: 뼈 시작
+	if (maxHU >= 200.0f && minHU <= 700.0f) {
+		m_controlPoints.push_back({ HUtoNorm(700.0f), 0.85f, 0.75f, 0.65f, 0.4f });
+	}
+
+	// 700 ~ 1300: 단단한 뼈
+	if (maxHU >= 700.0f && minHU <= 1300.0f) {
+		m_controlPoints.push_back({ HUtoNorm(1300.0f), 0.92f, 0.88f, 0.82f, 1.1f });
+	}
+
+	// 1300 이상: 치아
+	if (maxHU >= 1300.0f) {
+		m_controlPoints.push_back({ HUtoNorm(3000.0f), 0.98f, 0.95f, 0.90f, 2.0f });
+	}
 
 
-	UpdateTexture(g_pd3dDevice);
+
+	UpdateTexture(device);
+	return (m_tfSRV != nullptr);
 }
 
-void TransferFunction::UpdateTexture(ID3D11Device* g_pd3dDevice)
+
+
+void TransferFunction::SetHUWindow(float center, float width, ID3D11Device* g_pd3dDevice)
 {
-	// 256개 샘플로 보간된 1D 텍스처 생성
-	const int TF_SIZE = 256;
+	//// HU 윈도우 레벨 설정
+	//float minHU = center - width / 2.0f;
+	//float maxHU = center + width / 2.0f;
+
+	//m_controlPoints.clear();
+
+	////// 3개 포인트로 간단한 TF 생성
+	////m_controlPoints.push_back({ 0.0f, 0, 0, 0, 0 });      // 최소값: 투명
+	////m_controlPoints.push_back({ 0.5f, 1, 1, 1, 0.8f });   // 중간값: 불투명
+	////m_controlPoints.push_back({ 1.0f, 1, 1, 1, 1.0f });   // 최대값: 완전 불투명
+
+	// // 실제 의료 영상에서 많이 쓰는 설정
+	//m_controlPoints.push_back({ 0.0f,  0.0f, 0.0f, 0.0f, 0.0f });   // 최소값: 완전 투명
+	//m_controlPoints.push_back({ 0.2f,  0.3f, 0.3f, 0.3f, 0.1f });   // 어두운 부분: 약간 보임
+	//m_controlPoints.push_back({ 0.4f,  0.8f, 0.8f, 0.7f, 0.4f });   // 중간 부분
+	//m_controlPoints.push_back({ 0.6f,  1.0f, 0.9f, 0.8f, 0.7f });   // 밝은 부분
+	//m_controlPoints.push_back({ 1.0f,  1.0f, 1.0f, 1.0f, 1.0f });   // 최대값: 완전 불투명
+
+
+	//UpdateTexture(g_pd3dDevice);
+
+
+	m_controlPoints.clear();
+
+	float minHU = center - width / 2.0f;
+	float maxHU = center + width / 2.0f;
+
+	
+
+	// ⭐ 윈도우 범위로 정규화
+	auto HUtoNorm = [&](float hu) -> float {
+		return saturate((hu - minHU) / width);
+	};
+
+	// TransferFunctionHU 로직 그대로 적용
+	// -400 이하: 투명
+	if (minHU <= -400.0f) {
+		m_controlPoints.push_back({ HUtoNorm(-400.0f), 0.0f, 0.0f, 0.0f, 0.0f });
+	}
+
+	// -400 ~ 200: 연조직
+	if (maxHU >= -400.0f && minHU <= 200.0f) {
+		m_controlPoints.push_back({ HUtoNorm(200.0f), 0.6f, 0.5f, 0.4f, 0.05f });
+	}
+
+	// 200 ~ 700: 뼈 시작
+	if (maxHU >= 200.0f && minHU <= 700.0f) {
+		m_controlPoints.push_back({ HUtoNorm(700.0f), 0.85f, 0.75f, 0.65f, 0.4f });
+	}
+
+	// 700 ~ 1300: 단단한 뼈
+	if (maxHU >= 700.0f && minHU <= 1300.0f) {
+		m_controlPoints.push_back({ HUtoNorm(1300.0f), 0.92f, 0.88f, 0.82f, 1.1f });
+	}
+
+	// 1300 이상: 치아
+	if (maxHU >= 1300.0f) {
+		m_controlPoints.push_back({ HUtoNorm(3000.0f), 0.98f, 0.95f, 0.90f, 2.0f });
+	}
+
+	UpdateTexture(g_pd3dDevice);
+
+
+}
+
+void TransferFunction::UpdateTexture(ID3D11Device* device)
+{
+	// 기존 텍스처 해제
+	if (m_tfSRV) { m_tfSRV->Release(); m_tfSRV = nullptr; }
+	if (m_tfTexture) { m_tfTexture->Release(); m_tfTexture = nullptr; }
+
+	// 256개 샘플 데이터 생성
 	float* tfData = new float[TF_SIZE * 4]; // RGBA
 
-	for (int i{}; i < TF_SIZE; ++i) {
-		float t = (float)i / (TF_SIZE - 1); // 0.0 ~ 1.0
+	for (int i = 0; i < TF_SIZE; i++) {
+		float t = (float)i / (TF_SIZE - 1);
 
-		// control points 사이를 선형 보간
 		float r = 1.0f, g = 1.0f, b = 1.0f, a = 0.0f;
 
-		// 어느 두 control point 사이에 있는지 찾기
-		for (size_t j = 0; j < m_controlPoints.size() - 1; ++j) {
+		// 컨트롤 포인트 사이 선형 보간
+		for (size_t j = 0; j < m_controlPoints.size() - 1; j++) {
 			TFPoint& p1 = m_controlPoints[j];
 			TFPoint& p2 = m_controlPoints[j + 1];
 
 			if (t >= p1.value && t <= p2.value) {
-				// p1과 p2 사이의 위치 (0~1)
 				float localT = (t - p1.value) / (p2.value - p1.value);
 
-				// 선형 보간
 				r = p1.r + localT * (p2.r - p1.r);
 				g = p1.g + localT * (p2.g - p1.g);
 				b = p1.b + localT * (p2.b - p1.b);
@@ -61,7 +174,7 @@ void TransferFunction::UpdateTexture(ID3D11Device* g_pd3dDevice)
 		tfData[i * 4 + 3] = a;
 	}
 
-	// D3D11 텍스처 생성
+	// D3D11 1D 텍스처 생성
 	D3D11_TEXTURE1D_DESC desc = {};
 	desc.Width = TF_SIZE;
 	desc.MipLevels = 1;
@@ -69,13 +182,26 @@ void TransferFunction::UpdateTexture(ID3D11Device* g_pd3dDevice)
 	desc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
 	desc.Usage = D3D11_USAGE_DEFAULT;
 	desc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+	desc.CPUAccessFlags = 0;
 
 	D3D11_SUBRESOURCE_DATA initData = {};
 	initData.pSysMem = tfData;
 	initData.SysMemPitch = TF_SIZE * 4 * sizeof(float);
 
-	g_pd3dDevice->CreateTexture1D(&desc, &initData, &m_tfTexture);
-	g_pd3dDevice->CreateShaderResourceView(m_tfTexture, nullptr, &m_tfSRV);
+	HRESULT hr = device->CreateTexture1D(&desc, &initData, &m_tfTexture);
+	if (FAILED(hr)) {
+		delete[] tfData;
+		return;
+	}
+
+	// Shader Resource View 생성
+	D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+	srvDesc.Format = desc.Format;
+	srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE1D;
+	srvDesc.Texture1D.MipLevels = 1;
+	srvDesc.Texture1D.MostDetailedMip = 0;
+
+	hr = device->CreateShaderResourceView(m_tfTexture, &srvDesc, &m_tfSRV);
 
 	delete[] tfData;
 }

@@ -28,7 +28,12 @@ Texture3D<float> volumeTex : register(t0);
 SamplerState samp : register(s0);
 
 
-//
+
+// ⭐ Transfer Function 추가
+Texture1D<float4> transferFunction : register(t1);
+SamplerState tfSampler : register(s1);
+
+
 float4 TransferFunction(float density)
 {
 	// ✅ 0.001 이하만 제거 (거의 전부 사용)
@@ -57,59 +62,33 @@ float4 TransferFunction(float density)
 }
 
 
-//// 1. TF에서 alpha 더 높이기
-//float4 TransferFunctionHU(float hu, float huNorm)
+
+//// ========== 2. Transfer Function (30줄) ==========
+//float4 TransferFunctionHU(float hu)
 //{
-//	if (hu < 450.0)  // 400 → 450 (노이즈 더 제거)
-//		return float4(0, 0, 0, 0);
+//	if (hu < -400.0) return float4(0, 0, 0, 0);
 //
-//	if (hu < 750.0)
-//	{
-//		float t = saturate((hu - 450.0) / 300.0);
-//		return float4(0.5, 0.42, 0.36, t * 0.005);  // 거의 투명
+//	if (hu < 200.0) {
+//		float t = (hu + 400.0) / 600.0;
+//		return float4(0.6, 0.5, 0.4, t * 0.05);
 //	}
 //
-//	if (hu < 1300.0)
-//	{
-//		float t = saturate((hu - 750.0) / 550.0);
-//		float3 col = lerp(float3(0.82, 0.72, 0.62), float3(0.92, 0.82, 0.72), t);
-//		return float4(col, 0.8 + t * 1.5);  // alpha 높임
+//	if (hu < 700.0) {
+//		float t = (hu - 200.0) / 500.0;
+//		return float4(0.85, 0.75, 0.65, 0.1 + t * 0.3);
 //	}
 //
-//	float t = saturate((hu - 1300.0) / 1200.0);
-//	float3 col = lerp(float3(0.94, 0.89, 0.82), float3(0.99, 0.96, 0.92), t);
-//	return float4(col, 3.0 + t * 2.0);  // 더 불투명
+//	if (hu < 1300.0) {
+//		float t = (hu - 700.0) / 600.0;
+//		return float4(0.92, 0.88, 0.82, 0.5 + t * 0.6);
+//	}
+//
+//	float t = saturate((hu - 1300.0) / 1700.0);
+//	return float4(0.98, 0.95, 0.90, 1.2 + t * 0.8);
 //}
-
-
-// ========== 2. Transfer Function (30줄) ==========
-float4 TransferFunctionHU(float hu)
-{
-	if (hu < -400.0) return float4(0, 0, 0, 0);
-
-	if (hu < 200.0) {
-		float t = (hu + 400.0) / 600.0;
-		return float4(0.6, 0.5, 0.4, t * 0.05);
-	}
-
-	if (hu < 700.0) {
-		float t = (hu - 200.0) / 500.0;
-		return float4(0.85, 0.75, 0.65, 0.1 + t * 0.3);
-	}
-
-	if (hu < 1300.0) {
-		float t = (hu - 700.0) / 600.0;
-		return float4(0.92, 0.88, 0.82, 0.5 + t * 0.6);
-	}
-
-	float t = saturate((hu - 1300.0) / 1700.0);
-	return float4(0.98, 0.95, 0.90, 1.2 + t * 0.8);
-}
 
 float4 main(float4 pos : SV_POSITION, float2 uv : TEXCOORD0) : SV_Target
 {
-
-	// --- 愿묒꽑 ?앹꽦 (湲곗〈 肄붾뱶 ?좎?) ---
 	float2 offset = float2(0.0, 0.0);
 	float2 scale = float2(0.5, 0.5);
 	float2 localUV = (uv - offset) / scale;
@@ -136,10 +115,12 @@ float4 main(float4 pos : SV_POSITION, float2 uv : TEXCOORD0) : SV_Target
 
 	float3 rayDir = normalize(mul(float4(rayDirWS, 0), InvVolumeWorld).xyz);
 
-	float3 boxMin = float3(-0.75, -0.75, -0.75);
-	float3 boxMax = float3(0.75, 0.75, 0.75);
+	//float3 boxMin = float3(-0.75, -0.75, -0.75);
+	//float3 boxMax = float3(0.75, 0.75, 0.75);
 
 
+	float3 boxMin = float3(-1, -0.75, -0.75);
+	float3 boxMax = float3(1, 0.75, 0.75);
 
 	float3 invDir = 1.0 / (rayDir + 1e-6);
 	float3 tMin = (boxMin - rayPos) * invDir;
@@ -208,8 +189,20 @@ float4 main(float4 pos : SV_POSITION, float2 uv : TEXCOORD0) : SV_Target
 		float huNorm = (hu - HuParams.z) / (HuParams.w - HuParams.z);
 		huNorm = saturate(huNorm);
 
+		//// Transfer Function에서 색상/투명도 가져오기
+		//float4 tfValue = transferFunction.Sample(tfSampler, huNorm);
 
-		float4 colorAlpha = TransferFunctionHU(hu/*, huNorm*/);
+		// ⭐ Transfer Function에서 색상/투명도 가져오기 (하나만 사용!)
+		float4 colorAlpha = transferFunction.Sample(tfSampler, huNorm);
+
+		// ⭐ 기존 TransferFunctionHU() 삭제 - tfValue 하나로 통일!
+
+		if (colorAlpha.a < 0.001)
+			continue;
+
+		//float4 colorAlpha = TransferFunctionHU(hu/*, huNorm*/);
+
+
 
 		// 3) eps 계산
 		float3 eps = float3(1.0 / Voxel.x, 1.0 / Voxel.y, 1.0 / Voxel.z);
@@ -250,15 +243,12 @@ float4 main(float4 pos : SV_POSITION, float2 uv : TEXCOORD0) : SV_Target
 
 		if (alpha > 0.001)
 		{
-	
 			acc.rgb += (1.0 - acc.a) * alpha * color;
-
 			acc.a += (1.0 - acc.a) * alpha;
 
 			if (acc.a >= 0.95)
 				break;
 		}
-
 	}
 
 
