@@ -328,10 +328,6 @@
 									</item>
 								</layout>
 							</item>
-							
-							
-							
-							
 							<item>
 								<widget class="QLabel" name="label_patientImage1">
 									<property name="minimumSize">
@@ -349,8 +345,6 @@
 									<property name="pixmap">
 										<pixmap>:/images/left2_3Bar.png</pixmap>
 									</property>
-									
-									
 									<property name="scaledContents">
 										<bool>true</bool>
 									</property>
@@ -359,21 +353,18 @@
 									</property>
 								</widget>
 							</item>
-							
-							
-							
-								<item>
-								<widget class="QWidget" name="buttonPanel" native="true">
+							<item>
+								<widget class="QWidget" name="slidePanel" native="true">
+									<property name="sizePolicy">
+										<sizepolicy hsizetype="Preferred" vsizetype="Expanding">
+											<horstretch>0</horstretch>
+											<verstretch>0</verstretch>
+										</sizepolicy>
+									</property>
 									<property name="minimumSize">
 										<size>
 											<width>190</width>
 											<height>0</height>
-										</size>
-									</property>
-									<property name="maximumSize">
-										<size>
-											<width>190</width>
-											<height>600</height>
 										</size>
 									</property>
 									<property name="styleSheet">
@@ -395,39 +386,6 @@
 										<property name="bottomMargin">
 											<number>6</number>
 										</property>
-										<item>
-											<widget class="QPushButton" name="btnColorInvert">
-												<property name="minimumSize">
-													<size>
-														<width>0</width>
-														<height>40</height>
-													</size>
-												</property>
-												<property name="checkable">
-													<bool>true</bool>
-												</property>
-												<property name="styleSheet">
-													<string notr="true">QPushButton {
-    border: none;
-    padding: 0px;
-    background: transparent;
-    image: url(:/images/colorInvert.png);
-}
-QPushButton:checked {
-    image: url(:/images/colorInvert2.png);
-}
-QPushButton:hover {
-    background: transparent;
-}
-QPushButton:pressed {
-    background: transparent;
-}</string>
-												</property>
-												<property name="text">
-													<string/>
-												</property>
-											</widget>
-										</item>
 										<item>
 											<layout class="QGridLayout" name="gridLayout_buttons">
 												<property name="spacing">
@@ -570,45 +528,6 @@ QPushButton:pressed {
 									</layout>
 								</widget>
 							</item>
-							
-							
-							
-							
-							
-							
-							
-							
-							
-							
-							
-							
-							
-							
-							
-							
-							
-							
-							
-							
-							
-							
-							
-							
-							
-							
-							
-							
-							
-							
-							
-							
-			
-							
-							
-							
-							
-							
-							
 							<item>
 								<widget class="QLabel" name="label_patientImage3">
 									<property name="minimumSize">
@@ -642,12 +561,6 @@ QPushButton:pressed {
 											<height>0</height>
 										</size>
 									</property>
-									<property name="maximumSize">
-										<size>
-											<width>190</width>
-											<height>100</height>
-										</size>
-									</property>
 									<property name="styleSheet">
 										<string notr="true">background-color: rgb(108, 122, 144);</string>
 									</property>
@@ -672,7 +585,7 @@ QPushButton:pressed {
 												<property name="minimumSize">
 													<size>
 														<width>0</width>
-														<height>40</height>
+														<height>50</height>
 													</size>
 												</property>
 												<property name="checkable">
