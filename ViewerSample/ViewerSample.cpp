@@ -69,7 +69,7 @@ void ViewerSample::connectSlots()
 			//double brightness = value/1000.0 ;  // -500~500 → -0.5~0.5
 
 			qDebug() << "Slider moved:" << value;
-			double brightness = value / 1000.0;
+			double brightness = value;
 			brightnessCenterChanged(brightness);
 		});
 	connect(ui->sharpnessSlider, &QSlider::valueChanged, this, &ViewerSample::sharpnessChanged);
@@ -150,25 +150,6 @@ void ViewerSample::brightnessCenterChanged(double brightness)
 {// Window Center
 
 
-
-
-	//	// ⭐ 구현 추가!
-	//float huCenter = -1024.0f + (value * 4.024f);//2927
-
-
-
-	//// ⭐ 3. Null 체크
-	//if (!m_pScene || !m_pScene->fileReader || !m_pScene->GetTransferFunction()) {
-	//	return;
-	//}
-
-	//// ⭐ 3. FileReader에 저장 (다음 렌더링 때 반영됨)
-	//if (m_pScene && m_pScene->fileReader) {
-	//	m_pScene->fileReader->windowCenter = huCenter;
-	//	// windowWidth는 고정 또는 다른 슬라이더로 조절
-	//	// m_pScene->fileReader->windowWidth = 2000.0f;
-	//}
-
 	if (!m_pScene || !m_pScene->fileReader) return;
 
 	qDebug() << "brightness:" << brightness;
@@ -176,25 +157,32 @@ void ViewerSample::brightnessCenterChanged(double brightness)
 	qDebug() << "m_initialWindowCenter:" << m_initialWindowCenter;
 
 
-	float offset = brightness * m_initialWindowWidth * 0.5f; // WW의 절반 범위로 조절
-	float newWindowCenter = m_initialWindowCenter + offset;
+	//float offset = brightness * m_initialWindowWidth * 0.5f; // WW의 절반 범위로 조절
+	//float newWindowCenter = m_initialWindowCenter + offset;
 
-	// 실제 적용
-	m_pScene->fileReader->windowCenter = newWindowCenter;
-	ui->brightnessValueLabel->setText(QString::number(newWindowCenter));
+	//// 실제 적용
+	//m_pScene->fileReader->windowCenter = newWindowCenter;
+	//ui->brightnessValueLabel->setText(QString::number(newWindowCenter));
 
-	////m_pScene->UpdateVolumeMatrix();
-	////m_pScene->UpdateSlicePlanePositions();  // ✅ 추가
-	////m_pScene->FullScreenPassSet();
+	//////m_pScene->UpdateVolumeMatrix();
+	//////m_pScene->UpdateSlicePlanePositions();  // ✅ 추가
+	//////m_pScene->FullScreenPassSet();
 
-	//m_pScene->update();
-	////update();
-
-
+	////m_pScene->update();
+	//////update();
 
 
 
 
+
+		// brightness: -0.5 ~ 0.5
+	// WC를 ±WW의 절반 범위로 조절 (±2000)
+	float offset = brightness/1000.0  * m_initialWindowWidth;  // -2000 ~ +2000
+	float newWC = m_initialWindowCenter + offset;      // -1000 ~ 3000
+
+	m_pScene->fileReader->windowCenter = newWC;
+
+	ui->brightnessValueLabel->setText(QString::number(newWC));
 
 
 
@@ -288,36 +276,40 @@ void ViewerSample::contrastWidthChanged(double contrast)
 
 
 
-	// contrast: 0.0 ~ 2.0, 초기값 1.0
-	// 초기 WW에 비율 곱하기
-	float newWindowWidth = m_initialWindowWidth * (contrast/1000.0);
+	//// contrast: 0.0 ~ 2.0, 초기값 1.0
+	//// 초기 WW에 비율 곱하기
+	//float newWindowWidth = m_initialWindowWidth * (contrast/1000.0);
 
-	m_pScene->fileReader->windowWidth = newWindowWidth/2;
+	//m_pScene->fileReader->windowWidth = newWindowWidth/2;
 
-	ui->contrastValueLabel->setText(QString::number((double)newWindowWidth/4000.0));
-
-
-
-	qDebug() << "=== Contrast Changed ===";
-	qDebug() << "contrast (slider value):" << contrast;  // 0.0 ~ 2.0
-	qDebug() << "m_initialWindowWidth:" << m_initialWindowWidth;
-	qDebug() << "newWindowWidth:" << newWindowWidth;
-
-
-	////m_pScene->UpdateVolumeMatrix();
-	////m_pScene->UpdateSlicePlanePositions();  // ✅ 추가
-	////m_pScene->FullScreenPassSet();
-
-	//m_pScene->update();
-	//ui->centralWidget->updateGeometry();
-
-	////update();
+	//ui->contrastValueLabel->setText(QString::number((double)newWindowWidth/4000.0));
 
 
 
+	//qDebug() << "=== Contrast Changed ===";
+	//qDebug() << "contrast (slider value):" << contrast;  // 0.0 ~ 2.0
+	//qDebug() << "m_initialWindowWidth:" << m_initialWindowWidth;
+	//qDebug() << "newWindowWidth:" << newWindowWidth;
+
+
+	//////m_pScene->UpdateVolumeMatrix();
+	//////m_pScene->UpdateSlicePlanePositions();  // ✅ 추가
+	//////m_pScene->FullScreenPassSet();
+
+	////m_pScene->update();
+	////ui->centralWidget->updateGeometry();
+
+	//////update();
 
 
 
+	 // contrast: 0.0 ~ 2.0, 초기값 1.0
+	// WW를 배율로 조절
+	float newWW = m_initialWindowWidth * (contrast/1000.0);  // 0 ~ 8000
+
+	m_pScene->fileReader->windowWidth = newWW;
+
+	ui->contrastValueLabel->setText(QString::number((double)newWW ));
 
 
 
@@ -412,15 +404,15 @@ void ViewerSample::loadDicomData()
 {
 	// ... DICOM 로드 후
 
-	if (m_pScene->fileReader) {
-		// 초기값 저장
-		m_initialWindowCenter = m_pScene->fileReader->windowCenter;
-		m_initialWindowWidth = m_pScene->fileReader->windowWidth;
-	}
+	//if (m_pScene->fileReader) {
+	//	// 초기값 저장
+	//	m_initialWindowCenter = m_pScene->fileReader->windowCenter;
+	//	m_initialWindowWidth = m_pScene->fileReader->windowWidth;
+	//}
 
 
-	//m_initialWindowCenter =1000;
-	//m_initialWindowWidth =4000;
+	m_initialWindowCenter =1000;
+	m_initialWindowWidth =4000;
 
 
 	qDebug() << "m_initialWindowCenter :" << m_initialWindowCenter;
