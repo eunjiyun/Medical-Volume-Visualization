@@ -104,8 +104,10 @@ bool FileReader::LoadDICOMSeries(std::string folderPath, ID3D11Device* g_pd3dDev
 					dataset->findAndGetOFString(DCM_PatientSex, patientMF).good()
 					) {
 
-					windowCenter = std::stof(wcStr.c_str());
-					windowWidth = std::stof(wwStr.c_str());
+					volWC=windowCenter = std::stof(wcStr.c_str());
+					volWW=windowWidth = std::stof(wwStr.c_str());
+
+					
 
 				/*	std::string utf8Name = convertCP949ToUTF8(rawName.c_str());
 					patientName = utf8Name.c_str();*/

@@ -92,6 +92,36 @@ void ViewerSample::onBtnColorInvertClicked() {
 
 void ViewerSample::huValueChanged(int value)
 {
+//	// value: 0 ~ 1000 범위
+//	// HU 중심값 계산: -1024 ~ 2927
+//	float huCenter = -1024.0f + (value * 4.024f);
+//	ui->huValueLabel->setText(QString::number((int)huCenter));
+//
+//	if (!m_pScene || !m_pScene->fileReader || !m_pScene->GetTransferFunction()) {
+//		return;
+//	}
+//
+//	// ⭐ WC 적용
+//	m_pScene->fileReader->volWC = huCenter;
+//
+//	// ⭐ WW도 HU 값에 따라 자동 조절
+//	float normalizedValue = value / 1000.0f;  // 0.0 ~ 1.0
+//	float minWW = 400.0f;   // 연조직용 최소 폭
+//	float maxWW = 2000.0f;  // 뼈용 최대 폭
+//	float windowWidth = minWW + (normalizedValue * (maxWW - minWW));
+//
+//	m_pScene->fileReader->volWW = windowWidth;
+//
+//	qDebug() << "HU adjusted - WC:" << huCenter << "WW:" << windowWidth;
+//
+//	// ⭐ Transfer Function을 새로운 WC/WW로 재초기화
+////m_pScene->GetTransferFunction()->Initialize(huCenter, windowWidth, m_pScene->m_pDevice);
+//
+//	// 또는 SetHUWindow 사용 (고정 TF 유지하려면)
+//	 m_pScene->GetTransferFunction()->SetHUWindow(huCenter, windowWidth, m_pScene->m_pDevice);
+//
+//	update();
+
 	// ⭐ 구현 추가!
 	float huCenter = -1024.0f + (value * 4.024f);//2927
 
@@ -111,7 +141,7 @@ void ViewerSample::huValueChanged(int value)
 
 	// ⭐ 3. FileReader에 저장 (다음 렌더링 때 반영됨)
 	if (m_pScene && m_pScene->fileReader) {
-		m_pScene->fileReader->windowCenter = huCenter;
+		m_pScene->fileReader->volWC = huCenter;
 		// windowWidth는 고정 또는 다른 슬라이더로 조절
 		// m_pScene->fileReader->windowWidth = 2000.0f;
 	}
@@ -121,7 +151,6 @@ void ViewerSample::huValueChanged(int value)
 	//cb.HuParams.y = fileReader->m_rescaleIntercept;
 	//cb.HuParams.z = fileReader->windowCenter - fileReader->windowWidth / 2.0;
 	//cb.HuParams.w = fileReader->windowCenter + fileReader->windowWidth / 2.0;
-
 
 
 	//// ⭐ Constant Buffer에 center/width 전달
@@ -493,9 +522,18 @@ void ViewerSample::init(bool success)
 
 	//loadDicomData();
 
-	//ui->huSlider->setMinimum(-3660);
-	//ui->huSlider->setMaximum(14100);
-	//ui->huSlider->setValue(3157);
+	ui->huSlider->setMinimum(-3660);
+	ui->huSlider->setMaximum(14100);
+	ui->huSlider->setValue(3157);
+	// HU 슬라이더 초기 설정
+
+//	m_pScene->GetTransferFunction()->SetHUWindow(0, 0, m_pScene->m_pDevice);
+	//ui->huSlider->setMinimum(-1024);  // 최소 HU (공기)
+	//ui->huSlider->setMaximum(3000);   // 최대 HU (치아/금속)
+
+	//ui->huSlider->setMinimum(-1024);  // 최소 HU (공기)
+	//ui->huSlider->setMaximum(6000);   // 최대 HU (치아/금속)
+	//ui->huSlider->setValue(2000);     // 초기값: 디폴트 WC
 
 
 	//brightness

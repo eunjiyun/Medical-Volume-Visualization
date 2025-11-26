@@ -1,4 +1,5 @@
 #include "TransferFunction.h"
+#include<algorithm>
 
 TransferFunction::TransferFunction()
 	: m_tfTexture(nullptr)
@@ -20,50 +21,114 @@ float saturate(float x) {
 
 bool TransferFunction::Initialize(float center, float width, ID3D11Device* device)
 {
-	//// 기본 컨트롤 포인트 설정 (간단한 램프)
+	////// 기본 컨트롤 포인트 설정 (간단한 램프)
+	////m_controlPoints.clear();
+	////m_controlPoints.push_back({ 0.0f, 0.0f, 0.0f, 0.0f, 0.0f });   // 투명
+	////m_controlPoints.push_back({ 0.3f, 0.5f, 0.5f, 0.5f, 0.2f });
+	////m_controlPoints.push_back({ 0.7f, 1.0f, 1.0f, 1.0f, 0.8f });
+	////m_controlPoints.push_back({ 1.0f, 1.0f, 1.0f, 1.0f, 1.0f });   // 불투명
+
 	//m_controlPoints.clear();
-	//m_controlPoints.push_back({ 0.0f, 0.0f, 0.0f, 0.0f, 0.0f });   // 투명
-	//m_controlPoints.push_back({ 0.3f, 0.5f, 0.5f, 0.5f, 0.2f });
-	//m_controlPoints.push_back({ 0.7f, 1.0f, 1.0f, 1.0f, 0.8f });
-	//m_controlPoints.push_back({ 1.0f, 1.0f, 1.0f, 1.0f, 1.0f });   // 불투명
+
+	//float minHU = center - width / 2.0f;
+	//float maxHU = center + width / 2.0f;
+
+	//// ⭐ 윈도우 범위로 정규화
+	//auto HUtoNorm = [&](float hu) -> float {
+	//	return saturate((hu - minHU) / width);
+	//};
+
+
+	//// TransferFunctionHU 로직 그대로 적용
+	//// -400 이하: 투명
+	//if (minHU <= -400.0f) {
+	//	m_controlPoints.push_back({ HUtoNorm(-400.0f), 0.0f, 0.0f, 0.0f, 0.0f });
+	//}
+
+
+	//// ⭐ 시작점 추가 (0.0)
+	//m_controlPoints.push_back({ 0.0f, 0.0f, 0.0f, 0.0f, 0.0f });
+
+	//// -400 ~ 200: 연조직
+	//if (maxHU >= -400.0f && minHU <= 200.0f) {
+	//	m_controlPoints.push_back({ HUtoNorm(200.0f), 0.6f, 0.5f, 0.4f, 0.05f });
+	//}
+
+	//// 200 ~ 700: 뼈 시작
+	//if (maxHU >= 200.0f && minHU <= 700.0f) {
+	//	m_controlPoints.push_back({ HUtoNorm(700.0f), 0.85f, 0.75f, 0.65f, 0.4f });
+	//}
+
+	//// 700 ~ 1300: 단단한 뼈
+	//if (maxHU >= 700.0f && minHU <= 1300.0f) {
+	//	m_controlPoints.push_back({ HUtoNorm(1300.0f), 0.92f, 0.88f, 0.82f, 1.1f });
+	//}
+
+	//// 1300 이상: 치아
+	//if (maxHU >= 1300.0f) {
+	//	m_controlPoints.push_back({ HUtoNorm(3000.0f), 0.98f, 0.95f, 0.90f, 2.0f });
+	//}
+
+	//// ⭐ 끝점 추가 (1.0) - 중요!
+	//m_controlPoints.push_back({ 1.0f, 1.0f, 1.0f, 1.0f, 1.0f });
+
+	//UpdateTexture(device);
+	//return (m_tfSRV != nullptr);
+
+
 
 	m_controlPoints.clear();
 
 	float minHU = center - width / 2.0f;
 	float maxHU = center + width / 2.0f;
 
+	std::cout << "Initialize TF - Center:" << center << "Width:" << width << std:: endl;
+	std::cout << "HU Range:" << minHU << "~" << maxHU << std::endl;
+
 	// ⭐ 윈도우 범위로 정규화
 	auto HUtoNorm = [&](float hu) -> float {
 		return saturate((hu - minHU) / width);
 	};
 
-	// TransferFunctionHU 로직 그대로 적용
-	// -400 이하: 투명
-	if (minHU <= -400.0f) {
-		m_controlPoints.push_back({ HUtoNorm(-400.0f), 0.0f, 0.0f, 0.0f, 0.0f });
-	}
+	// ⭐ 시작점 추가 (0.0)
+	m_controlPoints.push_back({ 0.0f, 0.0f, 0.0f, 0.0f, 0.0f });
 
 	// -400 ~ 200: 연조직
 	if (maxHU >= -400.0f && minHU <= 200.0f) {
-		m_controlPoints.push_back({ HUtoNorm(200.0f), 0.6f, 0.5f, 0.4f, 0.05f });
+		float t = HUtoNorm(200.0f);
+		m_controlPoints.push_back({ t, 0.6f, 0.5f, 0.4f, 0.05f });
+		std::cout << "Added soft tissue at t=" << t;
 	}
 
 	// 200 ~ 700: 뼈 시작
 	if (maxHU >= 200.0f && minHU <= 700.0f) {
-		m_controlPoints.push_back({ HUtoNorm(700.0f), 0.85f, 0.75f, 0.65f, 0.4f });
+		float t = HUtoNorm(700.0f);
+		m_controlPoints.push_back({ t, 0.85f, 0.75f, 0.65f, 0.4f });
+		std::cout << "Added bone start at t=" << t;
 	}
 
 	// 700 ~ 1300: 단단한 뼈
 	if (maxHU >= 700.0f && minHU <= 1300.0f) {
-		m_controlPoints.push_back({ HUtoNorm(1300.0f), 0.92f, 0.88f, 0.82f, 1.1f });
+		float t = HUtoNorm(1300.0f);
+		m_controlPoints.push_back({ t, 0.92f, 0.88f, 0.82f, 1.1f });
+		std::cout << "Added hard bone at t=" << t;
 	}
 
 	// 1300 이상: 치아
 	if (maxHU >= 1300.0f) {
-		m_controlPoints.push_back({ HUtoNorm(3000.0f), 0.98f, 0.95f, 0.90f, 2.0f });
+		float t = HUtoNorm(3000.0f);
+		m_controlPoints.push_back({ t, 0.98f, 0.95f, 0.90f, 2.0f });
+		std::cout << "Added teeth at t=" << t;
 	}
 
+	// ⭐ 끝점 추가 (1.0) - 중요!
+	m_controlPoints.push_back({ 1.0f, 1.0f, 1.0f, 1.0f, 1.0f });
 
+	std::cout << "Total control points:" << m_controlPoints.size();
+
+	// ⭐ 정렬 확인
+	std::sort(m_controlPoints.begin(), m_controlPoints.end(),
+		[](const TFPoint& a, const TFPoint& b) { return a.value < b.value; });
 
 	UpdateTexture(device);
 	return (m_tfSRV != nullptr);

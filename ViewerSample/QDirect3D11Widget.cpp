@@ -1250,8 +1250,8 @@ void QDirect3D11Widget::FullScreenPassSet()
 	
 		cb.HuParams.x= fileReader->m_rescaleSlope;
 		cb.HuParams.y= fileReader->m_rescaleIntercept;
-		cb.HuParams.z = fileReader->windowCenter - fileReader->windowWidth / 2.0;
-		cb.HuParams.w = fileReader->windowCenter +fileReader->windowWidth / 2.0;
+		cb.HuParams.z = fileReader->volWC - fileReader->volWW / 2.0;
+		cb.HuParams.w = fileReader->volWC +fileReader->volWW / 2.0;
 
 
 		//// cb 설정 후, Map 전에

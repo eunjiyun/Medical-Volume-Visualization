@@ -56,6 +56,7 @@ public:
     std::vector<uint8_t> axialSlice;
     std::vector < ID3D11Texture2D*> axialTexture, coronalTexture, sagittalTexture;
     int windowCenter, windowWidth;
+	int volWC, volWW;
 
 	float m_rescaleSlope, m_rescaleIntercept;
 
