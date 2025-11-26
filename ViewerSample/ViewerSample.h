@@ -33,6 +33,6 @@ private:
     QDirect3D11Widget * m_pScene;
     QSize               m_WindowSize;
 
-	float m_initialWindowCenter; // 데이터 로드 시 초기값 저장
-	float m_initialWindowWidth;  // 데이터 로드 시 초기값 저장
+	float m_initialWindowCenter{-1}; // 데이터 로드 시 초기값 저장
+	float m_initialWindowWidth{ -1 };  // 데이터 로드 시 초기값 저장
 };

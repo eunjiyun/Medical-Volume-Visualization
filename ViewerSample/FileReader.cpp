@@ -523,8 +523,8 @@ bool FileReader::NormalizeSlice(const std::vector<uint16_t>& rawSlice,
 	const float minHU = windowCenter - windowWidth / 2.0f;//-1000
 	const float maxHU = windowCenter + windowWidth / 2.0f;//3000
 
-	cout << "NormalizeSlice minHU :" << minHU << endl;
-	cout<< "NormalizeSlice maxHU :" << maxHU << endl;
+	/*cout << "NormalizeSlice minHU :" << minHU << endl;
+	cout<< "NormalizeSlice maxHU :" << maxHU << endl;*/
 
 	outSlice.resize(rawSlice.size());
 

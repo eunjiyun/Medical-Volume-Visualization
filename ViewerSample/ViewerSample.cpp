@@ -151,6 +151,11 @@ void ViewerSample::brightnessCenterChanged(double brightness)
 
 
 	if (!m_pScene || !m_pScene->fileReader) return;
+	if (-1 == m_initialWindowCenter) {
+		m_initialWindowCenter = m_pScene->fileReader->windowCenter;
+		brightness = 0;
+		//return;
+	}
 
 	qDebug() << "brightness:" << brightness;
 	qDebug() << "m_initialWindowWidth:" << m_initialWindowWidth;
@@ -273,6 +278,12 @@ void ViewerSample::contrastWidthChanged(double contrast)
 
 
 	if (!m_pScene || !m_pScene->fileReader) return;
+	if (-1 == m_initialWindowWidth) {
+		m_initialWindowWidth = m_pScene->fileReader->windowWidth;
+		contrast = 1000;
+		//return;
+	}
+
 
 
 
@@ -402,25 +413,25 @@ void ViewerSample::sharpnessChanged(int value)
 
 void ViewerSample::loadDicomData()
 {
-	// ... DICOM 로드 후
+	//// ... DICOM 로드 후
 
-	//if (m_pScene->fileReader) {
-	//	// 초기값 저장
-	//	m_initialWindowCenter = m_pScene->fileReader->windowCenter;
-	//	m_initialWindowWidth = m_pScene->fileReader->windowWidth;
-	//}
-
-
-	m_initialWindowCenter =1000;
-	m_initialWindowWidth =4000;
+	////if (m_pScene->fileReader) {
+	////	// 초기값 저장
+	////	m_initialWindowCenter = m_pScene->fileReader->windowCenter;
+	////	m_initialWindowWidth = m_pScene->fileReader->windowWidth;
+	////}
 
 
-	qDebug() << "m_initialWindowCenter :" << m_initialWindowCenter;
-	qDebug() << "m_initialWindowWidth :" << m_initialWindowWidth;
+	//m_initialWindowCenter =1000;
+	//m_initialWindowWidth =4000;
 
-	// 슬라이더 초기화
-	ui->brightnessSlider->setValue(0);  // 초기 brightness = 0
-	ui->contrastSlider->setValue(100);    // 초기 contrast = 1
+
+	//qDebug() << "m_initialWindowCenter :" << m_initialWindowCenter;
+	//qDebug() << "m_initialWindowWidth :" << m_initialWindowWidth;
+
+	//// 슬라이더 초기화
+	//ui->brightnessSlider->setValue(0);  // 초기 brightness = 0
+	//ui->contrastSlider->setValue(1000);    // 초기 contrast = 1
 }
 
 void ViewerSample::init(bool success)
@@ -480,24 +491,24 @@ void ViewerSample::init(bool success)
 	ui->label_examDate->setTextFormat(Qt::RichText);
 	ui->label_examDate->setText(richTextstudyDate);
 
-	loadDicomData();
+	//loadDicomData();
 
-	ui->huSlider->setMinimum(-3660);
-	ui->huSlider->setMaximum(14100);
-	ui->huSlider->setValue(3157);
+	//ui->huSlider->setMinimum(-3660);
+	//ui->huSlider->setMaximum(14100);
+	//ui->huSlider->setValue(3157);
 
 
 	//brightness
 	ui->brightnessSlider->setMinimum(-500);
 	ui->brightnessSlider->setMaximum(500);
-	//ui->brightnessSlider->setValue(0);
+	ui->brightnessSlider->setValue(0);
 	//ui->brightnessSlider->setSingleStep(0.01);
 
 
 	//contrast
 	ui->contrastSlider->setMinimum(1);
 	ui->contrastSlider->setMaximum(2000);
-	//ui->contrastSlider->setValue(1.0f);
+	ui->contrastSlider->setValue(1000);
 	//ui->contrastSlider->setSingleStep(0.02);
 
 
