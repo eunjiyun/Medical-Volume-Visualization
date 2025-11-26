@@ -41,7 +41,38 @@ void ViewerSample::connectSlots()
 	// ✅ 시그널 연결
 
 	connect(ui->huSlider, &QSlider::valueChanged, this, &ViewerSample::huValueChanged);
+	connect(ui->contrastSlider, &QSlider::valueChanged, this, &ViewerSample::contrastWidthChanged);
 
+	//connect(ui->contrastSpinBox, &QDoubleSpinBox::valueChanged,
+	//	this, [this](double value) {
+	//		contrastWidthChanged(value);
+	//	});
+
+	//connect(ui->contrastSpinBox,
+	//	static_cast<void(QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged),
+	//	this, [this](double value) {
+	//		contrastWidthChanged(value);
+	//	});
+
+
+	//connect(ui->brightnessSlider, &QSlider::valueChanged, this, &ViewerSample::brightnessCenterChanged);
+
+	//connect(ui->brightnessSlider,
+	//	static_cast<void(QSlider::*)(double)>(&QDoubleSpinBox::valueChanged),
+	//	this, [this](double value) {
+	//		brightnessCenterChanged(value);
+	//	});
+
+	// 시그널 연결
+	connect(ui->brightnessSlider, &QSlider::valueChanged,
+		this, [this](int value) {
+			//double brightness = value/1000.0 ;  // -500~500 → -0.5~0.5
+
+			qDebug() << "Slider moved:" << value;
+			double brightness = value / 1000.0;
+			brightnessCenterChanged(brightness);
+		});
+	connect(ui->sharpnessSlider, &QSlider::valueChanged, this, &ViewerSample::sharpnessChanged);
 }
 
 
@@ -64,7 +95,7 @@ void ViewerSample::huValueChanged(int value)
 	// ⭐ 구현 추가!
 	float huCenter = -1024.0f + (value * 4.024f);//2927
 
-	ui->labelValue1->setText(QString::number((int)huCenter));
+	ui->huValueLabel->setText(QString::number((int)huCenter));
 
 	// ⭐ 3. Null 체크
 	if (!m_pScene || !m_pScene->fileReader || !m_pScene->GetTransferFunction()) {
@@ -114,6 +145,98 @@ void ViewerSample::huValueChanged(int value)
 	//);
 
 	update();
+}
+void ViewerSample::brightnessCenterChanged(double brightness)
+{// Window Center
+
+
+
+
+	//	// ⭐ 구현 추가!
+	//float huCenter = -1024.0f + (value * 4.024f);//2927
+
+
+
+	//// ⭐ 3. Null 체크
+	//if (!m_pScene || !m_pScene->fileReader || !m_pScene->GetTransferFunction()) {
+	//	return;
+	//}
+
+	//// ⭐ 3. FileReader에 저장 (다음 렌더링 때 반영됨)
+	//if (m_pScene && m_pScene->fileReader) {
+	//	m_pScene->fileReader->windowCenter = huCenter;
+	//	// windowWidth는 고정 또는 다른 슬라이더로 조절
+	//	// m_pScene->fileReader->windowWidth = 2000.0f;
+	//}
+
+	if (!m_pScene || !m_pScene->fileReader) return;
+
+	qDebug() << "brightness:" << brightness;
+	qDebug() << "m_initialWindowWidth:" << m_initialWindowWidth;
+	qDebug() << "m_initialWindowCenter:" << m_initialWindowCenter;
+
+
+	float offset = brightness * m_initialWindowWidth * 0.5f; // WW의 절반 범위로 조절
+	float newWindowCenter = m_initialWindowCenter + offset;
+
+	// 실제 적용
+	m_pScene->fileReader->windowCenter = newWindowCenter;
+	ui->brightnessValueLabel->setText(QString::number(newWindowCenter));
+
+	update();
+}
+void ViewerSample::contrastWidthChanged(double contrast)
+{// Window Width
+
+
+	if (!m_pScene || !m_pScene->fileReader) return;
+
+
+
+	// contrast: 0.0 ~ 2.0, 초기값 1.0
+	// 초기 WW에 비율 곱하기
+	float newWindowWidth = m_initialWindowWidth * (contrast/1000.0);
+
+	m_pScene->fileReader->windowWidth = newWindowWidth/4;
+
+	ui->contrastValueLabel->setText(QString::number((double)newWindowWidth/4000.0));
+
+
+
+	qDebug() << "=== Contrast Changed ===";
+	qDebug() << "contrast (slider value):" << contrast;  // 0.0 ~ 2.0
+	qDebug() << "m_initialWindowWidth:" << m_initialWindowWidth;
+	qDebug() << "newWindowWidth:" << newWindowWidth;
+
+
+	update();
+}
+void ViewerSample::sharpnessChanged(int value)
+{
+	update();
+}
+
+void ViewerSample::loadDicomData()
+{
+	// ... DICOM 로드 후
+
+	if (m_pScene->fileReader) {
+		// 초기값 저장
+		m_initialWindowCenter = m_pScene->fileReader->windowCenter;
+		m_initialWindowWidth = m_pScene->fileReader->windowWidth;
+	}
+
+
+	//m_initialWindowCenter =1000;
+	//m_initialWindowWidth =4000;
+
+
+	qDebug() << "m_initialWindowCenter :" << m_initialWindowCenter;
+	qDebug() << "m_initialWindowWidth :" << m_initialWindowWidth;
+
+	// 슬라이더 초기화
+	ui->brightnessSlider->setValue(0);  // 초기 brightness = 0
+	ui->contrastSlider->setValue(100);    // 초기 contrast = 1
 }
 
 void ViewerSample::init(bool success)
@@ -173,11 +296,25 @@ void ViewerSample::init(bool success)
 	ui->label_examDate->setTextFormat(Qt::RichText);
 	ui->label_examDate->setText(richTextstudyDate);
 
+	loadDicomData();
+
+	ui->huSlider->setMinimum(-3660);
+	ui->huSlider->setMaximum(14100);
+	ui->huSlider->setValue(3157);
 
 
-	ui->huSlider->setMinimum(114);
-	ui->huSlider->setMaximum(3200);
-	ui->huSlider->setValue(1751);
+	//brightness
+	ui->brightnessSlider->setMinimum(-500);
+	ui->brightnessSlider->setMaximum(500);
+	//ui->brightnessSlider->setValue(0);
+	//ui->brightnessSlider->setSingleStep(0.01);
+
+
+	//contrast
+	ui->contrastSlider->setMinimum(0);
+	ui->contrastSlider->setMaximum(2000);
+	//ui->contrastSlider->setValue(1.0f);
+	//ui->contrastSlider->setSingleStep(0.02);
 
 
 	disconnect(m_pScene, &QDirect3D11Widget::deviceInitialized, this, &ViewerSample::init);

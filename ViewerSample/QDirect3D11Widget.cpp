@@ -1309,18 +1309,18 @@ void QDirect3D11Widget::FullScreenPassSet()
 		cb.HuParams.w = fileReader->windowCenter +fileReader->windowWidth / 2.0;
 
 
-		// cb 설정 후, Map 전에
-		qDebug() << "HuParams: Slope=" << cb.HuParams.x
-			<< "Intercept=" << cb.HuParams.y
-			<< "Min=" << cb.HuParams.z
-			<< "Max=" << cb.HuParams.w;
+		//// cb 설정 후, Map 전에
+		//qDebug() << "HuParams: Slope=" << cb.HuParams.x
+		//	<< "Intercept=" << cb.HuParams.y
+		//	<< "Min=" << cb.HuParams.z
+		//	<< "Max=" << cb.HuParams.w;
 
-		qDebug() << "Voxel:" << (int)cb.Voxel.x
-			<< "x" << (int)cb.Voxel.y
-			<< "x" << (int)cb.Voxel.z;
+		//qDebug() << "Voxel:" << (int)cb.Voxel.x
+		//	<< "x" << (int)cb.Voxel.y
+		//	<< "x" << (int)cb.Voxel.z;
 
-		qDebug() << "Window: Center=" << fileReader->windowCenter
-			<< "Width=" << fileReader->windowWidth;
+		//qDebug() << "Window: Center=" << fileReader->windowCenter
+		//	<< "Width=" << fileReader->windowWidth;
 
 
 	D3D11_MAPPED_SUBRESOURCE mapped{};

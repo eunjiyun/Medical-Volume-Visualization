@@ -23,11 +23,16 @@ public slots:
 	void huValueChanged(int value);
 
 
-	void huCenterChanged(int value);  // Window Center
-	void huWidthChanged(int value);   // Window Width
-	
+	void brightnessCenterChanged(double value);  // Window Center
+	void contrastWidthChanged(double value);   // Window Width
+	void sharpnessChanged(int value);   // Window Width
+	void loadDicomData();
+
 private:
     Ui::ViewerSampleClass* ui;
     QDirect3D11Widget * m_pScene;
     QSize               m_WindowSize;
+
+	float m_initialWindowCenter; // 데이터 로드 시 초기값 저장
+	float m_initialWindowWidth;  // 데이터 로드 시 초기값 저장
 };
