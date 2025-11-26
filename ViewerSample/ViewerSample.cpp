@@ -183,6 +183,101 @@ void ViewerSample::brightnessCenterChanged(double brightness)
 	m_pScene->fileReader->windowCenter = newWindowCenter;
 	ui->brightnessValueLabel->setText(QString::number(newWindowCenter));
 
+	////m_pScene->UpdateVolumeMatrix();
+	////m_pScene->UpdateSlicePlanePositions();  // ✅ 추가
+	////m_pScene->FullScreenPassSet();
+
+	//m_pScene->update();
+	////update();
+
+
+
+
+
+
+
+
+
+	for (int i{ 1 }; i <= 3; ++i) {
+		//	m_pScene->fileReader->views.centerPatientCoord[i] = m_pScene->patientCoord;
+		//	m_pScene->fileReader->currentIndex[i] = m_pScene->ComputeSliceIndexForView(patientCoord, i);
+
+
+		ID3D11RenderTargetView* rtvA, *rtvC, *rtvS;
+		ID3D11ShaderResourceView* srvA, *srvC, *srvS;
+		ID3D11Texture2D* texA, *texC, *texS;
+
+
+		//if (clickedViewIndex != i) {
+
+		switch (i) {
+		case 1:
+			m_pScene->fileReader->UpdateAxialTexture(m_pScene->fileReader->currentIndex[1]);
+			texA = m_pScene->fileReader->axialTextureCache[m_pScene->fileReader->currentIndex[1]];
+			srvA = m_pScene->getSRVForTexture(texA);
+			m_pScene->m_SRViews.slices[1] = srvA;
+
+			rtvA = m_pScene->getRTVForTexture(texA);
+			m_pScene->m_RTViews.slices[1] = rtvA;
+
+
+			m_pScene->sliceInfoAxial->hide();
+			m_pScene->sliceInfoAxial->setText(QString("Image %1/%2").arg(m_pScene->fileReader->m_depth - m_pScene->fileReader->currentIndex[1] + 1).arg(m_pScene->fileReader->m_depth));
+			//sliceInfoAxial->adjustSize();
+		  //  sliceInfoAxial->repaint();  // 강제로 다시 그리기
+			m_pScene->sliceInfoAxial->show();
+
+
+			//onAxialScroll(fileReader->currentIndex[1]);
+			break;
+		case 2:
+			m_pScene->fileReader->UpdateCoronalTexture(m_pScene->fileReader->currentIndex[2]);
+			texC = m_pScene->fileReader->coronalTextureCache[m_pScene->fileReader->currentIndex[2]];
+			srvC = m_pScene->getSRVForTexture(texC);
+			m_pScene->m_SRViews.slices[2] = srvC;
+
+			rtvC = m_pScene->getRTVForTexture(texC);
+			m_pScene->m_RTViews.slices[2] = rtvC;
+
+
+			m_pScene->sliceInfoCoronal->hide();
+			m_pScene->sliceInfoCoronal->setText(QString("Image %1/%2").arg(m_pScene->fileReader->currentIndex[2] + 1).arg(m_pScene->fileReader->m_height));
+			//sliceInfoCoronal->adjustSize();
+		  //  sliceInfoCoronal->repaint();  // 강제로 다시 그리기
+			m_pScene->sliceInfoCoronal->show();
+
+
+
+			//onCoronalScroll(fileReader->currentIndex[2]);
+			break;
+		case 3:
+			m_pScene->fileReader->UpdateSagittalTexture(m_pScene->fileReader->currentIndex[3]);
+			texS = m_pScene->fileReader->sagittalTextureCache[m_pScene->fileReader->currentIndex[3]];
+			srvS = m_pScene->getSRVForTexture(texS);
+			m_pScene->m_SRViews.slices[3] = srvS;
+
+			rtvS = m_pScene->getRTVForTexture(texS);
+			m_pScene->m_RTViews.slices[3] = rtvS;
+
+			m_pScene->sliceInfoSagittal->hide();
+			m_pScene->sliceInfoSagittal->setText(QString("Image %1/%2").arg(m_pScene->fileReader->currentIndex[3] + 1).arg(m_pScene->fileReader->m_width));
+			//sliceInfoSagittal->adjustSize();
+			//sliceInfoSagittal->repaint();  // 강제로 다시 그리기
+			m_pScene->sliceInfoSagittal->show();
+
+			//onSagittalScroll(fileReader->currentIndex[3]);
+			break;
+		}
+		//}
+
+	}
+
+	m_pScene->UpdateSlicePlanePositions();
+
+	//RenderVolumeView(); // 강제 호출로 확인
+
+
+	// 렌더링 업데이트
 	update();
 }
 void ViewerSample::contrastWidthChanged(double contrast)
@@ -209,6 +304,103 @@ void ViewerSample::contrastWidthChanged(double contrast)
 	qDebug() << "newWindowWidth:" << newWindowWidth;
 
 
+	////m_pScene->UpdateVolumeMatrix();
+	////m_pScene->UpdateSlicePlanePositions();  // ✅ 추가
+	////m_pScene->FullScreenPassSet();
+
+	//m_pScene->update();
+	//ui->centralWidget->updateGeometry();
+
+	////update();
+
+
+
+
+
+
+
+
+
+	for (int i{ 1 }; i <= 3; ++i) {
+	//	m_pScene->fileReader->views.centerPatientCoord[i] = m_pScene->patientCoord;
+	//	m_pScene->fileReader->currentIndex[i] = m_pScene->ComputeSliceIndexForView(patientCoord, i);
+
+
+		ID3D11RenderTargetView* rtvA, *rtvC, *rtvS;
+		ID3D11ShaderResourceView* srvA, *srvC, *srvS;
+		ID3D11Texture2D* texA, *texC, *texS;
+
+
+		//if (clickedViewIndex != i) {
+
+			switch (i) {
+			case 1:
+				m_pScene->fileReader->UpdateAxialTexture(m_pScene->fileReader->currentIndex[1]);
+				texA = m_pScene->fileReader->axialTextureCache[m_pScene->fileReader->currentIndex[1]];
+				srvA = m_pScene->getSRVForTexture(texA);
+				m_pScene->m_SRViews.slices[1] = srvA;
+
+				rtvA = m_pScene->getRTVForTexture(texA);
+				m_pScene->m_RTViews.slices[1] = rtvA;
+
+
+				m_pScene->sliceInfoAxial->hide();
+				m_pScene->sliceInfoAxial->setText(QString("Image %1/%2").arg(m_pScene->fileReader->m_depth - m_pScene->fileReader->currentIndex[1] + 1).arg(m_pScene->fileReader->m_depth));
+				//sliceInfoAxial->adjustSize();
+			  //  sliceInfoAxial->repaint();  // 강제로 다시 그리기
+				m_pScene->sliceInfoAxial->show();
+
+
+				//onAxialScroll(fileReader->currentIndex[1]);
+				break;
+			case 2:
+				m_pScene->fileReader->UpdateCoronalTexture(m_pScene->fileReader->currentIndex[2]);
+				texC = m_pScene->fileReader->coronalTextureCache[m_pScene->fileReader->currentIndex[2]];
+				srvC = m_pScene->getSRVForTexture(texC);
+				m_pScene->m_SRViews.slices[2] = srvC;
+
+				rtvC = m_pScene->getRTVForTexture(texC);
+				m_pScene->m_RTViews.slices[2] = rtvC;
+
+
+				m_pScene->sliceInfoCoronal->hide();
+				m_pScene->sliceInfoCoronal->setText(QString("Image %1/%2").arg(m_pScene->fileReader->currentIndex[2] + 1).arg(m_pScene->fileReader->m_height));
+				//sliceInfoCoronal->adjustSize();
+			  //  sliceInfoCoronal->repaint();  // 강제로 다시 그리기
+				m_pScene->sliceInfoCoronal->show();
+
+
+
+				//onCoronalScroll(fileReader->currentIndex[2]);
+				break;
+			case 3:
+				m_pScene->fileReader->UpdateSagittalTexture(m_pScene->fileReader->currentIndex[3]);
+				texS = m_pScene->fileReader->sagittalTextureCache[m_pScene->fileReader->currentIndex[3]];
+				srvS = m_pScene->getSRVForTexture(texS);
+				m_pScene->m_SRViews.slices[3] = srvS;
+
+				rtvS = m_pScene->getRTVForTexture(texS);
+				m_pScene->m_RTViews.slices[3] = rtvS;
+
+				m_pScene->sliceInfoSagittal->hide();
+				m_pScene->sliceInfoSagittal->setText(QString("Image %1/%2").arg(m_pScene->fileReader->currentIndex[3] + 1).arg(m_pScene->fileReader->m_width));
+				//sliceInfoSagittal->adjustSize();
+				//sliceInfoSagittal->repaint();  // 강제로 다시 그리기
+				m_pScene->sliceInfoSagittal->show();
+
+				//onSagittalScroll(fileReader->currentIndex[3]);
+				break;
+			}
+		//}
+
+	}
+
+	m_pScene->UpdateSlicePlanePositions();
+
+	//RenderVolumeView(); // 강제 호출로 확인
+
+
+	// 렌더링 업데이트
 	update();
 }
 void ViewerSample::sharpnessChanged(int value)

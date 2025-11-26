@@ -69,6 +69,11 @@ public:
 
     //ViewInfo views[4]; // viewIndex로 접근
     ViewInfo views; // viewIndex로 접근
+
+
+	//Sint16 m_minPixelValue{ 32767 };// 또는 Uint16
+	//Sint16 m_maxPixelValue{ -32768 };  // 또는 Uint16
+	//float minHU, maxHU;
 public:
     //bool LoadDICOMSeries(const std::string& folderPath);
     bool LoadDICOMSeries(std::string folderPath, ID3D11Device* g_pd3dDevice);

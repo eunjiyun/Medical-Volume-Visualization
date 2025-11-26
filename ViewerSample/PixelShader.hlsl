@@ -1,9 +1,13 @@
 
 cbuffer Crosshair : register(b0)
 {
-    float2 crossUV;         // ���ڼ� ��ġ (0~1)
-    float crossThickness;   // �� �β�
-    float4 crossColor;      // ���ڼ� ����
+    float2 crossUV;        
+    float crossThickness;   
+	//float windowCenter;
+	//float windowWidth;
+	//float padding1;  // 16바이트 정렬
+	//float padding2;
+	float4 crossColor;  
 }
 
 SamplerState samp0 : register(s0);

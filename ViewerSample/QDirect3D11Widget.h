@@ -47,31 +47,14 @@ struct CB
 
 	DirectX::XMFLOAT4 HuParams;  // x=Slope, y=Intercept, z=Min, w=Max
 };
-
-
 //
-//cbuffer CB : register(b0)
-//{
-//	matrix View;
-//	matrix Proj;
-//	matrix InvView;
-//	matrix InvProj;
-//	matrix VolumeWorld;
-//	matrix InvVolumeWorld;
-//	float3 CameraPosWS;
-//	float Step;
-//	int   MaxSteps;
-//	float3 Voxel;
-//	//float Pad0;
-//
-//	//// 🔽 추가
-//	//float  HuSlope;        // RescaleSlope
-//	//float  HuIntercept;    // RescaleIntercept
-//	//float  HuMin;          // 윈도우/TF용 HU 최소값 (예: -1000)
-//	//float  HuMax;          // 윈도우/TF용 HU 최대값 (예: 3000)
-//
-//	float4 HuParams;  // x=Slope, y=Intercept, z=Min, w=Max
+//struct WindowLevelCB {
+//	float windowCenter;
+//	float windowWidth;
+//	float padding[2];  // 16바이트 정렬
 //};
+
+
 
 class FileReader;
 
@@ -144,7 +127,8 @@ public:
 	QScrollBar* scrollAxial;
 	QScrollBar* scrollCoronal;
 	QScrollBar* scrollSagittal;
-
+	// 멤버 변수로
+	ID3D11Buffer* m_pWindowLevelCB;
 
 	//ArcBall m_arcball;
 
@@ -297,8 +281,7 @@ private:
 	void InitSampler();
 	void InitializeGraphics();
 
-	ID3D11RenderTargetView* getRTVForTexture(ID3D11Texture2D* texture);
-	ID3D11ShaderResourceView* getSRVForTexture(ID3D11Texture2D* texture);
+
 
 	int ComputeSliceIndexFromPatientCoord(int viewIndex, XMFLOAT3 patientCoord);
 	int ComputeSliceIndexFromPatientCoord_Robust(
@@ -317,7 +300,8 @@ private:
 	XMFLOAT2 GetCrossUVFromPatientCoord(int viewIndex, XMFLOAT3 patientCoord);
 
 public:
-
+	ID3D11RenderTargetView* getRTVForTexture(ID3D11Texture2D* texture);
+	ID3D11ShaderResourceView* getSRVForTexture(ID3D11Texture2D* texture);
 	// ⭐ Getter 함수 추가
 	TransferFunction* GetTransferFunction() {
 		return m_transferFunction;
@@ -399,12 +383,13 @@ public:
 	std::unordered_map<ID3D11Texture2D*, ID3D11ShaderResourceView*> srvCache;
 
 	ID3D11DeviceContext *    m_pDeviceContext;
+	SliceSeriesRtv m_RTViews;// m_RTViewsVolume, m_RTViewsAxial, m_RTViewsCoronal, m_RTViewsSagittal;
 private:
 
 
 	IDXGISwapChain *         m_pSwapChain;
 	//ID3D11RenderTargetView * m_pRTView;
-	SliceSeriesRtv m_RTViews;// m_RTViewsVolume, m_RTViewsAxial, m_RTViewsCoronal, m_RTViewsSagittal;
+
 	ID3D11RenderTargetView* m_pSwapChainRTV = nullptr;
 	std::vector<ID3D11ShaderResourceView*> coronalTextureCacheSrv;
 	QTimer m_qTimer;

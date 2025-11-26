@@ -648,6 +648,11 @@ bool QDirect3D11Widget::init()
 
 	LoadDICOMSeries();  // 최초 표시 시 DICOM 로드
 
+
+	//qDebug() << "fileReader->minHU : " << fileReader->minHU << endl;
+	//qDebug() << "fileReader->maxHU : " << fileReader->maxHU << endl;
+
+
 	//// 🔧 임시 카메라 (볼륨 중앙을 보는 단순 뷰)
 
 
@@ -1307,54 +1312,7 @@ void QDirect3D11Widget::FullScreenPassSet()
 }
 
 
-//==============================================================
-// 마우스 입력 처리
-//void QDirect3D11Widget::OnMouseDown(int x, int y)
-//{
-//	m_isDragging = true;
-//	
-//	m_lastMousePos = currentPos;
-//}
 
-//void QDirect3D11Widget::OnMouseUp()
-//{
-//	m_isDragging = false;
-//}
-
-//void QDirect3D11Widget::OnMouseMove(int x, int y)
-//{
-//	//QPoint currentPos = event->pos();
-//	if (m_isDragging)
-//	{
-//		// 델타 계산 (y()는 함수입니다!)
-//		int deltaX = x - m_lastMousePos.x;
-//		int deltaY = y - m_lastMousePos.y;
-//
-//		// 회전 적용
-//		float sensitivity = 0.5f;
-//		m_rotationY += deltaX * sensitivity * XM_PI / 180.0f;
-//		m_rotationX += deltaY * sensitivity * XM_PI / 180.0f;
-//
-//		// X축 제한 (-90 ~ +90도)
-//		m_rotationX = std::clamp(m_rotationX, -XM_PIDIV2, XM_PIDIV2);
-//
-//		// 위치 갱신
-//		m_lastMousePos.x = x;
-//		m_lastMousePos.y = y;
-//
-//		// 시그널 발생
-//		emit onRotationChanged(m_rotationX, m_rotationY);
-//
-//		// 로그
-//		qDebug() << QString("Rotation: X=%1° Y=%2°")
-//			.arg(m_rotationX * 180.0f / XM_PI, 0, 'f', 1)
-//			.arg(m_rotationY * 180.0f / XM_PI, 0, 'f', 1);
-//
-//		// 다시 그리기
-//		update();
-//	}
-//	event->accept();
-//}
 
 void QDirect3D11Widget::UpdateVolumeMatrix()
 {
@@ -2800,14 +2758,6 @@ void QDirect3D11Widget::plasterVolumeShow()
 
 
 
-
-
-
-
-
-
-
-
 	//251017
 	// Axial 뷰 (Z축 슬라이스)
 	ViewGeometry QDirect3D11Widget::GetAxialGeometry() {
@@ -2934,22 +2884,8 @@ void QDirect3D11Widget::plasterVolumeShow()
 
 
 
-	
-
-
-
 	void QDirect3D11Widget::mousePressEvent(QMouseEvent* event)
 	{
-		// 왼쪽 버튼인지 확인
-		/*if (event->button() == Qt::LeftButton)
-		{
-			m_isDragging = true;
-			m_lastMousePos = event->pos();
-			setCursor(Qt::ClosedHandCursor);
-
-			qDebug() << "Mouse Pressed at:" << event->pos();
-		}*/
-
 		if (event->button() == Qt::LeftButton /*&& clickedViewIndex == 0*/)
 		{
 			m_isDragging = true;
@@ -2974,9 +2910,6 @@ void QDirect3D11Widget::plasterVolumeShow()
 
 		// ✅ 반드시 호출!
 		event->accept();
-
-
-
 
 
 		px[0] = event->pos().x(); // 클릭된 x 좌표
@@ -3034,13 +2967,6 @@ void QDirect3D11Widget::plasterVolumeShow()
 
 		for (int i{ 1 }; i <= 3; ++i) {
 			fileReader->views.centerPatientCoord[i] = patientCoord;
-
-
-			//ComputeSliceIndexFromPatientCoord_Robust
-		   // fileReader->currentIndex[i] = ComputeSliceIndexFromPatientCoord(i, patientCoord);
-		   /* fileReader->currentIndex[i] = ComputeSliceIndexFromPatientCoord_Robust(patientCoord, i,
-				fileReader->views.origin, XMFLOAT3(1, 0, 0), XMFLOAT3(0, 1, 0),
-				fileReader->views.spacing.x, fileReader->views.spacing.y, 0.15f, XMUINT3(632, 794, 794));*/
 			fileReader->currentIndex[i] = ComputeSliceIndexForView(patientCoord, i);
 
 
@@ -3048,7 +2974,7 @@ void QDirect3D11Widget::plasterVolumeShow()
 			ID3D11ShaderResourceView* srvA, *srvC, *srvS;
 			ID3D11Texture2D* texA, *texC, *texS;
 
-			// int viewIndex = GetClickedViewIndex(px, py, this->width(), this->height()); // 현재 뷰 인덱스 (0: Axial, 1: Coronal, 2: Sagittal, 3: 기타)
+
 			if (clickedViewIndex != i) {
 
 				switch (i) {
@@ -3163,48 +3089,6 @@ void QDirect3D11Widget::plasterVolumeShow()
 	}
 
 
-	//void QDirect3D11Widget::InitializeCrosshair()
-	//{
-	//    //// 기본 중심점: 환자 좌표계의 중앙 또는 첫 슬라이스 기준
-	//    //DirectX::XMFLOAT3 patientCoord = GetDefaultPatientCenter(); // 예: 영상 중앙 좌표
-	//
-	//    //// 십자선 데이터 구조 초기화
-	//    //CrosshairData crosshair = {};
-	//
-	//    //for (int i = 0; i < 4; ++i)
-	//    //{
-	//    //    DirectX::XMFLOAT2 uv = GetCrossUVFromPatientCoord(i, patientCoord);
-	//
-	//    //    switch (i)
-	//    //    {
-	//    //    case 0: crosshair.cross0 = uv; break;
-	//    //    case 1: crosshair.cross1 = uv; break;
-	//    //    case 2: crosshair.cross2 = uv; break;
-	//    //    case 3: crosshair.cross3 = uv; break;
-	//    //    }
-	//    //}
-	//
-	//    //crosshair.crossThickness = 0.002f;
-	//    //crosshair.crossColor = { 1.0f, 0.0f, 0.0f, 1.0f }; // 빨강
-	//
-	//    //// GPU에 전달
-	//    //m_pDeviceContext->UpdateSubresource(fileReader->m_crosshairBuffer, 0, nullptr, &crosshair, 0, 0);
-	//
-	//
-	//    int viewIndex = GetClickedViewIndex(px, py, this->width(), this->height()); // 현재 뷰 인덱스 (0: Axial, 1: Coronal, 2: Sagittal, 3: 기타)
-	//    UpdateViewIndexBuffer(viewIndex); // 반드시 렌더링 전에 호출
-	//    m_pDeviceContext->PSSetConstantBuffers(1, 1, &m_viewIndexBuffer); // b1 슬롯
-	//
-	//    DirectX::XMFLOAT3 patientCoord = GetDefaultPatientCenter(); // 환자 좌표계 기준 중심점
-	//
-	//    CrosshairData crosshair = {};
-	//    crosshair.crossUV = GetCrossUVFromPatientCoord(viewIndex, patientCoord); // 현재 뷰에 맞는 UV 좌표
-	//    crosshair.crossThickness = 0.002f;
-	//    crosshair.crossColor = { 1.0f, 0.0f, 0.0f, 1.0f }; // 빨강
-	//
-	//    m_pDeviceContext->UpdateSubresource(fileReader->m_crosshairBuffer, 0, nullptr, &crosshair, 0, 0);
-	//
-	//}
 
 	void QDirect3D11Widget::UpdateCrosshairFromPatientCoord(DirectX::XMFLOAT3 patientCoord, int i)
 	{
@@ -4324,108 +4208,6 @@ void QDirect3D11Widget::UpdateSlicePlanePositions() {
 		m_pDeviceContext->DrawIndexed(6, 0, 0);
 	}
 
-
-
-
-
-
-	
-	//void QDirect3D11Widget::mouseMoveEvent(QMouseEvent* event)
-	//{
-	//	if (m_isDragging && 0==clickedViewIndex)
-	//	{
-	//		QPoint currentPos = event->pos();
-	//		int deltaX = currentPos.x() - m_lastMousePos.x();
-	//		int deltaY = currentPos.y() - m_lastMousePos.y();
-
-	//		if (deltaX == 0 && deltaY == 0) { event->accept(); return; }
-
-	//		float sensitivity = 0.005f;
-
-	//		// --- 회전 각도 ---
-	//		float yaw = deltaX * sensitivity;    // 좌우
-	//		float pitch = -deltaY * sensitivity;  // 상하
-
-	//		// --- 축 ---
-	//		XMVECTOR worldY = XMVectorSet(0, 1, 0, 0); // ✅ 절대축 / 고정
-	//		XMMATRIX currentMat = XMMatrixRotationQuaternion(m_rotation);
-
-	//		// ✅ pitch는 로컬 X축
-	//		XMVECTOR localX = XMVector3Normalize(
-	//			XMVector3TransformNormal(XMVectorSet(1, 0, 0, 0), currentMat)
-	//		);
-
-	//		// ✅ 쿼터니언 생성
-	//		XMVECTOR qYaw = XMQuaternionRotationAxis(worldY, yaw);
-	//		XMVECTOR qPitch = XMQuaternionRotationAxis(localX, pitch);
-
-	//		// ✅ 중요: 순서 yaw → pitch → current
-	//		m_rotation = XMQuaternionMultiply(qPitch,
-	//			XMQuaternionMultiply(qYaw, m_rotation));
-
-	//		m_rotation = XMQuaternionNormalize(m_rotation);
-
-	//		m_lastMousePos = currentPos;
-
-	//		UpdateVolumeMatrix();
-	//		FullScreenPassSet();
-	//		update();
-
-	//	}
-	//	event->accept();
-	//}
-
-
-	//void QDirect3D11Widget::mouseMoveEvent(QMouseEvent* event)
-	//{
-	//	if (m_isDragging && 0 == clickedViewIndex)
-	//	{
-	//		QPoint currentPos = event->pos();
-	//		int deltaX = currentPos.x() - m_lastMousePos.x();
-	//		int deltaY = currentPos.y() - m_lastMousePos.y();
-	//		if (deltaX == 0 && deltaY == 0) { event->accept(); return; }
-
-	//		float sensitivity = 0.005f;
-	//		float yaw = deltaX * sensitivity;
-	//		float pitch = -deltaY * sensitivity;
-
-	//		// ✅ 둘 다 월드(뷰) 기준 고정 축 사용
-	//		XMVECTOR worldY = XMVectorSet(0, 1, 0, 0); // Yaw: 월드 Y
-	//		XMVECTOR worldX = XMVectorSet(1, 0, 0, 0); // Pitch: 월드 X
-
-	//		XMVECTOR qYaw = XMQuaternionRotationAxis(worldY, yaw);
-	//		XMVECTOR qPitch = XMQuaternionRotationAxis(worldX, pitch);
-
-	//		// ✅ 순서: pitch와 yaw를 먼저 합친 후 기존 회전에 적용
-	//		XMVECTOR deltaRotation = XMQuaternionMultiply(qPitch, qYaw);
-	//		m_rotation = XMQuaternionMultiply(deltaRotation, m_rotation);
-	//		m_rotation = XMQuaternionNormalize(m_rotation);
-
-	//		m_lastMousePos = currentPos;
-	//		UpdateVolumeMatrix();
-	//		FullScreenPassSet();
-	//		update();
-	//	}
-	//	event->accept();
-	//}
-
-	//void QDirect3D11Widget::mouseMoveEvent(QMouseEvent* event)
-	//{
-	//	if (m_isDragging && clickedViewIndex == 0)
-	//	{
-	//		m_arcball.OnMove(event->pos().x(), event->pos().y());
-	//		m_rotation = m_arcball.GetRotationQuat();
-
-
-	//		m_lastMousePos = currentPos;
-	//		UpdateVolumeMatrix();
-	//		FullScreenPassSet();
-	//		update();
-	//	}
-	//	event->accept();
-	//}
-
-
 	// 마우스 좌표를 -1~1로 정규화 후 구 표면 점으로 변환
 	XMVECTOR ScreenToArcball(float x, float y, float width, float height)
 	{
@@ -4728,20 +4510,7 @@ void QDirect3D11Widget::UpdateSlicePlanePositions() {
 
 	void QDirect3D11Widget::wheelEvent(QWheelEvent* event)
 	{
-		//if (event->angleDelta().x() == 0)
-		//{
-		//	// TODO: Update your camera position based on the delta value.
-		//}
-		//else if (event->angleDelta().x() !=
-		//	0) // horizontal scrolling - mice with another side scroller.
-		//{
-		//	// m_pCamera->MouseWheelH += (float)(event->angleDelta().y() / WHEEL_DELTA);
-		//}
-		//else if (event->angleDelta().y() != 0)
-		//{
-		//	// m_pCamera->MouseWheel += (float)(event->angleDelta().y() / WHEEL_DELTA);
-		//}
-
+		
 		int delta = event->angleDelta().y();
 
 		// 줌

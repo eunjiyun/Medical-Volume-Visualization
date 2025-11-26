@@ -310,6 +310,8 @@ bool FileReader::LoadDICOMSeries(std::string folderPath, ID3D11Device* g_pd3dDev
 	}
 
 
+
+
 	return true;
 }
 
@@ -343,6 +345,8 @@ ID3D11Texture2D* FileReader::getOrCreateSagittalTexture(int x) {
 
 bool FileReader::ParseSlice(const std::string path, int sliceIndex) {
 	DcmFileFormat file;
+
+
 	OFCondition status = file.loadFile(path.c_str(), EXS_Unknown, EGL_noChange);
 
 	if (!status.good()) {
@@ -364,9 +368,10 @@ bool FileReader::ParseSlice(const std::string path, int sliceIndex) {
 	int sliceSize = m_width * m_height;
 	int offset = sliceIndex * sliceSize;
 
-
 	for (int i{}; i < sliceSize; ++i) {
 		m_volumeData[offset + i] = pixelData[i];
+
+
 	}
 
 
@@ -515,8 +520,11 @@ bool FileReader::NormalizeSlice(const std::vector<uint16_t>& rawSlice,
 {
 	if (rawSlice.empty() || windowWidth <= 1e-5f) return false;
 
-	const float minHU = windowCenter - windowWidth / 2.0f;
-	const float maxHU = windowCenter + windowWidth / 2.0f;
+	const float minHU = windowCenter - windowWidth / 2.0f;//-1000
+	const float maxHU = windowCenter + windowWidth / 2.0f;//3000
+
+	cout << "NormalizeSlice minHU :" << minHU << endl;
+	cout<< "NormalizeSlice maxHU :" << maxHU << endl;
 
 	outSlice.resize(rawSlice.size());
 
