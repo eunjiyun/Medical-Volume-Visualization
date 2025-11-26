@@ -919,66 +919,6 @@ void QDirect3D11Widget::tick()
 	emit ticked();
 }
 
-//void QDirect3D11Widget::CreateTexture3D()
-//{
-//	// 1. DICOM 슬라이스를 [depth][height][width] 순으로 메모리에 쌓았다고 가정
-////    * 16bit HU를 0~1로 스케일해 R16_UNORM으로 업로드하면 간단합니다.
-//
-//	ComPtr<ID3D11ShaderResourceView> volumeSRV;
-//
-//	D3D11_TEXTURE3D_DESC td{};
-//
-//	td.Width = fileReader->m_width;   // X
-//	td.Height = fileReader->m_height;  // Y
-//	td.Depth = fileReader->m_depth;   // Z (슬라이스 개수)
-//	td.MipLevels = 1;
-//
-//	//DXGI_FORMAT_R8G8B8A8_UNORM
-//	td.Format = DXGI_FORMAT_R16_UNORM;   // 간단/가성비 좋음
-//	//td.Format = DXGI_FORMAT_R8G8B8A8_UNORM;   // 간단/가성비 좋음
-//	td.Usage = D3D11_USAGE_DEFAULT;
-//	td.BindFlags = D3D11_BIND_SHADER_RESOURCE;
-//
-//	fileReader->normalizedU16Data.resize(fileReader->m_width * fileReader->m_height * fileReader->m_depth);
-//
-//	D3D11_SUBRESOURCE_DATA init{};
-//	init.pSysMem = fileReader->normalizedU16Data.data();     // uint16_t* 크기: width*height*depth
-//	init.SysMemPitch = fileReader->m_width * sizeof(uint16_t);
-//	init.SysMemSlicePitch = fileReader->m_width * fileReader->m_height * sizeof(uint16_t);
-//
-//
-//	// 📌 2. raw DICOM 슬라이스 데이터 → 정규화
-//	bool ok = fileReader->NormalizeVolumeU16(
-//		fileReader->m_volumeData,                 // 원본 voxel 배열
-//		fileReader->normalizedU16Data,             // 결과 저장할 벡터
-//		fileReader->m_rescaleSlope,
-//		fileReader->m_rescaleIntercept,
-//		-1000.0f, 3000.0f              // HU 범위 : -1000(공기) ~ + 3000(뼈)
-//	);
-//
-//
-//	ComPtr<ID3D11Texture3D> volumeTex;
-//	HRESULT hr = m_pDevice->CreateTexture3D(&td, &init, &volumeTex);
-//
-//	D3D11_SHADER_RESOURCE_VIEW_DESC sd{};
-//	sd.Format = td.Format;
-//	sd.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE3D;
-//	sd.Texture3D.MipLevels = 1;
-//	hr=m_pDevice->CreateShaderResourceView(volumeTex.Get(), &sd, &volumeSRV);
-//
-//	// 샘플러(보간은 Linear, 경계 Clamp)
-//	ComPtr<ID3D11SamplerState> samp;
-//	D3D11_SAMPLER_DESC smp{};
-//	smp.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
-//	smp.AddressU = smp.AddressV = smp.AddressW = D3D11_TEXTURE_ADDRESS_CLAMP;
-//
-//	smp.ComparisonFunc = D3D11_COMPARISON_ALWAYS;
-//	smp.MinLOD = 0;
-//	smp.MaxLOD = D3D11_FLOAT32_MAX;
-//
-//	m_pDevice->CreateSamplerState(&smp, &samp);
-//
-//}
 
 
 void QDirect3D11Widget::CreateTexture3D()

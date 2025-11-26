@@ -197,7 +197,7 @@ void ViewerSample::contrastWidthChanged(double contrast)
 	// 초기 WW에 비율 곱하기
 	float newWindowWidth = m_initialWindowWidth * (contrast/1000.0);
 
-	m_pScene->fileReader->windowWidth = newWindowWidth/4;
+	m_pScene->fileReader->windowWidth = newWindowWidth/2;
 
 	ui->contrastValueLabel->setText(QString::number((double)newWindowWidth/4000.0));
 
@@ -311,7 +311,7 @@ void ViewerSample::init(bool success)
 
 
 	//contrast
-	ui->contrastSlider->setMinimum(0);
+	ui->contrastSlider->setMinimum(1);
 	ui->contrastSlider->setMaximum(2000);
 	//ui->contrastSlider->setValue(1.0f);
 	//ui->contrastSlider->setSingleStep(0.02);
