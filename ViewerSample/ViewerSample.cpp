@@ -437,7 +437,17 @@ void ViewerSample::contrastWidthChanged(double contrast)
 }
 void ViewerSample::sharpnessChanged(int value)
 {
-	update();
+	float sharpness = value / 100.0f;  // 0~200 → 0.0~2.0
+
+	ui->sharpnessValueLabel->setText(QString::number(sharpness, 'f', 2));
+
+
+	qDebug() << "Sharpness value:" << sharpness;  // ⭐ 이게 출력되는지 확인
+
+	if (!m_pScene) return;
+
+	m_pScene->SetSharpness(sharpness);  // ⭐ 하나만 호출
+	m_pScene->update();
 }
 
 void ViewerSample::loadDicomData()
@@ -549,6 +559,14 @@ void ViewerSample::init(bool success)
 	ui->contrastSlider->setValue(1000);
 	//ui->contrastSlider->setSingleStep(0.02);
 
+
+	//sharpness
+	//ui->sharpnessSlider->setMinimum(0);
+	// 슬라이더를 50 정도로 설정해서 테스트
+	ui->sharpnessSlider->setMinimum(0);      // 0.0
+	ui->sharpnessSlider->setMaximum(300);    // 3.0 (더 넓은 범위)
+	ui->sharpnessSlider->setValue(0);
+	
 
 	disconnect(m_pScene, &QDirect3D11Widget::deviceInitialized, this, &ViewerSample::init);
 }

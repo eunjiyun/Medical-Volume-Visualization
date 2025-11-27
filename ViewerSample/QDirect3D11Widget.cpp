@@ -3128,8 +3128,11 @@ void QDirect3D11Widget::plasterVolumeShow()
 		else
 			crosshair.crossThickness = 0.002f;
 
+		crosshair.sharpness = m_sharpness;  // ⭐ 여기서 사용
+		qDebug() << "Sending sharpness to GPU:" << m_sharpness;  // ⭐ 확인
 
 		crosshair.crossColor = { 1.0f, 0.0f, 0.0f, 1.0f }; // 빨강
+		//crosshair.textureSize = { 794.0f, 794.0f };  // ⭐ 실제 MPR 텍스처 크기
 
 		// GPU에 전달
 		m_pDeviceContext->UpdateSubresource(fileReader->m_crosshairBuffer, 0, nullptr, &crosshair, 0, 0);
@@ -4496,7 +4499,11 @@ void QDirect3D11Widget::UpdateSlicePlanePositions() {
 		sliceInfoSagittal->show();
 	}
 
-
+	void QDirect3D11Widget::SetSharpness(float value)
+	{
+		m_sharpness = value;
+		qDebug() << "SetSharpness called:" << value;  // ⭐ 확인
+	}
 
 	void QDirect3D11Widget::resetEnvironment()
 	{

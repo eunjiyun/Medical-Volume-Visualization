@@ -20,7 +20,11 @@ struct CrosshairData
 
     DirectX::XMFLOAT2 crossUV;
     float crossThickness;
+	float sharpness;
     DirectX::XMFLOAT4 crossColor;
+
+	//DirectX::XMFLOAT2 textureSize;  // ⭐ 추가 (width, height)
+	//DirectX::XMFLOAT2 padding;
 
 };
 

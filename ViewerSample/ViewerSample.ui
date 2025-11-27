@@ -755,7 +755,7 @@ QLabel {
             </widget>
         </item>
         <item>
-            <widget class="QLabel" name="labelValue6">
+            <widget class="QLabel" name="sharpnessValueLabel">
                 <property name="text">
                     <string>None</string>
                 </property>

@@ -401,7 +401,9 @@ private:
 	bool m_bStarted;
 
 	D3DCOLORVALUE m_BackColor = { 0.0f, 0.0f, 0.0f, 1.0f }; // Black, fully opaque
+	float m_sharpness{ 0.0f };  // ⭐ 추가
 public:
+	void SetSharpness(float value); // ⭐ setter
 
 	ComPtr<ID3D11ShaderResourceView> m_volumeSRV;   // 3D 볼륨 텍스처 SRV
 	ComPtr<ID3D11SamplerState> m_volumeSampler;     // 3D 볼륨 샘플러
@@ -516,6 +518,8 @@ public:
 	float viewWidth;
 	float viewHeight;
 	DirectX::XMFLOAT3 patientCoord;
+
+
 	
 };
 
