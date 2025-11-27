@@ -522,9 +522,9 @@ void ViewerSample::init(bool success)
 
 	//loadDicomData();
 
-	ui->huSlider->setMinimum(-3660);
+	ui->huSlider->setMinimum(-1024);
 	ui->huSlider->setMaximum(14100);
-	ui->huSlider->setValue(3157);
+	ui->huSlider->setValue(1500);//2114
 	// HU 슬라이더 초기 설정
 
 //	m_pScene->GetTransferFunction()->SetHUWindow(0, 0, m_pScene->m_pDevice);
