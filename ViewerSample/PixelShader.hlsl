@@ -30,72 +30,61 @@ struct VSOutput
 
 PSOutput PSMain(VSOutput input)
 {
-
- //   PSOutput o;
-
-	////// ⭐ sharpness 값 시각화 (임시 테스트)
-	////o.color0 = float4(sharpness, sharpness, sharpness, 1.0);
-	////return o;
-
- //   float2 uv = input.texcoord;
- //   float4 base = tex.Sample(samp0, uv);
-
-
-	//// ⭐ Sharpness 적용
-	//if (sharpness > 0.01) {
-	//	float2 ts = float2(1.0 / 794.0, 1.0 / 794.0);  // 텍스처 크기에 맞게 조정
-	//	float4 blur = (
-	//		tex.Sample(samp0, uv + float2(-1, -1)*ts) +
-	//		tex.Sample(samp0, uv + float2(0, -1)*ts) +
-	//		tex.Sample(samp0, uv + float2(1, -1)*ts) +
-	//		tex.Sample(samp0, uv + float2(-1, 0)*ts) +
-	//		tex.Sample(samp0, uv + float2(1, 0)*ts) +
-	//		tex.Sample(samp0, uv + float2(-1, 1)*ts) +
-	//		tex.Sample(samp0, uv + float2(0, 1)*ts) +
-	//		tex.Sample(samp0, uv + float2(1, 1)*ts)
-	//		) / 8.0;
-	//	base = base + (base - blur) * sharpness;
-	//}
-
-
-
- //   bool isCross = abs(uv.x - crossUV.x) < crossThickness || abs(uv.y - crossUV.y) < crossThickness;
-
-	////o.color0 = isCross ? crossColor : base;
-
-	//// 파란색으로 고정: R=0, G=0, B=1, A=1
-	//o.color0 = isCross ? float4(0.0, 1.0, 0.0, 1.0) : base;
-
-
- //   return o;
-
-
-
 	PSOutput o;
 	float2 uv = input.texcoord;
-
-	// ⭐ 텍스처 크기 자동으로 구하기
-	float width, height;
-	tex.GetDimensions(width, height);
-
 	float4 base = tex.Sample(samp0, uv);
 
-	// ⭐ Sharpness 적용
+	// ⭐ Sharpness 적용 (5x5 커널)
 	if (sharpness > 0.01) {
+		float width, height;
+		tex.GetDimensions(width, height);
 		float2 ts = 1.0 / float2(width, height);
 
-		float4 blur = (
-			tex.Sample(samp0, uv + float2(-1, -1)*ts) +
-			tex.Sample(samp0, uv + float2(0, -1)*ts) +
-			tex.Sample(samp0, uv + float2(1, -1)*ts) +
-			tex.Sample(samp0, uv + float2(-1, 0)*ts) +
-			tex.Sample(samp0, uv + float2(1, 0)*ts) +
-			tex.Sample(samp0, uv + float2(-1, 1)*ts) +
-			tex.Sample(samp0, uv + float2(0, 1)*ts) +
-			tex.Sample(samp0, uv + float2(1, 1)*ts)
-			) / 8.0;
+		// 5x5 가우시안 블러 (가중치 적용)
+		float4 blur = float4(0, 0, 0, 0);
 
-		base = base + (base - blur) * sharpness*3.0;
+		// 중심에서 거리에 따른 가중치
+		// 1  4  6  4  1
+		// 4 16 24 16  4
+		// 6 24 36 24  6
+		// 4 16 24 16  4
+		// 1  4  6  4  1
+		// 총합 = 256
+
+		blur += tex.Sample(samp0, uv + float2(-2, -2)*ts) * 1.0;
+		blur += tex.Sample(samp0, uv + float2(-1, -2)*ts) * 4.0;
+		blur += tex.Sample(samp0, uv + float2(0, -2)*ts) * 6.0;
+		blur += tex.Sample(samp0, uv + float2(1, -2)*ts) * 4.0;
+		blur += tex.Sample(samp0, uv + float2(2, -2)*ts) * 1.0;
+
+		blur += tex.Sample(samp0, uv + float2(-2, -1)*ts) * 4.0;
+		blur += tex.Sample(samp0, uv + float2(-1, -1)*ts) * 16.0;
+		blur += tex.Sample(samp0, uv + float2(0, -1)*ts) * 24.0;
+		blur += tex.Sample(samp0, uv + float2(1, -1)*ts) * 16.0;
+		blur += tex.Sample(samp0, uv + float2(2, -1)*ts) * 4.0;
+
+		blur += tex.Sample(samp0, uv + float2(-2, 0)*ts) * 6.0;
+		blur += tex.Sample(samp0, uv + float2(-1, 0)*ts) * 24.0;
+		blur += tex.Sample(samp0, uv + float2(0, 0)*ts) * 36.0;
+		blur += tex.Sample(samp0, uv + float2(1, 0)*ts) * 24.0;
+		blur += tex.Sample(samp0, uv + float2(2, 0)*ts) * 6.0;
+
+		blur += tex.Sample(samp0, uv + float2(-2, 1)*ts) * 4.0;
+		blur += tex.Sample(samp0, uv + float2(-1, 1)*ts) * 16.0;
+		blur += tex.Sample(samp0, uv + float2(0, 1)*ts) * 24.0;
+		blur += tex.Sample(samp0, uv + float2(1, 1)*ts) * 16.0;
+		blur += tex.Sample(samp0, uv + float2(2, 1)*ts) * 4.0;
+
+		blur += tex.Sample(samp0, uv + float2(-2, 2)*ts) * 1.0;
+		blur += tex.Sample(samp0, uv + float2(-1, 2)*ts) * 4.0;
+		blur += tex.Sample(samp0, uv + float2(0, 2)*ts) * 6.0;
+		blur += tex.Sample(samp0, uv + float2(1, 2)*ts) * 4.0;
+		blur += tex.Sample(samp0, uv + float2(2, 2)*ts) * 1.0;
+
+		blur /= 256.0;  // 가중치 총합으로 나누기
+
+		// Unsharp mask
+		base = base + (base - blur) * sharpness*5.0;
 	}
 
 	bool isCross = abs(uv.x - crossUV.x) < crossThickness || abs(uv.y - crossUV.y) < crossThickness;
