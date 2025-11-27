@@ -115,10 +115,10 @@ void ViewerSample::huValueChanged(int value)
 //	qDebug() << "HU adjusted - WC:" << huCenter << "WW:" << windowWidth;
 //
 //	// ⭐ Transfer Function을 새로운 WC/WW로 재초기화
-////m_pScene->GetTransferFunction()->Initialize(huCenter, windowWidth, m_pScene->m_pDevice);
+//m_pScene->GetTransferFunction()->Initialize(huCenter, windowWidth, m_pScene->m_pDevice);
 //
 //	// 또는 SetHUWindow 사용 (고정 TF 유지하려면)
-//	 m_pScene->GetTransferFunction()->SetHUWindow(huCenter, windowWidth, m_pScene->m_pDevice);
+//	// m_pScene->GetTransferFunction()->SetHUWindow(huCenter, windowWidth, m_pScene->m_pDevice);
 //
 //	update();
 
@@ -524,7 +524,7 @@ void ViewerSample::init(bool success)
 
 	ui->huSlider->setMinimum(-1024);
 	ui->huSlider->setMaximum(14100);
-	ui->huSlider->setValue(1500);//2114
+	ui->huSlider->setValue(700);//2114
 	// HU 슬라이더 초기 설정
 
 //	m_pScene->GetTransferFunction()->SetHUWindow(0, 0, m_pScene->m_pDevice);
