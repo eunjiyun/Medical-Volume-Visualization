@@ -84,7 +84,7 @@ PSOutput PSMain(VSOutput input)
 		blur /= 256.0;  // 가중치 총합으로 나누기
 
 		// Unsharp mask
-		base = base + (base - blur) * sharpness*5.0;
+		base = base + (base - blur) * sharpness*3.0;
 	}
 
 	bool isCross = abs(uv.x - crossUV.x) < crossThickness || abs(uv.y - crossUV.y) < crossThickness;
