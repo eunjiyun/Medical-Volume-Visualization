@@ -88,7 +88,7 @@ PSOutput PSMain(VSOutput input)
 	}
 
 	bool isCross = abs(uv.x - crossUV.x) < crossThickness || abs(uv.y - crossUV.y) < crossThickness;
-	o.color0 = isCross ? float4(0.0, 1.0, 0.0, 1.0) : base;
+	o.color0 = isCross ? float4(0.0, 0.0, 1.0, 1.0) : base;
 
 	return o;
 }

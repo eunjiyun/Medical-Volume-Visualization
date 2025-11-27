@@ -75,8 +75,6 @@ bool TransferFunction::Initialize(float center, float width, ID3D11Device* devic
 	//UpdateTexture(device);
 	//return (m_tfSRV != nullptr);
 
-
-
 	m_controlPoints.clear();
 
 	float minHU = center - width / 2.0f;
