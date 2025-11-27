@@ -515,6 +515,8 @@ void ViewerSample::init(bool success)
 	ui->huSlider->setMaximum(14100);
 	ui->huSlider->setValue(700);//2114
 	// HU 슬라이더 초기 설정
+	//ui->huSlider->setInvertedAppearance(true);  // ⭐ UI 방향 반대로
+	//ui->huSlider->setInvertedControls(true);
 
 //	m_pScene->GetTransferFunction()->SetHUWindow(0, 0, m_pScene->m_pDevice);
 	//ui->huSlider->setMinimum(-1024);  // 최소 HU (공기)
