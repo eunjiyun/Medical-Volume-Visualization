@@ -26,8 +26,7 @@ public slots:
 	void brightnessCenterChanged(double value);  // Window Center
 	void contrastWidthChanged(double value);   // Window Width
 	void sharpnessChanged(int value);   // Window Width
-	void loadDicomData();
-
+	
 private:
     Ui::ViewerSampleClass* ui;
     QDirect3D11Widget * m_pScene;

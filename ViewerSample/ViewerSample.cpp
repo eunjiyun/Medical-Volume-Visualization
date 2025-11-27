@@ -450,28 +450,7 @@ void ViewerSample::sharpnessChanged(int value)
 	m_pScene->update();
 }
 
-void ViewerSample::loadDicomData()
-{
-	//// ... DICOM 로드 후
 
-	////if (m_pScene->fileReader) {
-	////	// 초기값 저장
-	////	m_initialWindowCenter = m_pScene->fileReader->windowCenter;
-	////	m_initialWindowWidth = m_pScene->fileReader->windowWidth;
-	////}
-
-
-	//m_initialWindowCenter =1000;
-	//m_initialWindowWidth =4000;
-
-
-	//qDebug() << "m_initialWindowCenter :" << m_initialWindowCenter;
-	//qDebug() << "m_initialWindowWidth :" << m_initialWindowWidth;
-
-	//// 슬라이더 초기화
-	//ui->brightnessSlider->setValue(0);  // 초기 brightness = 0
-	//ui->contrastSlider->setValue(1000);    // 초기 contrast = 1
-}
 
 void ViewerSample::init(bool success)
 {
@@ -551,6 +530,8 @@ void ViewerSample::init(bool success)
 	ui->brightnessSlider->setMaximum(500);
 	ui->brightnessSlider->setValue(0);
 	//ui->brightnessSlider->setSingleStep(0.01);
+	ui->brightnessSlider->setInvertedAppearance(true);  // ⭐ UI 방향 반대로
+	ui->brightnessSlider->setInvertedControls(true);
 
 
 	//contrast
@@ -558,6 +539,8 @@ void ViewerSample::init(bool success)
 	ui->contrastSlider->setMaximum(2000);
 	ui->contrastSlider->setValue(1000);
 	//ui->contrastSlider->setSingleStep(0.02);
+	ui->contrastSlider->setInvertedAppearance(true);  // ⭐ UI 방향 반대로
+	ui->contrastSlider->setInvertedControls(true);
 
 
 	//sharpness
