@@ -90,88 +90,123 @@ void ViewerSample::onBtnColorInvertClicked() {
 	update();
 }
 
-void ViewerSample::huValueChanged(int value)
-{
-//	// value: 0 ~ 1000 범위
-//	// HU 중심값 계산: -1024 ~ 2927
-//	float huCenter = -1024.0f + (value * 4.024f);
+//void ViewerSample::huValueChanged(int value)
+//{
+////	// value: 0 ~ 1000 범위
+////	// HU 중심값 계산: -1024 ~ 2927
+////	float huCenter = -1024.0f + (value * 4.024f);
+////	ui->huValueLabel->setText(QString::number((int)huCenter));
+////
+////	if (!m_pScene || !m_pScene->fileReader || !m_pScene->GetTransferFunction()) {
+////		return;
+////	}
+////
+////	// ⭐ WC 적용
+////	m_pScene->fileReader->volWC = huCenter;
+////
+////	// ⭐ WW도 HU 값에 따라 자동 조절
+////	float normalizedValue = value / 1000.0f;  // 0.0 ~ 1.0
+////	float minWW = 400.0f;   // 연조직용 최소 폭
+////	float maxWW = 2000.0f;  // 뼈용 최대 폭
+////	float windowWidth = minWW + (normalizedValue * (maxWW - minWW));
+////
+////	m_pScene->fileReader->volWW = windowWidth;
+////
+////	qDebug() << "HU adjusted - WC:" << huCenter << "WW:" << windowWidth;
+////
+////	// ⭐ Transfer Function을 새로운 WC/WW로 재초기화
+////m_pScene->GetTransferFunction()->Initialize(huCenter, windowWidth, m_pScene->m_pDevice);
+////
+////	// 또는 SetHUWindow 사용 (고정 TF 유지하려면)
+////	// m_pScene->GetTransferFunction()->SetHUWindow(huCenter, windowWidth, m_pScene->m_pDevice);
+////
+////	update();
+//
+//	// ⭐ 구현 추가!
+//	float huCenter = -1024.0f + (value * 4.024f);//2927
+//
 //	ui->huValueLabel->setText(QString::number((int)huCenter));
 //
+//	// ⭐ 3. Null 체크
 //	if (!m_pScene || !m_pScene->fileReader || !m_pScene->GetTransferFunction()) {
 //		return;
 //	}
 //
-//	// ⭐ WC 적용
-//	m_pScene->fileReader->volWC = huCenter;
+//	//if (m_pScene->fileReader && m_pScene->GetTransferFunction()) {
+//	//	m_pScene->GetTransferFunction()->SetHUWindow(
+//	//		huCenter, m_pScene->fileReader->windowWidth, m_pScene->m_pDevice
+//	//	);
+//	//}
 //
-//	// ⭐ WW도 HU 값에 따라 자동 조절
-//	float normalizedValue = value / 1000.0f;  // 0.0 ~ 1.0
-//	float minWW = 400.0f;   // 연조직용 최소 폭
-//	float maxWW = 2000.0f;  // 뼈용 최대 폭
-//	float windowWidth = minWW + (normalizedValue * (maxWW - minWW));
 //
-//	m_pScene->fileReader->volWW = windowWidth;
+//	// ⭐ 3. FileReader에 저장 (다음 렌더링 때 반영됨)
+//	if (m_pScene && m_pScene->fileReader) {
+//		m_pScene->fileReader->volWC = huCenter;
+//		// windowWidth는 고정 또는 다른 슬라이더로 조절
+//		// m_pScene->fileReader->windowWidth = 2000.0f;
+//	}
 //
-//	qDebug() << "HU adjusted - WC:" << huCenter << "WW:" << windowWidth;
 //
-//	// ⭐ Transfer Function을 새로운 WC/WW로 재초기화
-//m_pScene->GetTransferFunction()->Initialize(huCenter, windowWidth, m_pScene->m_pDevice);
+//	//cb.HuParams.x = fileReader->m_rescaleSlope;
+//	//cb.HuParams.y = fileReader->m_rescaleIntercept;
+//	//cb.HuParams.z = fileReader->windowCenter - fileReader->windowWidth / 2.0;
+//	//cb.HuParams.w = fileReader->windowCenter + fileReader->windowWidth / 2.0;
 //
-//	// 또는 SetHUWindow 사용 (고정 TF 유지하려면)
-//	// m_pScene->GetTransferFunction()->SetHUWindow(huCenter, windowWidth, m_pScene->m_pDevice);
+//
+//	//// ⭐ Constant Buffer에 center/width 전달
+//	//VolumeParams params;
+//	//params.HuParams.z = huCenter;
+//	//params.HuParams.w = 2000.0f;  // width
+//
+//	//m_pScene->m_pImmediateContext->UpdateSubresource(
+//	//	m_constantBuffer, 0, nullptr, &params, 0, 0
+//	//);
+//
+//
+//
+//
+//	//m_pScene->cb.HuParams.z = huCenter - fileReader->windowWidth / 2.0;
+//	//m_pScene->cb.HuParams.w = huCenter + fileReader->windowWidth / 2.0;
+//
+//
+//	//m_pScene->m_pDeviceContext->UpdateSubresource(
+//	//	m_constantBuffer, 0, nullptr, &params, 0, 0
+//	//);
 //
 //	update();
+//}
 
-	// ⭐ 구현 추가!
-	float huCenter = -1024.0f + (value * 4.024f);//2927
 
+void ViewerSample::huValueChanged(int value)
+{
+	// ✅ 올바른 변환: 0~4000 → -1000~3000 HU
+	//float huCenter = -1000.0f + (value * 1.0f);
+
+	float huCenter = (float)value;
 	ui->huValueLabel->setText(QString::number((int)huCenter));
 
-	// ⭐ 3. Null 체크
-	if (!m_pScene || !m_pScene->fileReader || !m_pScene->GetTransferFunction()) {
-		return;
-	}
+	if (!m_pScene || !m_pScene->fileReader) return;
 
-	//if (m_pScene->fileReader && m_pScene->GetTransferFunction()) {
-	//	m_pScene->GetTransferFunction()->SetHUWindow(
-	//		huCenter, m_pScene->fileReader->windowWidth, m_pScene->m_pDevice
-	//	);
-	//}
+	float windowWidth = 2000.0f;  // 고정 또는 별도 슬라이더
 
+	// TF 재초기화
+	m_pScene->GetTransferFunction()->Initialize(
+		huCenter, windowWidth, m_pScene->m_pDevice
+	);
 
-	// ⭐ 3. FileReader에 저장 (다음 렌더링 때 반영됨)
-	if (m_pScene && m_pScene->fileReader) {
-		m_pScene->fileReader->volWC = huCenter;
-		// windowWidth는 고정 또는 다른 슬라이더로 조절
-		// m_pScene->fileReader->windowWidth = 2000.0f;
-	}
+	m_pScene->fileReader->volWC = huCenter;
 
+	//// CB 업데이트
+	//float minHU = huCenter - windowWidth / 2.0f;
+	//float maxHU = huCenter + windowWidth / 2.0f;
 
-	//cb.HuParams.x = fileReader->m_rescaleSlope;
-	//cb.HuParams.y = fileReader->m_rescaleIntercept;
-	//cb.HuParams.z = fileReader->windowCenter - fileReader->windowWidth / 2.0;
-	//cb.HuParams.w = fileReader->windowCenter + fileReader->windowWidth / 2.0;
+	//m_pScene->cb.HuParams.x = m_pScene->fileReader->m_rescaleSlope;
+	//m_pScene->cb.HuParams.y = m_pScene->fileReader->m_rescaleIntercept;
+	//m_pScene->cb.HuParams.z = minHU;
+	//m_pScene->cb.HuParams.w = maxHU;
 
-
-	//// ⭐ Constant Buffer에 center/width 전달
-	//VolumeParams params;
-	//params.HuParams.z = huCenter;
-	//params.HuParams.w = 2000.0f;  // width
-
-	//m_pScene->m_pImmediateContext->UpdateSubresource(
-	//	m_constantBuffer, 0, nullptr, &params, 0, 0
-	//);
-
-
-
-
-	//m_pScene->cb.HuParams.z = huCenter - fileReader->windowWidth / 2.0;
-	//m_pScene->cb.HuParams.w = huCenter + fileReader->windowWidth / 2.0;
-
-
-	//m_pScene->m_pDeviceContext->UpdateSubresource(
-	//	m_constantBuffer, 0, nullptr, &params, 0, 0
-	//);
+	//qDebug() << "HU Center:" << huCenter
+	//	<< "Range:" << minHU << "~" << maxHU;
 
 	update();
 }
@@ -511,9 +546,9 @@ void ViewerSample::init(bool success)
 
 	//loadDicomData();
 
-	ui->huSlider->setMinimum(-1024);
-	ui->huSlider->setMaximum(14100);
-	ui->huSlider->setValue(700);//2114
+	ui->huSlider->setMinimum(0);
+	ui->huSlider->setMaximum(4000);
+	ui->huSlider->setValue(2000);//2114
 	// HU 슬라이더 초기 설정
 	//ui->huSlider->setInvertedAppearance(true);  // ⭐ UI 방향 반대로
 	//ui->huSlider->setInvertedControls(true);

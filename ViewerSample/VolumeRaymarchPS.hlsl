@@ -195,6 +195,17 @@ float4 main(float4 pos : SV_POSITION, float2 uv : TEXCOORD0) : SV_Target
 		// ⭐ Transfer Function에서 색상/투명도 가져오기 (하나만 사용!)
 		float4 colorAlpha = transferFunction.Sample(tfSampler, huNorm);
 
+
+
+		// ⭐ Window로 알파만 조절 (조직 분리 유지)
+		float huInWindow = (hu - HuParams.z) / (HuParams.w - HuParams.z);
+		if (huInWindow < 0.0 || huInWindow > 1.0) {
+			colorAlpha.a *= 0.1;  // Window 밖은 투명하게
+		}
+
+
+
+
 		// ⭐ 기존 TransferFunctionHU() 삭제 - tfValue 하나로 통일!
 
 		if (colorAlpha.a < 0.001)
