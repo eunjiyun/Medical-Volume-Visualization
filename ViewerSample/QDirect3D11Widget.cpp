@@ -3129,7 +3129,7 @@ void QDirect3D11Widget::plasterVolumeShow()
 			crosshair.crossThickness = 0.002f;
 
 		crosshair.sharpness = m_sharpness;  // ⭐ 여기서 사용
-		qDebug() << "Sending sharpness to GPU:" << m_sharpness;  // ⭐ 확인
+		//qDebug() << "Sending sharpness to GPU:" << m_sharpness;  // ⭐ 확인
 
 		crosshair.crossColor = { 1.0f, 0.0f, 0.0f, 1.0f }; // 빨강
 		//crosshair.textureSize = { 794.0f, 794.0f };  // ⭐ 실제 MPR 텍스처 크기

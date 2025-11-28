@@ -122,6 +122,8 @@ public:
 		float windowMinHU = -1000.0f,
 		float windowMaxHU = 3000.0f);
 
+	void AnalyzeHUDistribution();
+
 
     ID3D11Texture2D* CreateTextureFromSlice(const std::vector<uint8_t>& slice, int width, int height, ID3D11Device* g_pd3dDevice);
 };

@@ -19,105 +19,143 @@ float saturate(float x) {
 	return x;
 }
 
+//bool TransferFunction::Initialize(float center, float width, ID3D11Device* device)
+//{
+//	
+//
+//	//m_controlPoints.clear();
+//
+//	//float minHU = center - width / 2.0f;
+//	//float maxHU = center + width / 2.0f;
+//
+//	//std::cout << "Initialize TF - Center:" << center << "Width:" << width << std:: endl;
+//	//std::cout << "HU Range:" << minHU << "~" << maxHU << std::endl;
+//
+//	//// ⭐ 윈도우 범위로 정규화
+//	//auto HUtoNorm = [&](float hu) -> float {
+//	//	return saturate((hu - minHU) / width);
+//	//};
+//
+//	//// ⭐ 시작점 추가 (0.0)
+//	//m_controlPoints.push_back({ 0.0f, 0.0f, 0.0f, 0.0f, 0.0f });
+//
+//	//// -400 ~ 200: 연조직
+//	//if (maxHU >= -400.0f && minHU <= 200.0f) {
+//	//	float t = HUtoNorm(200.0f);
+//	//	m_controlPoints.push_back({ t, 0.6f, 0.5f, 0.4f, 0.05f });
+//	//	std::cout << "Added soft tissue at t=" << t;
+//	//}
+//
+//	//// 200 ~ 700: 뼈 시작
+//	//if (maxHU >= 200.0f && minHU <= 700.0f) {
+//	//	float t = HUtoNorm(700.0f);
+//	//	m_controlPoints.push_back({ t, 0.85f, 0.75f, 0.65f, 0.4f });
+//	//	std::cout << "Added bone start at t=" << t;
+//	//}
+//
+//	//// 700 ~ 1300: 단단한 뼈
+//	//if (maxHU >= 700.0f && minHU <= 1300.0f) {
+//	//	float t = HUtoNorm(1300.0f);
+//	//	m_controlPoints.push_back({ t, 0.92f, 0.88f, 0.82f, 1.1f });
+//	//	std::cout << "Added hard bone at t=" << t;
+//	//}
+//
+//	//// 1300 이상: 치아
+//	//if (maxHU >= 1300.0f) {
+//	//	float t = HUtoNorm(3000.0f);
+//	//	m_controlPoints.push_back({ t, 0.98f, 0.95f, 0.90f, 2.0f });
+//	//	std::cout << "Added teeth at t=" << t;
+//	//}
+//
+//	//// ⭐ 끝점 추가 (1.0) - 중요!
+//	//m_controlPoints.push_back({ 1.0f, 1.0f, 1.0f, 1.0f, 1.0f });
+//
+//	//std::cout << "Total control points:" << m_controlPoints.size();
+//
+//	//// ⭐ 정렬 확인
+//	//std::sort(m_controlPoints.begin(), m_controlPoints.end(),
+//	//	[](const TFPoint& a, const TFPoint& b) { return a.value < b.value; });
+//
+//	//UpdateTexture(device);
+//	//return (m_tfSRV != nullptr);
+//
+//
+//
+//	m_controlPoints.clear();
+//
+//	// ⭐ 절대 HU 기준 (-1000 ~ 3000)
+//	auto HUtoNorm = [](float hu) -> float {
+//		return saturate((hu + 1000.0f) / 4000.0f);
+//	};
+//
+//	// 배경/공기
+//	m_controlPoints.push_back({ 0.0f, 0.0f, 0.0f, 0.0f, 0.0f });
+//	m_controlPoints.push_back({ HUtoNorm(-400.0f), 0.0f, 0.0f, 0.0f, 0.0f });
+//
+//	// 연조직 (-100 ~ 100)
+//	m_controlPoints.push_back({ HUtoNorm(-100.0f), 0.5f, 0.4f, 0.3f, 0.01f });
+//	m_controlPoints.push_back({ HUtoNorm(100.0f), 0.6f, 0.5f, 0.4f, 0.05f });
+//
+//	// 뼈 시작 (200 ~ 400)
+//	m_controlPoints.push_back({ HUtoNorm(200.0f), 0.7f, 0.6f, 0.5f, 0.15f });
+//	m_controlPoints.push_back({ HUtoNorm(400.0f), 0.8f, 0.7f, 0.6f, 0.3f });
+//
+//	// 단단한 뼈 (700 ~ 1000)
+//	m_controlPoints.push_back({ HUtoNorm(700.0f), 0.85f, 0.75f, 0.65f, 0.6f });
+//	m_controlPoints.push_back({ HUtoNorm(1000.0f), 0.90f, 0.82f, 0.72f, 0.9f });
+//
+//	// 매우 단단한 뼈 (1300 ~ 1800)
+//	m_controlPoints.push_back({ HUtoNorm(1300.0f), 0.93f, 0.88f, 0.80f, 1.2f });
+//	m_controlPoints.push_back({ HUtoNorm(1800.0f), 0.96f, 0.92f, 0.85f, 1.5f });
+//
+//	// 치아 (2000+)
+//	m_controlPoints.push_back({ HUtoNorm(2000.0f), 0.98f, 0.95f, 0.90f, 1.8f });
+//	m_controlPoints.push_back({ HUtoNorm(3000.0f), 0.99f, 0.97f, 0.93f, 2.2f });
+//
+//	m_controlPoints.push_back({ 1.0f, 1.0f, 1.0f, 1.0f, 2.2f });
+//
+//	UpdateTexture(device);
+//	return (m_tfSRV != nullptr);
+//}
 bool TransferFunction::Initialize(float center, float width, ID3D11Device* device)
 {
-	
-
-	//m_controlPoints.clear();
-
-	//float minHU = center - width / 2.0f;
-	//float maxHU = center + width / 2.0f;
-
-	//std::cout << "Initialize TF - Center:" << center << "Width:" << width << std:: endl;
-	//std::cout << "HU Range:" << minHU << "~" << maxHU << std::endl;
-
-	//// ⭐ 윈도우 범위로 정규화
-	//auto HUtoNorm = [&](float hu) -> float {
-	//	return saturate((hu - minHU) / width);
-	//};
-
-	//// ⭐ 시작점 추가 (0.0)
-	//m_controlPoints.push_back({ 0.0f, 0.0f, 0.0f, 0.0f, 0.0f });
-
-	//// -400 ~ 200: 연조직
-	//if (maxHU >= -400.0f && minHU <= 200.0f) {
-	//	float t = HUtoNorm(200.0f);
-	//	m_controlPoints.push_back({ t, 0.6f, 0.5f, 0.4f, 0.05f });
-	//	std::cout << "Added soft tissue at t=" << t;
-	//}
-
-	//// 200 ~ 700: 뼈 시작
-	//if (maxHU >= 200.0f && minHU <= 700.0f) {
-	//	float t = HUtoNorm(700.0f);
-	//	m_controlPoints.push_back({ t, 0.85f, 0.75f, 0.65f, 0.4f });
-	//	std::cout << "Added bone start at t=" << t;
-	//}
-
-	//// 700 ~ 1300: 단단한 뼈
-	//if (maxHU >= 700.0f && minHU <= 1300.0f) {
-	//	float t = HUtoNorm(1300.0f);
-	//	m_controlPoints.push_back({ t, 0.92f, 0.88f, 0.82f, 1.1f });
-	//	std::cout << "Added hard bone at t=" << t;
-	//}
-
-	//// 1300 이상: 치아
-	//if (maxHU >= 1300.0f) {
-	//	float t = HUtoNorm(3000.0f);
-	//	m_controlPoints.push_back({ t, 0.98f, 0.95f, 0.90f, 2.0f });
-	//	std::cout << "Added teeth at t=" << t;
-	//}
-
-	//// ⭐ 끝점 추가 (1.0) - 중요!
-	//m_controlPoints.push_back({ 1.0f, 1.0f, 1.0f, 1.0f, 1.0f });
-
-	//std::cout << "Total control points:" << m_controlPoints.size();
-
-	//// ⭐ 정렬 확인
-	//std::sort(m_controlPoints.begin(), m_controlPoints.end(),
-	//	[](const TFPoint& a, const TFPoint& b) { return a.value < b.value; });
-
-	//UpdateTexture(device);
-	//return (m_tfSRV != nullptr);
-
-
-
 	m_controlPoints.clear();
 
-	// ⭐ 절대 HU 기준 (-1000 ~ 3000)
 	auto HUtoNorm = [](float hu) -> float {
 		return saturate((hu + 1000.0f) / 4000.0f);
 	};
 
-	// 배경/공기
+	// 공기/배경
 	m_controlPoints.push_back({ 0.0f, 0.0f, 0.0f, 0.0f, 0.0f });
 	m_controlPoints.push_back({ HUtoNorm(-400.0f), 0.0f, 0.0f, 0.0f, 0.0f });
 
-	// 연조직 (-100 ~ 100)
-	m_controlPoints.push_back({ HUtoNorm(-100.0f), 0.5f, 0.4f, 0.3f, 0.01f });
-	m_controlPoints.push_back({ HUtoNorm(100.0f), 0.6f, 0.5f, 0.4f, 0.05f });
+	// 연조직 - 더 어두운 갈색
+	m_controlPoints.push_back({ HUtoNorm(-100.0f), 0.35f, 0.25f, 0.15f, 0.01f });
+	m_controlPoints.push_back({ HUtoNorm(100.0f), 0.48f, 0.38f, 0.28f, 0.08f });
 
-	// 뼈 시작 (200 ~ 400)
-	m_controlPoints.push_back({ HUtoNorm(200.0f), 0.7f, 0.6f, 0.5f, 0.15f });
-	m_controlPoints.push_back({ HUtoNorm(400.0f), 0.8f, 0.7f, 0.6f, 0.3f });
+	// 뼈 시작 (300~600) - 베이지 톤
+	m_controlPoints.push_back({ HUtoNorm(300.0f), 0.70f, 0.58f, 0.46f, 0.25f });
+	m_controlPoints.push_back({ HUtoNorm(600.0f), 0.80f, 0.68f, 0.56f, 0.50f });
 
-	// 단단한 뼈 (700 ~ 1000)
-	m_controlPoints.push_back({ HUtoNorm(700.0f), 0.85f, 0.75f, 0.65f, 0.6f });
-	m_controlPoints.push_back({ HUtoNorm(1000.0f), 0.90f, 0.82f, 0.72f, 0.9f });
+	// 뼈 중간 (800~1200) - 밝은 베이지
+	m_controlPoints.push_back({ HUtoNorm(800.0f), 0.86f, 0.76f, 0.66f, 0.75f });
+	m_controlPoints.push_back({ HUtoNorm(1200.0f), 0.90f, 0.83f, 0.74f, 1.00f });
 
-	// 매우 단단한 뼈 (1300 ~ 1800)
-	m_controlPoints.push_back({ HUtoNorm(1300.0f), 0.93f, 0.88f, 0.80f, 1.2f });
-	m_controlPoints.push_back({ HUtoNorm(1800.0f), 0.96f, 0.92f, 0.85f, 1.5f });
+	// 단단한 뼈 (1400~1800) - 아주 밝은 베이지
+	m_controlPoints.push_back({ HUtoNorm(1400.0f), 0.93f, 0.88f, 0.80f, 1.30f });
+	m_controlPoints.push_back({ HUtoNorm(1800.0f), 0.95f, 0.91f, 0.85f, 1.60f });
 
-	// 치아 (2000+)
-	m_controlPoints.push_back({ HUtoNorm(2000.0f), 0.98f, 0.95f, 0.90f, 1.8f });
-	m_controlPoints.push_back({ HUtoNorm(3000.0f), 0.99f, 0.97f, 0.93f, 2.2f });
+	// 치아 (2000~2500) - 밝은 크림/흰색
+	m_controlPoints.push_back({ HUtoNorm(2000.0f), 0.97f, 0.94f, 0.89f, 2.00f });
+	m_controlPoints.push_back({ HUtoNorm(2500.0f), 0.99f, 0.97f, 0.94f, 2.50f });
 
-	m_controlPoints.push_back({ 1.0f, 1.0f, 1.0f, 1.0f, 2.2f });
+	// 매우 높은 HU (3000+) - 완전 흰색
+	m_controlPoints.push_back({ HUtoNorm(3000.0f), 1.00f, 1.00f, 1.00f, 3.00f });
+	m_controlPoints.push_back({ 1.0f, 1.0f, 1.0f, 1.0f, 3.00f });
 
 	UpdateTexture(device);
-	return (m_tfSRV != nullptr);
+	return true;
 }
-
 
 
 void TransferFunction::SetHUWindow(float center, float width, ID3D11Device* g_pd3dDevice)

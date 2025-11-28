@@ -11,6 +11,7 @@
 #include<algorithm>
 #include<numeric>
 
+#include<map>
 
 
 FileReader::FileReader()
@@ -63,14 +64,14 @@ bool FileReader::LoadDICOMSeries(std::string folderPath, ID3D11Device* g_pd3dDev
 
 			if (entry.path().string() == m_filePaths.front())
 			{
-		
+
 
 				DcmFileFormat file;
 				OFCondition status = file.loadFile(/*folderPath + "0000.dcm"*/entry.path().string().c_str());
 
 				DcmDataset* dataset = file.getDataset();
 
-				
+
 
 				//dataset->convertToUTF8();  // DCMTK 3.6.7 이상
 				//dataset->putAndInsertString(DCM_SpecificCharacterSet, "ISO_IR 192"); // UTF-8
@@ -104,22 +105,22 @@ bool FileReader::LoadDICOMSeries(std::string folderPath, ID3D11Device* g_pd3dDev
 					dataset->findAndGetOFString(DCM_PatientSex, patientMF).good()
 					) {
 
-					volWC=windowCenter = std::stof(wcStr.c_str());
-					volWW=windowWidth = std::stof(wwStr.c_str());
-
-					
-
-				/*	std::string utf8Name = convertCP949ToUTF8(rawName.c_str());
-					patientName = utf8Name.c_str();*/
-
-			
+					volWC = windowCenter = std::stof(wcStr.c_str());
+					volWW = windowWidth = std::stof(wwStr.c_str());
 
 
-					/* patientName = std::stof(wcStr.c_str());
-					 birthDate = std::stof(wwStr.c_str());
-					 studyDate = std::stof(wcStr.c_str());
-					 patientID = std::stof(wwStr.c_str());
-					 patientMF = std::stof(wcStr.c_str());*/
+
+					/*	std::string utf8Name = convertCP949ToUTF8(rawName.c_str());
+						patientName = utf8Name.c_str();*/
+
+
+
+
+						/* patientName = std::stof(wcStr.c_str());
+						 birthDate = std::stof(wwStr.c_str());
+						 studyDate = std::stof(wcStr.c_str());
+						 patientID = std::stof(wwStr.c_str());
+						 patientMF = std::stof(wcStr.c_str());*/
 
 
 					std::cout << "Window Center: " << windowCenter << ", Window Width: " << windowWidth << std::endl;
@@ -277,13 +278,13 @@ bool FileReader::LoadDICOMSeries(std::string folderPath, ID3D11Device* g_pd3dDev
 					m_rescaleSlope = 1.0f; // 기본값
 				}
 
-				// ⚙️ Rescale Intercept (0028,1052)
-				if (dataset->findAndGetOFString(DCM_RescaleIntercept, interceptStr).good()) {
-					m_rescaleIntercept = std::stof(interceptStr.c_str());
-				}
-				else {
-					m_rescaleIntercept = -1024.0f; // 기본값
-				}
+				//// ⚙️ Rescale Intercept (0028,1052)
+				//if (dataset->findAndGetOFString(DCM_RescaleIntercept, interceptStr).good()) {
+				//	m_rescaleIntercept = std::stof(interceptStr.c_str());
+				//}
+				//else {
+				m_rescaleIntercept = -1024.0f; // 기본값
+			//}
 
 				std::cout << "Rescale Slope: " << m_rescaleSlope
 					<< ", Intercept: " << m_rescaleIntercept << std::endl;
@@ -312,7 +313,7 @@ bool FileReader::LoadDICOMSeries(std::string folderPath, ID3D11Device* g_pd3dDev
 	}
 
 
-
+	AnalyzeHUDistribution();
 
 	return true;
 }
@@ -549,15 +550,20 @@ bool FileReader::NormalizeVolumeU16(
 	std::vector<uint16_t>& outVolume,
 	float rescaleSlope,
 	float rescaleIntercept,
-	float windowMinHU ,
-	float windowMaxHU )
+	float windowMinHU,
+	float windowMaxHU)
 {
 	if (rawVolume.empty()) return false;
-
 	outVolume.resize(rawVolume.size());
 
 	for (size_t i = 0; i < rawVolume.size(); ++i)
 	{
+		// ⭐ 패딩 값 체크
+		if (rawVolume[i] > 60000) {
+			outVolume[i] = 65535;  // ✅ 최대값으로 (셰이더에서 특수 처리)
+			continue;
+		}
+
 		// 1️⃣ 원본 픽셀을 HU 단위로 변환
 		float hu = rescaleSlope * static_cast<float>(rawVolume[i]) + rescaleIntercept;
 
@@ -573,6 +579,80 @@ bool FileReader::NormalizeVolumeU16(
 	return true;
 }
 
+
+//minHU = minHU > hu ? hu : minHU;
+//maxHU = maxHU > hu ? maxHU : hu;
+
+void FileReader::AnalyzeHUDistribution()
+{
+	if (m_volumeData.empty()) return;
+
+	std::map<int, int> histogram;
+	float minHU = FLT_MAX;
+	float maxHU = -FLT_MAX;
+
+	// ⭐ 패딩 값 확인
+	int paddingCount = 0;
+
+	for (const auto& raw : m_volumeData) {
+		// ⭐ 패딩 값 제외 (65535, 63488 등)
+		if (raw > 60000) {
+			paddingCount++;
+			continue;  // 분석에서 제외
+		}
+
+		float hu = m_rescaleSlope * static_cast<float>(raw) + m_rescaleIntercept;
+
+		minHU = minHU > hu ? hu : minHU;
+		maxHU = maxHU > hu ? maxHU : hu;
+
+		int bucket = static_cast<int>(hu / 100) * 100;
+		histogram[bucket]++;
+	}
+
+	std::cout << "=== HU Distribution Analysis ===" << std::endl;
+	std::cout << "Padding voxels excluded: " << paddingCount
+		<< " (" << (paddingCount * 100.0f / m_volumeData.size()) << "%)" << std::endl;
+	std::cout << "Min HU: " << minHU << std::endl;
+	std::cout << "Max HU: " << maxHU << std::endl;
+	std::cout << "Valid voxels: " << (m_volumeData.size() - paddingCount) << std::endl;
+	std::cout << "\nHU Range | Count | Percentage" << std::endl;
+
+	for (const auto&[bucket, count] : histogram) {
+		float percentage = (count * 100.0f) / m_volumeData.size();
+		if (percentage > 0.1) {  // 0.1% 이상만 출력
+			std::cout << bucket << "~" << (bucket + 100)
+				<< " | " << count
+				<< " | " << std::fixed << std::setprecision(2) << percentage << "%"
+				<< std::endl;
+		}
+	}
+
+	// 조직별 분포
+	int air = 0, soft = 0, bone = 0, teeth = 0, other = 0;
+	int validVoxels = 0;
+
+	for (const auto& raw : m_volumeData) {
+		// ⭐ 패딩 제외
+		if (raw > 60000) continue;
+
+		validVoxels++;
+		float hu = m_rescaleSlope * static_cast<float>(raw) + m_rescaleIntercept;
+
+		if (hu < -400) air++;
+		else if (hu < 200) soft++;
+		else if (hu < 1500) bone++;
+		else if (hu < 3000) teeth++;
+		else other++;
+	}
+
+	std::cout << "\n=== Tissue Distribution (Valid Voxels Only) ===" << std::endl;
+	std::cout << "Air (<-400): " << (air * 100.0f / validVoxels) << "%" << std::endl;
+	std::cout << "Soft Tissue (-400~200): " << (soft * 100.0f / validVoxels) << "%" << std::endl;
+	std::cout << "Bone (200~1500): " << (bone * 100.0f / validVoxels) << "%" << std::endl;
+	std::cout << "Teeth (1500~3000): " << (teeth * 100.0f / validVoxels) << "%" << std::endl;
+	std::cout << "Other (3000+): " << (other * 100.0f / validVoxels) << "%" << std::endl;
+}
 
 void FileReader::SliceIdxManage()
 {

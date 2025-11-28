@@ -61,32 +61,6 @@ float4 TransferFunction(float density)
 	return float4(0.98, 0.95, 0.92, 2.2);  // 2.0 → 2.2
 }
 
-
-
-//// ========== 2. Transfer Function (30줄) ==========
-//float4 TransferFunctionHU(float hu)
-//{
-//	if (hu < -400.0) return float4(0, 0, 0, 0);
-//
-//	if (hu < 200.0) {
-//		float t = (hu + 400.0) / 600.0;
-//		return float4(0.6, 0.5, 0.4, t * 0.05);
-//	}
-//
-//	if (hu < 700.0) {
-//		float t = (hu - 200.0) / 500.0;
-//		return float4(0.85, 0.75, 0.65, 0.1 + t * 0.3);
-//	}
-//
-//	if (hu < 1300.0) {
-//		float t = (hu - 700.0) / 600.0;
-//		return float4(0.92, 0.88, 0.82, 0.5 + t * 0.6);
-//	}
-//
-//	float t = saturate((hu - 1300.0) / 1700.0);
-//	return float4(0.98, 0.95, 0.90, 1.2 + t * 0.8);
-//}
-
 float4 main(float4 pos : SV_POSITION, float2 uv : TEXCOORD0) : SV_Target
 {
 	float2 offset = float2(0.0, 0.0);
@@ -176,34 +150,45 @@ float4 main(float4 pos : SV_POSITION, float2 uv : TEXCOORD0) : SV_Target
 
 		// 1) Raw 기반 density
 		float raw = volumeTex.SampleLevel(samp, uvw, 0).r;
-		float density = raw / 255.0;    // TF 전용
+		//float density = raw / 255.0;    // TF 전용
 
 
-
+		// ⭐ 패딩 체크
+		if (raw > 60000.0) {
+			continue;  // 완전히 스킵
+		}
 
 
 		//// 2) DICOM HU 로 변환
 		float hu = raw * HuParams.x + HuParams.y;   // -1000 ~ 3000 같은 범위
 
+
+
+
+	//// ⭐ Raw를 4095배 해서 확인 (12bit)
+	//	float scaledRaw = raw * 4095.0;
+	//	return float4(scaledRaw / 4095.0, scaledRaw / 4095.0, scaledRaw / 4095.0, 1.0);
+
 		// 3) 윈도우/레벨 범위로 정규화 (0~1)
 		float huNorm = (hu - HuParams.z) / (HuParams.w - HuParams.z);
 		huNorm = saturate(huNorm);
 
+		// ⭐ 절대 HU 기준 (전체 범위 -1000~3000)
+		float tfCoord = saturate((hu + 1000.0f) / 4000.0f);
+
 		//// Transfer Function에서 색상/투명도 가져오기
 		//float4 tfValue = transferFunction.Sample(tfSampler, huNorm);
 
-		// ⭐ Transfer Function에서 색상/투명도 가져오기 (하나만 사용!)
-		float4 colorAlpha = transferFunction.Sample(tfSampler, huNorm);
-
+		//// ⭐ Transfer Function에서 색상/투명도 가져오기 (하나만 사용!)
+		//float4 colorAlpha = transferFunction.Sample(tfSampler, huNorm);
+		float4 colorAlpha = transferFunction.Sample(tfSampler, tfCoord);
 
 
 		// ⭐ Window로 알파만 조절 (조직 분리 유지)
 		float huInWindow = (hu - HuParams.z) / (HuParams.w - HuParams.z);
 		if (huInWindow < 0.0 || huInWindow > 1.0) {
-			colorAlpha.a *= 0.1;  // Window 밖은 투명하게
+			colorAlpha.a *= 0.05;  // Window 밖은 투명하게
 		}
-
-
 
 
 		// ⭐ 기존 TransferFunctionHU() 삭제 - tfValue 하나로 통일!
@@ -240,12 +225,12 @@ float4 main(float4 pos : SV_POSITION, float2 uv : TEXCOORD0) : SV_Target
 		float lambert = max(dot(N, L), 0.0);
 		float spec = pow(max(dot(N, H), 0.0), 48.0);  // 광택
 
-		float lighting = 0.45 + lambert * 0.75;
-
+	// ⭐ 조명을 훨씬 약하게
+		float lighting = 0.85 + lambert * 0.15;  // 0.7 + 0.3 → 0.85 + 0.15
 
 
 		colorAlpha.rgb *= lighting;
-		colorAlpha.rgb += spec * float3(0.2, 0.18, 0.15);  // 따뜻한 하이라이트
+		colorAlpha.rgb += spec * float3(0.12, 0.10, 0.08);  // 하이라이트도 약하게
 
 
 		float3 color = colorAlpha.rgb;
@@ -271,7 +256,7 @@ float4 main(float4 pos : SV_POSITION, float2 uv : TEXCOORD0) : SV_Target
 	acc.rgb = pow(saturate(acc.rgb), 1.0 / 2.2);
 	acc.rgb *= 0.95;  // 1.15 → 0.95 (밝기 줄임)
 	acc.rgb = (acc.rgb - 0.5) * 1.3 + 0.5;  // 콘트라스트 더 높임
-	acc.rgb *= float3(1.0, 0.95, 0.88);
+	//acc.rgb *= float3(1.0, 0.95, 0.88);
 	acc.rgb = saturate(acc.rgb);
 
 

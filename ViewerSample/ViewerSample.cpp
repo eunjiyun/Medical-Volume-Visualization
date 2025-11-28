@@ -177,36 +177,61 @@ void ViewerSample::onBtnColorInvertClicked() {
 //}
 
 
+//void ViewerSample::huValueChanged(int value)
+//{
+//	// ✅ 올바른 변환: 0~4000 → -1000~3000 HU
+//	//float huCenter = -1000.0f + (value * 1.0f);
+//
+//	float huCenter = (float)value *4;
+//	ui->huValueLabel->setText(QString::number((int)huCenter));
+//
+//	if (!m_pScene || !m_pScene->fileReader) return;
+//
+//	float windowWidth = 2000.0f;  // 고정 또는 별도 슬라이더
+//
+//	//// TF 재초기화
+//	//m_pScene->GetTransferFunction()->Initialize(
+//	//	huCenter, windowWidth, m_pScene->m_pDevice
+//	//);
+//
+//	m_pScene->fileReader->volWC = huCenter;
+//
+//	//// CB 업데이트
+//	//float minHU = huCenter - windowWidth / 2.0f;
+//	//float maxHU = huCenter + windowWidth / 2.0f;
+//
+//	//m_pScene->cb.HuParams.x = m_pScene->fileReader->m_rescaleSlope;
+//	//m_pScene->cb.HuParams.y = m_pScene->fileReader->m_rescaleIntercept;
+//	//m_pScene->cb.HuParams.z = minHU;
+//	//m_pScene->cb.HuParams.w = maxHU;
+//
+//	//qDebug() << "HU Center:" << huCenter
+//	//	<< "Range:" << minHU << "~" << maxHU;
+//
+//	update();
+//}
+
 void ViewerSample::huValueChanged(int value)
 {
-	// ✅ 올바른 변환: 0~4000 → -1000~3000 HU
-	//float huCenter = -1000.0f + (value * 1.0f);
+	//float huCenter = (float)value;  // ✅ 곱하기 없음!
+	//ui->huValueLabel->setText(QString::number((int)huCenter));
+
+	//if (!m_pScene || !m_pScene->fileReader) return;
+
+	//m_pScene->fileReader->volWC = huCenter;
+	//m_pScene->fileReader->volWW = 1500.0f;  // Width 줄임
+
+	//update();
+
 
 	float huCenter = (float)value;
 	ui->huValueLabel->setText(QString::number((int)huCenter));
 
 	if (!m_pScene || !m_pScene->fileReader) return;
 
-	float windowWidth = 2000.0f;  // 고정 또는 별도 슬라이더
-
-	// TF 재초기화
-	m_pScene->GetTransferFunction()->Initialize(
-		huCenter, windowWidth, m_pScene->m_pDevice
-	);
-
+	// ⭐ Width를 늘림
 	m_pScene->fileReader->volWC = huCenter;
-
-	//// CB 업데이트
-	//float minHU = huCenter - windowWidth / 2.0f;
-	//float maxHU = huCenter + windowWidth / 2.0f;
-
-	//m_pScene->cb.HuParams.x = m_pScene->fileReader->m_rescaleSlope;
-	//m_pScene->cb.HuParams.y = m_pScene->fileReader->m_rescaleIntercept;
-	//m_pScene->cb.HuParams.z = minHU;
-	//m_pScene->cb.HuParams.w = maxHU;
-
-	//qDebug() << "HU Center:" << huCenter
-	//	<< "Range:" << minHU << "~" << maxHU;
+	m_pScene->fileReader->volWW = 3000.0f;  // 1500 → 3000
 
 	update();
 }
@@ -546,20 +571,26 @@ void ViewerSample::init(bool success)
 
 	//loadDicomData();
 
-	ui->huSlider->setMinimum(0);
-	ui->huSlider->setMaximum(4000);
-	ui->huSlider->setValue(2000);//2114
-	// HU 슬라이더 초기 설정
-	//ui->huSlider->setInvertedAppearance(true);  // ⭐ UI 방향 반대로
-	//ui->huSlider->setInvertedControls(true);
+//	ui->huSlider->setMinimum(0);
+//	ui->huSlider->setMaximum(4000);
+//	ui->huSlider->setValue(2000);//2114
+//	// HU 슬라이더 초기 설정
+//	//ui->huSlider->setInvertedAppearance(true);  // ⭐ UI 방향 반대로
+//	//ui->huSlider->setInvertedControls(true);
+//
+////	m_pScene->GetTransferFunction()->SetHUWindow(0, 0, m_pScene->m_pDevice);
+//	//ui->huSlider->setMinimum(-1024);  // 최소 HU (공기)
+//	//ui->huSlider->setMaximum(3000);   // 최대 HU (치아/금속)
+//
+//	//ui->huSlider->setMinimum(-1024);  // 최소 HU (공기)
+//	//ui->huSlider->setMaximum(6000);   // 최대 HU (치아/금속)
+//	//ui->huSlider->setValue(2000);     // 초기값: 디폴트 WC
 
-//	m_pScene->GetTransferFunction()->SetHUWindow(0, 0, m_pScene->m_pDevice);
-	//ui->huSlider->setMinimum(-1024);  // 최소 HU (공기)
-	//ui->huSlider->setMaximum(3000);   // 최대 HU (치아/금속)
 
-	//ui->huSlider->setMinimum(-1024);  // 최소 HU (공기)
-	//ui->huSlider->setMaximum(6000);   // 최대 HU (치아/금속)
-	//ui->huSlider->setValue(2000);     // 초기값: 디폴트 WC
+	// ViewerSample 초기화
+	ui->huSlider->setMinimum(-1000);
+	ui->huSlider->setMaximum(3000);
+	ui->huSlider->setValue(1000);  // 뼈 중심
 
 
 	//brightness
