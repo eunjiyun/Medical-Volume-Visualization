@@ -113,6 +113,7 @@ public:
 
 	// 📌 1. 볼륨 크기만큼 16비트 배열 확보
 	std::vector<uint16_t> normalizedU16Data/*(m_width * m_height * m_depth)*/;
+	std::vector<float> floatData;
 
 	bool NormalizeVolumeU16(
 		const std::vector<uint16_t>& rawVolume,

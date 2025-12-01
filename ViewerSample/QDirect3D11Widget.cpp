@@ -981,7 +981,7 @@ void QDirect3D11Widget::CreateTexture3D()
 		fileReader->m_rescaleIntercept,
 		windowMinHU, windowMaxHU
 	);
-
+	//fileReader->floatData(m_volumeData.size());
 
 	
 
@@ -1002,9 +1002,9 @@ void QDirect3D11Widget::CreateTexture3D()
 	td.MipLevels = 1;
 	// ✔ 권장: R16_FLOAT (샘플링/필터링/호환성 안전)
 	//   R16_UNORM도 가능하지만 드라이버/샘플링측 이슈 줄이려면 FLOAT이 편합니다.
-	td.Format = DXGI_FORMAT_R16_FLOAT;
+	//td.Format = DXGI_FORMAT_R16_FLOAT;
 	//td.Format = DXGI_FORMAT_R16_UNORM;
-	//td.Format = DXGI_FORMAT_R32_FLOAT;
+	td.Format = DXGI_FORMAT_R32_FLOAT;
 
 	//td.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
 	td.Usage = D3D11_USAGE_DEFAULT;
@@ -1012,9 +1012,9 @@ void QDirect3D11Widget::CreateTexture3D()
 
 	// 3) 초기 데이터(피치/슬라이스피치) — "바이트" 기준
 	D3D11_SUBRESOURCE_DATA init{};
-	init.pSysMem = fileReader->normalizedU16Data.data();
-	init.SysMemPitch = w * sizeof(uint16_t);                  // 한 줄(바이트)
-	init.SysMemSlicePitch = w * h * sizeof(uint16_t) /** 4*/;       // 한 장(바이트)
+	init.pSysMem = fileReader->floatData.data();
+	init.SysMemPitch = w * sizeof(float);                  // 한 줄(바이트)
+	init.SysMemSlicePitch = w * h * sizeof(float) /** 4*/;       // 한 장(바이트)
 
 	// 4) 생성
 	Microsoft::WRL::ComPtr<ID3D11Texture3D> tex;

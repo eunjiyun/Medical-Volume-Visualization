@@ -136,131 +136,235 @@ float4 main(float4 pos : SV_POSITION, float2 uv : TEXCOORD0) : SV_Target
 
 	int sampleCount = 0;
 
-	[loop]
-	for (int i = 0; i < MaxSteps; i++)
-	{
-		float3 currentPos = startPos + rayDir * (i * stepSize);
-		float3 uvw = (currentPos - boxMin) / (boxMax - boxMin);
+//	[loop]
+//	for (int i = 0; i < MaxSteps; i++)
+//	{
+//		float3 currentPos = startPos + rayDir * (i * stepSize);
+//		float3 uvw = (currentPos - boxMin) / (boxMax - boxMin);
+//
+//		uvw.y = 1.0 - uvw.y;  // ✅ 추가
+//
+//		if (any(uvw < 0.0) || any(uvw > 1.0))
+//			break;
+//
+//
+//		// 1) Raw 기반 density
+//		float raw = volumeTex.SampleLevel(samp, uvw, 0).r;
+//		//float density = raw / 255.0;    // TF 전용
+//
+//
+//		// ⭐ 패딩 체크
+//		if (raw > 60000.0 || raw < 1.0) {
+//			continue;  // 완전히 스킵
+//		}
+//
+//
+//		//// 2) DICOM HU 로 변환
+//		float hu = raw * HuParams.x + HuParams.y;   // -1000 ~ 3000 같은 범위
+//
+//
+//
+//
+//	//// ⭐ Raw를 4095배 해서 확인 (12bit)
+//	//	float scaledRaw = raw * 4095.0;
+//	//	return float4(scaledRaw / 4095.0, scaledRaw / 4095.0, scaledRaw / 4095.0, 1.0);
+//
+//		// 3) 윈도우/레벨 범위로 정규화 (0~1)
+//		float huNorm = (hu - HuParams.z) / (HuParams.w - HuParams.z);
+//		if (huNorm < 0.0 || huNorm > 1.0) {
+//			continue;  // ✅ 완전히 스킵!
+//		}
+//
+//		huNorm = saturate(huNorm);
+//
+//		// ⭐ 절대 HU 기준 (전체 범위 -1000~3000)
+//		float tfCoord = saturate((hu + 1000.0f) / 4000.0f);
+//
+//		//// Transfer Function에서 색상/투명도 가져오기
+//		//float4 tfValue = transferFunction.Sample(tfSampler, huNorm);
+//
+//		//// ⭐ Transfer Function에서 색상/투명도 가져오기 (하나만 사용!)
+//		//float4 colorAlpha = transferFunction.Sample(tfSampler, huNorm);
+//		float4 colorAlpha = transferFunction.Sample(tfSampler, tfCoord);
+//
+//
+//		// ⭐ Window로 알파만 조절 (조직 분리 유지)
+//		float huInWindow = (hu - HuParams.z) / (HuParams.w - HuParams.z);
+//		if (huInWindow < 0.0 || huInWindow > 1.0) {
+//			colorAlpha.a *= 0.05;  // Window 밖은 투명하게
+//		}
+//
+//
+//		// ⭐ 기존 TransferFunctionHU() 삭제 - tfValue 하나로 통일!
+//
+//		if (colorAlpha.a < 0.001)
+//			continue;
+//
+//		//float4 colorAlpha = TransferFunctionHU(hu/*, huNorm*/);
+//
+//
+//
+//		// 3) eps 계산
+//		float3 eps = float3(1.0 / Voxel.x, 1.0 / Voxel.y, 1.0 / Voxel.z);
+//
+//		// 4) raw 기반 gradient
+//		float dx =
+//			volumeTex.SampleLevel(samp, uvw + float3(eps.x, 0, 0), 0).r -
+//			volumeTex.SampleLevel(samp, uvw - float3(eps.x, 0, 0), 0).r;
+//
+//		float dy =
+//			volumeTex.SampleLevel(samp, uvw + float3(0, eps.y, 0), 0).r -
+//			volumeTex.SampleLevel(samp, uvw - float3(0, eps.y, 0), 0).r;
+//
+//		float dz =
+//			volumeTex.SampleLevel(samp, uvw + float3(0, 0, eps.z), 0).r -
+//			volumeTex.SampleLevel(samp, uvw - float3(0, 0, eps.z), 0).r;
+//
+//		// 조명 계산 부분에서
+//		float3 N = normalize(float3(dx, dy, dz) + 1e-6);
+//		float3 L = normalize(float3(0.5, 0.7, -0.5));
+//		float3 V = -rayDir;  // 뷰 방향
+//		float3 H = normalize(L + V);  // 하프 벡터
+//
+//		float lambert = max(dot(N, L), 0.0);
+//		float spec = pow(max(dot(N, H), 0.0), 48.0);  // 광택
+//
+//	// ⭐ 조명을 훨씬 약하게
+//		float lighting = 0.85 + lambert * 0.15;  // 0.7 + 0.3 → 0.85 + 0.15
+//
+//
+//		colorAlpha.rgb *= lighting;
+//		colorAlpha.rgb += spec * float3(0.12, 0.10, 0.08);  // 하이라이트도 약하게
+//
+//
+//		float3 color = colorAlpha.rgb;
+//		float alpha = colorAlpha.a * stepSize * 8.0;
+//
+//
+//		if (alpha > 0.001)
+//		{
+//			acc.rgb += (1.0 - acc.a) * alpha * color;
+//			acc.a += (1.0 - acc.a) * alpha;
+//
+//			if (acc.a >= 0.95)
+//				break;
+//		}
+//	}
+//
+//
+//	// ✅ 감마 보정만 (선택)
+//	acc.rgb = pow(saturate(acc.rgb), 1.0 / 2.2);
+//
+//
+//// 후처리 부분 수정
+//	acc.rgb = pow(saturate(acc.rgb), 1.0 / 2.2);
+//	acc.rgb *= 0.95;  // 1.15 → 0.95 (밝기 줄임)
+//	acc.rgb = (acc.rgb - 0.5) * 1.3 + 0.5;  // 콘트라스트 더 높임
+//	//acc.rgb *= float3(1.0, 0.95, 0.88);
+//	acc.rgb = saturate(acc.rgb);
+//
+//
+//	return float4(acc.rgb, 1.0);
 
-		uvw.y = 1.0 - uvw.y;  // ✅ 추가
-
-		if (any(uvw < 0.0) || any(uvw > 1.0))
-			break;
 
 
-		// 1) Raw 기반 density
-		float raw = volumeTex.SampleLevel(samp, uvw, 0).r;
-		//float density = raw / 255.0;    // TF 전용
+[loop]
+for (int i = 0; i < MaxSteps; i++)
+{
+	float3 currentPos = startPos + rayDir * (i * stepSize);
+	float3 uvw = (currentPos - boxMin) / (boxMax - boxMin);
+	uvw.y = 1.0 - uvw.y;
 
+	if (any(uvw < 0.0) || any(uvw > 1.0))
+		break;
 
-		// ⭐ 패딩 체크
-		if (raw > 60000.0) {
-			continue;  // 완전히 스킵
-		}
+	float raw = volumeTex.SampleLevel(samp, uvw, 0).r;
 
+	if (raw < 1.0) continue;  // 패딩
 
-		//// 2) DICOM HU 로 변환
-		float hu = raw * HuParams.x + HuParams.y;   // -1000 ~ 3000 같은 범위
+	float hu = raw * HuParams.x + HuParams.y;  // raw * 1.0 - 1024
 
-
-
-
-	//// ⭐ Raw를 4095배 해서 확인 (12bit)
-	//	float scaledRaw = raw * 4095.0;
-	//	return float4(scaledRaw / 4095.0, scaledRaw / 4095.0, scaledRaw / 4095.0, 1.0);
-
-		// 3) 윈도우/레벨 범위로 정규화 (0~1)
-		float huNorm = (hu - HuParams.z) / (HuParams.w - HuParams.z);
-		huNorm = saturate(huNorm);
-
-		// ⭐ 절대 HU 기준 (전체 범위 -1000~3000)
-		float tfCoord = saturate((hu + 1000.0f) / 4000.0f);
-
-		//// Transfer Function에서 색상/투명도 가져오기
-		//float4 tfValue = transferFunction.Sample(tfSampler, huNorm);
-
-		//// ⭐ Transfer Function에서 색상/투명도 가져오기 (하나만 사용!)
-		//float4 colorAlpha = transferFunction.Sample(tfSampler, huNorm);
-		float4 colorAlpha = transferFunction.Sample(tfSampler, tfCoord);
-
-
-		// ⭐ Window로 알파만 조절 (조직 분리 유지)
-		float huInWindow = (hu - HuParams.z) / (HuParams.w - HuParams.z);
-		if (huInWindow < 0.0 || huInWindow > 1.0) {
-			colorAlpha.a *= 0.05;  // Window 밖은 투명하게
-		}
-
-
-		// ⭐ 기존 TransferFunctionHU() 삭제 - tfValue 하나로 통일!
-
-		if (colorAlpha.a < 0.001)
-			continue;
-
-		//float4 colorAlpha = TransferFunctionHU(hu/*, huNorm*/);
-
-
-
-		// 3) eps 계산
-		float3 eps = float3(1.0 / Voxel.x, 1.0 / Voxel.y, 1.0 / Voxel.z);
-
-		// 4) raw 기반 gradient
-		float dx =
-			volumeTex.SampleLevel(samp, uvw + float3(eps.x, 0, 0), 0).r -
-			volumeTex.SampleLevel(samp, uvw - float3(eps.x, 0, 0), 0).r;
-
-		float dy =
-			volumeTex.SampleLevel(samp, uvw + float3(0, eps.y, 0), 0).r -
-			volumeTex.SampleLevel(samp, uvw - float3(0, eps.y, 0), 0).r;
-
-		float dz =
-			volumeTex.SampleLevel(samp, uvw + float3(0, 0, eps.z), 0).r -
-			volumeTex.SampleLevel(samp, uvw - float3(0, 0, eps.z), 0).r;
-
-		// 조명 계산 부분에서
-		float3 N = normalize(float3(dx, dy, dz) + 1e-6);
-		float3 L = normalize(float3(0.5, 0.7, -0.5));
-		float3 V = -rayDir;  // 뷰 방향
-		float3 H = normalize(L + V);  // 하프 벡터
-
-		float lambert = max(dot(N, L), 0.0);
-		float spec = pow(max(dot(N, H), 0.0), 48.0);  // 광택
-
-	// ⭐ 조명을 훨씬 약하게
-		float lighting = 0.85 + lambert * 0.15;  // 0.7 + 0.3 → 0.85 + 0.15
-
-
-		colorAlpha.rgb *= lighting;
-		colorAlpha.rgb += spec * float3(0.12, 0.10, 0.08);  // 하이라이트도 약하게
-
-
-		float3 color = colorAlpha.rgb;
-		float alpha = colorAlpha.a * stepSize * 8.0;
-
-
-		if (alpha > 0.001)
-		{
-			acc.rgb += (1.0 - acc.a) * alpha * color;
-			acc.a += (1.0 - acc.a) * alpha;
-
-			if (acc.a >= 0.95)
-				break;
-		}
+	if (hu < HuParams.z || hu > HuParams.w) {
+		continue;
 	}
 
+	float4 colorAlpha;
 
-	// ✅ 감마 보정만 (선택)
-	acc.rgb = pow(saturate(acc.rgb), 1.0 / 2.2);
+	// 조직 분류 (그대로)
+	if (hu < -400.0) {
+		colorAlpha = float4(0, 0, 0, 0);
+	}
+	else if (hu < 100.0) {
+		float t = saturate((hu + 400.0) / 500.0);
+		colorAlpha = float4(0.50, 0.40, 0.30, t * 0.10);
+	}
+	else if (hu < 500.0) {
+		float t = (hu - 100.0) / 400.0;
+		colorAlpha = float4(0.70, 0.58, 0.46, 0.10 + t * 0.40);
+	}
+	else if (hu < 1000.0) {
+		float t = (hu - 500.0) / 500.0;
+		colorAlpha = float4(0.84, 0.72, 0.60, 0.50 + t * 0.40);
+	}
+	else if (hu < 1500.0) {
+		float t = (hu - 1000.0) / 500.0;
+		colorAlpha = float4(0.91, 0.84, 0.75, 0.90 + t * 0.50);
+	}
+	else if (hu < 2000.0) {
+		float t = (hu - 1500.0) / 500.0;
+		colorAlpha = float4(0.95, 0.90, 0.84, 1.40 + t * 0.60);
+	}
+	else if (hu < 2500.0) {
+		float t = (hu - 2000.0) / 500.0;
+		colorAlpha = float4(0.97 + t * 0.03, 0.94 + t * 0.06, 0.88 + t * 0.12, 2.00 + t * 0.80);
+	}
+	else {
+		colorAlpha = float4(1.0, 1.0, 1.0, 3.20);
+	}
 
+	if (colorAlpha.a < 0.001)
+		continue;
 
-// 후처리 부분 수정
-	acc.rgb = pow(saturate(acc.rgb), 1.0 / 2.2);
-	acc.rgb *= 0.95;  // 1.15 → 0.95 (밝기 줄임)
-	acc.rgb = (acc.rgb - 0.5) * 1.3 + 0.5;  // 콘트라스트 더 높임
-	//acc.rgb *= float3(1.0, 0.95, 0.88);
-	acc.rgb = saturate(acc.rgb);
+	// 조명 계산
+	float3 eps = float3(1.0 / Voxel.x, 1.0 / Voxel.y, 1.0 / Voxel.z);
 
+	float dx = volumeTex.SampleLevel(samp, uvw + float3(eps.x, 0, 0), 0).r -
+		volumeTex.SampleLevel(samp, uvw - float3(eps.x, 0, 0), 0).r;
+	float dy = volumeTex.SampleLevel(samp, uvw + float3(0, eps.y, 0), 0).r -
+		volumeTex.SampleLevel(samp, uvw - float3(0, eps.y, 0), 0).r;
+	float dz = volumeTex.SampleLevel(samp, uvw + float3(0, 0, eps.z), 0).r -
+		volumeTex.SampleLevel(samp, uvw - float3(0, 0, eps.z), 0).r;
 
-	return float4(acc.rgb, 1.0);
+	float3 N = normalize(float3(dx, dy, dz) + 1e-6);
+	float3 L = normalize(float3(0.5, 0.7, -0.5));
+	float3 V = -rayDir;
+	float3 H = normalize(L + V);
+
+	float lambert = max(dot(N, L), 0.0);
+	float spec = pow(max(dot(N, H), 0.0), 48.0);
+
+	float lighting = 0.88 + lambert * 0.12;
+
+	colorAlpha.rgb *= lighting;
+	colorAlpha.rgb += spec * float3(0.08, 0.07, 0.06);
+
+	float3 color = colorAlpha.rgb;
+	float alpha = colorAlpha.a * stepSize * 8.0;
+
+	if (alpha > 0.001) {
+		acc.rgb += (1.0 - acc.a) * alpha * color;
+		acc.a += (1.0 - acc.a) * alpha;
+		if (acc.a >= 0.95) break;
+	}
+}
+
+// 후처리
+acc.rgb = pow(saturate(acc.rgb), 1.0 / 2.2);
+acc.rgb *= 1.0;
+acc.rgb = (acc.rgb - 0.5) * 1.4 + 0.5;
+acc.rgb = saturate(acc.rgb);
+
+return float4(acc.rgb, 1.0);
 
 }
 

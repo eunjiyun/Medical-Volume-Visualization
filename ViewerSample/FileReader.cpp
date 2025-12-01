@@ -556,24 +556,31 @@ bool FileReader::NormalizeVolumeU16(
 	if (rawVolume.empty()) return false;
 	outVolume.resize(rawVolume.size());
 
+	floatData.resize(rawVolume.size());
+
 	for (size_t i = 0; i < rawVolume.size(); ++i)
 	{
 		// ⭐ 패딩 값 체크
 		if (rawVolume[i] > 60000) {
-			outVolume[i] = 65535;  // ✅ 최대값으로 (셰이더에서 특수 처리)
+			//outVolume[i] = 65535;  // ✅ 최대값으로 (셰이더에서 특수 처리)
+			floatData[i] = 0.0f;  // ✅ 패딩 → 0
 			continue;
 		}
+		else{
+			//floatData[i] = rawVolume[i];  // Raw 값 유지
+			floatData[i] = static_cast<float>(rawVolume[i]);
+		}
 
-		// 1️⃣ 원본 픽셀을 HU 단위로 변환
-		float hu = rescaleSlope * static_cast<float>(rawVolume[i]) + rescaleIntercept;
+		//// 1️⃣ 원본 픽셀을 HU 단위로 변환
+		//float hu = rescaleSlope * static_cast<float>(rawVolume[i]) + rescaleIntercept;
 
-		// 2️⃣ 윈도우 범위 클램프
-		if (hu < windowMinHU) hu = windowMinHU;
-		if (hu > windowMaxHU) hu = windowMaxHU;
+		//// 2️⃣ 윈도우 범위 클램프
+		//if (hu < windowMinHU) hu = windowMinHU;
+		//if (hu > windowMaxHU) hu = windowMaxHU;
 
-		// 3️⃣ 0~1 정규화 후 0~65535로 스케일
-		float norm = (hu - windowMinHU) / (windowMaxHU - windowMinHU);
-		outVolume[i] = static_cast<uint16_t>(norm * 65535.0f);
+		//// 3️⃣ 0~1 정규화 후 0~65535로 스케일
+		//float norm = (hu - windowMinHU) / (windowMaxHU - windowMinHU);
+		//outVolume[i] = static_cast<uint16_t>(norm * 65535.0f);
 	}
 
 	return true;
