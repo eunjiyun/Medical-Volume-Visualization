@@ -231,7 +231,12 @@ void ViewerSample::huValueChanged(int value)
 
 	// ⭐ Width를 늘림
 	m_pScene->fileReader->volWC = huCenter;
-	m_pScene->fileReader->volWW = 3000.0f;  // 1500 → 3000
+	// ⭐ HU 값을 0~1로 정규화
+	float t = (huCenter + 1000.0f) / 4000.0f;  // -1000~3000 → 0~1
+	// ⭐ Window Width를 역으로 조정 (HU 높을수록 좁게)
+	float windowWidth = 4000.0f - t * 3000.0f;  // 4000 → 1000
+
+	m_pScene->fileReader->volWW = windowWidth;  // 1500 → 3000
 
 	update();
 }

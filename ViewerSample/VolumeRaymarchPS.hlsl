@@ -273,57 +273,64 @@ for (int i = 0; i < MaxSteps; i++)
 {
 	float3 currentPos = startPos + rayDir * (i * stepSize);
 	float3 uvw = (currentPos - boxMin) / (boxMax - boxMin);
-	uvw.y = 1.0 - uvw.y;
+
+	uvw.y = 1.0 - uvw.y;  // ✅ 추가
 
 	if (any(uvw < 0.0) || any(uvw > 1.0))
 		break;
 
+
+	// 1) Raw 기반 density
 	float raw = volumeTex.SampleLevel(samp, uvw, 0).r;
+	//float density = raw / 255.0;    // TF 전용
 
-	if (raw < 1.0) continue;  // 패딩
 
-	float hu = raw * HuParams.x + HuParams.y;  // raw * 1.0 - 1024
-
-	if (hu < HuParams.z || hu > HuParams.w) {
-		continue;
+	// ⭐ 패딩 체크
+	if (raw > 60000.0) {
+		continue;  // 완전히 스킵
 	}
 
-	float4 colorAlpha;
 
-	// 조직 분류 (그대로)
-	if (hu < -400.0) {
-		colorAlpha = float4(0, 0, 0, 0);
+	//// 2) DICOM HU 로 변환
+	float hu = raw * HuParams.x + HuParams.y;   // -1000 ~ 3000 같은 범위
+
+
+
+
+//// ⭐ Raw를 4095배 해서 확인 (12bit)
+//	float scaledRaw = raw * 4095.0;
+//	return float4(scaledRaw / 4095.0, scaledRaw / 4095.0, scaledRaw / 4095.0, 1.0);
+
+	// 3) 윈도우/레벨 범위로 정규화 (0~1)
+	float huNorm = (hu - HuParams.z) / (HuParams.w - HuParams.z);
+	huNorm = saturate(huNorm);
+
+	// ⭐ 절대 HU 기준 (전체 범위 -1000~3000)
+	float tfCoord = saturate((hu + 1000.0f) / 4000.0f);
+
+	//// Transfer Function에서 색상/투명도 가져오기
+	//float4 tfValue = transferFunction.Sample(tfSampler, huNorm);
+
+	//// ⭐ Transfer Function에서 색상/투명도 가져오기 (하나만 사용!)
+	//float4 colorAlpha = transferFunction.Sample(tfSampler, huNorm);
+	float4 colorAlpha = transferFunction.Sample(tfSampler, tfCoord);
+
+
+	// ⭐ Window로 알파만 조절 (조직 분리 유지)
+	float huInWindow = (hu - HuParams.z) / (HuParams.w - HuParams.z);
+	if (huInWindow < 0.0 || huInWindow > 1.0) {
+		colorAlpha.a *= 0.05;  // Window 밖은 투명하게
 	}
-	else if (hu < 100.0) {
-		float t = saturate((hu + 400.0) / 500.0);
-		colorAlpha = float4(0.50, 0.40, 0.30, t * 0.10);
-	}
-	else if (hu < 500.0) {
-		float t = (hu - 100.0) / 400.0;
-		colorAlpha = float4(0.70, 0.58, 0.46, 0.10 + t * 0.40);
-	}
-	else if (hu < 1000.0) {
-		float t = (hu - 500.0) / 500.0;
-		colorAlpha = float4(0.84, 0.72, 0.60, 0.50 + t * 0.40);
-	}
-	else if (hu < 1500.0) {
-		float t = (hu - 1000.0) / 500.0;
-		colorAlpha = float4(0.91, 0.84, 0.75, 0.90 + t * 0.50);
-	}
-	else if (hu < 2000.0) {
-		float t = (hu - 1500.0) / 500.0;
-		colorAlpha = float4(0.95, 0.90, 0.84, 1.40 + t * 0.60);
-	}
-	else if (hu < 2500.0) {
-		float t = (hu - 2000.0) / 500.0;
-		colorAlpha = float4(0.97 + t * 0.03, 0.94 + t * 0.06, 0.88 + t * 0.12, 2.00 + t * 0.80);
-	}
-	else {
-		colorAlpha = float4(1.0, 1.0, 1.0, 3.20);
-	}
+
+
+	// ⭐ 기존 TransferFunctionHU() 삭제 - tfValue 하나로 통일!
 
 	if (colorAlpha.a < 0.001)
 		continue;
+
+	//float4 colorAlpha = TransferFunctionHU(hu/*, huNorm*/);
+
+
 
 	// 조명 계산
 	float3 eps = float3(1.0 / Voxel.x, 1.0 / Voxel.y, 1.0 / Voxel.z);
