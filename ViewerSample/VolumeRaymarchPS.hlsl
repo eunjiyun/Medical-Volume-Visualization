@@ -178,11 +178,11 @@ for (int i = 0; i < MaxSteps; i++)
 	//float4 colorAlpha = transferFunction.Sample(tfSampler, tfCoord);
 
 
-	//// ⭐ Window로 알파만 조절 (조직 분리 유지)
-	//float huInWindow = (hu - HuParams.z) / (HuParams.w - HuParams.z);
-	//if (huInWindow < 0.0 || huInWindow > 1.0) {
-	//	colorAlpha.a *= 0.05;  // Window 밖은 투명하게
-	//}
+	// ⭐ Window로 알파만 조절 (조직 분리 유지)
+	float huInWindow = (hu - HuParams.z) / (HuParams.w - HuParams.z);
+	if (huInWindow < 0.0 || huInWindow > 1.0) {
+		colorAlpha.a *= 0.05;  // Window 밖은 투명하게
+	}
 
 
 	//// 뼈/치아 제거: HU가 300 이상이면 완전 투명
@@ -211,27 +211,27 @@ for (int i = 0; i < MaxSteps; i++)
 		volumeTex.SampleLevel(samp, uvw - float3(0, 0, eps.z), 0).r;
 
 	float3 N = normalize(float3(dx, dy, dz) + 1e-6);
-	float gradMag = length(float3(dx, dy, dz));
+	//float gradMag = length(float3(dx, dy, dz));
 
-	//colorAlpha.a *= saturate(gradMag * 50.0);  // ⭐ 이 한 줄!
+	////colorAlpha.a *= saturate(gradMag * 50.0);  // ⭐ 이 한 줄!
 
-	//// ✅ 대신 이렇게!
+	////// ✅ 대신 이렇게!
+	////float gradientOpacity = saturate(gradMag * 30.0);
+	////colorAlpha.a *= (0.3 + gradientOpacity * 0.7);  // 최소 30%, 최대 100%
+
+	//// 기존
 	//float gradientOpacity = saturate(gradMag * 30.0);
-	//colorAlpha.a *= (0.3 + gradientOpacity * 0.7);  // 최소 30%, 최대 100%
+	//colorAlpha.a *= (0.3 + gradientOpacity * 0.7);
 
-	// 기존
-	float gradientOpacity = saturate(gradMag * 30.0);
-	colorAlpha.a *= (0.3 + gradientOpacity * 0.7);
+	//// 디버그: 연조직 확인용 최소 알파 높이기
+	//colorAlpha.a *= 1.0; // 또는 0.8 이상으로 고정해서 쌓이게
 
-	// 디버그: 연조직 확인용 최소 알파 높이기
-	colorAlpha.a *= 1.0; // 또는 0.8 이상으로 고정해서 쌓이게
-
-	//// ⭐ 경계 감지 및 강조
-	//if (gradMag > 0.02) {
-	//	// 경계를 어둡게 (입술/콧구멍처럼)
-	//	colorAlpha.rgb *= 0.4;  // 60% 어둡게
-	//	colorAlpha.a *= 1.5;    // 더 불투명
-	//}
+	////// ⭐ 경계 감지 및 강조
+	////if (gradMag > 0.02) {
+	////	// 경계를 어둡게 (입술/콧구멍처럼)
+	////	colorAlpha.rgb *= 0.4;  // 60% 어둡게
+	////	colorAlpha.a *= 1.5;    // 더 불투명
+	////}
 
 
 	float3 L = normalize(float3(0.5, 0.7, -0.5));
@@ -241,11 +241,11 @@ for (int i = 0; i < MaxSteps; i++)
 	float lambert = max(dot(N, L), 0.0);
 	float spec = pow(max(dot(N, H), 0.0), 48.0);
 
-	//float lighting = 0.88 + lambert * 0.12;
+	float lighting = 0.88 + lambert * 0.12;
 	//colorAlpha.rgb *= lighting;
 
 	//float lighting = 0.4 + lambert * 0.6;  // 0.88 + 0.12 → 0.4 + 0.6 (더 강하게)
-	float lighting = 0.5 + lambert * 0.5;
+	//float lighting = 0.5 + lambert * 0.5;
 	colorAlpha.rgb *= lighting;
 
 
@@ -254,16 +254,16 @@ for (int i = 0; i < MaxSteps; i++)
 	float3 color = colorAlpha.rgb;
 	float alpha = colorAlpha.a * stepSize * 8.0;
 
-	/*if (alpha > 0.001) {
+	if (alpha > 0.001) {
 		acc.rgb += (1.0 - acc.a) * alpha * color;
 		acc.a += (1.0 - acc.a) * alpha;
 		if (acc.a >= 0.95) break;
-	}*/
+	}
 
-	acc.rgb += (1.0 - acc.a) * alpha * colorAlpha.rgb;
-	acc.a += (1.0 - acc.a) * alpha;
+	//acc.rgb += (1.0 - acc.a) * alpha * colorAlpha.rgb;
+	//acc.a += (1.0 - acc.a) * alpha;
 
-	if (acc.a >= 0.95) break;
+	//if (acc.a >= 0.95) break;
 }
 
 //// 후처리
