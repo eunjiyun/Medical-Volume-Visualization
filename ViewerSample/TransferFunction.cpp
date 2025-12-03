@@ -184,7 +184,11 @@ bool TransferFunction::Initialize(float center, float width, ID3D11Device* devic
 
 	m_controlPoints.push_back({ HUtoNorm(-400.0f), 0.0f, 0.0f, 0.0f, 0.0f });
 
-	// 연조직 - 더 어두운 갈색
+	// ⭐ 경계 영역 (-400 ~ -100) - 어두운 갈색 (입술/콧구멍!)
+m_controlPoints.push_back({ HUtoNorm(-300.0f), 0.25f, 0.18f, 0.12f, 4.0f });
+m_controlPoints.push_back({ HUtoNorm(-200.0f), 0.40f, 0.30f, 0.22f, 6.0f });
+
+	// 연조직 - 더 어두운 갈색s
 	m_controlPoints.push_back({ HUtoNorm(-100.0f), 0.35f, 0.25f, 0.15f, 20.00f });
 	m_controlPoints.push_back({ HUtoNorm(100.0f), 0.48f, 0.38f, 0.28f,25.00f });
 
