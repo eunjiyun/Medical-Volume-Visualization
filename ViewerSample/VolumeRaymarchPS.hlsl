@@ -191,10 +191,10 @@ for (int i = 0; i < MaxSteps; i++)
 	//}
 
 
-	// 뼈/치아 제거: HU가 300 이상이면 완전 투명
-	if (hu > 300.0) {
-		colorAlpha.a = 0.0;
-	}
+	//// 뼈/치아 제거: HU가 300 이상이면 완전 투명
+	//if (hu > 300.0) {
+	//	colorAlpha.a = 0.0;
+	//}
 
 	// ⭐ 기존 TransferFunctionHU() 삭제 - tfValue 하나로 통일!
 

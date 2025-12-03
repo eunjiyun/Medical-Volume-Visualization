@@ -1226,13 +1226,13 @@ void QDirect3D11Widget::FullScreenPassSet()
 		XMVectorGetZ(at)
 	);
 	//cb.Step = 0.001f;
-	//cb.MaxSteps = 512;
+	cb.MaxSteps = 512;
 	// ✅ 권장값
-	//cb.MaxSteps = 256;  // 또는 128~512 사이
+//	cb.MaxSteps = 256;  // 또는 128~512 사이
 	//cb.MaxSteps = 1024;
 
 	//cb.MaxSteps = 768;  // 512 → 768 (더 부드럽게)
-	cb.MaxSteps = 1536;
+	//cb.MaxSteps = 1536;
 
 	//cb.Opacity = 0.08f;
 	//cb.Opacity = 0.12f;  // 약간만 높여보세요 (0.08 → 0.12)

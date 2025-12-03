@@ -652,14 +652,14 @@ void ViewerSample::init(bool success)
 //	//ui->huSlider->setValue(2000);     // 초기값: 디폴트 WC
 
 
-	//// ViewerSample 초기화
-	//ui->huSlider->setMinimum(-1000);
-	//ui->huSlider->setMaximum(3000);
-	//ui->huSlider->setValue(1000);  // 뼈 중심
-
-    ui->huSlider->setMinimum(-2600);
-	ui->huSlider->setMaximum(4000);
+	// ViewerSample 초기화
+	ui->huSlider->setMinimum(-500);
+	ui->huSlider->setMaximum(3000);
 	ui->huSlider->setValue(1000);  // 뼈 중심
+
+ //   ui->huSlider->setMinimum(-500);
+	//ui->huSlider->setMaximum(3000);
+	//ui->huSlider->setValue(600);  // 뼈 중심
 
 
 	//brightness
