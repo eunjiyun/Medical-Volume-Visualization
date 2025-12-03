@@ -1225,7 +1225,7 @@ void QDirect3D11Widget::FullScreenPassSet()
 		XMVectorGetY(up),
 		XMVectorGetZ(at)
 	);
-	cb.Step = 0.001f;
+	//cb.Step = 0.001f;
 	//cb.MaxSteps = 512;
 	// ✅ 권장값
 	//cb.MaxSteps = 256;  // 또는 128~512 사이

@@ -1,5 +1,5 @@
 ﻿#include "FileReader.h"
-#include <dcmtk/dcmdata/dcfilefo.h>
+//#include <dcmtk/dcmdata/dcfilefo.h>
 #include <dcmtk/dcmdata/dcdeftag.h>
 #include <dcmtk/ofstd/ofcond.h>
 #include "dcmtk/ofstd/ofchrenc.h" // 문자셋 변환기
@@ -271,12 +271,12 @@ bool FileReader::LoadDICOMSeries(std::string folderPath, ID3D11Device* g_pd3dDev
 				OFString slopeStr, interceptStr;
 
 				// ⚙️ Rescale Slope (0028,1053)
-				if (dataset->findAndGetOFString(DCM_RescaleSlope, slopeStr).good()) {
+				/*if (dataset->findAndGetOFString(DCM_RescaleSlope, slopeStr).good()) {
 					m_rescaleSlope = std::stof(slopeStr.c_str());
 				}
-				else {
+				else {*/
 					m_rescaleSlope = 1.0f; // 기본값
-				}
+				//}
 
 				//// ⚙️ Rescale Intercept (0028,1052)
 				//if (dataset->findAndGetOFString(DCM_RescaleIntercept, interceptStr).good()) {
@@ -346,43 +346,139 @@ ID3D11Texture2D* FileReader::getOrCreateSagittalTexture(int x) {
 }
 
 
-bool FileReader::ParseSlice(const std::string path, int sliceIndex) {
-	DcmFileFormat file;
+//bool FileReader::ParseSlice(const std::string path, int sliceIndex) {
+//	DcmFileFormat file;
+//
+//
+//	OFCondition status = file.loadFile(path.c_str(), EXS_Unknown, EGL_noChange);
+//
+//	if (!status.good()) {
+//		std::cerr << " Failed to load DICOM file: " << path << std::endl;
+//		return false;
+//	}
+//
+//	DcmDataset* dataset = file.getDataset();
+//
+//
+//	const Sint16* pixelData = nullptr;
+//	status = dataset->findAndGetSint16Array(DCM_PixelData, pixelData);
+//	if (!status.good() || nullptr == pixelData) {
+//		//std::cerr << " Failed to get pixel data from: " << path << std::endl;
+//		std::cerr << "❌ Failed to get pixel data from: " << path << std::endl;
+//		std::cerr << "🔍 Error detail: " << status.text() << std::endl;
+//
+//		return false;
+//	}
+//
+//
+//	int sliceSize = m_width * m_height;
+//	int offset = sliceIndex * sliceSize;
+//
+//	for (int i{}; i < sliceSize; ++i) {
+//		m_volumeData[offset + i] = pixelData[i];
+//
+//
+//	}
+//
+//
+//	std::cout << " DICOM Metadata for slice " << sliceIndex << std::endl;
+//
+//
+//	return true;
+//}
 
+bool FileReader::DecompressDICOM(DcmDataset* dataset) {
+	DcmXfer originalXfer(dataset->getOriginalXfer());
 
-	OFCondition status = file.loadFile(path.c_str(), EXS_Unknown, EGL_noChange);
+	if (!originalXfer.isEncapsulated()) {
+		return true;
+	}
+
+	std::cout << "📦 Decompressing from: " << originalXfer.getXferName() << std::endl;
+
+	OFCondition status = dataset->chooseRepresentation(EXS_LittleEndianExplicit, nullptr);
 
 	if (!status.good()) {
-		std::cerr << " Failed to load DICOM file: " << path << std::endl;
+		std::cerr << "❌ Decompression failed: " << status.text() << std::endl;
+		return false;
+	}
+
+	std::cout << "✅ Decompressed successfully" << std::endl;
+	return true;
+}
+
+const Sint16* FileReader::GetPixelData(DcmDataset* dataset) {
+	DcmElement* element = nullptr;
+	OFCondition status = dataset->findAndGetElement(DCM_PixelData, element);
+
+	if (!status.good() || element == nullptr) {
+		std::cerr << "❌ Pixel Data element not found" << std::endl;
+		return nullptr;
+	}
+
+	DcmVR vr(element->getVR());
+	std::cout << "🔍 VR: " << vr.getVRName()
+		<< ", Length: " << element->getLength() << " bytes" << std::endl;
+
+	// OW, US, SS 모두 처리
+	if (vr.getEVR() == EVR_OW || vr.getEVR() == EVR_US) {
+		Uint16* data = nullptr;
+		status = element->getUint16Array(data);
+
+		if (status.good() && data != nullptr) {
+			std::cout << "✅ Pixel data loaded (as Uint16)" << std::endl;
+			return reinterpret_cast<Sint16*>(data);
+		}
+	}
+	else if (vr.getEVR() == EVR_SS) {
+		Sint16* data = nullptr;
+		status = element->getSint16Array(data);
+
+		if (status.good() && data != nullptr) {
+			std::cout << "✅ Pixel data loaded (as Sint16)" << std::endl;
+			return data;
+		}
+	}
+
+	std::cerr << "❌ Failed to read pixel data: " << status.text() << std::endl;
+	return nullptr;
+}
+
+bool FileReader::ParseSlice(const std::string path, int sliceIndex) {
+	DcmFileFormat file;
+	OFCondition status = file.loadFile(path.c_str());
+
+	if (!status.good()) {
+		std::cerr << "❌ Failed to load: " << path << std::endl;
 		return false;
 	}
 
 	DcmDataset* dataset = file.getDataset();
 
-
-	const Uint16* pixelData = nullptr;
-	status = dataset->findAndGetUint16Array(DCM_PixelData, pixelData);
-	if (!status.good() || nullptr == pixelData) {
-		std::cerr << " Failed to get pixel data from: " << path << std::endl;
+	// 압축 해제
+	if (!DecompressDICOM(dataset)) {
 		return false;
 	}
 
+	// Pixel Data 읽기
+	const Sint16* pixelData = GetPixelData(dataset);
+	if (pixelData == nullptr) {
+		std::cerr << "❌ Failed to get pixel data from: " << path << std::endl;
+		return false;
+	}
 
+	// 데이터 복사
 	int sliceSize = m_width * m_height;
 	int offset = sliceIndex * sliceSize;
 
-	for (int i{}; i < sliceSize; ++i) {
+	for (int i = 0; i < sliceSize; ++i) {
 		m_volumeData[offset + i] = pixelData[i];
-
-
 	}
 
-
-	std::cout << " DICOM Metadata for slice " << sliceIndex << std::endl;
-
-
+	std::cout << "✅ Slice " << sliceIndex << " loaded" << std::endl;
 	return true;
 }
+
 
 bool FileReader::BuildVolume()
 {
@@ -421,7 +517,7 @@ std::vector<uint8_t> FileReader::GenerateAxialSlice(int zIndex)
 {
 	const size_t sliceSize = static_cast<size_t>(m_width) * m_height;
 
-	std::vector<uint16_t> rawSlice(sliceSize);
+	std::vector<int16_t> rawSlice(sliceSize);
 	const size_t offset = static_cast<size_t>(zIndex) * sliceSize;
 
 	if (offset + sliceSize > m_volumeData.size()) {
@@ -437,6 +533,7 @@ std::vector<uint8_t> FileReader::GenerateAxialSlice(int zIndex)
 	);
 
 	std::vector<uint8_t> normalized;
+	//NormalizeSlice(rawSlice, normalized, windowCenter, windowWidth);
 	NormalizeSlice(rawSlice, normalized, windowCenter, windowWidth);
 
 
@@ -459,7 +556,7 @@ std::vector<uint8_t> FileReader::GenerateCoronalSlice(int yIndex)
 	const size_t sliceHeight = static_cast<size_t>(m_depth);
 	const size_t sliceSize = sliceWidth * sliceHeight;
 
-	std::vector<uint16_t> rawSlice(sliceSize);
+	std::vector<int16_t> rawSlice(sliceSize);
 
 	for (size_t z = 0; z < m_depth; ++z) {
 		for (size_t x = 0; x < m_width; ++x) {
@@ -490,7 +587,7 @@ std::vector<uint8_t> FileReader::GenerateSagittalSlice(int xIndex)
 	const size_t sliceHeight = static_cast<size_t>(m_depth);
 	const size_t sliceSize = sliceWidth * sliceHeight;
 
-	std::vector<uint16_t> rawSlice(sliceSize);
+	std::vector<int16_t> rawSlice(sliceSize);
 
 	for (size_t z = 0; z < m_depth; ++z) {
 		for (size_t y = 0; y < m_height; ++y) {
@@ -516,25 +613,77 @@ std::vector<uint8_t> FileReader::GenerateSagittalSlice(int xIndex)
 }
 
 
-bool FileReader::NormalizeSlice(const std::vector<uint16_t>& rawSlice,
+//1202
+bool FileReader::NormalizeSlice(const std::vector<int16_t>& rawSlice,
 	std::vector<uint8_t>& outSlice,
 	float windowCenter,
 	float windowWidth)
 {
+	////// ⭐ 디버그!
+	////std::cout << "NormalizeSlice called: WC=" << windowCenter
+	////	<< ", WW=" << windowWidth << std::endl;
+
+
+
+	//if (rawSlice.empty() || windowWidth <= 1e-5f) return false;
+
+	//const float minHU = windowCenter - windowWidth / 2.0f;//-1000
+	//const float maxHU = windowCenter + windowWidth / 2.0f;//3000
+
+	////cout << "NormalizeSlice minHU :" << minHU << endl;
+	////cout<< "NormalizeSlice maxHU :" << maxHU << endl;
+
+	//outSlice.resize(rawSlice.size());
+
+	////// ⭐ 첫 10개 raw 값 확인
+	////std::cout << "   First 10 raw: ";
+	////for (int i = 0; i < 10 && i < rawSlice.size(); ++i) {
+	////	std::cout << rawSlice[i] << " ";
+	////}
+	////std::cout << std::endl;
+
+	////std::cout << "rawSlice size : " << rawSlice.size() << std::endl;
+
+	//for (size_t i = 0; i < rawSlice.size(); ++i) {
+	//	// ⭐⭐⭐ 여기 수정!
+	//	float val = static_cast<float>(rawSlice[i]) * m_rescaleSlope + m_rescaleIntercept;
+
+	//	//cout << "1202 val : " << val << endl;
+
+	//	if (val < minHU) val = minHU;
+	//	if (val > maxHU) val = maxHU;
+
+	//	float normalized = (val - minHU) / (maxHU - minHU);
+	//	outSlice[i] = static_cast<uint8_t>(normalized * 255.0f);
+
+	//	//cout << "1202 outSlice : " << outSlice[i] << endl;
+	//}
+
+	//return true;
+
+
+
+
+
+
 	if (rawSlice.empty() || windowWidth <= 1e-5f) return false;
 
-	const float minHU = windowCenter - windowWidth / 2.0f;//-1000
-	const float maxHU = windowCenter + windowWidth / 2.0f;//3000
-
-	/*cout << "NormalizeSlice minHU :" << minHU << endl;
-	cout<< "NormalizeSlice maxHU :" << maxHU << endl;*/
+	const float minHU = windowCenter - windowWidth / 2.0f;
+	const float maxHU = windowCenter + windowWidth / 2.0f;
 
 	outSlice.resize(rawSlice.size());
 
 	for (size_t i = 0; i < rawSlice.size(); ++i) {
-		//float val = static_cast<float>(rawSlice[i]);
-		float val = static_cast<float>(static_cast<int16_t>(rawSlice[i]));
+		// ⭐ 패딩 체크
+		if (rawSlice[i] > 60000 || rawSlice[i] < -30000) {
+			outSlice[i] = 0;  // 검은색
+			continue;
+		}
 
+		// ⭐⭐⭐ Rescale 제거! Raw 값이 이미 HU!
+		float val = static_cast<float>(rawSlice[i]);  // ← 이것만!
+
+		// Window/Level 적용
 		if (val < minHU) val = minHU;
 		if (val > maxHU) val = maxHU;
 
@@ -545,8 +694,48 @@ bool FileReader::NormalizeSlice(const std::vector<uint16_t>& rawSlice,
 	return true;
 }
 
+//bool FileReader::NormalizeVolumeU16(
+//	const std::vector<int16_t>& rawVolume,
+//	std::vector<uint16_t>& outVolume,
+//	float rescaleSlope,
+//	float rescaleIntercept,
+//	float windowMinHU,
+//	float windowMaxHU)
+//{
+//	if (rawVolume.empty()) return false;
+//	outVolume.resize(rawVolume.size());
+//
+//	floatData.resize(rawVolume.size());
+//
+//	for (size_t i = 0; i < rawVolume.size(); ++i)
+//	{
+//		// ⭐ 패딩 값 체크
+//		if (rawVolume[i] > 60000 || rawVolume[i] < -30000) {
+//			floatData[i] = -1024.0f;
+//			continue;
+//		}
+//		//else
+//		{
+//			//floatData[i] = rawVolume[i];  // Raw 값 유지
+//			floatData[i] = static_cast<float>(rawVolume[i]);
+//		}
+//
+//		//// 1️⃣ 원본 픽셀을 HU 단위로 변환
+//		//float hu = rescaleSlope * static_cast<float>(rawVolume[i]) + rescaleIntercept;
+//
+//		//// 2️⃣ 윈도우 범위 클램프
+//		//if (hu < windowMinHU) hu = windowMinHU;
+//		//if (hu > windowMaxHU) hu = windowMaxHU;
+//
+//		//// 3️⃣ 0~1 정규화 후 0~65535로 스케일
+//		//float norm = (hu - windowMinHU) / (windowMaxHU - windowMinHU);
+//		//outVolume[i] = static_cast<uint16_t>(norm * 65535.0f);
+//	}
+//
+//	return true;
+//}
 bool FileReader::NormalizeVolumeU16(
-	const std::vector<uint16_t>& rawVolume,
+	const std::vector<int16_t>& rawVolume,
 	std::vector<uint16_t>& outVolume,
 	float rescaleSlope,
 	float rescaleIntercept,
@@ -554,111 +743,281 @@ bool FileReader::NormalizeVolumeU16(
 	float windowMaxHU)
 {
 	if (rawVolume.empty()) return false;
-	outVolume.resize(rawVolume.size());
 
+	//outVolume.resize(rawVolume.size());
 	floatData.resize(rawVolume.size());
+
+	//int outlierCount = 0;
 
 	for (size_t i = 0; i < rawVolume.size(); ++i)
 	{
-		// ⭐ 패딩 값 체크
-		if (rawVolume[i] > 60000) {
-			//outVolume[i] = 65535;  // ✅ 최대값으로 (셰이더에서 특수 처리)
-			floatData[i] = 0.0f;  // ✅ 패딩 → 0
-			continue;
-		}
-		else{
-			//floatData[i] = rawVolume[i];  // Raw 값 유지
-			floatData[i] = static_cast<float>(rawVolume[i]);
-		}
+		//// ⭐ 패딩 체크
+		//if (rawVolume[i] > 60000 || rawVolume[i] < -30000) {
+		//	floatData[i] = -1024.0f;
+		//	outVolume[i] = 0;
+		//	continue;
+		//}
 
-		//// 1️⃣ 원본 픽셀을 HU 단위로 변환
-		//float hu = rescaleSlope * static_cast<float>(rawVolume[i]) + rescaleIntercept;
+		//// HU 변환
+		float hu = static_cast<float>(rawVolume[i]) * rescaleSlope + rescaleIntercept;
 
-		//// 2️⃣ 윈도우 범위 클램프
-		//if (hu < windowMinHU) hu = windowMinHU;
-		//if (hu > windowMaxHU) hu = windowMaxHU;
+		//// ⭐ Outlier 클램핑
+		//if (hu < -1500.0f) {
+		//	hu = -1024.0f;  // 공기로 설정
+		//	outlierCount++;
+		//}
+		//else if (hu > 3500.0f) {
+		//	hu = 3000.0f;   // 치아 최대로
+		//	outlierCount++;
+		//}
 
-		//// 3️⃣ 0~1 정규화 후 0~65535로 스케일
-		//float norm = (hu - windowMinHU) / (windowMaxHU - windowMinHU);
-		//outVolume[i] = static_cast<uint16_t>(norm * 65535.0f);
+		floatData[i] = hu ;
+
+		//// ⭐ 윈도우링 적용 (Soft tissue window 예: -100 ~ 300)
+		//float normalized = (hu - windowMinHU) / (windowMaxHU - windowMinHU);
+
+		//// 범위 클램핑
+		//if (normalized < 0.0f) normalized = 0.0f;
+		//if (normalized > 1.0f) normalized = 1.0f;
+
+		//// 0~65535 범위로 매핑
+		//outVolume[i] = static_cast<uint16_t>(normalized * 65535.0f);
 	}
+
+
+	//if (outlierCount > 0) {
+	//	std::cout << "⚠️ Clamped " << outlierCount << " outlier voxels ("
+	//		<< (outlierCount * 100.0f / rawVolume.size()) << "%)" << std::endl;
+	//}
+
 
 	return true;
 }
 
-
 //minHU = minHU > hu ? hu : minHU;
 //maxHU = maxHU > hu ? maxHU : hu;
 
+
+//1202
+//void FileReader::AnalyzeHUDistribution()
+//{
+//	if (m_volumeData.empty()) return;
+//
+//	std::map<int, int> histogram;
+//	float minHU = FLT_MAX;
+//	float maxHU = -FLT_MAX;
+//
+//	// ⭐ 패딩 값 확인
+//	int paddingCount = 0;
+//
+//	for (const auto& raw : m_volumeData) {
+//		// ⭐ 패딩 값 제외 (65535, 63488 등)
+//		if (raw > 60000) {
+//			paddingCount++;
+//			continue;  // 분석에서 제외
+//		}
+//
+//		float hu = m_rescaleSlope * static_cast<float>(raw) + m_rescaleIntercept;
+//
+//		minHU = minHU > hu ? hu : minHU;
+//		maxHU = maxHU > hu ? maxHU : hu;
+//
+//		int bucket = static_cast<int>(hu / 100) * 100;
+//		histogram[bucket]++;
+//	}
+//
+//	std::cout << "=== HU Distribution Analysis ===" << std::endl;
+//	std::cout << "Padding voxels excluded: " << paddingCount
+//		<< " (" << (paddingCount * 100.0f / m_volumeData.size()) << "%)" << std::endl;
+//	std::cout << "Min HU: " << minHU << std::endl;
+//	std::cout << "Max HU: " << maxHU << std::endl;
+//	std::cout << "Valid voxels: " << (m_volumeData.size() - paddingCount) << std::endl;
+//	std::cout << "\nHU Range | Count | Percentage" << std::endl;
+//
+//	for (const auto&[bucket, count] : histogram) {
+//		float percentage = (count * 100.0f) / m_volumeData.size();
+//		if (percentage > 0.1) {  // 0.1% 이상만 출력
+//			std::cout << bucket << "~" << (bucket + 100)
+//				<< " | " << count
+//				<< " | " << std::fixed << std::setprecision(2) << percentage << "%"
+//				<< std::endl;
+//		}
+//	}
+//
+//	// 조직별 분포
+//	int air = 0, soft = 0, bone = 0, teeth = 0, other = 0;
+//	int validVoxels = 0;
+//
+//	for (const auto& raw : m_volumeData) {
+//		// ⭐ 패딩 제외
+//		if (raw > 60000) continue;
+//
+//		validVoxels++;
+//		float hu = m_rescaleSlope * static_cast<float>(raw) + m_rescaleIntercept;
+//
+//		if (hu < -400) air++;
+//		else if (hu < 200) soft++;
+//		else if (hu < 1500) bone++;
+//		else if (hu < 3000) teeth++;
+//		else other++;
+//	}
+//
+//	std::cout << "\n=== Tissue Distribution (Valid Voxels Only) ===" << std::endl;
+//	std::cout << "Air (<-400): " << (air * 100.0f / validVoxels) << "%" << std::endl;
+//	std::cout << "Soft Tissue (-400~200): " << (soft * 100.0f / validVoxels) << "%" << std::endl;
+//	std::cout << "Bone (200~1500): " << (bone * 100.0f / validVoxels) << "%" << std::endl;
+//	std::cout << "Teeth (1500~3000): " << (teeth * 100.0f / validVoxels) << "%" << std::endl;
+//	std::cout << "Other (3000+): " << (other * 100.0f / validVoxels) << "%" << std::endl;
+//}
 void FileReader::AnalyzeHUDistribution()
 {
 	if (m_volumeData.empty()) return;
 
+	// ⭐ Raw 값 직접 확인!
+	std::cout << "\n=== Raw Value Samples ===" << std::endl;
+	std::cout << "First 100 raw values:" << std::endl;
+	for (int i = 0; i < 100 && i < m_volumeData.size(); ++i) {
+		std::cout << m_volumeData[i] << " ";
+		if ((i + 1) % 20 == 0) std::cout << std::endl;
+	}
+	std::cout << "\n" << std::endl;
+
 	std::map<int, int> histogram;
+	float minRaw = FLT_MAX;
+	float maxRaw = -FLT_MAX;
 	float minHU = FLT_MAX;
 	float maxHU = -FLT_MAX;
-
-	// ⭐ 패딩 값 확인
 	int paddingCount = 0;
+	int outlierCount = 0;  // ⭐ Outlier 카운트
 
 	for (const auto& raw : m_volumeData) {
-		// ⭐ 패딩 값 제외 (65535, 63488 등)
-		if (raw > 60000) {
+		// ⭐ 패딩 체크
+		if (raw > 60000 || raw < -30000) {
 			paddingCount++;
-			continue;  // 분석에서 제외
+		//	continue;
 		}
 
-		float hu = m_rescaleSlope * static_cast<float>(raw) + m_rescaleIntercept;
+		// ⭐⭐⭐ Outlier 체크 (정상 HU 범위 밖)
+		// 정상 HU 범위: -1024 ~ 3000
+		// 여유있게: -1500 ~ 3500
+		if (raw < -1500 || raw > 3500) {
+			outlierCount++;
+			//continue;  // ⭐ 분석에서 제외!
+		}
 
-		minHU = minHU > hu ? hu : minHU;
-		maxHU = maxHU > hu ? maxHU : hu;
+		// Raw 값 범위 확인
+		if (raw < minRaw) minRaw = raw;
+		if (raw > maxRaw) maxRaw = raw;
+
+		// Raw 값 = HU
+		float hu = static_cast<float>(raw) /** 1 + (-1024.f)*/;
+
+
+		if (hu < minHU) minHU = hu;
+		if (hu > maxHU) maxHU = hu;
 
 		int bucket = static_cast<int>(hu / 100) * 100;
 		histogram[bucket]++;
 	}
 
-	std::cout << "=== HU Distribution Analysis ===" << std::endl;
-	std::cout << "Padding voxels excluded: " << paddingCount
+	int validVoxels = m_volumeData.size() - paddingCount - outlierCount;
+
+	std::cout << "=== Raw Value Range ===" << std::endl;
+	std::cout << "Min Raw: " << minRaw << std::endl;
+	std::cout << "Max Raw: " << maxRaw << std::endl;
+	std::cout << "Padding: " << paddingCount
 		<< " (" << (paddingCount * 100.0f / m_volumeData.size()) << "%)" << std::endl;
+	std::cout << "Outliers: " << outlierCount
+		<< " (" << (outlierCount * 100.0f / m_volumeData.size()) << "%)" << std::endl;
+
+	std::cout << "\n=== HU Distribution Analysis (Outliers Excluded) ===" << std::endl;
 	std::cout << "Min HU: " << minHU << std::endl;
 	std::cout << "Max HU: " << maxHU << std::endl;
-	std::cout << "Valid voxels: " << (m_volumeData.size() - paddingCount) << std::endl;
-	std::cout << "\nHU Range | Count | Percentage" << std::endl;
+	std::cout << "Valid voxels: " << validVoxels << "\n" << std::endl;
 
+	std::cout << "HU Range | Count | Percentage" << std::endl;
 	for (const auto&[bucket, count] : histogram) {
-		float percentage = (count * 100.0f) / m_volumeData.size();
-		if (percentage > 0.1) {  // 0.1% 이상만 출력
+		float percentage = (count * 100.0f) / validVoxels;
+		if (percentage > 0.5f) {
 			std::cout << bucket << "~" << (bucket + 100)
 				<< " | " << count
-				<< " | " << std::fixed << std::setprecision(2) << percentage << "%"
-				<< std::endl;
+				<< " | " << std::fixed << std::setprecision(2)
+				<< percentage << "%" << std::endl;
 		}
 	}
 
-	// 조직별 분포
-	int air = 0, soft = 0, bone = 0, teeth = 0, other = 0;
-	int validVoxels = 0;
+	// 조직별 분포 (Outlier 제외)
+	int air = 0, soft = 0, bone = 0, teeth = 0;
 
 	for (const auto& raw : m_volumeData) {
-		// ⭐ 패딩 제외
-		if (raw > 60000) continue;
+		if (raw > 60000 || raw < -30000) continue;
+		if (raw < -1500 || raw > 3500) continue;  // ⭐ Outlier 제외
 
-		validVoxels++;
-		float hu = m_rescaleSlope * static_cast<float>(raw) + m_rescaleIntercept;
+		float hu = static_cast<float>(raw);
 
 		if (hu < -400) air++;
 		else if (hu < 200) soft++;
 		else if (hu < 1500) bone++;
-		else if (hu < 3000) teeth++;
-		else other++;
+		else teeth++;
 	}
 
-	std::cout << "\n=== Tissue Distribution (Valid Voxels Only) ===" << std::endl;
+	std::cout << "\n=== Tissue Distribution (Outliers Excluded) ===" << std::endl;
 	std::cout << "Air (<-400): " << (air * 100.0f / validVoxels) << "%" << std::endl;
 	std::cout << "Soft Tissue (-400~200): " << (soft * 100.0f / validVoxels) << "%" << std::endl;
 	std::cout << "Bone (200~1500): " << (bone * 100.0f / validVoxels) << "%" << std::endl;
-	std::cout << "Teeth (1500~3000): " << (teeth * 100.0f / validVoxels) << "%" << std::endl;
-	std::cout << "Other (3000+): " << (other * 100.0f / validVoxels) << "%" << std::endl;
+	std::cout << "Teeth (1500~3500): " << (teeth * 100.0f / validVoxels) << "%" << std::endl;
+
+
+
+
+
+
+	// ⭐ 추가: 특정 범위 샘플 확인
+	std::cout << "\n=== Sample Analysis ===" << std::endl;
+
+	// -1100~-1000 (공기) 샘플
+	std::cout << "Air range (-1100~-1000) samples: ";
+	int airSampleCount = 0;
+	for (const auto& raw : m_volumeData) {
+		if (raw >= -1100 && raw <= -1000) {
+			if (airSampleCount < 20) {
+				std::cout << raw << " ";
+			}
+			airSampleCount++;
+		}
+	}
+	std::cout << "\nTotal: " << airSampleCount << std::endl;
+
+	// 0~100 샘플
+	std::cout << "\n0~100 range samples: ";
+	int zeroSampleCount = 0;
+	for (const auto& raw : m_volumeData) {
+		if (raw >= 0 && raw <= 100) {
+			if (zeroSampleCount < 20) {
+				std::cout << raw << " ";
+			}
+			zeroSampleCount++;
+		}
+	}
+	std::cout << "\nTotal: " << zeroSampleCount << std::endl;
+
+	// ⭐ 중앙값(Median) 확인
+	std::vector<int16_t> sortedData;
+	for (const auto& raw : m_volumeData) {
+		if (raw > 60000 || raw < -30000) continue;
+		if (raw < -1500 || raw > 3500) continue;
+		sortedData.push_back(raw);
+	}
+	std::sort(sortedData.begin(), sortedData.end());
+
+	size_t p25 = sortedData.size() / 4;
+	size_t p50 = sortedData.size() / 2;
+	size_t p75 = sortedData.size() * 3 / 4;
+
+	std::cout << "\n=== Percentiles ===" << std::endl;
+	std::cout << "25th percentile: " << sortedData[p25] << std::endl;
+	std::cout << "50th percentile (Median): " << sortedData[p50] << std::endl;
+	std::cout << "75th percentile: " << sortedData[p75] << std::endl;
 }
 
 void FileReader::SliceIdxManage()

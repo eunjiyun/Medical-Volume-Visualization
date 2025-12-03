@@ -42,7 +42,7 @@ struct CB
 	DirectX::XMMATRIX InvProj;
 	DirectX::XMMATRIX VolumeWorld;     // 볼륨의 월드 변환(스케일/회전/이동)
 	DirectX::XMMATRIX InvVolumeWorld;
-	DirectX::XMFLOAT3 CameraPosWS;     float Step;      // 샘플 간격 (예: 0.002~0.01)
+	DirectX::XMFLOAT3 CameraPosWS;      float alphaScale;      // 샘플 간격 (예: 0.002~0.01)
 	int   MaxSteps;                   DirectX::XMFLOAT3 Voxel;
 
 	DirectX::XMFLOAT4 HuParams;  // x=Slope, y=Intercept, z=Min, w=Max

@@ -4,6 +4,8 @@
 #include<unordered_map>
 #include "stdafx.h"
 #include <dcmtk/ofstd/ofstring.h>
+// DCMTK Core
+#include <dcmtk/dcmdata/dcfilefo.h>   // DcmFileFormat, DcmDataset
 
 using namespace std;
 
@@ -45,7 +47,7 @@ public:
     FileReader();
 public:
     std::vector<std::string> m_filePaths;
-    std::vector<uint16_t> m_volumeData;
+    std::vector<int16_t> m_volumeData;
     UINT16 m_width;
     UINT16 m_height;
     int m_depth = 0;
@@ -83,6 +85,10 @@ public:
     //bool LoadDICOMSeries(const std::string& folderPath);
     bool LoadDICOMSeries(std::string folderPath, ID3D11Device* g_pd3dDevice);
 
+
+	// Helper 함수
+	bool DecompressDICOM(DcmDataset* dataset);
+	const Sint16* GetPixelData(DcmDataset* dataset);
     bool ParseSlice(std::string filePath, int sliceIndex);
     ID3D11Texture2D* getOrCreateAxialTexture(int z);
     ID3D11Texture2D* getOrCreateCoronalTexture(int y);
@@ -106,7 +112,7 @@ public:
     void UpdateCoronalTexture(int y);
     void UpdateSagittalTexture(int x);
 
-    bool NormalizeSlice(const std::vector<uint16_t>& rawSlice,
+    bool NormalizeSlice(const std::vector<int16_t>& rawSlice,
         std::vector<uint8_t>& outSlice,
         float windowCenter,
         float windowWidth);
@@ -116,7 +122,7 @@ public:
 	std::vector<float> floatData;
 
 	bool NormalizeVolumeU16(
-		const std::vector<uint16_t>& rawVolume,
+		const std::vector<int16_t>& rawVolume,
 		std::vector<uint16_t>& outVolume,
 		float rescaleSlope,
 		float rescaleIntercept,

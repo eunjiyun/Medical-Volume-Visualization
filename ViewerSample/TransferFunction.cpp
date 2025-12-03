@@ -117,45 +117,162 @@ float saturate(float x) {
 //	UpdateTexture(device);
 //	return (m_tfSRV != nullptr);
 //}
+//bool TransferFunction::Initialize(float center, float width, ID3D11Device* device)
+//{
+//	m_controlPoints.clear();
+//
+//	auto HUtoNorm = [](float hu) -> float {
+//		return saturate((hu + 1000.0f) / 4000.0f);
+//	};
+//
+//	//// 공기/배경
+//	//m_controlPoints.push_back({ 0.0f, 0.0f, 0.0f, 0.0f, 0.0f });
+//	////m_controlPoints.push_back({ HUtoNorm(-400.0f), 0.0f, 0.0f, 0.0f, 0.0f });
+//
+//
+//	//// 연조직
+//	//m_controlPoints.push_back({ HUtoNorm(-500.0f), 0.35f, 0.25f, 0.15f, 1.2f });
+//	//m_controlPoints.push_back({ HUtoNorm(-200.0f), 0.48f, 0.38f, 0.28f, 1.5f });
+//	//m_controlPoints.push_back({ HUtoNorm(50.0f),  0.48f, 0.38f, 0.28f, 1.7f });
+//
+//	////// 연조직 - 더 어두운 갈색
+//	////m_controlPoints.push_back({ HUtoNorm(-100.0f), 0.35f, 0.25f, 0.15f, 0.01f });
+//	////m_controlPoints.push_back({ HUtoNorm(100.0f), 0.48f, 0.38f, 0.28f, 0.08f });
+//
+//	//// 뼈 시작 (300~600) - 베이지 톤
+//	//m_controlPoints.push_back({ HUtoNorm(300.0f), 0.70f, 0.58f, 0.46f, 0.25f });
+//	//m_controlPoints.push_back({ HUtoNorm(600.0f), 0.80f, 0.68f, 0.56f, 0.50f });
+//
+//	//// 뼈 중간 (800~1200) - 밝은 베이지
+//	//m_controlPoints.push_back({ HUtoNorm(800.0f), 0.86f, 0.76f, 0.66f, 0.75f });
+//	//m_controlPoints.push_back({ HUtoNorm(1200.0f), 0.90f, 0.83f, 0.74f, 1.00f });
+//
+//	//// 단단한 뼈 (1400~1800) - 아주 밝은 베이지
+//	//m_controlPoints.push_back({ HUtoNorm(1400.0f), 0.93f, 0.88f, 0.80f, 1.30f });
+//	//m_controlPoints.push_back({ HUtoNorm(1800.0f), 0.95f, 0.91f, 0.85f, 1.60f });
+//
+//	//// 치아 (2000~2500) - 밝은 크림/흰색
+//	//m_controlPoints.push_back({ HUtoNorm(2000.0f), 0.97f, 0.94f, 0.89f, 2.00f });
+//	//m_controlPoints.push_back({ HUtoNorm(2500.0f), 0.99f, 0.97f, 0.94f, 2.50f });
+//
+//	//// 매우 높은 HU (3000+) - 완전 흰색
+//	//m_controlPoints.push_back({ HUtoNorm(3000.0f), 1.00f, 1.00f, 1.00f, 3.00f });
+//	//m_controlPoints.push_back({ 1.0f, 1.0f, 1.0f, 1.0f, 3.00f });
+//
+//
+//
+//	// ⭐ 시작/공기 - 완전 투명!
+//	m_controlPoints.push_back({ 0.0f, 0.0f, 0.0f, 0.0f, 0.0f });
+//	m_controlPoints.push_back({ HUtoNorm(-400.0f), 0.0f, 0.0f, 0.0f, 0.0f });
+//
+//	//// ⭐ 경계 영역 (-400 ~ -100) - 어두운 갈색 (입술/콧구멍!)
+//	//m_controlPoints.push_back({ HUtoNorm(-300.0f), 0.25f, 0.18f, 0.12f, 4.0f });
+//	//m_controlPoints.push_back({ HUtoNorm(-200.0f), 0.40f, 0.30f, 0.22f, 6.0f });
+//
+//	// 연조직 (-100~100)
+//	m_controlPoints.push_back({ HUtoNorm(-100.0f), 0.72f, 0.52f, 0.38f, 20.00f });
+//	m_controlPoints.push_back({ HUtoNorm(100.0f), 0.82f, 0.62f, 0.45f, 25.00f });
+//
+//	// 뼈 (300~1200)
+//	m_controlPoints.push_back({ HUtoNorm(300.0f), 0.88f, 0.68f, 0.50f, 18.00f });
+//	m_controlPoints.push_back({ HUtoNorm(1200.0f), 0.96f, 0.82f, 0.65f, 24.00f });
+//
+//	// 치아 (2000~3000)
+//	m_controlPoints.push_back({ HUtoNorm(2000.0f), 0.99f, 0.92f, 0.82f, 30.00f });
+//	//m_controlPoints.push_back({ HUtoNorm(3000.0f), 1.00f, 0.95f, 0.88f, 35.00f });
+//	m_controlPoints.push_back({ 1.0f, 1.00f, 0.95f, 0.88f, 35.00f });
+//
+//	UpdateTexture(device);
+//	return true;
+//}
+
+
+
+//bool TransferFunction::Initialize(float center, float width, ID3D11Device* device)
+//{
+//	m_controlPoints.clear();
+//	
+//
+//	auto HUtoNorm = [center, width](float hu) -> float {
+//		return saturate((hu - center + width / 2.0f) / width);
+//	};
+//
+//	// ⭐ 공기 - 좁게 투명 처리 (실제 공기는 -1200~-900)
+//	m_controlPoints.push_back({ 0.0f, 0.0f, 0.0f, 0.0f, 0.0f });
+//	m_controlPoints.push_back({ HUtoNorm(-800.0f), 0.0f, 0.0f, 0.0f, 0.0f });
+//
+//	// ⭐ 공기/연조직 경계 (-800~-300) - Median -301 포함!
+//	m_controlPoints.push_back({ HUtoNorm(-600.0f), 0.35f, 0.28f, 0.22f, 0.1f });
+//	m_controlPoints.push_back({ HUtoNorm(-400.0f), 0.48f, 0.36f, 0.28f, 0.3f });
+//	m_controlPoints.push_back({ HUtoNorm(-200.0f), 0.58f, 0.43f, 0.33f, 0.5f });
+//
+//	// ⭐ 연조직 (-200~200) - 0~100 포함!
+//	m_controlPoints.push_back({ HUtoNorm(-100.0f), 0.66f, 0.48f, 0.36f, 0.8f });
+//	m_controlPoints.push_back({ HUtoNorm(-50.0f),  0.70f, 0.52f, 0.38f, 1.0f });
+//	m_controlPoints.push_back({ HUtoNorm(0.0f),    0.74f, 0.56f, 0.40f, 1.3f });
+//	m_controlPoints.push_back({ HUtoNorm(50.0f),   0.78f, 0.60f, 0.44f, 1.6f });
+//	m_controlPoints.push_back({ HUtoNorm(100.0f),  0.82f, 0.64f, 0.47f, 2.0f });
+//
+//	// 연조직/뼈 경계 (100~300)
+//	m_controlPoints.push_back({ HUtoNorm(200.0f),  0.85f, 0.68f, 0.51f, 2.5f });
+//
+//	// 뼈 (300~1000)
+//	m_controlPoints.push_back({ HUtoNorm(400.0f),  0.88f, 0.73f, 0.57f, 3.5f });
+//	m_controlPoints.push_back({ HUtoNorm(600.0f),  0.90f, 0.77f, 0.62f, 5.0f });
+//	m_controlPoints.push_back({ HUtoNorm(800.0f),  0.92f, 0.81f, 0.67f, 7.0f });
+//
+//	// 단단한 뼈 (1000~1500)
+//	m_controlPoints.push_back({ HUtoNorm(1000.0f), 0.94f, 0.84f, 0.72f, 9.5f });
+//	m_controlPoints.push_back({ HUtoNorm(1500.0f), 0.96f, 0.88f, 0.78f, 13.0f });
+//
+//	// 치아 (1500~3000)
+//	m_controlPoints.push_back({ HUtoNorm(1800.0f), 0.97f, 0.91f, 0.84f, 17.0f });
+//	m_controlPoints.push_back({ HUtoNorm(2200.0f), 0.98f, 0.94f, 0.89f, 21.0f });
+//	m_controlPoints.push_back({ 1.0f, 0.99f, 0.97f, 0.93f, 25.0f });
+//
+//	UpdateTexture(device);
+//	return true;
+//}
+
 bool TransferFunction::Initialize(float center, float width, ID3D11Device* device)
 {
 	m_controlPoints.clear();
 
-	auto HUtoNorm = [](float hu) -> float {
-		return saturate((hu + 1000.0f) / 4000.0f);
+	auto HUtoNorm = [center, width](float hu) -> float {
+		return saturate((hu - center + width / 2.0f) / width);
 	};
 
-	// 공기/배경
+	// 공기: 완전히 투명
 	m_controlPoints.push_back({ 0.0f, 0.0f, 0.0f, 0.0f, 0.0f });
-	m_controlPoints.push_back({ HUtoNorm(-400.0f), 0.0f, 0.0f, 0.0f, 0.0f });
+	m_controlPoints.push_back({ HUtoNorm(-800.0f), 0.0f, 0.0f, 0.0f, 0.0f });
 
-	// 연조직 - 더 어두운 갈색
-	m_controlPoints.push_back({ HUtoNorm(-100.0f), 0.35f, 0.25f, 0.15f, 0.01f });
-	m_controlPoints.push_back({ HUtoNorm(100.0f), 0.48f, 0.38f, 0.28f, 0.08f });
+	// 공기/연조직 경계 (-800~-300)
+	m_controlPoints.push_back({ HUtoNorm(-600.0f), 0.35f, 0.28f, 0.22f, 0.1f });
+	m_controlPoints.push_back({ HUtoNorm(-400.0f), 0.48f, 0.36f, 0.28f, 0.3f });
+	m_controlPoints.push_back({ HUtoNorm(-200.0f), 0.58f, 0.43f, 0.33f, 0.5f });
 
-	// 뼈 시작 (300~600) - 베이지 톤
-	m_controlPoints.push_back({ HUtoNorm(300.0f), 0.70f, 0.58f, 0.46f, 0.25f });
-	m_controlPoints.push_back({ HUtoNorm(600.0f), 0.80f, 0.68f, 0.56f, 0.50f });
+	// 연조직 (-200~200) → 알파를 높여서 잘 보이게
+	m_controlPoints.push_back({ HUtoNorm(-100.0f), 0.66f, 0.48f, 0.36f, 0.8f });
+	m_controlPoints.push_back({ HUtoNorm(-50.0f),  0.70f, 0.52f, 0.38f, 1.0f });
+	m_controlPoints.push_back({ HUtoNorm(0.0f),    0.74f, 0.56f, 0.40f, 1.3f });
+	m_controlPoints.push_back({ HUtoNorm(50.0f),   0.78f, 0.60f, 0.44f, 1.6f });
+	m_controlPoints.push_back({ HUtoNorm(100.0f),  0.82f, 0.64f, 0.47f, 2.0f });
+	m_controlPoints.push_back({ HUtoNorm(200.0f),  0.85f, 0.68f, 0.51f, 2.5f });
 
-	// 뼈 중간 (800~1200) - 밝은 베이지
-	m_controlPoints.push_back({ HUtoNorm(800.0f), 0.86f, 0.76f, 0.66f, 0.75f });
-	m_controlPoints.push_back({ HUtoNorm(1200.0f), 0.90f, 0.83f, 0.74f, 1.00f });
-
-	// 단단한 뼈 (1400~1800) - 아주 밝은 베이지
-	m_controlPoints.push_back({ HUtoNorm(1400.0f), 0.93f, 0.88f, 0.80f, 1.30f });
-	m_controlPoints.push_back({ HUtoNorm(1800.0f), 0.95f, 0.91f, 0.85f, 1.60f });
-
-	// 치아 (2000~2500) - 밝은 크림/흰색
-	m_controlPoints.push_back({ HUtoNorm(2000.0f), 0.97f, 0.94f, 0.89f, 2.00f });
-	m_controlPoints.push_back({ HUtoNorm(2500.0f), 0.99f, 0.97f, 0.94f, 2.50f });
-
-	// 매우 높은 HU (3000+) - 완전 흰색
-	m_controlPoints.push_back({ HUtoNorm(3000.0f), 1.00f, 1.00f, 1.00f, 3.00f });
-	m_controlPoints.push_back({ 1.0f, 1.0f, 1.0f, 1.0f, 3.00f });
+	// 뼈/치아 구간 → 알파를 0으로 해서 완전히 투명 처리
+	m_controlPoints.push_back({ HUtoNorm(400.0f),  0.88f, 0.73f, 0.57f, 0.0f });
+	m_controlPoints.push_back({ HUtoNorm(600.0f),  0.90f, 0.77f, 0.62f, 0.0f });
+	m_controlPoints.push_back({ HUtoNorm(800.0f),  0.92f, 0.81f, 0.67f, 0.0f });
+	m_controlPoints.push_back({ HUtoNorm(1000.0f), 0.94f, 0.84f, 0.72f, 0.0f });
+	m_controlPoints.push_back({ HUtoNorm(1500.0f), 0.96f, 0.88f, 0.78f, 0.0f });
+	m_controlPoints.push_back({ HUtoNorm(1800.0f), 0.97f, 0.91f, 0.84f, 0.0f });
+	m_controlPoints.push_back({ HUtoNorm(2200.0f), 0.98f, 0.94f, 0.89f, 0.0f });
+	m_controlPoints.push_back({ 1.0f,              0.99f, 0.97f, 0.93f, 0.0f });
 
 	UpdateTexture(device);
 	return true;
 }
+
 
 
 void TransferFunction::SetHUWindow(float center, float width, ID3D11Device* g_pd3dDevice)

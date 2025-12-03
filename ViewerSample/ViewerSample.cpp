@@ -238,8 +238,68 @@ void ViewerSample::huValueChanged(int value)
 
 	m_pScene->fileReader->volWW = windowWidth;  // 1500 → 3000
 
+
+	//m_pScene->fileReader->volWC = 40;
+	//m_pScene->fileReader->volWW = 400;
+
+
+	float sliderNorm = (huCenter - (-1000.0f)) / (3000.0f - (-1000.0f));
+	// 결과: HU=-3600 → 0.0
+	//       HU=-1000 → 1.0
+	sliderNorm = std::clamp(sliderNorm, 0.0f, 1.0f);
+
+	float minBoost = 3.0f;   // HU 최소 → soft tissue 3배 진하게
+	float maxBoost = 0.4f;   // HU 최대 → soft tissue 40%만 남김
+
+		//m_pScene->cb.alphaScale = (4000 - value)/4000.f;
+	m_pScene->cb.alphaScale = minBoost * (1.0f - sliderNorm) + maxBoost * sliderNorm;
+	//m_pScene->cb.alphaScale = 1;
+
 	update();
 }
+
+//void ViewerSample::huValueChanged(int value)
+//{
+//	float huCenter = (float)value;
+//	ui->huValueLabel->setText(QString::number((int)huCenter));
+//
+//	if (!m_pScene || !m_pScene->fileReader) return;
+//
+//	// ⭐ Center/Width 설정
+//	m_pScene->fileReader->volWC = huCenter;
+//
+//	// ⭐ Width를 동적으로 조정 (선택사항)
+//	// 연조직 영역(-400~200)에서는 좁게, 뼈 영역에서는 넓게
+//	float windowWidth;
+//	if (huCenter < -400) {
+//		// 공기 영역: 넓게 (공기 전체 보기)
+//		windowWidth = 1200.0f;
+//	}
+//	else if (huCenter < 200) {
+//		// 연조직 영역: 중간
+//		windowWidth = 1000.0f;
+//	}
+//	else {
+//		// 뼈/치아 영역: 넓게 (전체 뼈 보기)
+//		windowWidth = 2000.0f;
+//	}
+//
+//	m_pScene->fileReader->volWW = windowWidth;
+//
+//	// ⭐ Window 범위 계산
+//	float windowMin = huCenter - windowWidth / 2.0f;
+//	float windowMax = huCenter + windowWidth / 2.0f;
+//
+//	// Shader에 전달
+//	m_pScene->cb.HuParams.x = 1.0f;
+//	m_pScene->cb.HuParams.y = 0.0f;
+//	m_pScene->cb.HuParams.z = windowMin;
+//	m_pScene->cb.HuParams.w = windowMax;
+//
+//	m_pScene->cb.alphaScale = 1.0f;
+//
+//	update();
+//}
 void ViewerSample::brightnessCenterChanged(double brightness)
 {// Window Center
 
@@ -592,9 +652,13 @@ void ViewerSample::init(bool success)
 //	//ui->huSlider->setValue(2000);     // 초기값: 디폴트 WC
 
 
-	// ViewerSample 초기화
-	ui->huSlider->setMinimum(-1000);
-	ui->huSlider->setMaximum(3000);
+	//// ViewerSample 초기화
+	//ui->huSlider->setMinimum(-1000);
+	//ui->huSlider->setMaximum(3000);
+	//ui->huSlider->setValue(1000);  // 뼈 중심
+
+    ui->huSlider->setMinimum(-2600);
+	ui->huSlider->setMaximum(4000);
 	ui->huSlider->setValue(1000);  // 뼈 중심
 
 
