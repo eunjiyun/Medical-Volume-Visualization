@@ -23,8 +23,8 @@ bool TransferFunction::Initialize(float center, float width, ID3D11Device* devic
 {
 	m_controlPoints.clear();
 
-	auto HUtoNorm = [](float hu) -> float {
-		return saturate((hu + 1000.0f) / 4000.0f);
+		auto HUtoNorm = [center, width](float hu) -> float {
+		return saturate((hu - center + width / 2.0f) / width);
 	};
 
 
