@@ -1,31 +1,24 @@
 
 cbuffer Crosshair : register(b0)
 {
-    float2 crossUV;        
-    float crossThickness;   
-	//float windowCenter;
-	//float windowWidth;
-	//float padding1;  // 16바이트 정렬
-	//float padding2;
+	float2 crossUV;
+	float crossThickness;
 
 	float sharpness;        // ⭐ 추가
-	float4 crossColor;  
-
-	//float2 textureSize;  // ⭐ 텍스처 크기 추가
-	//float2 padding;
+	float4 crossColor;
 }
 
 SamplerState samp0 : register(s0);
 Texture2D tex : register(t0);       // tex[0] = Axial, tex[1] = Coronal, tex[2] = Sagittal
 
 struct PSOutput {
-    float4 color0 : SV_Target0;
+	float4 color0 : SV_Target0;
 };
 
 struct VSOutput
 {
-    float4 position : SV_POSITION;
-    float2 texcoord : TEXCOORD;
+	float4 position : SV_POSITION;
+	float2 texcoord : TEXCOORD;
 };
 
 PSOutput PSMain(VSOutput input)

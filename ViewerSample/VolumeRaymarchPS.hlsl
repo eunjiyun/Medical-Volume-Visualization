@@ -11,13 +11,7 @@ cbuffer CB : register(b0)
 	float alphaScale;
 	int   MaxSteps;
 	float3 Voxel;
-	//float Pad0;
 
-	//// 🔽 추가
-	//float  HuSlope;        // RescaleSlope
-	//float  HuIntercept;    // RescaleIntercept
-	//float  HuMin;          // 윈도우/TF용 HU 최소값 (예: -1000)
-	//float  HuMax;          // 윈도우/TF용 HU 최대값 (예: 3000)
 
 	float4 HuParams;  // x=Slope, y=Intercept, z=Min, w=Max
 };

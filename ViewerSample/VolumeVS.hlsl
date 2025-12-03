@@ -20,8 +20,6 @@ struct VS_OUTPUT {
 VS_OUTPUT VSMain(VS_INPUT input) {
 	VS_OUTPUT output;
 
-
-	// ?�� ?��????�렬 (2.0�??��?)
 	float4x4 scale = {
 		1.9, 0.0, 0.0, 0.0,
 		0.0, 1.9, 0.0, 0.0,
@@ -30,7 +28,6 @@ VS_OUTPUT VSMain(VS_INPUT input) {
 	};
 
 	float4 worldPos = mul(float4(input.position, 1.0f), mul(scale, World));
-	//float4 worldPos = mul(float4(input.position, 1.0f), World);
 	float4 viewPos = mul(worldPos, View);
 	output.position = mul(viewPos, Projection);
 
@@ -39,12 +36,3 @@ VS_OUTPUT VSMain(VS_INPUT input) {
 
 	return output;
 }
-
-
-//VS_OUTPUT VSMain(VS_INPUT input) {
-//	VS_OUTPUT output;
-//	output.position = float4(input.position, 1.0f); // NDC 좌표 직접 출력
-//	output.texcoord = input.texcoord;
-//	output.worldPos = input.position;
-//	return output;
-//}

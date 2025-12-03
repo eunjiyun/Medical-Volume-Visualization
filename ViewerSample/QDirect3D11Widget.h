@@ -47,13 +47,6 @@ struct CB
 
 	DirectX::XMFLOAT4 HuParams;  // x=Slope, y=Intercept, z=Min, w=Max
 };
-//
-//struct WindowLevelCB {
-//	float windowCenter;
-//	float windowWidth;
-//	float padding[2];  // 16바이트 정렬
-//};
-
 
 
 class FileReader;
@@ -100,14 +93,6 @@ struct VolumeConstants {
 
 
 	DirectX::XMFLOAT4 Voxel;  // 선택사항: 와이어프레임 색상 등
-	
-	//float Pad0;
-	// // 🔽 추가
-	//float  HuSlope;        // RescaleSlope
-	//float  HuIntercept;    // RescaleIntercept
-	//float  HuMin;          // 윈도우/TF용 HU 최소값 (예: -1000)
-	//float  HuMax;          // 윈도우/TF용 HU 최대값 (예: 3000)
-
 	DirectX::XMFLOAT4 HuParams;
 };
 
@@ -143,10 +128,6 @@ public:
 	QLabel* sliceInfoCoronal;
 	QLabel* sliceInfoSagittal;
 
-//	QSlider* huSlider, brightnessSlider, contrastSlider, sharpnessSlider;
-	
-
-	//DirectX::XMFLOAT3 currentPatientCoord[4];
 	DirectX::XMFLOAT2 currentUV[4] = {
 	{0.0f, 0.0f},
 	{0.5f, 0.5f},
@@ -172,14 +153,7 @@ public:
 	TransferFunction* m_transferFunction;
 	ID3D11SamplerState* m_tfSampler;
 
-//	QPoint m_lastMousePos;
-//	bool m_isDragging;
-
 public:
-	//// 마우스 입력 처리
-	//void OnMouseDown(int x, int y);
-	//void OnMouseUp();
-	//void OnMouseMove(int x, int y);
 
 	void UpdateVolumeMatrix();
 	void Render();
@@ -203,27 +177,10 @@ public:
 
 	void mousePressEvent(QMouseEvent* event);
 
-	
+
 	void mouseMoveEvent(QMouseEvent* event);
 	void mouseReleaseEvent(QMouseEvent* event);
 	void mouseDoubleClickEvent(QMouseEvent* event);
-
-	// 마우스 입력 처리
-	//void OnMouseDown(int x, int y);
-	//void OnMouseUp();
-
-
-
-
-	//void OnMouseMove(int x, int y);
-
-	//void onRotationChanged(float x, float y);
-
-
-
-
-
-
 
 
 	int GetClickedViewIndex(int px, int py, int width, int height);
@@ -237,7 +194,6 @@ public:
 
 	D3D11_VIEWPORT viewPort;
 
-	//std::vector<std::vector<uint8_t>> sliceData;
 	ComPtr<ID3D11ShaderResourceView> texArraySRV;
 private:
 
@@ -255,7 +211,6 @@ private:
 
 	void createSwapChainRTV();
 
-	//void DrawQuadWithTexture(ID3D11ShaderResourceView* pSRV, const D3D11_VIEWPORT& vp);
 	void render();
 	void UpdateColorBuffer();
 	void UpdateViewIndexBuffer(int viewIndex);
@@ -268,7 +223,6 @@ private:
 
 	void UpdateCrosshairFromPatientCoord(DirectX::XMFLOAT3 patientCoord, int i);
 	DirectX::XMFLOAT3 GetDefaultPatientCenter();
-	//void InitializeCrosshair();
 	void RenderAllQuads();
 	void DrawFullScreenQuad();
 	void DrawQuadWithTexture(ID3D11ShaderResourceView* pSRV, const D3D11_VIEWPORT& vp, int i);
@@ -351,12 +305,6 @@ private slots:
 	void onCoronalScroll(int value);
 	void onSagittalScroll(int value);
 
-	////// ⭐ 슬라이더 슬롯 추가
-	//void OnHUChanged(int value);  // HU Center
-	////void OnBrightnessChanged(int value);  // HU Width (선택사항)
-
-
-
 	// Getters / Setters
 public:
 	HWND const & nativeHandle() const { return m_hWnd; }
@@ -364,10 +312,7 @@ public:
 	ID3D11Device *           device() const { return m_pDevice; }
 	ID3D11DeviceContext *    deviceContext() { return m_pDeviceContext; }
 	IDXGISwapChain *         swapChain() { return m_pSwapChain; }
-	//ID3D11RenderTargetView * TargetView() const { return m_pRTView; }
-	/*std::vector<ID3D11RenderTargetView*> TargetView() const {
-		return m_RTViews;
-	}*/
+
 	bool renderActive() const { return m_bRenderActive; }
 	void setRenderActive(bool active) { m_bRenderActive = active; }
 
@@ -386,9 +331,7 @@ public:
 	SliceSeriesRtv m_RTViews;// m_RTViewsVolume, m_RTViewsAxial, m_RTViewsCoronal, m_RTViewsSagittal;
 private:
 
-
 	IDXGISwapChain *         m_pSwapChain;
-	//ID3D11RenderTargetView * m_pRTView;
 
 	ID3D11RenderTargetView* m_pSwapChainRTV = nullptr;
 	std::vector<ID3D11ShaderResourceView*> coronalTextureCacheSrv;
@@ -436,8 +379,6 @@ public:
 	ID3D11InputLayout*        m_prevVolumeInputLayout = nullptr;
 	ID3D11InputLayout* m_cubeInputLayout;        // ✅ 큐브용 (Position만)
 
-	//ID3D11Buffer* m_vertexBuffer = nullptr;
-
 
 	ID3D11Buffer* m_volumeConstantBuffer;  // ← 여기 추가!
 	ID3D11Buffer* m_volumePrevConstantBuffer;  // ← 여기 추가!
@@ -447,7 +388,7 @@ public:
 	Microsoft::WRL::ComPtr<ID3D11DepthStencilState> m_disableDepthState;
 
 
-		// ✅ 큐브 관련
+	// ✅ 큐브 관련
 	ID3D11Buffer* m_cubeVertexBuffer;
 	ID3D11Buffer* m_cubeIndexBuffer;
 
@@ -463,9 +404,7 @@ public:
 	ID3D11DepthStencilView* m_pDepthStencilView;  // ← 이게 있는지 확인
 
 	// // ✅ 각 평면의 World Matrix를 저장
-	//XMFLOAT4X4 m_axialPlaneWorld;
-	//XMFLOAT4X4 m_coronalPlaneWorld;
-	//XMFLOAT4X4 m_sagittalPlaneWorld;
+
 	VolumeConstants constants{};
 	VolumeConstants constantsPrev{};
 
@@ -476,7 +415,7 @@ public:
 	XMVECTOR eye /*= XMVectorSet(0.0f, 0.0f, -3.0f, 1.0f)*/;  // 조금 더 뒤로
 	XMVECTOR at /*= XMVectorSet(0.0f, 0.0f, 0.0f, 1.0f)*/;
 	XMVECTOR up /*= XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f)*/;
-	XMMATRIX v, iv, p, ip, rotx,roty, trans, /*scale,*/ w, iw,scale;
+	XMMATRIX v, iv, p, ip, rotx, roty, trans, /*scale,*/ w, iw, scale;
 public:
 	bool isPlaster{ false };
 	void plasterVolumeShow();
@@ -505,10 +444,6 @@ public:
 	std::vector<ID3D11ShaderResourceView*> m_textureSRV;
 	std::vector < ID3D11SamplerState*> m_samplerState;
 
-
-	//ID3D11Texture2D* m_texture = nullptr;
-	//ID3D11ShaderResourceView* m_textureSRV = nullptr;
-
 	FileReader* fileReader = nullptr;
 
 	ID3D11ShaderResourceView* axialTextureSRV = nullptr;
@@ -519,8 +454,6 @@ public:
 	float viewHeight;
 	DirectX::XMFLOAT3 patientCoord;
 
-
-	
 };
 
 

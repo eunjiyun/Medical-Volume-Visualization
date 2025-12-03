@@ -23,5 +23,5 @@ VS_OUTPUT VSMain(VS_INPUT input) {
 }
 
 float4 PSMain(VS_OUTPUT input) : SV_TARGET{
-	return lineColor;  // �ܻ� ��
+	return lineColor;  
 }
