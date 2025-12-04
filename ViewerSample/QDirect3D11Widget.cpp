@@ -975,8 +975,8 @@ void QDirect3D11Widget::FullScreenPassSet()
 	);
 
 	// ✅ 권장값
-	//cb.MaxSteps = 256;  // 또는 128~512 사이
-	cb.MaxSteps =1536;  // 또는 128~512 사이
+	cb.MaxSteps = 256;  // 또는 128~512 사이
+	//cb.MaxSteps =1536;  // 또는 128~512 사이
 
 	cb.Voxel = XMFLOAT3(fileReader->m_width, fileReader->m_height, fileReader->m_depth);
 
