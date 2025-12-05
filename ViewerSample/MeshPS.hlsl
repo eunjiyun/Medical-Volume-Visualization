@@ -10,8 +10,14 @@ struct PS_INPUT
 
 float4 main(PS_INPUT input) : SV_TARGET
 {
-	return meshTexture.Sample(samplerState, input.Tex);
-	// return float4(1.0f, 0.0f, 0.0f, 1.0f);  // ✅ 빨간색으로 강제 출력
+	//return meshTexture.Sample(samplerState, input.Tex);
+	//// return float4(1.0f, 0.0f, 0.0f, 1.0f);  // ✅ 빨간색으로 강제 출력
+
+
+	float4 color = meshTexture.Sample(samplerState, input.Tex);
+color.a = 0.5;   // 투명도 절반
+return color;
+
 }
 
 

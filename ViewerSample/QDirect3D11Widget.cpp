@@ -1279,7 +1279,7 @@ bool QDirect3D11Widget::InitializeMeshShaders() {
 	);
 
 	psBlob->Release();
-	
+
 	if (FAILED(hr)) {
 		return false;
 	}
@@ -1348,22 +1348,25 @@ void QDirect3D11Widget::RenderMesh(ID3D11DeviceContext* context)
 
 	qDebug() << "=== RenderMesh START ===";
 
-	//// Viewport
-	//D3D11_VIEWPORT vp;
-	//vp.Width = (FLOAT)width();
-	//vp.Height = (FLOAT)height();
-	//vp.MinDepth = 0.0f;
-	//vp.MaxDepth = 1.0f;
-	//vp.TopLeftX = 0;
-	//vp.TopLeftY = 0;
-	//context->RSSetViewports(1, &vp);
-	//qDebug() << "Viewport set:" << vp.Width << "x" << vp.Height;
+	ID3D11BlendState* alphaBlendState = nullptr;
+
+	D3D11_BLEND_DESC blendDesc = {};
+	blendDesc.AlphaToCoverageEnable = FALSE;
+	blendDesc.IndependentBlendEnable = FALSE;
+
+	auto& rtDesc = blendDesc.RenderTarget[0];
+	rtDesc.BlendEnable = TRUE;
+	rtDesc.SrcBlend = D3D11_BLEND_SRC_ALPHA;
+	rtDesc.DestBlend = D3D11_BLEND_INV_SRC_ALPHA;
+	rtDesc.BlendOp = D3D11_BLEND_OP_ADD;
+	rtDesc.SrcBlendAlpha = D3D11_BLEND_ONE;
+	rtDesc.DestBlendAlpha = D3D11_BLEND_ZERO;
+	rtDesc.BlendOpAlpha = D3D11_BLEND_OP_ADD;
+	rtDesc.RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
+
+	m_pDevice->CreateBlendState(&blendDesc, &alphaBlendState);
 
 
-	//// ✅ RenderTarget 강제 바인딩
-	////context->OMSetRenderTargets(1, &m_pRenderTargetView, m_pDepthStencilView);
-	//m_pDeviceContext->OMSetRenderTargets(1, &m_pSwapChainRTV, nullptr);
-	//qDebug() << "RenderTarget set";
 
 	if (!m_meshVertexBuffer || m_meshVertexCount == 0) {
 		qDebug() << "No mesh data!";
@@ -1378,332 +1381,92 @@ void QDirect3D11Widget::RenderMesh(ID3D11DeviceContext* context)
 		return;
 	}
 
-	////// 2. 백버퍼에 출력할 준비
-	//m_pDeviceContext->OMSetRenderTargets(1, &m_pSwapChainRTV, m_pDepthStencilView);
-	//m_pDeviceContext->ClearRenderTargetView(m_pSwapChainRTV, reinterpret_cast<float*>(&m_BackColor));
 
-	//// ✅ 깊이 버퍼 클리어 (3D 렌더링에 필요)
-	//if (m_pDepthStencilView) {
-	//	m_pDeviceContext->ClearDepthStencilView(m_pDepthStencilView,
-	//		D3D11_CLEAR_DEPTH,
-	//		1.0f, 0);
-	//}
 
-	//// 3. 각 렌더 타겟 텍스처를 quad로 출력
-	//for (int i{}; i < 4; ++i)
-	//{
-	//	D3D11_VIEWPORT vp = CreateViewport(i); // ← 4분할 뷰포트 계산
+	//	1. 셰이더 설정
+	context->VSSetShader(m_meshVS, nullptr, 0);
+	context->PSSetShader(m_meshPS, nullptr, 0);
+	context->IASetInputLayout(m_meshInputLayout);
+	qDebug() << "Shaders set";
 
-	//	m_pDeviceContext->RSSetViewports(1, &vp); // ✅ 모든 뷰에 설정
 
 
-	//	if (0 == i) {
 
-	//		//RenderVolumeView();
-	//		//RenderMesh(m_pDeviceContext);
+	XMMATRIX meshScale = XMMatrixScaling(-1.0f, 1.0f, 1.0f);  // 작게 만들기
 
+	XMMATRIX world =
+		XMMatrixRotationZ(XMConvertToRadians(180.0f)) *
+		XMMatrixRotationX(XMConvertToRadians(-90.0f)) *
+		XMMatrixScaling(0.015f, 0.015f, 0.015f);
 
 
-	//	//	1. 셰이더 설정
-	//		context->VSSetShader(m_meshVS, nullptr, 0);
-	//		context->PSSetShader(m_meshPS, nullptr, 0);
-	//		context->IASetInputLayout(m_meshInputLayout);
-	//		qDebug() << "Shaders set";
 
+	XMMATRIX view = XMMatrixLookAtLH(
+		XMVectorSet(0, 0, -5, 1),//eye
+		XMVectorSet(0, 0, 0, 1),//target
+		XMVectorSet(0, 1, 0, 0)//up
+	);
 
-	//		//// ✅ 임시로 단순한 변환 행렬 테스트
-	//		//XMMATRIX world = XMMatrixIdentity();
-	//		//XMMATRIX view = XMMatrixLookAtLH(
-	//		//	XMVectorSet(0.0f, 0.0f, -5.0f, 1.0f),  // 카메라 위치
-	//		//	XMVectorSet(0.0f, 0.0f, 0.0f, 1.0f),   // 보는 방향
-	//		//	XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f)    // 위쪽
-	//		//);
-	//		//XMMATRIX proj = p;  // 기존 프로젝션 사용
+	XMMATRIX meshworld =
+		XMMatrixRotationZ(XMConvertToRadians(180.0f)) *
+		XMMatrixRotationX(XMConvertToRadians(-90.0f)) *
+		XMMatrixScaling(0.01f, 0.01f, 0.01f);
 
-	//		//	// ✅ WVP 행렬 계산 전에 메쉬 스케일 조정
-	//		//XMMATRIX meshScale = XMMatrixScaling(0.01f, 0.01f, 0.01f);  // 작게 만들기
-	//		////XMMATRIX meshWorld = meshScale;
-	//		//XMMATRIX meshTranslation = XMMatrixTranslation(0.0f, 0.0f, 0.0f);
-	//		//XMMATRIX meshWorld = meshScale * meshTranslation;
 
 
-	//		//// 2. 상수 버퍼 업데이트 (WVP 행렬)
-	//		//MeshConstantBuffer cb;
-	//		////cb.WVP = XMMatrixTranspose(w * v * p);  // 네 기존 변환 행렬
-	//		////cb.WVP = XMMatrixTranspose(meshWorld *world * view  * proj);  // 네 기존 변환 행렬
-	//		////cb.WVP = XMMatrixTranspose(meshWorld *w * v * p);  // 네 기존 변환 행렬
-	//		////cb.WVP = XMMatrixIdentity();
-	//		//cb.WVP = XMMatrixTranspose(meshWorld);  // 일단 단위 뷰/프로젝션
+	float width = static_cast<float>(this->width());
+	float height = static_cast<float>(this->height());
 
+	XMMATRIX proj = XMMatrixPerspectiveFovLH(XM_PIDIV4,
+		static_cast<float>(width / 2.f) / (static_cast<float>(height / 2.f)), 0.1f, 100.0f);
+	MeshConstantBuffer cb;
+	cb.WVP = XMMatrixTranspose(world * view * proj);
+	//cb.WVP = XMMatrixTranspose(w * v * p);
 
-	//		//XMMATRIX world = XMMatrixScaling(0.01f, 0.01f, 0.01f);
 
-	//		XMMATRIX meshScale = XMMatrixScaling(-1.0f, 1.0f, 1.0f);  // 작게 만들기
 
-	//		XMMATRIX world =
-	//			XMMatrixRotationZ(XMConvertToRadians(180.0f)) *
-	//			XMMatrixRotationX(XMConvertToRadians(-90.0f)) *
-	//			XMMatrixScaling(0.01f, 0.01f, 0.01f);
+	context->UpdateSubresource(m_meshConstantBuffer, 0, nullptr, &cb, 0, 0);
+	context->VSSetConstantBuffers(0, 1, &m_meshConstantBuffer);
+	qDebug() << "CB updated";
 
-	//		//world *= meshScale;
+	//qDebug() << "Constant buffer updated";
 
-	//		//XMMATRIX world =
-	//		//	XMMatrixRotationZ(XMConvertToRadians(180.0f)) *   // ← 뒤집어서 코가 앞을 향하게
-	//		//	XMMatrixRotationX(XMConvertToRadians(-90.0f)) *   // ← 정수리를 앞으로 돌리는 기존 회전
-	//		//	XMMatrixScaling(0.01f, 0.01f, 0.01f);
 
+		// ✅ Cull mode 끄기
+	D3D11_RASTERIZER_DESC rastDesc = {};
+	rastDesc.FillMode = D3D11_FILL_SOLID;
+	rastDesc.CullMode = D3D11_CULL_NONE;  // 양면 그리기
+	//rastDesc.CullMode = D3D11_CULL_FRONT;  // ✅ 앞면 대신 뒷면 컬링
+	//rastDesc.CullMode = D3D11_CULL_BACK;  // ✅ 앞면 대신 뒷면 컬링
+	rastDesc.FrontCounterClockwise = FALSE;
+	ID3D11RasterizerState* rastState = nullptr;
+	m_pDevice->CreateRasterizerState(&rastDesc, &rastState);
+	context->RSSetState(rastState);
+	qDebug() << "Rasterizer set";
 
 
 
-	//		XMMATRIX view = XMMatrixLookAtLH(
-	//			XMVectorSet(0, 0, -5, 1),//eye
-	//			XMVectorSet(0, 0, 0, 1),//target
-	//			XMVectorSet(0, 1, 0, 0)//up
-	//		);
+	// 3. 텍스처 바인딩
+	context->PSSetShaderResources(0, 1, &m_meshTexture);
+	context->PSSetSamplers(0, 1, &m_MeshSamplerState);
 
 
 
 
+	UINT stride = sizeof(PLY::VertexWithTexture);
+	UINT offset = 0;
+	context->IASetVertexBuffers(0, 1, &m_meshVertexBuffer, &stride, &offset);
+	context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+	qDebug() << "VB set, drawing" << m_meshVertexCount;
 
-	//		float w = static_cast<float>(this->width());
-	//		float h = static_cast<float>(this->height());
 
-	//		XMMATRIX proj = XMMatrixPerspectiveFovLH(XM_PIDIV4, 
-	//			static_cast<float>(w/2.f )/ (static_cast<float>(h / 2.f)), 0.1f, 100.0f);
-	//		MeshConstantBuffer cb;
-	//		cb.WVP = XMMatrixTranspose(world * view * proj);
+	context->OMSetBlendState(alphaBlendState, nullptr, 0xffffffff);
+	context->Draw(m_meshVertexCount, 0);
 
+	if (rastState) rastState->Release();
+	qDebug() << "=== RenderMesh END ===";
 
 
-
-	//		context->UpdateSubresource(m_meshConstantBuffer, 0, nullptr, &cb, 0, 0);
-	//		context->VSSetConstantBuffers(0, 1, &m_meshConstantBuffer);
-	//		qDebug() << "CB updated";
-
-	//		//qDebug() << "Constant buffer updated";
-
-
-	//			// ✅ Cull mode 끄기
-	//		D3D11_RASTERIZER_DESC rastDesc = {};
-	//		rastDesc.FillMode = D3D11_FILL_SOLID;
-	//		rastDesc.CullMode = D3D11_CULL_NONE;  // 양면 그리기
-	//		//rastDesc.CullMode = D3D11_CULL_FRONT;  // ✅ 앞면 대신 뒷면 컬링
-	//		//rastDesc.CullMode = D3D11_CULL_BACK;  // ✅ 앞면 대신 뒷면 컬링
-	//		rastDesc.FrontCounterClockwise = FALSE;
-	//		ID3D11RasterizerState* rastState = nullptr;
-	//		m_pDevice->CreateRasterizerState(&rastDesc, &rastState);
-	//		context->RSSetState(rastState);
-	//		qDebug() << "Rasterizer set";
-
-
-
-	//		// 3. 텍스처 바인딩
-	//		context->PSSetShaderResources(0, 1, &m_meshTexture);
-	//		context->PSSetSamplers(0, 1, &m_MeshSamplerState);
-
-
-
-
-	//		UINT stride = sizeof(PLY::VertexWithTexture);
-	//		UINT offset = 0;
-	//		context->IASetVertexBuffers(0, 1, &m_meshVertexBuffer, &stride, &offset);
-	//		context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-	//		qDebug() << "VB set, drawing" << m_meshVertexCount;
-
-
-
-	//		context->Draw(m_meshVertexCount, 0);
-
-	//		if (rastState) rastState->Release();
-	//		qDebug() << "=== RenderMesh END ===";
-	//	}
-	//	else if (fileReader) {
-
-	//		// ✅ Depth Buffer 해제 (2D는 필요 없음)
-	//		m_pDeviceContext->OMSetRenderTargets(1, &m_pSwapChainRTV, nullptr);
-	//		DrawQuadWithTexture(m_SRViews.slices[i], vp, i);      // ← 여기서 호출!
-	//	}
-	//}
-
-//	1. 셰이더 설정
-context->VSSetShader(m_meshVS, nullptr, 0);
-context->PSSetShader(m_meshPS, nullptr, 0);
-context->IASetInputLayout(m_meshInputLayout);
-qDebug() << "Shaders set";
-
-
-//// ✅ 임시로 단순한 변환 행렬 테스트
-//XMMATRIX world = XMMatrixIdentity();
-//XMMATRIX view = XMMatrixLookAtLH(
-//	XMVectorSet(0.0f, 0.0f, -5.0f, 1.0f),  // 카메라 위치
-//	XMVectorSet(0.0f, 0.0f, 0.0f, 1.0f),   // 보는 방향
-//	XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f)    // 위쪽
-//);
-//XMMATRIX proj = p;  // 기존 프로젝션 사용
-
-//	// ✅ WVP 행렬 계산 전에 메쉬 스케일 조정
-//XMMATRIX meshScale = XMMatrixScaling(0.01f, 0.01f, 0.01f);  // 작게 만들기
-////XMMATRIX meshWorld = meshScale;
-//XMMATRIX meshTranslation = XMMatrixTranslation(0.0f, 0.0f, 0.0f);
-//XMMATRIX meshWorld = meshScale * meshTranslation;
-
-
-//// 2. 상수 버퍼 업데이트 (WVP 행렬)
-//MeshConstantBuffer cb;
-////cb.WVP = XMMatrixTranspose(w * v * p);  // 네 기존 변환 행렬
-////cb.WVP = XMMatrixTranspose(meshWorld *world * view  * proj);  // 네 기존 변환 행렬
-////cb.WVP = XMMatrixTranspose(meshWorld *w * v * p);  // 네 기존 변환 행렬
-////cb.WVP = XMMatrixIdentity();
-//cb.WVP = XMMatrixTranspose(meshWorld);  // 일단 단위 뷰/프로젝션
-
-
-//XMMATRIX world = XMMatrixScaling(0.01f, 0.01f, 0.01f);
-
-XMMATRIX meshScale = XMMatrixScaling(-1.0f, 1.0f, 1.0f);  // 작게 만들기
-
-XMMATRIX world =
-XMMatrixRotationZ(XMConvertToRadians(180.0f)) *
-XMMatrixRotationX(XMConvertToRadians(-90.0f)) *
-XMMatrixScaling(0.01f, 0.01f, 0.01f);
-
-//world *= meshScale;
-
-//XMMATRIX world =
-//	XMMatrixRotationZ(XMConvertToRadians(180.0f)) *   // ← 뒤집어서 코가 앞을 향하게
-//	XMMatrixRotationX(XMConvertToRadians(-90.0f)) *   // ← 정수리를 앞으로 돌리는 기존 회전
-//	XMMatrixScaling(0.01f, 0.01f, 0.01f);
-
-
-
-
-XMMATRIX view = XMMatrixLookAtLH(
-	XMVectorSet(0, 0, -5, 1),//eye
-	XMVectorSet(0, 0, 0, 1),//target
-	XMVectorSet(0, 1, 0, 0)//up
-);
-
-
-
-
-
-float w = static_cast<float>(this->width());
-float h = static_cast<float>(this->height());
-
-XMMATRIX proj = XMMatrixPerspectiveFovLH(XM_PIDIV4,
-	static_cast<float>(w / 2.f) / (static_cast<float>(h / 2.f)), 0.1f, 100.0f);
-MeshConstantBuffer cb;
-cb.WVP = XMMatrixTranspose(world * view * proj);
-
-
-
-
-context->UpdateSubresource(m_meshConstantBuffer, 0, nullptr, &cb, 0, 0);
-context->VSSetConstantBuffers(0, 1, &m_meshConstantBuffer);
-qDebug() << "CB updated";
-
-//qDebug() << "Constant buffer updated";
-
-
-	// ✅ Cull mode 끄기
-D3D11_RASTERIZER_DESC rastDesc = {};
-rastDesc.FillMode = D3D11_FILL_SOLID;
-rastDesc.CullMode = D3D11_CULL_NONE;  // 양면 그리기
-//rastDesc.CullMode = D3D11_CULL_FRONT;  // ✅ 앞면 대신 뒷면 컬링
-//rastDesc.CullMode = D3D11_CULL_BACK;  // ✅ 앞면 대신 뒷면 컬링
-rastDesc.FrontCounterClockwise = FALSE;
-ID3D11RasterizerState* rastState = nullptr;
-m_pDevice->CreateRasterizerState(&rastDesc, &rastState);
-context->RSSetState(rastState);
-qDebug() << "Rasterizer set";
-
-
-
-// 3. 텍스처 바인딩
-context->PSSetShaderResources(0, 1, &m_meshTexture);
-context->PSSetSamplers(0, 1, &m_MeshSamplerState);
-
-
-
-
-UINT stride = sizeof(PLY::VertexWithTexture);
-UINT offset = 0;
-context->IASetVertexBuffers(0, 1, &m_meshVertexBuffer, &stride, &offset);
-context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-qDebug() << "VB set, drawing" << m_meshVertexCount;
-
-
-
-context->Draw(m_meshVertexCount, 0);
-
-if (rastState) rastState->Release();
-qDebug() << "=== RenderMesh END ===";
-
-
-	//ImGuiIO& io = ImGui::GetIO();
-
-
-
-	//// ✅ 여기에 ImGui 렌더링 추가!
-	//ImGui_ImplDX11_NewFrame();
-	//ImGui_ImplWin32_NewFrame();
-	//ImGui::NewFrame();
-
-
-
-
-	//// ✅ Begin/End 없이 바로 그리기
-	//ImDrawList* drawList = ImGui::GetBackgroundDrawList();
-	//ImVec2 screenSize = ImGui::GetIO().DisplaySize;
-	//float cx = screenSize.x * 0.5f;
-	//float cy = screenSize.y * 0.5f;
-
-	//// 수직선 (연한 회색)
-	//drawList->AddLine(ImVec2(cx, 0), ImVec2(cx, screenSize.y), IM_COL32(211, 211, 211, 255), 2.0f);
-
-	//// 수평선 (연한 회색)
-	//drawList->AddLine(ImVec2(0, cy), ImVec2(screenSize.x, cy), IM_COL32(211, 211, 211, 255), 2.0f);
-
-
-	//// ImGui 렌더링 마무리
-	//ImGui::Render();
-	//ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
-
-	//m_pSwapChain->Present(1, 0);
-
-	//emit rendered();
-
-	
-
-
-
-
-
-
-
-	//// 1. 셰이더 설정
-	//context->VSSetShader(m_meshVS, nullptr, 0);
-	//context->PSSetShader(m_meshPS, nullptr, 0);
-	//context->IASetInputLayout(m_meshInputLayout);
-
-	//// 2. 상수 버퍼 업데이트 (WVP 행렬)
-	//MeshConstantBuffer cb;
-	//cb.WVP = XMMatrixTranspose(w * v * p);  // 네 기존 변환 행렬
-	//context->UpdateSubresource(m_meshConstantBuffer, 0, nullptr, &cb, 0, 0);
-	//context->VSSetConstantBuffers(0, 1, &m_meshConstantBuffer);
-
-	//// 3. 텍스처 바인딩
-	//context->PSSetShaderResources(0, 1, &m_meshTexture);
-	//context->PSSetSamplers(0, 1, &m_MeshSamplerState);
-	//
-	//
-	//
-	//
-	//UINT stride = sizeof(PLY::VertexWithTexture);
-	//UINT offset = 0;
-	//context->IASetVertexBuffers(0, 1, &m_meshVertexBuffer, &stride, &offset);
-	//context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-
-	//context->Draw(m_meshVertexCount, 0);
 }
 
 
@@ -1724,7 +1487,7 @@ void QDirect3D11Widget::initializeRenderTargets()
 
 
 	for (int i{}; i < 4; ++i) {
-	//for (int i{}; i < 1; ++i) {
+		//for (int i{}; i < 1; ++i) {
 		if (0 == i) {
 
 
@@ -1804,7 +1567,7 @@ void QDirect3D11Widget::initializeRenderTargets()
 			}
 
 
-			if(fileReader)
+			if (fileReader)
 				CreateTexture3D();
 
 
@@ -2133,8 +1896,8 @@ void QDirect3D11Widget::RenderVolumeView()
 		//// ✅ (2) 볼륨 렌더링용 상태 설정
 		m_pDeviceContext->OMSetDepthStencilState(nullptr, 0);
 
-			// ✅ Depth Test 활성화
-		//m_pDeviceContext->OMSetDepthStencilState(m_depthStencilState, 1);
+		// ✅ Depth Test 활성화
+	//m_pDeviceContext->OMSetDepthStencilState(m_depthStencilState, 1);
 
 		m_pDeviceContext->OMSetBlendState(nullptr, nullptr, 0xffffffff);
 
@@ -3059,8 +2822,8 @@ void QDirect3D11Widget::RenderAllQuads()
 
 			RenderVolumeView();
 
-			m_pDeviceContext->ClearDepthStencilView(m_pDepthStencilView, D3D11_CLEAR_DEPTH, 1.0f, 0);
-			m_pDeviceContext->OMSetRenderTargets(1, &m_pSwapChainRTV, m_pDepthStencilView);
+			//m_pDeviceContext->ClearDepthStencilView(m_pDepthStencilView, D3D11_CLEAR_DEPTH, 1.0f, 0);
+			//m_pDeviceContext->OMSetRenderTargets(1, &m_pSwapChainRTV, m_pDepthStencilView);
 			RenderMesh(m_pDeviceContext);
 		}
 		else {
@@ -4169,7 +3932,7 @@ void QDirect3D11Widget::resizeEvent(QResizeEvent* event)
 
 
 
-	}
+}
 
 bool QDirect3D11Widget::event(QEvent* event)
 {
