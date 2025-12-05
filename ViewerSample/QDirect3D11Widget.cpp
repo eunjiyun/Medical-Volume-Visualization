@@ -1485,9 +1485,9 @@ void QDirect3D11Widget::RenderMesh(ID3D11DeviceContext* context)
 
 
 
-			//// 3. 텍스처 바인딩
-			//context->PSSetShaderResources(0, 1, &m_meshTexture);
-			//context->PSSetSamplers(0, 1, &m_MeshSamplerState);
+			// 3. 텍스처 바인딩
+			context->PSSetShaderResources(0, 1, &m_meshTexture);
+			context->PSSetSamplers(0, 1, &m_MeshSamplerState);
 
 
 
