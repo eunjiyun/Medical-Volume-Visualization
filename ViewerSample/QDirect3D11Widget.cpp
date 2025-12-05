@@ -1411,29 +1411,60 @@ void QDirect3D11Widget::RenderMesh(ID3D11DeviceContext* context)
 			qDebug() << "Shaders set";
 
 
-			// ✅ 임시로 단순한 변환 행렬 테스트
-			XMMATRIX world = XMMatrixIdentity();
+			//// ✅ 임시로 단순한 변환 행렬 테스트
+			//XMMATRIX world = XMMatrixIdentity();
+			//XMMATRIX view = XMMatrixLookAtLH(
+			//	XMVectorSet(0.0f, 0.0f, -5.0f, 1.0f),  // 카메라 위치
+			//	XMVectorSet(0.0f, 0.0f, 0.0f, 1.0f),   // 보는 방향
+			//	XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f)    // 위쪽
+			//);
+			//XMMATRIX proj = p;  // 기존 프로젝션 사용
+
+			//	// ✅ WVP 행렬 계산 전에 메쉬 스케일 조정
+			//XMMATRIX meshScale = XMMatrixScaling(0.01f, 0.01f, 0.01f);  // 작게 만들기
+			////XMMATRIX meshWorld = meshScale;
+			//XMMATRIX meshTranslation = XMMatrixTranslation(0.0f, 0.0f, 0.0f);
+			//XMMATRIX meshWorld = meshScale * meshTranslation;
+
+
+			//// 2. 상수 버퍼 업데이트 (WVP 행렬)
+			//MeshConstantBuffer cb;
+			////cb.WVP = XMMatrixTranspose(w * v * p);  // 네 기존 변환 행렬
+			////cb.WVP = XMMatrixTranspose(meshWorld *world * view  * proj);  // 네 기존 변환 행렬
+			////cb.WVP = XMMatrixTranspose(meshWorld *w * v * p);  // 네 기존 변환 행렬
+			////cb.WVP = XMMatrixIdentity();
+			//cb.WVP = XMMatrixTranspose(meshWorld);  // 일단 단위 뷰/프로젝션
+
+
+			//XMMATRIX world = XMMatrixScaling(0.01f, 0.01f, 0.01f);
+			XMMATRIX world =
+				XMMatrixRotationX(XMConvertToRadians(-90.0f)) *
+				XMMatrixScaling(0.01f, 0.01f, 0.01f);
+
+
+
+
 			XMMATRIX view = XMMatrixLookAtLH(
-				XMVectorSet(0.0f, 0.0f, -5.0f, 1.0f),  // 카메라 위치
-				XMVectorSet(0.0f, 0.0f, 0.0f, 1.0f),   // 보는 방향
-				XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f)    // 위쪽
+				XMVectorSet(0, 0, -5, 1),//eye
+				XMVectorSet(0, 0, 0, 1),//target
+				XMVectorSet(0, 1, 0, 0)//up
 			);
-			XMMATRIX proj = p;  // 기존 프로젝션 사용
-
-				// ✅ WVP 행렬 계산 전에 메쉬 스케일 조정
-			XMMATRIX meshScale = XMMatrixScaling(0.01f, 0.01f, 0.01f);  // 작게 만들기
-			//XMMATRIX meshWorld = meshScale;
-			XMMATRIX meshTranslation = XMMatrixTranslation(0.0f, 0.0f, 0.0f);
-			XMMATRIX meshWorld = meshScale * meshTranslation;
 
 
-			// 2. 상수 버퍼 업데이트 (WVP 행렬)
+
+
+
+			float w = static_cast<float>(this->width());
+			float h = static_cast<float>(this->height());
+
+			XMMATRIX proj = XMMatrixPerspectiveFovLH(XM_PIDIV4, 
+				static_cast<float>(w/2.f )/ (static_cast<float>(h / 2.f)), 0.1f, 100.0f);
 			MeshConstantBuffer cb;
-			//cb.WVP = XMMatrixTranspose(w * v * p);  // 네 기존 변환 행렬
-			//cb.WVP = XMMatrixTranspose(meshWorld *world * view  * proj);  // 네 기존 변환 행렬
-			//cb.WVP = XMMatrixTranspose(meshWorld *w * v * p);  // 네 기존 변환 행렬
-			//cb.WVP = XMMatrixIdentity();
-			cb.WVP = XMMatrixTranspose(meshWorld);  // 일단 단위 뷰/프로젝션
+			cb.WVP = XMMatrixTranspose(world * view * proj);
+
+
+
+
 			context->UpdateSubresource(m_meshConstantBuffer, 0, nullptr, &cb, 0, 0);
 			context->VSSetConstantBuffers(0, 1, &m_meshConstantBuffer);
 			qDebug() << "CB updated";
