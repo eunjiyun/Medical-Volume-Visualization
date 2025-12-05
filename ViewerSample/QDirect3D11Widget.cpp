@@ -779,7 +779,7 @@ void QDirect3D11Widget::LoadDICOMSeries()
 
 	fileReader = new FileReader();
 
-	fileReader->LoadDICOMSeries((std::string)"D:\\Data\\sez\\DICOM", m_pDevice);
+	fileReader->LoadDICOMSeries((std::string)"D:\\Data\\faceData\\DCM", m_pDevice);
 
 }
 
@@ -1378,16 +1378,16 @@ void QDirect3D11Widget::RenderMesh(ID3D11DeviceContext* context)
 		return;
 	}
 
-	//// 2. 백버퍼에 출력할 준비
-	m_pDeviceContext->OMSetRenderTargets(1, &m_pSwapChainRTV, m_pDepthStencilView);
-	m_pDeviceContext->ClearRenderTargetView(m_pSwapChainRTV, reinterpret_cast<float*>(&m_BackColor));
+	////// 2. 백버퍼에 출력할 준비
+	//m_pDeviceContext->OMSetRenderTargets(1, &m_pSwapChainRTV, m_pDepthStencilView);
+	//m_pDeviceContext->ClearRenderTargetView(m_pSwapChainRTV, reinterpret_cast<float*>(&m_BackColor));
 
-	// ✅ 깊이 버퍼 클리어 (3D 렌더링에 필요)
-	if (m_pDepthStencilView) {
-		m_pDeviceContext->ClearDepthStencilView(m_pDepthStencilView,
-			D3D11_CLEAR_DEPTH,
-			1.0f, 0);
-	}
+	//// ✅ 깊이 버퍼 클리어 (3D 렌더링에 필요)
+	//if (m_pDepthStencilView) {
+	//	m_pDeviceContext->ClearDepthStencilView(m_pDepthStencilView,
+	//		D3D11_CLEAR_DEPTH,
+	//		1.0f, 0);
+	//}
 
 	//// 3. 각 렌더 타겟 텍스처를 quad로 출력
 	//for (int i{}; i < 4; ++i)
@@ -3058,6 +3058,9 @@ void QDirect3D11Widget::RenderAllQuads()
 		if (0 == i) {
 
 			RenderVolumeView();
+
+			m_pDeviceContext->ClearDepthStencilView(m_pDepthStencilView, D3D11_CLEAR_DEPTH, 1.0f, 0);
+			m_pDeviceContext->OMSetRenderTargets(1, &m_pSwapChainRTV, m_pDepthStencilView);
 			RenderMesh(m_pDeviceContext);
 		}
 		else {
