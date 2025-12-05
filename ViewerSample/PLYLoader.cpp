@@ -126,16 +126,23 @@ void PLYLoader::CreateRenderVertices() {
 	m_renderVertices.reserve(m_faceCount * 3);
 
 	for (const auto& face : m_faces) {
-		for (int i = 0; i < 3; i++) {
+		for (int i{}; i < 3; ++i) {
 			PLY::VertexWithTexture v;
 
 			int idx = face.indices[i];
 			v.x = m_vertices[idx].x;
 			v.y = m_vertices[idx].y;
 			v.z = m_vertices[idx].z;
-			v.nx = m_vertices[idx].nx;
+
+
+
+			/*v.nx = m_vertices[idx].nx;
 			v.ny = m_vertices[idx].ny;
-			v.nz = m_vertices[idx].nz;
+			v.nz = m_vertices[idx].nz;*/
+			// 노멀 (반전)
+			v.nx = -m_vertices[idx].nx;
+			v.ny = -m_vertices[idx].ny;
+			v.nz = -m_vertices[idx].nz;
 
 			v.u = face.texCoords[i * 2];
 			v.v = face.texCoords[i * 2 + 1];
@@ -144,6 +151,61 @@ void PLYLoader::CreateRenderVertices() {
 		}
 	}
 }
+
+//void PLYLoader::CreateRenderVertices() {
+//	m_renderVertices.clear();
+//	m_renderVertices.reserve(m_faceCount * 3);
+//
+//	for (const auto& face : m_faces) {
+//		// ✅ 역순으로 추가 (2, 1, 0)
+//		for (int i = 2; i >= 0; i--) {
+//			PLY::VertexWithTexture v;
+//
+//			int idx = face.indices[i];
+//
+//			// 위치
+//			v.x = m_vertices[idx].x;
+//			v.y = m_vertices[idx].y;
+//			v.z = m_vertices[idx].z;
+//
+//			// 노멀 (반전)
+//			v.nx = -m_vertices[idx].nx;
+//			v.ny = -m_vertices[idx].ny;
+//			v.nz = -m_vertices[idx].nz;
+//
+//			// 텍스처 좌표
+//			v.u = face.texCoords[i * 2];
+//			v.v = face.texCoords[i * 2 + 1];
+//
+//			m_renderVertices.push_back(v);
+//		}
+//	}
+//}
+
+//void PLYLoader::CreateRenderVertices() {
+//	m_renderVertices.clear();
+//	m_renderVertices.reserve(m_faceCount * 3);
+//
+//	for (const auto& face : m_faces) {
+//		// ✅ 정점 순서 반대로 (0,1,2 → 2,1,0)
+//		for (int i = 2; i >= 0; i--) {  // 역순
+//			PLY::VertexWithTexture v;
+//
+//			int idx = face.indices[i];
+//			v.x = m_vertices[idx].x;
+//			v.y = m_vertices[idx].y;
+//			v.z = m_vertices[idx].z;
+//			v.nx = m_vertices[idx].nx;
+//			v.ny = m_vertices[idx].ny;
+//			v.nz = m_vertices[idx].nz;
+//
+//			v.u = face.texCoords[i * 2];
+//			v.v = face.texCoords[i * 2 + 1];
+//
+//			m_renderVertices.push_back(v);
+//		}
+//	}
+//}
 
 const std::vector<PLY::VertexWithTexture>& PLYLoader::GetRenderVertices() const {
 	return m_renderVertices;

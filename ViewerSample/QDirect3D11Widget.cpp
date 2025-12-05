@@ -1437,9 +1437,20 @@ void QDirect3D11Widget::RenderMesh(ID3D11DeviceContext* context)
 
 
 			//XMMATRIX world = XMMatrixScaling(0.01f, 0.01f, 0.01f);
+
+			XMMATRIX meshScale = XMMatrixScaling(-1.0f, 1.0f, 1.0f);  // 작게 만들기
+
 			XMMATRIX world =
+				XMMatrixRotationZ(XMConvertToRadians(180.0f)) *
 				XMMatrixRotationX(XMConvertToRadians(-90.0f)) *
 				XMMatrixScaling(0.01f, 0.01f, 0.01f);
+
+			//world *= meshScale;
+
+			//XMMATRIX world =
+			//	XMMatrixRotationZ(XMConvertToRadians(180.0f)) *   // ← 뒤집어서 코가 앞을 향하게
+			//	XMMatrixRotationX(XMConvertToRadians(-90.0f)) *   // ← 정수리를 앞으로 돌리는 기존 회전
+			//	XMMatrixScaling(0.01f, 0.01f, 0.01f);
 
 
 
@@ -1475,8 +1486,9 @@ void QDirect3D11Widget::RenderMesh(ID3D11DeviceContext* context)
 				// ✅ Cull mode 끄기
 			D3D11_RASTERIZER_DESC rastDesc = {};
 			rastDesc.FillMode = D3D11_FILL_SOLID;
-		//	rastDesc.CullMode = D3D11_CULL_NONE;  // 양면 그리기
-			rastDesc.CullMode = D3D11_CULL_FRONT;  // ✅ 앞면 대신 뒷면 컬링
+			rastDesc.CullMode = D3D11_CULL_NONE;  // 양면 그리기
+			//rastDesc.CullMode = D3D11_CULL_FRONT;  // ✅ 앞면 대신 뒷면 컬링
+			//rastDesc.CullMode = D3D11_CULL_BACK;  // ✅ 앞면 대신 뒷면 컬링
 			rastDesc.FrontCounterClockwise = FALSE;
 			ID3D11RasterizerState* rastState = nullptr;
 			m_pDevice->CreateRasterizerState(&rastDesc, &rastState);
