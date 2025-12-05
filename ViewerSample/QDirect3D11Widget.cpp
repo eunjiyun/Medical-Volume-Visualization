@@ -1444,7 +1444,8 @@ void QDirect3D11Widget::RenderMesh(ID3D11DeviceContext* context)
 				// ✅ Cull mode 끄기
 			D3D11_RASTERIZER_DESC rastDesc = {};
 			rastDesc.FillMode = D3D11_FILL_SOLID;
-			rastDesc.CullMode = D3D11_CULL_NONE;  // 양면 그리기
+		//	rastDesc.CullMode = D3D11_CULL_NONE;  // 양면 그리기
+			rastDesc.CullMode = D3D11_CULL_FRONT;  // ✅ 앞면 대신 뒷면 컬링
 			rastDesc.FrontCounterClockwise = FALSE;
 			ID3D11RasterizerState* rastState = nullptr;
 			m_pDevice->CreateRasterizerState(&rastDesc, &rastState);
