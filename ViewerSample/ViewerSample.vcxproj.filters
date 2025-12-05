@@ -73,6 +73,9 @@
     <ClCompile Include="TransferFunction.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="PLYLoader.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <QtMoc Include="QDirect3D11Widget.h">
@@ -119,6 +122,9 @@
     <ClInclude Include="TransferFunction.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="PLYLoader.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="PixelShader.hlsl" />
@@ -130,6 +136,8 @@
     <FxCompile Include="prevVolumePS.hlsl" />
     <FxCompile Include="VolumeRaymarchVS.hlsl" />
     <FxCompile Include="VolumeRaymarchPS.hlsl" />
+    <FxCompile Include="MeshVS.hlsl" />
+    <FxCompile Include="MeshPS.hlsl" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="icon.ico">

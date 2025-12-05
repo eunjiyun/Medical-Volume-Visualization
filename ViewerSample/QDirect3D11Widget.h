@@ -105,6 +105,12 @@ struct SlicePlane {
 };
 
 
+
+struct MeshConstantBuffer {
+	XMMATRIX WVP;
+};
+
+
 class QDirect3D11Widget : public QWidget
 {
 	Q_OBJECT
@@ -157,6 +163,14 @@ public:
 
 	void UpdateVolumeMatrix();
 	void Render();
+
+	bool LoadMeshFromPLY(const std::string& filename, ID3D11Device* device);
+	bool LoadMeshTexture(const std::string& filename, ID3D11Device* device);
+	bool InitializeMeshShaders();
+	bool CreateMeshConstantBuffer();
+
+	bool TestSimpleTriangle();
+	void RenderMesh(ID3D11DeviceContext* context);
 
 
 public:
@@ -369,7 +383,9 @@ public:
 	ID3D11VertexShader*       m_volumeQuadVS = nullptr;
 	ID3D11PixelShader*        m_volumeQuadPS = nullptr;
 
-	ID3D11Buffer*             m_vertexBuffer = nullptr;
+
+
+
 
 	ID3D11InputLayout*        m_inputLayout = nullptr;//layoutQuad
 	ID3D11InputLayout*layoutQuad{ nullptr };
@@ -454,6 +470,19 @@ public:
 	float viewHeight;
 	DirectX::XMFLOAT3 patientCoord;
 
+	// PLY 데이터
+	ID3D11Buffer*             m_vertexBuffer = nullptr;
+	int m_vertexCount;
+	ID3D11Buffer* m_meshVertexBuffer;
+	int m_meshVertexCount{};
+
+	// 렌더링 리소스
+	ID3D11VertexShader* m_meshVS{ nullptr };
+	ID3D11PixelShader* m_meshPS{ nullptr };
+	ID3D11InputLayout* m_meshInputLayout{ nullptr };
+	ID3D11ShaderResourceView* m_meshTexture{ nullptr };
+	ID3D11SamplerState* m_MeshSamplerState{ nullptr };
+	ID3D11Buffer* m_meshConstantBuffer{ nullptr };
 };
 
 

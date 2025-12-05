@@ -10,11 +10,10 @@
 #include "imgui.h"
 #include "imgui_impl_dx11.h"
 #include "imgui_impl_win32.h"
+#include "PLYLoader.h"
 
 
 using Microsoft::WRL::ComPtr;
-
-
 
 constexpr int FPS_LIMIT = 60.0f;
 constexpr int MS_PER_FRAME = (int)((1.0f / FPS_LIMIT) * 1000.0f);
@@ -27,8 +26,6 @@ T Max3(T a, T b, T c)
 	T temp = (a > b) ? a : b;
 	return (temp > c) ? temp : c;
 }
-
-
 
 QDirect3D11Widget::QDirect3D11Widget(QWidget* parent)
 	: QWidget(parent)
@@ -508,6 +505,16 @@ QDirect3D11Widget::~QDirect3D11Widget()
 
 	if (m_transferFunction) delete m_transferFunction;
 	if (m_tfSampler) m_tfSampler->Release();
+
+	if (m_meshVertexBuffer) {
+		m_meshVertexBuffer->Release();
+		m_meshVertexBuffer = nullptr;
+	}
+
+	if (m_meshTexture) {
+		m_meshTexture->Release();
+		m_meshTexture = nullptr;
+	}
 }
 
 void QDirect3D11Widget::release()
@@ -575,7 +582,6 @@ void QDirect3D11Widget::showEvent(QShowEvent* event)
 
 	ImGui_ImplWin32_Init(hwnd); // Qt에서 가져온 HWND
 	ImGui_ImplDX11_Init(m_pDevice, m_pDeviceContext);
-
 }
 
 bool QDirect3D11Widget::init()
@@ -622,115 +628,145 @@ bool QDirect3D11Widget::init()
 
 	resetEnvironment();
 
-	LoadDICOMSeries();  // 최초 표시 시 DICOM 로드
+	//LoadDICOMSeries();  // 최초 표시 시 DICOM 로드
 
 
-	eye = XMVectorSet(0.0f, 0.0f, -3.0f, 1.0f);  // 조금 더 뒤로
-	at = XMVectorSet(0.0f, 0.0f, 0.0f, 1.0f);
-	up = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
+	//eye = XMVectorSet(0.0f, 0.0f, -3.0f, 1.0f);  // 조금 더 뒤로
+	//at = XMVectorSet(0.0f, 0.0f, 0.0f, 1.0f);
+	//up = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
 
 
 
-	v = XMMatrixLookAtLH(eye, at, up);
+	//v = XMMatrixLookAtLH(eye, at, up);
 
-	p = XMMatrixPerspectiveFovLH(
-		XM_PIDIV4,
-		(float)width() / (float)height(),
-		0.1f,
-		100.0f  // Far plane 증가
-	);
-
-
-	iv = XMMatrixInverse(nullptr, v);
-	ip = XMMatrixInverse(nullptr, p);
+	//p = XMMatrixPerspectiveFovLH(
+	//	XM_PIDIV4,
+	//	(float)width() / (float)height(),
+	//	0.1f,
+	//	100.0f  // Far plane 증가
+	//);
 
 
-	rotx = XMMatrixRotationX(-XM_PIDIV2);  // 90도 회전
-	roty = XMMatrixRotationY(XM_PI);  // 90도 회전
+	//iv = XMMatrixInverse(nullptr, v);
+	//ip = XMMatrixInverse(nullptr, p);
 
 
-	// ✅ center 변환 제거
-	trans = XMMatrixTranslation(0.0f, 0.0f, 0.0f);
-
-	// DICOM에서 읽어온 값
-	float voxelSpacingX = fileReader->views.spacing.x;  // mm
-	float voxelSpacingY = fileReader->views.spacing.y;  // mm
-	float voxelSpacingZ = fileReader->views.spacing.z;  // mm (슬라이스 간격)
-
-	// 실제 물리적 크기
-	float physicalWidth = fileReader->m_width * voxelSpacingX;   // 512 * 0.4 = 204.8mm
-	float physicalHeight = fileReader->m_height * voxelSpacingY; // 512 * 0.4 = 204.8mm
-	float physicalDepth = fileReader->m_depth * voxelSpacingZ;   // 632 * 0.3 = 189.6mm
-
-	// 최대 크기
-	float maxPhysical = Max3(physicalWidth, physicalHeight, physicalDepth);
-
-	// 정규화된 스케일
-	float scaleX = physicalWidth / maxPhysical;
-
-	float scaleY = physicalDepth / maxPhysical;
-	float scaleZ = physicalHeight / maxPhysical;
-
-	// 스케일 행렬
-	float overallSize = 1.5f;
-	scale = XMMatrixScaling(
-		scaleX*overallSize,
-		scaleY*overallSize,
-		scaleZ*overallSize
-	);
+	//rotx = XMMatrixRotationX(-XM_PIDIV2);  // 90도 회전
+	//roty = XMMatrixRotationY(XM_PI);  // 90도 회전
 
 
-	w = scale * roty*rotx;
-	iw = XMMatrixInverse(nullptr, w);
+	//// ✅ center 변환 제거
+	//trans = XMMatrixTranslation(0.0f, 0.0f, 0.0f);
+
+	//// DICOM에서 읽어온 값
+	//float voxelSpacingX = fileReader->views.spacing.x;  // mm
+	//float voxelSpacingY = fileReader->views.spacing.y;  // mm
+	//float voxelSpacingZ = fileReader->views.spacing.z;  // mm (슬라이스 간격)
+
+	//// 실제 물리적 크기
+	//float physicalWidth = fileReader->m_width * voxelSpacingX;   // 512 * 0.4 = 204.8mm
+	//float physicalHeight = fileReader->m_height * voxelSpacingY; // 512 * 0.4 = 204.8mm
+	//float physicalDepth = fileReader->m_depth * voxelSpacingZ;   // 632 * 0.3 = 189.6mm
+
+	//// 최대 크기
+	//float maxPhysical = Max3(physicalWidth, physicalHeight, physicalDepth);
+
+	//// 정규화된 스케일
+	//float scaleX = physicalWidth / maxPhysical;
+
+	//float scaleY = physicalDepth / maxPhysical;
+	//float scaleZ = physicalHeight / maxPhysical;
+
+	//// 스케일 행렬
+	//float overallSize = 1.5f;
+	//scale = XMMatrixScaling(
+	//	scaleX*overallSize,
+	//	scaleY*overallSize,
+	//	scaleZ*overallSize
+	//);
+
+
+	//w = scale * roty*rotx;
+	//iw = XMMatrixInverse(nullptr, w);
 
 
 	initializeRenderTargets();
 
 	createSwapChainRTV();
 
-	// ✅ 4. Depth Stencil Buffer 생성 (여기서 호출!)
+	//// ✅ 4. Depth Stencil Buffer 생성 (여기서 호출!)
 	CreateDepthStencilBuffer();
 
 
-	InitShaders();
-	InitializeVolumeShaders();    // 셰이더 컴파일
-	InitializeSlicePlanes();      // ← 1번
-	InitializeBoundingCube();     // ← 2번
-	InitializeVolumeCamera();     // 카메라 설정
-	InitializeTFVolume();
+	//InitShaders();
+	//InitializeVolumeShaders();    // 셰이더 컴파일
+	//InitializeSlicePlanes();      // ← 1번
+	//InitializeBoundingCube();     // ← 2번
+	//InitializeVolumeCamera();     // 카메라 설정
+	//InitializeTFVolume();
 
 
-	scrollAxial->setRange(0, fileReader->m_depth - 1);
-	scrollAxial->setValue(fileReader->m_depth / 2); // 중앙으로 초기화
-	scrollAxial->setPageStep(1);
-	scrollAxial->setSingleStep(1);
 
-	// Coronal 스크롤바 설정 (height 기준)
-	scrollCoronal->setRange(0, fileReader->m_height - 1);
-	scrollCoronal->setValue(fileReader->m_height / 2); // 중앙으로 초기화
-	scrollCoronal->setPageStep(1);
-	scrollCoronal->setSingleStep(1);
-
-	// Sagittal 스크롤바 설정 (width 기준)
-	scrollSagittal->setRange(0, fileReader->m_width - 1);
-	scrollSagittal->setValue(fileReader->m_width / 2); // 중앙으로 초기화
-	scrollSagittal->setPageStep(1);
-	scrollSagittal->setSingleStep(1);
-
-	// 초기 슬라이스 업데이트
-	onAxialScroll(scrollAxial->value());
-	onCoronalScroll(scrollCoronal->value());
-	onSagittalScroll(scrollSagittal->value());
+	// ✅ PLY 메쉬 로드 추가
+	if (!LoadMeshFromPLY("D:\\Data\\faceData\\Mouse_close\\c_facescan_Face.ply", m_pDevice)) {
+		qDebug() << "Failed to load PLY mesh";
+		// 에러 처리 (필요시)
+	}
 
 
-	// 초기 슬라이스 정보 표시
-	sliceInfoAxial->setText(QString("Image %1/%2").arg(fileReader->m_depth / 2 + 1).arg(fileReader->m_depth));
-	sliceInfoCoronal->setText(QString("Image %1/%2").arg(fileReader->m_height / 2 + 1).arg(fileReader->m_height));
-	sliceInfoSagittal->setText(QString("Image %1/%2").arg(fileReader->m_width / 2 + 1).arg(fileReader->m_width));
+	//// ✅ PLY 메쉬 로드 추가
+	//if (!TestSimpleTriangle()) {
+	//	qDebug() << "Failed to load PLY mesh";
+	//	// 에러 처리 (필요시)
+	//}
 
-	sliceInfoAxial->adjustSize();
-	sliceInfoCoronal->adjustSize();
-	sliceInfoSagittal->adjustSize();
+	// 텍스처 로드
+	if (!LoadMeshTexture("D:\\Data\\faceData\\Mouse_close\\c_facescan_Face_texture0.png", m_pDevice)) {
+		return false;
+	}
+
+	if (!InitializeMeshShaders()) {
+		qDebug() << "Failed to initialize mesh shaders";
+		return false;  // 실패하면 종료
+	}
+
+	if (!CreateMeshConstantBuffer()) {
+		qDebug() << "Failed to create mesh constant buffer";
+		return false;
+	}
+
+
+	//scrollAxial->setRange(0, fileReader->m_depth - 1);
+	//scrollAxial->setValue(fileReader->m_depth / 2); // 중앙으로 초기화
+	//scrollAxial->setPageStep(1);
+	//scrollAxial->setSingleStep(1);
+
+	//// Coronal 스크롤바 설정 (height 기준)
+	//scrollCoronal->setRange(0, fileReader->m_height - 1);
+	//scrollCoronal->setValue(fileReader->m_height / 2); // 중앙으로 초기화
+	//scrollCoronal->setPageStep(1);
+	//scrollCoronal->setSingleStep(1);
+
+	//// Sagittal 스크롤바 설정 (width 기준)
+	//scrollSagittal->setRange(0, fileReader->m_width - 1);
+	//scrollSagittal->setValue(fileReader->m_width / 2); // 중앙으로 초기화
+	//scrollSagittal->setPageStep(1);
+	//scrollSagittal->setSingleStep(1);
+
+	//// 초기 슬라이스 업데이트
+	//onAxialScroll(scrollAxial->value());
+	//onCoronalScroll(scrollCoronal->value());
+	//onSagittalScroll(scrollSagittal->value());
+
+
+	//// 초기 슬라이스 정보 표시
+	//sliceInfoAxial->setText(QString("Image %1/%2").arg(fileReader->m_depth / 2 + 1).arg(fileReader->m_depth));
+	//sliceInfoCoronal->setText(QString("Image %1/%2").arg(fileReader->m_height / 2 + 1).arg(fileReader->m_height));
+	//sliceInfoSagittal->setText(QString("Image %1/%2").arg(fileReader->m_width / 2 + 1).arg(fileReader->m_width));
+
+	//sliceInfoAxial->adjustSize();
+	//sliceInfoCoronal->adjustSize();
+	//sliceInfoSagittal->adjustSize();
 
 
 	connect(&m_qTimer, &QTimer::timeout, this, &QDirect3D11Widget::onFrame);
@@ -751,10 +787,13 @@ void QDirect3D11Widget::onFrame()
 {
 	if (m_bRenderActive) tick();
 
-	//beginScene();
-	//render();
-	RenderAllQuads();
-	//RenderVolumeView();
+	////beginScene();
+	////render();
+	//RenderAllQuads();
+	////RenderVolumeView();
+
+	RenderMesh(m_pDeviceContext);
+
 	endScene();
 }
 
@@ -1051,6 +1090,466 @@ void QDirect3D11Widget::UpdateVolumeMatrix()
 }
 //======================================================================================
 
+bool QDirect3D11Widget::LoadMeshFromPLY(const std::string& filename, ID3D11Device* device) {
+	// PLY 로드
+	PLYLoader plyLoader;
+	if (!plyLoader.Load(filename)) {
+		return false;
+	}
+
+	const auto& vertices = plyLoader.GetRenderVertices();
+
+	// ✅ 이 줄이 꼭 있어야 함!
+	m_meshVertexCount = static_cast<int>(vertices.size());
+
+	// 버텍스 버퍼 생성
+	D3D11_BUFFER_DESC bd = {};
+	bd.Usage = D3D11_USAGE_DEFAULT;
+	bd.ByteWidth = sizeof(PLY::VertexWithTexture) * vertices.size();
+	bd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+
+	D3D11_SUBRESOURCE_DATA initData = {};
+	initData.pSysMem = vertices.data();
+
+	HRESULT hr = device->CreateBuffer(&bd, &initData, &m_meshVertexBuffer);
+	if (FAILED(hr)) {
+		return false;
+	}
+
+	// ✅ 로드 후 확인
+	qDebug() << "Mesh loaded - Vertex count:" << m_meshVertexCount;
+	qDebug() << "Vertex buffer:" << (m_meshVertexBuffer ? "OK" : "NULL");
+
+	return true;
+}
+
+// QDirect3D11Widget.cpp
+bool QDirect3D11Widget::LoadMeshTexture(const std::string& filename, ID3D11Device* device) {
+	// Qt로 이미지 로드
+	QImage image(QString::fromStdString(filename));
+	if (image.isNull()) {
+		qDebug() << "Failed to load texture:" << QString::fromStdString(filename);
+		return false;
+	}
+
+	// RGBA 포맷으로 변환
+	image = image.convertToFormat(QImage::Format_RGBA8888);
+	image = image.mirrored(false, true);  // OpenGL과 DX11 UV 좌표 차이 보정
+
+	// DX11 텍스처 생성
+	D3D11_TEXTURE2D_DESC texDesc = {};
+	texDesc.Width = image.width();
+	texDesc.Height = image.height();
+	texDesc.MipLevels = 1;
+	texDesc.ArraySize = 1;
+	texDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+	texDesc.SampleDesc.Count = 1;
+	texDesc.Usage = D3D11_USAGE_DEFAULT;
+	texDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+
+	D3D11_SUBRESOURCE_DATA texData = {};
+	texData.pSysMem = image.bits();
+	texData.SysMemPitch = image.bytesPerLine();
+
+	ID3D11Texture2D* texture = nullptr;
+	HRESULT hr = device->CreateTexture2D(&texDesc, &texData, &texture);
+	if (FAILED(hr)) {
+		qDebug() << "Failed to create texture2D";
+		return false;
+	}
+
+	// Shader Resource View 생성
+	hr = device->CreateShaderResourceView(texture, nullptr, &m_meshTexture);
+	texture->Release();  // SRV가 참조 가지고 있으므로 해제
+
+	if (FAILED(hr)) {
+		qDebug() << "Failed to create shader resource view";
+		return false;
+	}
+
+	// Sampler State 생성
+	D3D11_SAMPLER_DESC samplerDesc = {};
+	samplerDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+	samplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
+	samplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
+	samplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
+	samplerDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
+	samplerDesc.MinLOD = 0;
+	samplerDesc.MaxLOD = D3D11_FLOAT32_MAX;
+
+	hr = device->CreateSamplerState(&samplerDesc, &m_MeshSamplerState);
+	if (FAILED(hr)) {
+		qDebug() << "Failed to create sampler state";
+		return false;
+	}
+
+	qDebug() << "Texture loaded successfully:" << QString::fromStdString(filename);
+	return true;
+}
+
+bool QDirect3D11Widget::InitializeMeshShaders() {
+	HRESULT hr;
+
+	// Vertex Shader 컴파일
+	ID3DBlob* vsBlob = nullptr;
+	ID3DBlob* errorBlob = nullptr;
+
+	hr = D3DCompileFromFile(
+		L"MeshVS.hlsl",
+		nullptr,
+		nullptr,
+		"main",
+		"vs_5_0",
+		D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION,
+		0,
+		&vsBlob,
+		&errorBlob
+	);
+
+	if (FAILED(hr)) {
+		if (errorBlob) {
+			qDebug() << "VS compile error:" << (char*)errorBlob->GetBufferPointer();
+			errorBlob->Release();
+		}
+		return false;
+	}
+
+	// Vertex Shader 생성
+	hr = m_pDevice->CreateVertexShader(
+		vsBlob->GetBufferPointer(),
+		vsBlob->GetBufferSize(),
+		nullptr,
+		&m_meshVS
+	);
+
+	if (FAILED(hr)) {
+		vsBlob->Release();
+		return false;
+	}
+
+	// Input Layout 정의
+	D3D11_INPUT_ELEMENT_DESC layout[] = {
+		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+		{ "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 24, D3D11_INPUT_PER_VERTEX_DATA, 0 }
+	};
+
+	hr = m_pDevice->CreateInputLayout(
+		layout,
+		ARRAYSIZE(layout),
+		vsBlob->GetBufferPointer(),
+		vsBlob->GetBufferSize(),
+		&m_meshInputLayout
+	);
+
+	vsBlob->Release();
+
+	if (FAILED(hr)) {
+		return false;
+	}
+
+	// Pixel Shader 컴파일
+	ID3DBlob* psBlob = nullptr;
+	hr = D3DCompileFromFile(
+		L"MeshPS.hlsl",
+		nullptr,
+		nullptr,
+		"main",
+		"ps_5_0",
+		D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION,
+		0,
+		&psBlob,
+		&errorBlob
+	);
+
+	if (FAILED(hr)) {
+		if (errorBlob) {
+			qDebug() << "PS compile error:" << (char*)errorBlob->GetBufferPointer();
+			errorBlob->Release();
+		}
+		return false;
+	}
+
+	// Pixel Shader 생성
+	hr = m_pDevice->CreatePixelShader(
+		psBlob->GetBufferPointer(),
+		psBlob->GetBufferSize(),
+		nullptr,
+		&m_meshPS
+	);
+
+	psBlob->Release();
+
+	if (FAILED(hr)) {
+		return false;
+	}
+
+	qDebug() << "Mesh shaders initialized successfully";
+	return true;
+}
+
+bool QDirect3D11Widget::CreateMeshConstantBuffer() {
+	D3D11_BUFFER_DESC bd = {};
+	bd.Usage = D3D11_USAGE_DEFAULT;
+	bd.ByteWidth = sizeof(XMMATRIX);  // 16바이트 배수 (64바이트)
+	bd.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+	bd.CPUAccessFlags = 0;
+
+	HRESULT hr = m_pDevice->CreateBuffer(&bd, nullptr, &m_meshConstantBuffer);
+	if (FAILED(hr)) {
+		qDebug() << "Failed to create mesh constant buffer";
+		return false;
+	}
+
+	qDebug() << "Mesh constant buffer created successfully";
+	return true;
+}
+
+
+bool QDirect3D11Widget::TestSimpleTriangle() {
+	// ✅ 아주 간단한 삼각형 3개 정점
+	struct SimpleVertex {
+		float x, y, z;
+		float nx, ny, nz;
+		float u, v;
+	};
+
+	SimpleVertex vertices[] = {
+		{ 0.0f,  0.5f, 0.0f,  0.0f, 0.0f, 1.0f,  0.5f, 0.0f },
+		{ 0.5f, -0.5f, 0.0f,  0.0f, 0.0f, 1.0f,  1.0f, 1.0f },
+		{-0.5f, -0.5f, 0.0f,  0.0f, 0.0f, 1.0f,  0.0f, 1.0f }
+	};
+
+	D3D11_BUFFER_DESC bd = {};
+	bd.Usage = D3D11_USAGE_DEFAULT;
+	bd.ByteWidth = sizeof(vertices);
+	bd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+
+	D3D11_SUBRESOURCE_DATA initData = {};
+	initData.pSysMem = vertices;
+
+	ID3D11Buffer* testBuffer = nullptr;
+	HRESULT hr = m_pDevice->CreateBuffer(&bd, &initData, &testBuffer);
+
+	if (SUCCEEDED(hr)) {
+		// 기존 버퍼 임시 교체
+		if (m_meshVertexBuffer) m_meshVertexBuffer->Release();
+		m_meshVertexBuffer = testBuffer;
+		m_meshVertexCount = 3;
+		qDebug() << "Test triangle buffer created";
+		return true;
+	}
+
+	return false;
+}
+
+void QDirect3D11Widget::RenderMesh(ID3D11DeviceContext* context)
+{
+
+	qDebug() << "=== RenderMesh START ===";
+
+	// Viewport
+	D3D11_VIEWPORT vp;
+	vp.Width = (FLOAT)width();
+	vp.Height = (FLOAT)height();
+	vp.MinDepth = 0.0f;
+	vp.MaxDepth = 1.0f;
+	vp.TopLeftX = 0;
+	vp.TopLeftY = 0;
+	context->RSSetViewports(1, &vp);
+	qDebug() << "Viewport set:" << vp.Width << "x" << vp.Height;
+
+
+	// ✅ RenderTarget 강제 바인딩
+	//context->OMSetRenderTargets(1, &m_pRenderTargetView, m_pDepthStencilView);
+	m_pDeviceContext->OMSetRenderTargets(1, &m_pSwapChainRTV, nullptr);
+	qDebug() << "RenderTarget set";
+
+	if (!m_meshVertexBuffer || m_meshVertexCount == 0) {
+		qDebug() << "No mesh data!";
+		return;
+	}
+
+	qDebug() << "Drawing" << m_meshVertexCount << "vertices";  // ✅
+
+	// ✅ 리소스 체크
+	if (!m_meshVS || !m_meshPS || !m_meshInputLayout) {
+		qDebug() << "Shader resources missing!";
+		return;
+	}
+
+	//// 2. 백버퍼에 출력할 준비
+	m_pDeviceContext->OMSetRenderTargets(1, &m_pSwapChainRTV, m_pDepthStencilView);
+	m_pDeviceContext->ClearRenderTargetView(m_pSwapChainRTV, reinterpret_cast<float*>(&m_BackColor));
+
+	// ✅ 깊이 버퍼 클리어 (3D 렌더링에 필요)
+	if (m_pDepthStencilView) {
+		m_pDeviceContext->ClearDepthStencilView(m_pDepthStencilView,
+			D3D11_CLEAR_DEPTH,
+			1.0f, 0);
+	}
+
+	// 3. 각 렌더 타겟 텍스처를 quad로 출력
+	for (int i{}; i < 4; ++i)
+	{
+		D3D11_VIEWPORT vp = CreateViewport(i); // ← 4분할 뷰포트 계산
+
+		m_pDeviceContext->RSSetViewports(1, &vp); // ✅ 모든 뷰에 설정
+
+
+		if (0 == i) {
+
+			//RenderVolumeView();
+			//RenderMesh(m_pDeviceContext);
+
+
+
+		//	1. 셰이더 설정
+			context->VSSetShader(m_meshVS, nullptr, 0);
+			context->PSSetShader(m_meshPS, nullptr, 0);
+			context->IASetInputLayout(m_meshInputLayout);
+			qDebug() << "Shaders set";
+
+
+			// ✅ 임시로 단순한 변환 행렬 테스트
+			XMMATRIX world = XMMatrixIdentity();
+			XMMATRIX view = XMMatrixLookAtLH(
+				XMVectorSet(0.0f, 0.0f, -5.0f, 1.0f),  // 카메라 위치
+				XMVectorSet(0.0f, 0.0f, 0.0f, 1.0f),   // 보는 방향
+				XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f)    // 위쪽
+			);
+			XMMATRIX proj = p;  // 기존 프로젝션 사용
+
+				// ✅ WVP 행렬 계산 전에 메쉬 스케일 조정
+			XMMATRIX meshScale = XMMatrixScaling(0.01f, 0.01f, 0.01f);  // 작게 만들기
+			//XMMATRIX meshWorld = meshScale;
+			XMMATRIX meshTranslation = XMMatrixTranslation(0.0f, 0.0f, 0.0f);
+			XMMATRIX meshWorld = meshScale * meshTranslation;
+
+
+			// 2. 상수 버퍼 업데이트 (WVP 행렬)
+			MeshConstantBuffer cb;
+			//cb.WVP = XMMatrixTranspose(w * v * p);  // 네 기존 변환 행렬
+			//cb.WVP = XMMatrixTranspose(meshWorld *world * view  * proj);  // 네 기존 변환 행렬
+			//cb.WVP = XMMatrixTranspose(meshWorld *w * v * p);  // 네 기존 변환 행렬
+			//cb.WVP = XMMatrixIdentity();
+			cb.WVP = XMMatrixTranspose(meshWorld);  // 일단 단위 뷰/프로젝션
+			context->UpdateSubresource(m_meshConstantBuffer, 0, nullptr, &cb, 0, 0);
+			context->VSSetConstantBuffers(0, 1, &m_meshConstantBuffer);
+			qDebug() << "CB updated";
+
+			//qDebug() << "Constant buffer updated";
+
+
+				// ✅ Cull mode 끄기
+			D3D11_RASTERIZER_DESC rastDesc = {};
+			rastDesc.FillMode = D3D11_FILL_SOLID;
+			rastDesc.CullMode = D3D11_CULL_NONE;  // 양면 그리기
+			rastDesc.FrontCounterClockwise = FALSE;
+			ID3D11RasterizerState* rastState = nullptr;
+			m_pDevice->CreateRasterizerState(&rastDesc, &rastState);
+			context->RSSetState(rastState);
+			qDebug() << "Rasterizer set";
+
+
+
+			//// 3. 텍스처 바인딩
+			//context->PSSetShaderResources(0, 1, &m_meshTexture);
+			//context->PSSetSamplers(0, 1, &m_MeshSamplerState);
+
+
+
+
+			UINT stride = sizeof(PLY::VertexWithTexture);
+			UINT offset = 0;
+			context->IASetVertexBuffers(0, 1, &m_meshVertexBuffer, &stride, &offset);
+			context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+			qDebug() << "VB set, drawing" << m_meshVertexCount;
+
+
+
+			context->Draw(m_meshVertexCount, 0);
+
+			if (rastState) rastState->Release();
+			qDebug() << "=== RenderMesh END ===";
+		}
+		else if (fileReader) {
+
+			// ✅ Depth Buffer 해제 (2D는 필요 없음)
+			m_pDeviceContext->OMSetRenderTargets(1, &m_pSwapChainRTV, nullptr);
+			DrawQuadWithTexture(m_SRViews.slices[i], vp, i);      // ← 여기서 호출!
+		}
+	}
+
+
+	ImGuiIO& io = ImGui::GetIO();
+
+
+
+	// ✅ 여기에 ImGui 렌더링 추가!
+	ImGui_ImplDX11_NewFrame();
+	ImGui_ImplWin32_NewFrame();
+	ImGui::NewFrame();
+
+
+
+
+	// ✅ Begin/End 없이 바로 그리기
+	ImDrawList* drawList = ImGui::GetBackgroundDrawList();
+	ImVec2 screenSize = ImGui::GetIO().DisplaySize;
+	float cx = screenSize.x * 0.5f;
+	float cy = screenSize.y * 0.5f;
+
+	// 수직선 (연한 회색)
+	drawList->AddLine(ImVec2(cx, 0), ImVec2(cx, screenSize.y), IM_COL32(211, 211, 211, 255), 2.0f);
+
+	// 수평선 (연한 회색)
+	drawList->AddLine(ImVec2(0, cy), ImVec2(screenSize.x, cy), IM_COL32(211, 211, 211, 255), 2.0f);
+
+
+	// ImGui 렌더링 마무리
+	ImGui::Render();
+	ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
+
+	m_pSwapChain->Present(1, 0);
+
+	emit rendered();
+
+	
+
+
+
+
+
+
+
+	//// 1. 셰이더 설정
+	//context->VSSetShader(m_meshVS, nullptr, 0);
+	//context->PSSetShader(m_meshPS, nullptr, 0);
+	//context->IASetInputLayout(m_meshInputLayout);
+
+	//// 2. 상수 버퍼 업데이트 (WVP 행렬)
+	//MeshConstantBuffer cb;
+	//cb.WVP = XMMatrixTranspose(w * v * p);  // 네 기존 변환 행렬
+	//context->UpdateSubresource(m_meshConstantBuffer, 0, nullptr, &cb, 0, 0);
+	//context->VSSetConstantBuffers(0, 1, &m_meshConstantBuffer);
+
+	//// 3. 텍스처 바인딩
+	//context->PSSetShaderResources(0, 1, &m_meshTexture);
+	//context->PSSetSamplers(0, 1, &m_MeshSamplerState);
+	//
+	//
+	//
+	//
+	//UINT stride = sizeof(PLY::VertexWithTexture);
+	//UINT offset = 0;
+	//context->IASetVertexBuffers(0, 1, &m_meshVertexBuffer, &stride, &offset);
+	//context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+	//context->Draw(m_meshVertexCount, 0);
+}
+
+
 
 
 void QDirect3D11Widget::initializeRenderTargets()
@@ -1060,49 +1559,54 @@ void QDirect3D11Widget::initializeRenderTargets()
 	m_SRViews.slices.clear();
 	m_samplerState.clear();
 	coronalTextureCacheSrv.clear();
-	coronalTextureCacheSrv.resize(fileReader->m_height);
 
-	fileReader->SliceIdxManage();
+	if (fileReader) {
+		coronalTextureCacheSrv.resize(fileReader->m_height);
+		fileReader->SliceIdxManage();
+	}
 
 
-	for (int i{}; i < 4; ++i) {
+	//for (int i{}; i < 4; ++i) {
+	for (int i{}; i < 1; ++i) {
 		if (0 == i) {
 
 
-			std::vector<std::vector<uint8_t>> sliceData(fileReader->m_height);
+			if (fileReader) {
+				std::vector<std::vector<uint8_t>> sliceData(fileReader->m_height);
 
-			for (int i = 0; i < fileReader->m_height; ++i)
-			{
-
-				sliceData[i] = fileReader->GenerateCoronalSlice(i);
-
-				D3D11_TEXTURE2D_DESC sliceDesc = {};
-
-				sliceDesc.Width = fileReader->m_width;
-				sliceDesc.Height = fileReader->m_depth;
-				sliceDesc.MipLevels = 1;
-				sliceDesc.ArraySize = 1;
-				sliceDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-				sliceDesc.SampleDesc.Count = 1;
-				sliceDesc.Usage = D3D11_USAGE_DEFAULT;
-				sliceDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
-
-				D3D11_SUBRESOURCE_DATA initData = {};
-				initData.pSysMem = sliceData[i].data();
-				initData.SysMemPitch = fileReader->m_width * 4;
-
-				ID3D11Texture2D* sliceTex = nullptr;
-				HRESULT hr = m_pDevice->CreateTexture2D(&sliceDesc, &initData, &sliceTex);
-				if (FAILED(hr)) continue;
-
-				// 슬라이스 개별 SRV
-				ID3D11ShaderResourceView* sliceSRV = nullptr;
-				hr = m_pDevice->CreateShaderResourceView(sliceTex, nullptr, &sliceSRV);
-				if (SUCCEEDED(hr))
+				for (int i = 0; i < fileReader->m_height; ++i)
 				{
-					coronalTextureCacheSrv[i] = sliceSRV; // ✅ 저장
-				}
 
+					sliceData[i] = fileReader->GenerateCoronalSlice(i);
+
+					D3D11_TEXTURE2D_DESC sliceDesc = {};
+
+					sliceDesc.Width = fileReader->m_width;
+					sliceDesc.Height = fileReader->m_depth;
+					sliceDesc.MipLevels = 1;
+					sliceDesc.ArraySize = 1;
+					sliceDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+					sliceDesc.SampleDesc.Count = 1;
+					sliceDesc.Usage = D3D11_USAGE_DEFAULT;
+					sliceDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+
+					D3D11_SUBRESOURCE_DATA initData = {};
+					initData.pSysMem = sliceData[i].data();
+					initData.SysMemPitch = fileReader->m_width * 4;
+
+					ID3D11Texture2D* sliceTex = nullptr;
+					HRESULT hr = m_pDevice->CreateTexture2D(&sliceDesc, &initData, &sliceTex);
+					if (FAILED(hr)) continue;
+
+					// 슬라이스 개별 SRV
+					ID3D11ShaderResourceView* sliceSRV = nullptr;
+					hr = m_pDevice->CreateShaderResourceView(sliceTex, nullptr, &sliceSRV);
+					if (SUCCEEDED(hr))
+					{
+						coronalTextureCacheSrv[i] = sliceSRV; // ✅ 저장
+					}
+
+				}
 			}
 
 
@@ -1143,7 +1647,8 @@ void QDirect3D11Widget::initializeRenderTargets()
 			}
 
 
-			CreateTexture3D();
+			if(fileReader)
+				CreateTexture3D();
 
 
 
@@ -1468,8 +1973,12 @@ void QDirect3D11Widget::RenderVolumeView()
 		UINT prevSampleMask = 0xffffffff;
 		m_pDeviceContext->OMGetBlendState(&prevBS, prevBlendFactor, &prevSampleMask);
 
-		// ✅ (2) 볼륨 렌더링용 상태 설정
+		//// ✅ (2) 볼륨 렌더링용 상태 설정
 		m_pDeviceContext->OMSetDepthStencilState(nullptr, 0);
+
+			// ✅ Depth Test 활성화
+		//m_pDeviceContext->OMSetDepthStencilState(m_depthStencilState, 1);
+
 		m_pDeviceContext->OMSetBlendState(nullptr, nullptr, 0xffffffff);
 
 		UpdateVolumeMatrix();
@@ -1949,28 +2458,32 @@ D3D11_VIEWPORT QDirect3D11Widget::CreateViewport(int index)
 		return vp;
 	}
 
+	if (fileReader) {
 
-	switch (index) {
+		switch (index) {
 
-	case 1: // Axial (Z축 슬라이싱)
-		dataAspect = (float)(fileReader->m_width) / (float)(fileReader->m_height);
-		break;
+		case 1: // Axial (Z축 슬라이싱)
+			dataAspect = (float)(fileReader->m_width) / (float)(fileReader->m_height);
+			break;
 
-	case 2: // Coronal (Y축 슬라이싱)
-		// X × Z 평면
-		dataAspect = (float)(fileReader->m_width) / (float)(fileReader->m_depth);
-		break;
+		case 2: // Coronal (Y축 슬라이싱)
+			// X × Z 평면
+			dataAspect = (float)(fileReader->m_width) / (float)(fileReader->m_depth);
+			break;
 
-	case 3: // Sagittal (X축 슬라이싱)
-		// Y × Z 평면
-		dataAspect = (float)(fileReader->m_height) / (float)(fileReader->m_depth);
-		break;
+		case 3: // Sagittal (X축 슬라이싱)
+			// Y × Z 평면
+			dataAspect = (float)(fileReader->m_height) / (float)(fileReader->m_depth);
+			break;
 
-	default: // Volume (3D)
-		//dataAspect = 1.0f;
-		dataAspect = (float)(fileReader->m_width) / (float)(fileReader->m_depth);
-		break;
+		default: // Volume (3D)
+			//dataAspect = 1.0f;
+			dataAspect = (float)(fileReader->m_width) / (float)(fileReader->m_depth);
+			break;
+		}
 	}
+	else
+		dataAspect = 1;
 
 	// ✅ Aspect ratio 유지하며 최대 크기로 맞춤
 	float renderWidth = quadWidth;
@@ -3495,7 +4008,7 @@ void QDirect3D11Widget::resizeEvent(QResizeEvent* event)
 
 
 
-}
+	}
 
 bool QDirect3D11Widget::event(QEvent* event)
 {
