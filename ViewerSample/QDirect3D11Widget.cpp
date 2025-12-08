@@ -705,10 +705,14 @@ bool QDirect3D11Widget::init()
 	InitializeVolumeCamera();     // 카메라 설정
 	InitializeTFVolume();
 
+	//D:\Data\faceData\Mouse_open
+	//c_facescan_Face_texture0
 
+	//"D:\\Data\\faceData\\Mouse_close\\c_facescan_Face.ply"
+	//"D:\\Data\\faceData\\Mouse_close\\c_facescan_Face_texture0.png"
 
 	// ✅ PLY 메쉬 로드 추가
-	if (!LoadMeshFromPLY("D:\\Data\\faceData\\Mouse_close\\c_facescan_Face.ply", m_pDevice)) {
+	if (!LoadMeshFromPLY("D:\\Data\\faceData\\Mouse_open\\c_facescan_Face.ply", m_pDevice)) {
 		qDebug() << "Failed to load PLY mesh";
 		// 에러 처리 (필요시)
 	}
@@ -721,7 +725,7 @@ bool QDirect3D11Widget::init()
 	//}
 
 	// 텍스처 로드
-	if (!LoadMeshTexture("D:\\Data\\faceData\\Mouse_close\\c_facescan_Face_texture0.png", m_pDevice)) {
+	if (!LoadMeshTexture("D:\\Data\\faceData\\Mouse_open\\c_facescan_Face_texture0.png", m_pDevice)) {
 		return false;
 	}
 
@@ -1346,7 +1350,7 @@ bool QDirect3D11Widget::TestSimpleTriangle() {
 void QDirect3D11Widget::RenderMesh(ID3D11DeviceContext* context)
 {
 
-	qDebug() << "=== RenderMesh START ===";
+	//qDebug() << "=== RenderMesh START ===";
 
 	ID3D11BlendState* alphaBlendState = nullptr;
 
@@ -1373,7 +1377,7 @@ void QDirect3D11Widget::RenderMesh(ID3D11DeviceContext* context)
 		return;
 	}
 
-	qDebug() << "Drawing" << m_meshVertexCount << "vertices";  // ✅
+	//qDebug() << "Drawing" << m_meshVertexCount << "vertices";  // ✅
 
 	// ✅ 리소스 체크
 	if (!m_meshVS || !m_meshPS || !m_meshInputLayout) {
@@ -1387,7 +1391,7 @@ void QDirect3D11Widget::RenderMesh(ID3D11DeviceContext* context)
 	context->VSSetShader(m_meshVS, nullptr, 0);
 	context->PSSetShader(m_meshPS, nullptr, 0);
 	context->IASetInputLayout(m_meshInputLayout);
-	qDebug() << "Shaders set";
+	//qDebug() << "Shaders set";
 
 
 
@@ -1419,15 +1423,31 @@ void QDirect3D11Widget::RenderMesh(ID3D11DeviceContext* context)
 
 	XMMATRIX proj = XMMatrixPerspectiveFovLH(XM_PIDIV4,
 		static_cast<float>(width / 2.f) / (static_cast<float>(height / 2.f)), 0.1f, 100.0f);
+
+
+
+	//// ✅ m_rotation 쿼터니언을 회전 행렬로 변환
+	//XMMATRIX rotationMatrix = XMMatrixRotationQuaternion(m_rotation);
+
+	//// ✅ 초기 방향 수정 + 스케일 + 사용자 회전 적용
+	//XMMATRIX world =
+	//	XMMatrixScaling(0.0065f, 0.0065f, 0.0065f) *      // 스케일
+	//	XMMatrixRotationX(DirectX::XM_PI) *                // 초기 뒤집기
+	//	rotationMatrix;                                     // 사용자 회전 적용
+
+
+
+
 	MeshConstantBuffer cb;
-	cb.WVP = XMMatrixTranspose(world * view * proj);
-	//cb.WVP = XMMatrixTranspose(w * v * p);
+	//cb.WVP = XMMatrixTranspose(world * view * proj);
+	cb.WVP = XMMatrixTranspose(w *
+		XMMatrixScaling(0.0065f, 0.0065f, 0.0065f)*DirectX::XMMatrixRotationX(DirectX::XM_PI)* v * p);
 
 
 
 	context->UpdateSubresource(m_meshConstantBuffer, 0, nullptr, &cb, 0, 0);
 	context->VSSetConstantBuffers(0, 1, &m_meshConstantBuffer);
-	qDebug() << "CB updated";
+	//qDebug() << "CB updated";
 
 	//qDebug() << "Constant buffer updated";
 
@@ -1442,7 +1462,7 @@ void QDirect3D11Widget::RenderMesh(ID3D11DeviceContext* context)
 	ID3D11RasterizerState* rastState = nullptr;
 	m_pDevice->CreateRasterizerState(&rastDesc, &rastState);
 	context->RSSetState(rastState);
-	qDebug() << "Rasterizer set";
+	//qDebug() << "Rasterizer set";
 
 
 
@@ -1457,16 +1477,14 @@ void QDirect3D11Widget::RenderMesh(ID3D11DeviceContext* context)
 	UINT offset = 0;
 	context->IASetVertexBuffers(0, 1, &m_meshVertexBuffer, &stride, &offset);
 	context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-	qDebug() << "VB set, drawing" << m_meshVertexCount;
+	//qDebug() << "VB set, drawing" << m_meshVertexCount;
 
 
 	context->OMSetBlendState(alphaBlendState, nullptr, 0xffffffff);
 	context->Draw(m_meshVertexCount, 0);
 
 	if (rastState) rastState->Release();
-	qDebug() << "=== RenderMesh END ===";
-
-
+	//qDebug() << "=== RenderMesh END ===";
 }
 
 
@@ -2634,8 +2652,6 @@ void QDirect3D11Widget::mousePressEvent(QMouseEvent* event)
 
 	patientCoord = GetPatientCoordFromClick(clickedViewIndex, currentUV[clickedViewIndex]);
 
-
-
 	for (int i{ 1 }; i <= 3; ++i) {
 		fileReader->views.centerPatientCoord[i] = patientCoord;
 		fileReader->currentIndex[i] = ComputeSliceIndexForView(patientCoord, i);
@@ -2824,6 +2840,9 @@ void QDirect3D11Widget::RenderAllQuads()
 
 			//m_pDeviceContext->ClearDepthStencilView(m_pDepthStencilView, D3D11_CLEAR_DEPTH, 1.0f, 0);
 			//m_pDeviceContext->OMSetRenderTargets(1, &m_pSwapChainRTV, m_pDepthStencilView);
+
+
+
 			RenderMesh(m_pDeviceContext);
 		}
 		else {
@@ -3649,9 +3668,9 @@ void QDirect3D11Widget::mouseMoveEvent(QMouseEvent* event)
 
 		// 시작점과 끝점을 구 표면 좌표로 변환
 		XMVECTOR v0 = ScreenToArcball(m_lastMousePos.x(), m_lastMousePos.y(),
-			width(), height());
+			width()/2.0f, height() / 2.0f);
 		XMVECTOR v1 = ScreenToArcball(currentPos.x(), currentPos.y(),
-			width(), height());
+			width() / 2.0f, height() / 2.0f);
 
 		// 두 벡터 사이의 회전축과 각도 계산
 		XMVECTOR axis = XMVector3Cross(v0, v1);
@@ -3671,7 +3690,24 @@ void QDirect3D11Widget::mouseMoveEvent(QMouseEvent* event)
 			m_rotation = XMQuaternionNormalize(m_rotation);
 		}
 
+
+		//MeshConstantBuffer cb;
+		////cb.WVP = XMMatrixTranspose(world * view * proj);
+		//cb.WVP = XMMatrixTranspose(w *
+		//	XMMatrixScaling(0.0065f, 0.0065f, 0.0065f)*DirectX::XMMatrixRotationX(DirectX::XM_PI)* v * p);
+
+
+
+		//m_pDeviceContext->UpdateSubresource(m_meshConstantBuffer, 0, nullptr, &cb, 0, 0);
+		//m_pDeviceContext->VSSetConstantBuffers(0, 1, &m_meshConstantBuffer);
+
+		
+
+
+
 		m_lastMousePos = currentPos;
+
+		RenderMesh(m_pDeviceContext);
 		UpdateVolumeMatrix();
 
 		UpdateSlicePlanePositions();  // ✅ 추가
