@@ -1173,11 +1173,17 @@ bool QDirect3D11Widget::LoadMeshTexture(const std::string& filename, ID3D11Devic
 
 	// Sampler State 생성
 	D3D11_SAMPLER_DESC samplerDesc = {};
-	samplerDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+
+	//samplerDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+	samplerDesc.Filter = D3D11_FILTER_ANISOTROPIC; // ✅ 변경
+
+
 	samplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
 	samplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
 	samplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
 	samplerDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
+
+	samplerDesc.MaxAnisotropy = 16; // ✅ 추가
 	samplerDesc.MinLOD = 0;
 	samplerDesc.MaxLOD = D3D11_FLOAT32_MAX;
 
@@ -1398,12 +1404,6 @@ void QDirect3D11Widget::RenderMesh(ID3D11DeviceContext* context)
 
 	XMMATRIX meshScale = XMMatrixScaling(-1.0f, 1.0f, 1.0f);  // 작게 만들기
 
-	//XMMATRIX world =
-	//	XMMatrixRotationZ(XMConvertToRadians(180.0f)) *
-	//	XMMatrixRotationX(XMConvertToRadians(-90.0f)) *
-	//	XMMatrixScaling(0.015f, 0.015f, 0.015f);
-
-
 
 	XMMATRIX view = XMMatrixLookAtLH(
 		XMVectorSet(0, 0, -5, 1),//eye
@@ -1426,9 +1426,6 @@ void QDirect3D11Widget::RenderMesh(ID3D11DeviceContext* context)
 
 
 
-	//// ✅ m_rotation 쿼터니언을 회전 행렬로 변환
-	//XMMATRIX rotationMatrix = XMMatrixRotationQuaternion(m_rotation);
-
 	// ✅ 초기 방향 수정 + 스케일 + 사용자 회전 적용
 	XMMATRIX world =
 		XMMatrixScaling(0.0065f, 0.0065f, 0.0065f) *      // 스케일
@@ -1436,21 +1433,6 @@ void QDirect3D11Widget::RenderMesh(ID3D11DeviceContext* context)
 		XMMatrixRotationQuaternion(m_meshRotation);                                     // 사용자 회전 적용
 
 
-	//// ✅ Y, Z축만 반전하는 행렬
-	//XMMATRIX flipYZ = XMMatrixSet(
-	//	1, 0, 0, 0,   // X 그대로
-	//	0, -1, 0, 0,   // Y 반전
-	//	0, 0, -1, 0,   // Z 반전
-	//	0, 0, 0, 1
-	//);
-
-	//// ✅ 1단계: 축 재배치
-	//XMMATRIX plyToDicom = XMMatrixSet(
-	//	1, 0, 0, 0,
-	//	0, 0, 1, 0,
-	//	0, -1, 0, 0,
-	//	0, 0, 0, 1
-	//);
 
 	XMMATRIX plyToDicom = XMMatrixSet(
 		1, 0, 0, 0,   // X 그대로
@@ -1460,45 +1442,17 @@ void QDirect3D11Widget::RenderMesh(ID3D11DeviceContext* context)
 	);
 
 	MeshConstantBuffer cb;
-	//////cb.WVP = XMMatrixTranspose(world * view * proj);
-	//cb.WVP = XMMatrixTranspose(w *flipYZ *
-	//	XMMatrixScaling(0.0065f, 0.0065f, 0.0065f)/**DirectX::XMMatrixRotationX(DirectX::XM_PI)*/* v * p);
-
 
 
 	// ✅ 2단계: Volume과 동일한 회전
 	XMMATRIX volumeRotation = XMMatrixRotationQuaternion(m_meshRotation);
 
 
-	//// ✅ 3단계: 최종 변환
-	//cb.WVP = XMMatrixTranspose(w*
-	//	XMMatrixScaling(0.0065f, 0.0065f, 0.0065f) *
-	//	
-
-	//	//DirectX::XMMatrixRotationX(DirectX::XM_PI)*
-	//	//plyToDicom *        // 축 재배치 (회전 전에!)
-	//	//volumeRotation *    // 회전 (DICOM 좌표계 기준)
-
-	//	v * p
-	//);
-
 	cb.WVP = XMMatrixTranspose(
 		XMMatrixScaling(0.0065f, 0.0065f, 0.0065f) *
 		XMMatrixRotationX(XM_PI /*/ 4.0f*/) *  // 90도 눕히기
 		w * v * p
 	);
-
-	//cb.WVP = XMMatrixTranspose(
-	//	XMMatrixScaling(0.0065f, 0.0065f, 0.0065f) *
-	//	XMMatrixRotationX(-XM_PI / 2.0f) *  // -90도 회전 (정면 보게)
-	//	w * v * p
-	//);
-
-	////XMMatrixRotationQuaternion(m_meshRotation)
-
-	//cb.WVP = XMMatrixTranspose(XMMatrixRotationQuaternion(m_rotation)*
-	//	XMMatrixScaling(0.0065f, 0.0065f, 0.0065f)*DirectX::XMMatrixRotationX(DirectX::XM_PI)* v * p);
-
 
 
 	context->UpdateSubresource(m_meshConstantBuffer, 0, nullptr, &cb, 0, 0);
@@ -1511,9 +1465,9 @@ void QDirect3D11Widget::RenderMesh(ID3D11DeviceContext* context)
 		// ✅ Cull mode 끄기
 	D3D11_RASTERIZER_DESC rastDesc = {};
 	rastDesc.FillMode = D3D11_FILL_SOLID;
-	rastDesc.CullMode = D3D11_CULL_NONE;  // 양면 그리기
+	//rastDesc.CullMode = D3D11_CULL_NONE;  // 양면 그리기
 	//rastDesc.CullMode = D3D11_CULL_FRONT;  // ✅ 앞면 대신 뒷면 컬링
-	//rastDesc.CullMode = D3D11_CULL_BACK;  // ✅ 앞면 대신 뒷면 컬링
+	rastDesc.CullMode = D3D11_CULL_BACK;  // ✅ 앞면 대신 뒷면 컬링
 	rastDesc.FrontCounterClockwise = FALSE;
 	ID3D11RasterizerState* rastState = nullptr;
 	m_pDevice->CreateRasterizerState(&rastDesc, &rastState);
@@ -1521,12 +1475,12 @@ void QDirect3D11Widget::RenderMesh(ID3D11DeviceContext* context)
 	//qDebug() << "Rasterizer set";
 
 
-
 	// 3. 텍스처 바인딩
 	context->PSSetShaderResources(0, 1, &m_meshTexture);
 	context->PSSetSamplers(0, 1, &m_MeshSamplerState);
 
-
+	// ✅ 이 부분 추가!
+	context->OMSetDepthStencilState(m_disableDepthState.Get(), 1);
 
 
 	UINT stride = sizeof(PLY::VertexWithTexture);
@@ -2778,7 +2732,7 @@ void QDirect3D11Widget::mousePressEvent(QMouseEvent* event)
 	// 렌더링 업데이트
 	update();
 
-	RenderVolumeView(); // 강제 호출로 확인
+	//RenderVolumeView(); // 강제 호출로 확인
 
 	qDebug() << "a cur slice : " << 631 - fileReader->currentIndex[1] << endl;
 	qDebug() << "c cur slice : " << fileReader->currentIndex[2] << endl;
@@ -2892,7 +2846,7 @@ void QDirect3D11Widget::RenderAllQuads()
 
 		if (0 == i) {
 
-			RenderVolumeView();
+			//RenderVolumeView();
 
 			//m_pDeviceContext->ClearDepthStencilView(m_pDepthStencilView, D3D11_CLEAR_DEPTH, 1.0f, 0);
 			//m_pDeviceContext->OMSetRenderTargets(1, &m_pSwapChainRTV, m_pDepthStencilView);
@@ -3883,7 +3837,7 @@ void QDirect3D11Widget::onAxialScroll(int value) {
 		// 렌더링 업데이트
 		update();
 
-		RenderVolumeView(); // 강제 호출로 확인
+		//RenderVolumeView(); // 강제 호출로 확인
 	}
 
 
