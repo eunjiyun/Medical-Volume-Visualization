@@ -1376,8 +1376,6 @@ void QDirect3D11Widget::RenderMesh(ID3D11DeviceContext* context)
 
 	m_pDevice->CreateBlendState(&blendDesc, &alphaBlendState);
 
-
-
 	if (!m_meshVertexBuffer || m_meshVertexCount == 0) {
 		qDebug() << "No mesh data!";
 		return;
@@ -1399,53 +1397,7 @@ void QDirect3D11Widget::RenderMesh(ID3D11DeviceContext* context)
 	context->IASetInputLayout(m_meshInputLayout);
 	//qDebug() << "Shaders set";
 
-
-
-
-	XMMATRIX meshScale = XMMatrixScaling(-1.0f, 1.0f, 1.0f);  // 작게 만들기
-
-
-	XMMATRIX view = XMMatrixLookAtLH(
-		XMVectorSet(0, 0, -5, 1),//eye
-		XMVectorSet(0, 0, 0, 1),//target
-		XMVectorSet(0, 1, 0, 0)//up
-	);
-
-	XMMATRIX meshworld =
-		XMMatrixRotationZ(XMConvertToRadians(180.0f)) *
-		XMMatrixRotationX(XMConvertToRadians(-90.0f)) *
-		XMMatrixScaling(0.01f, 0.01f, 0.01f);
-
-
-
-	float width = static_cast<float>(this->width());
-	float height = static_cast<float>(this->height());
-
-	XMMATRIX proj = XMMatrixPerspectiveFovLH(XM_PIDIV4,
-		static_cast<float>(width / 2.f) / (static_cast<float>(height / 2.f)), 0.1f, 100.0f);
-
-
-
-	// ✅ 초기 방향 수정 + 스케일 + 사용자 회전 적용
-	XMMATRIX world =
-		XMMatrixScaling(0.0065f, 0.0065f, 0.0065f) *      // 스케일
-		XMMatrixRotationX(DirectX::XM_PI) *                // 초기 뒤집기
-		XMMatrixRotationQuaternion(m_meshRotation);                                     // 사용자 회전 적용
-
-
-
-	XMMATRIX plyToDicom = XMMatrixSet(
-		1, 0, 0, 0,   // X 그대로
-		0, 0, 1, 0,   // 새 Y = 원래 Z  
-		0, -1, 0, 0,   // 새 Z = -원래 Y (방향도 반대)
-		0, 0, 0, 1
-	);
-
 	MeshConstantBuffer cb;
-
-
-	// ✅ 2단계: Volume과 동일한 회전
-	XMMATRIX volumeRotation = XMMatrixRotationQuaternion(m_meshRotation);
 
 
 	cb.WVP = XMMatrixTranspose(
@@ -2732,7 +2684,7 @@ void QDirect3D11Widget::mousePressEvent(QMouseEvent* event)
 	// 렌더링 업데이트
 	update();
 
-	//RenderVolumeView(); // 강제 호출로 확인
+	RenderVolumeView(); // 강제 호출로 확인
 
 	qDebug() << "a cur slice : " << 631 - fileReader->currentIndex[1] << endl;
 	qDebug() << "c cur slice : " << fileReader->currentIndex[2] << endl;
@@ -2846,7 +2798,7 @@ void QDirect3D11Widget::RenderAllQuads()
 
 		if (0 == i) {
 
-			//RenderVolumeView();
+			RenderVolumeView();
 
 			//m_pDeviceContext->ClearDepthStencilView(m_pDepthStencilView, D3D11_CLEAR_DEPTH, 1.0f, 0);
 			//m_pDeviceContext->OMSetRenderTargets(1, &m_pSwapChainRTV, m_pDepthStencilView);
@@ -3692,58 +3644,16 @@ void QDirect3D11Widget::mouseMoveEvent(QMouseEvent* event)
 			dot = std::clamp(dot, -1.0f, 1.0f);
 			float angle = acosf(dot);
 
-			// ✅ Y축과 Z축 반전 (Mesh 좌표계 보정)
-			float x = XMVectorGetX(axis);
-			float y = XMVectorGetY(axis);
-			float z = XMVectorGetZ(axis);
-
-
-			XMVECTOR correctedAxis = XMVectorSet(
-				x,    // X축 그대로
-				-y,   // Y축 반전
-				-z,   // Z축 반전
-				0
-			);
-
 
 			// 쿼터니언 생성 및 적용
 			XMVECTOR qDelta = XMQuaternionRotationAxis(axis, angle);
-			//XMVECTOR qDelta = XMQuaternionRotationAxis(correctedAxis, angle);
 			m_rotation = XMQuaternionMultiply(qDelta, m_rotation);
-
-
 			// 이걸로 바꿔보기 (오른쪽에 곱함)
 			m_rotation = XMQuaternionNormalize(m_rotation);
-
-
-
-
-			//// ✅ Mesh 회전 (Y, Z 반전된 축)
-			//float x = XMVectorGetX(axis);
-			//float y = XMVectorGetY(axis);
-			//float z = XMVectorGetZ(axis);
-			XMVECTOR meshAxis = XMVectorSet(x, -y, -z, 0);
-			XMVECTOR qDeltaMesh = XMQuaternionRotationAxis(meshAxis, angle);
-			m_meshRotation = XMQuaternionMultiply(qDeltaMesh, m_meshRotation);
-			m_meshRotation = XMQuaternionNormalize(m_meshRotation);
 		}
-
-
-		//MeshConstantBuffer cb;
-		//////cb.WVP = XMMatrixTranspose(world * view * proj);
-		//cb.WVP = XMMatrixTranspose(w *
-		//	XMMatrixScaling(0.0065f, 0.0065f, 0.0065f)
-		//	*XMMatrixRotationQuaternion(m_meshRotation)
-		//	*DirectX::XMMatrixRotationX(DirectX::XM_PI)* v * p);
-
-
 
 		m_pDeviceContext->UpdateSubresource(m_meshConstantBuffer, 0, nullptr, &cb, 0, 0);
 		m_pDeviceContext->VSSetConstantBuffers(0, 1, &m_meshConstantBuffer);
-
-		
-
-
 
 		m_lastMousePos = currentPos;
 
@@ -3833,11 +3743,10 @@ void QDirect3D11Widget::onAxialScroll(int value) {
 		UpdateSlicePlanePositions();
 
 
-
 		// 렌더링 업데이트
 		update();
 
-		//RenderVolumeView(); // 강제 호출로 확인
+		RenderVolumeView(); // 강제 호출로 확인
 	}
 
 
