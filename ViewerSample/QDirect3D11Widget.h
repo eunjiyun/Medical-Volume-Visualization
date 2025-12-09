@@ -153,6 +153,7 @@ public:
 
 	XMVECTOR m_rotation;  // 쿼터니언
 	XMVECTOR m_initialRotation;
+	XMVECTOR m_meshRotation;  // Mesh용 (별도 관리)
 
 
 	// ⭐ Transfer Function 추가

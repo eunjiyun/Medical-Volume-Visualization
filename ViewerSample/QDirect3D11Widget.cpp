@@ -1398,10 +1398,10 @@ void QDirect3D11Widget::RenderMesh(ID3D11DeviceContext* context)
 
 	XMMATRIX meshScale = XMMatrixScaling(-1.0f, 1.0f, 1.0f);  // 작게 만들기
 
-	XMMATRIX world =
-		XMMatrixRotationZ(XMConvertToRadians(180.0f)) *
-		XMMatrixRotationX(XMConvertToRadians(-90.0f)) *
-		XMMatrixScaling(0.015f, 0.015f, 0.015f);
+	//XMMATRIX world =
+	//	XMMatrixRotationZ(XMConvertToRadians(180.0f)) *
+	//	XMMatrixRotationX(XMConvertToRadians(-90.0f)) *
+	//	XMMatrixScaling(0.015f, 0.015f, 0.015f);
 
 
 
@@ -1429,19 +1429,75 @@ void QDirect3D11Widget::RenderMesh(ID3D11DeviceContext* context)
 	//// ✅ m_rotation 쿼터니언을 회전 행렬로 변환
 	//XMMATRIX rotationMatrix = XMMatrixRotationQuaternion(m_rotation);
 
-	//// ✅ 초기 방향 수정 + 스케일 + 사용자 회전 적용
-	//XMMATRIX world =
-	//	XMMatrixScaling(0.0065f, 0.0065f, 0.0065f) *      // 스케일
-	//	XMMatrixRotationX(DirectX::XM_PI) *                // 초기 뒤집기
-	//	rotationMatrix;                                     // 사용자 회전 적용
+	// ✅ 초기 방향 수정 + 스케일 + 사용자 회전 적용
+	XMMATRIX world =
+		XMMatrixScaling(0.0065f, 0.0065f, 0.0065f) *      // 스케일
+		XMMatrixRotationX(DirectX::XM_PI) *                // 초기 뒤집기
+		XMMatrixRotationQuaternion(m_meshRotation);                                     // 사용자 회전 적용
 
 
+	//// ✅ Y, Z축만 반전하는 행렬
+	//XMMATRIX flipYZ = XMMatrixSet(
+	//	1, 0, 0, 0,   // X 그대로
+	//	0, -1, 0, 0,   // Y 반전
+	//	0, 0, -1, 0,   // Z 반전
+	//	0, 0, 0, 1
+	//);
 
+	//// ✅ 1단계: 축 재배치
+	//XMMATRIX plyToDicom = XMMatrixSet(
+	//	1, 0, 0, 0,
+	//	0, 0, 1, 0,
+	//	0, -1, 0, 0,
+	//	0, 0, 0, 1
+	//);
+
+	XMMATRIX plyToDicom = XMMatrixSet(
+		1, 0, 0, 0,   // X 그대로
+		0, 0, 1, 0,   // 새 Y = 원래 Z  
+		0, -1, 0, 0,   // 새 Z = -원래 Y (방향도 반대)
+		0, 0, 0, 1
+	);
 
 	MeshConstantBuffer cb;
-	//cb.WVP = XMMatrixTranspose(world * view * proj);
-	cb.WVP = XMMatrixTranspose(w *
-		XMMatrixScaling(0.0065f, 0.0065f, 0.0065f)*DirectX::XMMatrixRotationX(DirectX::XM_PI)* v * p);
+	//////cb.WVP = XMMatrixTranspose(world * view * proj);
+	//cb.WVP = XMMatrixTranspose(w *flipYZ *
+	//	XMMatrixScaling(0.0065f, 0.0065f, 0.0065f)/**DirectX::XMMatrixRotationX(DirectX::XM_PI)*/* v * p);
+
+
+
+	// ✅ 2단계: Volume과 동일한 회전
+	XMMATRIX volumeRotation = XMMatrixRotationQuaternion(m_meshRotation);
+
+
+	//// ✅ 3단계: 최종 변환
+	//cb.WVP = XMMatrixTranspose(w*
+	//	XMMatrixScaling(0.0065f, 0.0065f, 0.0065f) *
+	//	
+
+	//	//DirectX::XMMatrixRotationX(DirectX::XM_PI)*
+	//	//plyToDicom *        // 축 재배치 (회전 전에!)
+	//	//volumeRotation *    // 회전 (DICOM 좌표계 기준)
+
+	//	v * p
+	//);
+
+	cb.WVP = XMMatrixTranspose(
+		XMMatrixScaling(0.0065f, 0.0065f, 0.0065f) *
+		XMMatrixRotationX(XM_PI /*/ 4.0f*/) *  // 90도 눕히기
+		w * v * p
+	);
+
+	//cb.WVP = XMMatrixTranspose(
+	//	XMMatrixScaling(0.0065f, 0.0065f, 0.0065f) *
+	//	XMMatrixRotationX(-XM_PI / 2.0f) *  // -90도 회전 (정면 보게)
+	//	w * v * p
+	//);
+
+	////XMMatrixRotationQuaternion(m_meshRotation)
+
+	//cb.WVP = XMMatrixTranspose(XMMatrixRotationQuaternion(m_rotation)*
+	//	XMMatrixScaling(0.0065f, 0.0065f, 0.0065f)*DirectX::XMMatrixRotationX(DirectX::XM_PI)* v * p);
 
 
 
@@ -3682,24 +3738,54 @@ void QDirect3D11Widget::mouseMoveEvent(QMouseEvent* event)
 			dot = std::clamp(dot, -1.0f, 1.0f);
 			float angle = acosf(dot);
 
+			// ✅ Y축과 Z축 반전 (Mesh 좌표계 보정)
+			float x = XMVectorGetX(axis);
+			float y = XMVectorGetY(axis);
+			float z = XMVectorGetZ(axis);
+
+
+			XMVECTOR correctedAxis = XMVectorSet(
+				x,    // X축 그대로
+				-y,   // Y축 반전
+				-z,   // Z축 반전
+				0
+			);
+
+
 			// 쿼터니언 생성 및 적용
 			XMVECTOR qDelta = XMQuaternionRotationAxis(axis, angle);
+			//XMVECTOR qDelta = XMQuaternionRotationAxis(correctedAxis, angle);
 			m_rotation = XMQuaternionMultiply(qDelta, m_rotation);
+
 
 			// 이걸로 바꿔보기 (오른쪽에 곱함)
 			m_rotation = XMQuaternionNormalize(m_rotation);
+
+
+
+
+			//// ✅ Mesh 회전 (Y, Z 반전된 축)
+			//float x = XMVectorGetX(axis);
+			//float y = XMVectorGetY(axis);
+			//float z = XMVectorGetZ(axis);
+			XMVECTOR meshAxis = XMVectorSet(x, -y, -z, 0);
+			XMVECTOR qDeltaMesh = XMQuaternionRotationAxis(meshAxis, angle);
+			m_meshRotation = XMQuaternionMultiply(qDeltaMesh, m_meshRotation);
+			m_meshRotation = XMQuaternionNormalize(m_meshRotation);
 		}
 
 
 		//MeshConstantBuffer cb;
-		////cb.WVP = XMMatrixTranspose(world * view * proj);
+		//////cb.WVP = XMMatrixTranspose(world * view * proj);
 		//cb.WVP = XMMatrixTranspose(w *
-		//	XMMatrixScaling(0.0065f, 0.0065f, 0.0065f)*DirectX::XMMatrixRotationX(DirectX::XM_PI)* v * p);
+		//	XMMatrixScaling(0.0065f, 0.0065f, 0.0065f)
+		//	*XMMatrixRotationQuaternion(m_meshRotation)
+		//	*DirectX::XMMatrixRotationX(DirectX::XM_PI)* v * p);
 
 
 
-		//m_pDeviceContext->UpdateSubresource(m_meshConstantBuffer, 0, nullptr, &cb, 0, 0);
-		//m_pDeviceContext->VSSetConstantBuffers(0, 1, &m_meshConstantBuffer);
+		m_pDeviceContext->UpdateSubresource(m_meshConstantBuffer, 0, nullptr, &cb, 0, 0);
+		m_pDeviceContext->VSSetConstantBuffers(0, 1, &m_meshConstantBuffer);
 
 		
 
