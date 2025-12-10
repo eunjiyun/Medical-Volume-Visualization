@@ -173,21 +173,42 @@ struct PS_INPUT
 //	return color;
 //}
 
+//float4 main(PS_INPUT input) : SV_TARGET
+//{
+//	if (enableClip == 1)
+//	{
+//		float z = input.ViewPos.z;
+//
+//		// ✅ 더 큰 범위
+//		if (z < 2.0) return float4(1, 0, 0, 1);  // 빨강
+//		if (z < 2.5) return float4(1, 1, 0, 1);  // 노랑
+//		if (z < 3.0) return float4(0, 1, 0, 1);  // 초록
+//		if (z < 3.5) return float4(0, 1, 1, 1);  // 청록
+//		return float4(0, 0, 1, 1);  // 파랑
+//	}
+//
+//	float4 color = meshTexture.Sample(samplerState, input.Tex);
+//	color.a = 0.5;
+//	return color;
+//}
+
+
 float4 main(PS_INPUT input) : SV_TARGET
 {
 	if (enableClip == 1)
 	{
-		float z = input.ViewPos.z;
+		// ✅ 파랑(z > 3.5) 자르기
+		if (input.ViewPos.z > 3.0)
+		{
+			discard;
 
-		// ✅ 더 큰 범위
-		if (z < 2.0) return float4(1, 0, 0, 1);  // 빨강
-		if (z < 2.5) return float4(1, 1, 0, 1);  // 노랑
-		if (z < 3.0) return float4(0, 1, 0, 1);  // 초록
-		if (z < 3.5) return float4(0, 1, 1, 1);  // 청록
-		return float4(0, 0, 1, 1);  // 파랑
+			//return float4(1, 0, 0, 1);  // 빨강 = 잘릴 부분
+		}
+		
 	}
 
 	float4 color = meshTexture.Sample(samplerState, input.Tex);
 	color.a = 0.5;
 	return color;
 }
+

@@ -1730,6 +1730,23 @@ void QDirect3D11Widget::RenderMesh(ID3D11DeviceContext* context)
 	m_pDevice->CreateRasterizerState(&rastDesc, &rastState);
 	context->RSSetState(rastState);
 
+	// RenderMesh()에서
+	D3D11_DEPTH_STENCIL_DESC depthDesc = {};
+	depthDesc.DepthEnable = TRUE;
+	//depthDesc.DepthEnable = FALSE;  // ✅ 완전히 끄기!
+	depthDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ALL;  // ✅ Depth 쓰기 끄기
+	//depthDesc.DepthFunc = D3D11_COMPARISON_LESS;
+	//depthDesc.DepthFunc = D3D11_COMPARISON_ALWAYS;  // ✅ 항상 통과
+	depthDesc.DepthFunc = D3D11_COMPARISON_LESS_EQUAL;  // ✅ LESS_EQUAL
+
+	ID3D11DepthStencilState* depthState = nullptr;
+	m_pDevice->CreateDepthStencilState(&depthDesc, &depthState);
+	context->OMSetDepthStencilState(depthState, 0);
+
+	// ... 렌더링 ...
+
+
+
 
 
 	// 그리기
@@ -1743,6 +1760,7 @@ void QDirect3D11Widget::RenderMesh(ID3D11DeviceContext* context)
 	// ✅ Cleanup
 	if (blendState) blendState->Release();
 	if (rastState) rastState->Release();
+	if (depthState) depthState->Release();
 }
 
 
