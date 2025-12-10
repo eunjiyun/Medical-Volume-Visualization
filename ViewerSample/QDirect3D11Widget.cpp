@@ -1456,7 +1456,7 @@ bool QDirect3D11Widget::InitializeMeshShaders() {
 bool QDirect3D11Widget::CreateMeshConstantBuffer() {
 	D3D11_BUFFER_DESC bd = {};
 	bd.Usage = D3D11_USAGE_DEFAULT;
-	bd.ByteWidth = sizeof(XMMATRIX);  // 16바이트 배수 (64바이트)
+	bd.ByteWidth = sizeof(MeshConstantBuffer);  // 16바이트 배수 (64바이트)
 	bd.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
 	bd.CPUAccessFlags = 0;
 
@@ -1577,50 +1577,45 @@ void QDirect3D11Widget::RenderMesh(ID3D11DeviceContext* context)
 	DirectX::XMMATRIX fullWorld = scale * rotation * w;  // ✅ w 포함
 
 	cb.WVP = XMMatrixTranspose(fullWorld * v * p);
-	cb.World = XMMatrixTranspose(fullWorld);  // ✅ World 행렬
+	cb.World = XMMatrixTranspose(fullWorld);
+	cb.WorldView = XMMatrixTranspose(fullWorld * v);  // ✅ v 곱하기!
+
+
+	//qDebug() << "=== Matrix Debug ===";
+
+	//// w 행렬 (회전)
+	//XMFLOAT4X4 wMat;
+	//XMStoreFloat4x4(&wMat, w);
+	//qDebug() << "w matrix _11,_22,_33:" << wMat._11 << wMat._22 << wMat._33;
+
+	//// fullWorld 행렬
+	//XMFLOAT4X4 fwMat;
+	//XMStoreFloat4x4(&fwMat, fullWorld);
+	//qDebug() << "fullWorld _11,_22,_33:" << fwMat._11 << fwMat._22 << fwMat._33;
+
+	//// WorldView 행렬
+	//XMFLOAT4X4 wvMat;
+	//XMStoreFloat4x4(&wvMat, fullWorld * v);
+	//qDebug() << "WorldView _11,_22,_33:" << wvMat._11 << wvMat._22 << wvMat._33;
+
 
 	context->UpdateSubresource(m_meshConstantBuffer, 0, nullptr, &cb, 0, 0);
 	context->VSSetConstantBuffers(0, 1, &m_meshConstantBuffer);
 
 
-	// ------------------------------
-// 1) 로컬 평면 정의
-// ------------------------------
-	float localClipY = 0.01f;
-
-	//XMVECTOR localNormal = XMVectorSet(0, 1, 0, 0);        // y=constant 평면 normal
-	//XMVECTOR P0_local = XMVectorSet(0, localClipY, 0, 1); // 평면 위 점
-
-	XMVECTOR localNormal = XMVectorSet(0, 0, 1, 0);  // Z-up → Z 기준 클리핑
-	XMVECTOR P0_local = XMVectorSet(0, 0, localClipY, 1);
-
-
-	// ------------------------------
-	// 2) 로컬 → 월드 변환
-	// ------------------------------
-	XMVECTOR worldNormal = XMVector3TransformNormal(localNormal, fullWorld);
-	worldNormal = XMVector3Normalize(worldNormal);
-
-	XMVECTOR P0_world = XMVector3Transform(P0_local, fullWorld);
-
-
-	// ------------------------------
-	// 3) 평면 offset D 계산
-	// ------------------------------
-	float D = -XMVectorGetX(XMVector3Dot(worldNormal, P0_world));
-
-
-	// ------------------------------
-	// 4) ClipSettings 채우기 (nx,ny,nz 필요없음)
-	// ------------------------------
+	// ✅ 2. 간단한 Clipping (View Z로)
 	ClipSettings cs;
+	//cs.clipPlane = DirectX::XMFLOAT4(0, 0, 1, -1.0f);  // View Z > 1.0 자르기
+	//cs.clipPlane = DirectX::XMFLOAT4(0, 0, 1, -0.3f);  // Z > 0.5 자르기
+
+	//cs.clipPlane = DirectX::XMFLOAT4(0, 0, 1, -500.0f);  // ✅ 큰 값으로!
+
+	// ✅ clipPlane.w 값을 메쉬 범위에 맞추기
+	//cs.clipPlane = DirectX::XMFLOAT4(0, 0, 1, -0.7f);  // View Z > 0.7 자르기
+	cs.clipPlane = DirectX::XMFLOAT4(0, 0, 1, -0.15f);  // View Z > 0.7 자르기
 	cs.enableClip = 1;
 
-	XMStoreFloat3(&cs.planeNormal, worldNormal);
-	cs.planeD = D;
-
-	// alignment padding 자동 초기화되면 더 좋음
-	// ZeroMemory(&cs, sizeof(cs)); 하고 필요한 것만 채워도 됨
+	//qDebug() << "clipPlane:" << cs.clipPlane.x << cs.clipPlane.y << cs.clipPlane.z << cs.clipPlane.w;
 
 	context->UpdateSubresource(m_clipSettingsBuffer, 0, nullptr, &cs, 0, 0);
 	context->PSSetConstantBuffers(1, 1, &m_clipSettingsBuffer);
@@ -1628,6 +1623,73 @@ void QDirect3D11Widget::RenderMesh(ID3D11DeviceContext* context)
 
 
 
+
+//// ✅ 카메라 위치 (View 좌표계에서는 원점)
+//	DirectX::XMVECTOR cameraPos_view = XMVectorSet(0, 0, 0, 1);
+//
+//	// ✅ 메쉬 중심을 View 좌표로 변환
+//	DirectX::XMVECTOR meshCenter_local = XMVectorSet(0, 0, 0, 1);
+//	DirectX::XMVECTOR meshCenter_view = XMVector3Transform(meshCenter_local, fullWorld * v);
+//
+//	// ✅ 카메라 → 메쉬 방향 (View 좌표)
+//	DirectX::XMVECTOR viewDir = XMVector3Normalize(meshCenter_view - cameraPos_view);
+//
+//	// ✅ Clipping 평면 (View 좌표)
+//	float offsetClip = 0.5f;
+//	DirectX::XMVECTOR clipPoint = meshCenter_view - viewDir * offsetClip;
+//
+//
+//	// ✅ 평면 방정식: n·(P-P0) = 0 → n·P + d = 0
+//	float d = -XMVectorGetX(XMVector3Dot(viewDir, clipPoint));
+//
+//
+//	ClipSettings cs;
+//	XMStoreFloat3((DirectX::XMFLOAT3*)&cs.clipPlane, viewDir);
+//	cs.clipPlane.w = d;
+//	cs.enableClip = 1;
+//
+//
+//
+//	context->UpdateSubresource(m_clipSettingsBuffer, 0, nullptr, &cs, 0, 0);
+//	context->PSSetConstantBuffers(1, 1, &m_clipSettingsBuffer);
+
+
+
+//	// ------------------------------
+//// 1) 로컬 평면 정의
+//// ------------------------------
+//	float localClipY = 0.01f;
+//
+//	//XMVECTOR localNormal = XMVectorSet(0, 1, 0, 0);        // y=constant 평면 normal
+//	//XMVECTOR P0_local = XMVectorSet(0, localClipY, 0, 1); // 평면 위 점
+//
+//	XMVECTOR localNormal = XMVectorSet(0, 0, 1, 0);  // Z-up → Z 기준 클리핑
+//	XMVECTOR P0_local = XMVectorSet(0, 0, localClipY, 1);
+//
+//
+//	// ------------------------------
+//	// 2) 로컬 → 월드 변환
+//	// ------------------------------
+//	XMVECTOR worldNormal = XMVector3TransformNormal(localNormal, fullWorld);
+//	worldNormal = XMVector3Normalize(worldNormal);
+//
+//	XMVECTOR P0_world = XMVector3Transform(P0_local, fullWorld);
+//
+//
+//	// ------------------------------
+//	// 3) 평면 offset D 계산
+//	// ------------------------------
+//	float D = -XMVectorGetX(XMVector3Dot(worldNormal, P0_world));
+
+
+
+
+
+
+	//MeshCamConstantBuffer cbCamera;
+	//cbCamera.CameraPosWS = cameraWorldPosition;
+	//context->UpdateSubresource(m_cameraBuffer, 0, nullptr, &cbCamera, 0, 0);
+	//context->PSSetConstantBuffers(2, 1, &m_cameraBuffer);
 
 
 
@@ -1656,17 +1718,17 @@ void QDirect3D11Widget::RenderMesh(ID3D11DeviceContext* context)
 	context->OMSetBlendState(blendState, nullptr, 0xffffffff);
 
 
-	//// ✅ 5. Rasterizer 설정
-	//D3D11_RASTERIZER_DESC rastDesc = {};
-	//rastDesc.FillMode = D3D11_FILL_SOLID;
-	//rastDesc.CullMode = D3D11_CULL_BACK;  // ✅ 이미 있죠?
-	//rastDesc.FrontCounterClockwise = FALSE;
-	//rastDesc.DepthBias = 0;
-	//rastDesc.DepthBiasClamp = 0.0f;
-	//rastDesc.SlopeScaledDepthBias = 0.0f;
-	//ID3D11RasterizerState* rastState = nullptr;
-	//m_pDevice->CreateRasterizerState(&rastDesc, &rastState);
-	//context->RSSetState(rastState);
+	// ✅ 5. Rasterizer 설정
+	D3D11_RASTERIZER_DESC rastDesc = {};
+	rastDesc.FillMode = D3D11_FILL_SOLID;
+	rastDesc.CullMode = D3D11_CULL_BACK;  // ✅ 이미 있죠?
+	rastDesc.FrontCounterClockwise = FALSE;
+	rastDesc.DepthBias = 0;
+	rastDesc.DepthBiasClamp = 0.0f;
+	rastDesc.SlopeScaledDepthBias = 0.0f;
+	ID3D11RasterizerState* rastState = nullptr;
+	m_pDevice->CreateRasterizerState(&rastDesc, &rastState);
+	context->RSSetState(rastState);
 
 
 
@@ -1680,7 +1742,7 @@ void QDirect3D11Widget::RenderMesh(ID3D11DeviceContext* context)
 
 	// ✅ Cleanup
 	if (blendState) blendState->Release();
-	//if (rastState) rastState->Release();
+	if (rastState) rastState->Release();
 }
 
 

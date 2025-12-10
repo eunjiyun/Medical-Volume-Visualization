@@ -124,16 +124,20 @@ struct SlicePlane {
 struct MeshConstantBuffer
 {
 	DirectX::XMMATRIX WVP;
-	DirectX::XMMATRIX World;  // ✅ 추가
-};  // 총 64 bytes
+	DirectX::XMMATRIX World;
+	DirectX::XMMATRIX WorldView;  // ✅ 추가
+};
 
-struct ClipSettings
-{
-	DirectX::XMFLOAT3 planeNormal;   // (nx, ny, nz)
-	float planeD;                    // 평면 오프셋
+//struct MeshCamConstantBuffer
+//{
+//	DirectX::XMFLOAT3 CameraPosWS;
+//	float  pad;
+//};  
 
-	int enableClip;                  // 0 or 1
-	float padding[3];                // 16-byte alignment
+struct ClipSettings {
+	DirectX::XMFLOAT4 clipPlane;  // (nx, ny, nz, d)
+	int enableClip;
+	DirectX::XMFLOAT3 padding;
 };
 class QDirect3D11Widget : public QWidget
 {
@@ -515,7 +519,8 @@ public:
 //	ID3D11DepthStencilState* m_meshDepthState{ nullptr };
 	ID3D11PixelShader* m_composePS{ nullptr };  // ✅ 추가
 	ID3D11VertexShader* m_fullscreenVS{ nullptr };
-	ID3D11Buffer* m_clipSettingsBuffer{ nullptr };  // ✅ 추가!
+	ID3D11Buffer* m_clipSettingsBuffer{ nullptr };  // ✅ 추가!    m_cameraBuffer
+	ID3D11Buffer* m_cameraBuffer{ nullptr };
 
 	//// 헤더에 추가
 	//ID3D11Texture2D* m_meshDepthTexture{ nullptr };
