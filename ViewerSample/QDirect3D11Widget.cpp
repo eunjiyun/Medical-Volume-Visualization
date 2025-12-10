@@ -1853,49 +1853,21 @@ void QDirect3D11Widget::RenderMesh(ID3D11DeviceContext* context)
 	// ✅ ClipSettings
 	ClipSettings cs;
 
+	// ✅ Clipping Plane도 회전시키기!
+	DirectX::XMVECTOR originalPlane = XMVectorSet(0, -1, 0, 50);  // Y축 기준
+	DirectX::XMMATRIX worldMatrix = XMMatrixScaling(0.0065f, 0.0065f, 0.0065f) *
+		XMMatrixRotationX(XM_PI) *
+		w;
 
+	// ✅ Plane을 월드 변환으로 회전
+	DirectX::XMVECTOR rotatedPlane = XMPlaneTransform(originalPlane, worldMatrix);
 
-
-	// 평면을 이동시켜서 잘라보기
-	//cs.clipPlane = DirectX::XMFLOAT4(1, 0, 0, -50);  // X축, 원점에서 50 이동
-
-	// cs.clipPlane = DirectX::XMFLOAT4(1, 0, 0, 0);   // 원점
-
-	 //cs.clipPlane = DirectX::XMFLOAT4(1, 0, 0, -100);
-	 //cs.clipPlane = DirectX::XMFLOAT4(0, 1, 0, -50);
-
-	//cs.clipPlane = DirectX::XMFLOAT4(1, 0, 0, 10);  // 왼쪽 많이 자르기
-
-	//// 얼굴 왼쪽(빨강) 부분 자르기
-	//cs.clipPlane = DirectX::XMFLOAT4(1, 0, 0, 0);
-
-// ✅ Y < 50 부분 자르기 (앞쪽만 남기기)
-	cs.clipPlane = DirectX::XMFLOAT4(0, -1, 0, 10);
+	XMStoreFloat4(&cs.clipPlane, rotatedPlane);
+	cs.enableClip = 1;
 
 
 
 
-
-	//cs.clipPlane = DirectX::XMFLOAT4(1, 0, 0, 50);  // 반대로 50 이동
-
-	//cs.clipPlane = DirectX::XMFLOAT4(0, 1, 0, -30);  // Y축, 위아래로 자르기
-
-	// 테스트 2: Y축 (위아래)
-	// cs.clipPlane = DirectX::XMFLOAT4(0, 1, 0, 0);  // Y+ 위쪽 잘림
-
-	// 테스트 3: Z축 (앞뒤)
-	// cs.clipPlane = DirectX::XMFLOAT4(0, 0, 1, 0);  // Z+ 앞쪽 잘림
-
-	// 테스트 4: 반대 방향
-	// cs.clipPlane = DirectX::XMFLOAT4(-1, 0, 0, 0);  // X- 왼쪽 잘림
-
-	// 테스트 5: 대각선
-	// cs.clipPlane = DirectX::XMFLOAT4(1, 1, 0, 0);  // 대각선
-
-
-
-
-	cs.enableClip = 1;  // ✅ 켜기!
 
 	context->UpdateSubresource(m_clipSettingsBuffer, 0, nullptr, &cs, 0, 0);
 	context->PSSetConstantBuffers(1, 1, &m_clipSettingsBuffer);  // ✅ slot 1
