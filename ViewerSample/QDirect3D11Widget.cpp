@@ -11,6 +11,8 @@
 #include "imgui_impl_dx11.h"
 #include "imgui_impl_win32.h"
 #include "PLYLoader.h"
+#include<algorithm>
+#include<iostream>
 
 
 using Microsoft::WRL::ComPtr;
@@ -667,17 +669,26 @@ bool QDirect3D11Widget::init()
 	float physicalHeight = fileReader->m_height * voxelSpacingY; // 512 * 0.4 = 204.8mm
 	float physicalDepth = fileReader->m_depth * voxelSpacingZ;   // 632 * 0.3 = 189.6mm
 
+
+
+
+
 	// 최대 크기
-	float maxPhysical = Max3(physicalWidth, physicalHeight, physicalDepth);
+	maxPhysicalVol = Max3(physicalWidth, physicalHeight, physicalDepth);
+
+
+
+	qDebug() << "Volume physical size:" << physicalWidth << physicalHeight << physicalDepth;
+	qDebug() << "Volume maxPhysical:" << maxPhysicalVol;
 
 	// 정규화된 스케일
-	float scaleX = physicalWidth / maxPhysical;
+	 scaleX = physicalWidth / maxPhysicalVol;
 
-	float scaleY = physicalDepth / maxPhysical;
-	float scaleZ = physicalHeight / maxPhysical;
+	 scaleY = physicalDepth / maxPhysicalVol;
+	 scaleZ = physicalHeight / maxPhysicalVol;
 
 	// 스케일 행렬
-	float overallSize = 1.5f;
+	overallSize = 1.5f;
 	scale = XMMatrixScaling(
 		scaleX*overallSize,
 		scaleY*overallSize,
@@ -1122,6 +1133,8 @@ void QDirect3D11Widget::UpdateVolumeMatrix()
 }
 //======================================================================================
 
+
+
 bool QDirect3D11Widget::LoadMeshFromPLY(const std::string& filename, ID3D11Device* device) {
 	// PLY 로드
 	PLYLoader plyLoader;
@@ -1130,9 +1143,36 @@ bool QDirect3D11Widget::LoadMeshFromPLY(const std::string& filename, ID3D11Devic
 	}
 
 	const auto& vertices = plyLoader.GetRenderVertices();
-
-	// ✅ 이 줄이 꼭 있어야 함!
 	m_meshVertexCount = static_cast<int>(vertices.size());
+
+	// ✅ 메쉬 범위 계산
+	if (vertices.size() > 0) {
+		float minX = FLT_MAX, maxX = -FLT_MAX;
+		float minY = FLT_MAX, maxY = -FLT_MAX;
+		float minZ = FLT_MAX, maxZ = -FLT_MAX;
+
+		for (const auto& v : vertices) {
+			if (v.x < minX) minX = v.x;
+			if (v.x > maxX) maxX = v.x;
+			if (v.y < minY) minY = v.y;
+			if (v.y > maxY) maxY = v.y;
+			if (v.z < minZ) minZ = v.z;
+			if (v.z > maxZ) maxZ = v.z;
+		}
+
+		float meshWidth = maxX - minX;
+		float meshHeight = maxY - minY;
+		float meshDepth = maxZ - minZ;
+
+		maxMesh=
+		Max3(meshWidth, meshHeight, meshDepth);
+
+		qDebug() << "=== Mesh Size ===";
+		qDebug() << "Width (X):" << meshWidth;
+		qDebug() << "Height (Y):" << meshHeight;
+		qDebug() << "Depth (Z):" << meshDepth;
+		qDebug() << "Center:" << (minX + maxX) / 2 << (minY + maxY) / 2 << (minZ + maxZ) / 2;
+	}
 
 	// 버텍스 버퍼 생성
 	D3D11_BUFFER_DESC bd = {};
@@ -1148,10 +1188,7 @@ bool QDirect3D11Widget::LoadMeshFromPLY(const std::string& filename, ID3D11Devic
 		return false;
 	}
 
-	// ✅ 로드 후 확인
 	qDebug() << "Mesh loaded - Vertex count:" << m_meshVertexCount;
-	qDebug() << "Vertex buffer:" << (m_meshVertexBuffer ? "OK" : "NULL");
-
 	return true;
 }
 
@@ -1503,332 +1540,7 @@ bool QDirect3D11Widget::TestSimpleTriangle() {
 	return false;
 }
 
-//void QDirect3D11Widget::RenderMesh(ID3D11DeviceContext* context)
-//{
-//
-//	//// ✅ 1. 메쉬 전용 depth buffer 클리어
-//	//context->ClearDepthStencilView(m_meshDepthView, D3D11_CLEAR_DEPTH, 1.0f, 0);
-//
-//
-//	//// ✅ 2. 현재 render target 저장
-//	//ID3D11RenderTargetView* currentRTV = nullptr;
-//	//ID3D11DepthStencilView* originalDSV = nullptr;
-//	//context->OMGetRenderTargets(1, &currentRTV, &originalDSV);
-//
-//	//// ✅ 3. 메쉬 depth buffer로 교체
-//	//context->OMSetRenderTargets(1, &currentRTV, m_meshDepthView);
-//
-//
-//	//qDebug() << "=== RenderMesh START ===";
-//
-//	ID3D11BlendState* alphaBlendState = nullptr;
-//
-//	D3D11_BLEND_DESC blendDesc = {};
-//	blendDesc.AlphaToCoverageEnable = FALSE;
-//	blendDesc.IndependentBlendEnable = FALSE;
-//
-//	auto& rtDesc = blendDesc.RenderTarget[0];
-//	rtDesc.BlendEnable = TRUE;
-//	rtDesc.SrcBlend = D3D11_BLEND_SRC_ALPHA;
-//	rtDesc.DestBlend = D3D11_BLEND_INV_SRC_ALPHA;
-//	rtDesc.BlendOp = D3D11_BLEND_OP_ADD;
-//	rtDesc.SrcBlendAlpha = D3D11_BLEND_ONE;
-//	rtDesc.DestBlendAlpha = D3D11_BLEND_ZERO;
-//	rtDesc.BlendOpAlpha = D3D11_BLEND_OP_ADD;
-//	rtDesc.RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
-//
-//
-//	m_pDevice->CreateBlendState(&blendDesc, &alphaBlendState);
-//
-//	if (!m_meshVertexBuffer || m_meshVertexCount == 0) {
-//		qDebug() << "No mesh data!";
-//		return;
-//	}
-//
-//	//qDebug() << "Drawing" << m_meshVertexCount << "vertices";  // ✅
-//
-//	// ✅ 리소스 체크
-//	if (!m_meshVS || !m_meshPS || !m_meshInputLayout) {
-//		qDebug() << "Shader resources missing!";
-//		return;
-//	}
-//
-//
-//
-//	//	1. 셰이더 설정
-//	context->VSSetShader(m_meshVS, nullptr, 0);
-//	context->PSSetShader(m_meshPS, nullptr, 0);
-//	context->IASetInputLayout(m_meshInputLayout);
-//	//qDebug() << "Shaders set";
-//
-//	MeshConstantBuffer cb;
-//
-//
-//	cb.WVP = XMMatrixTranspose(
-//		XMMatrixScaling(0.0065f, 0.0065f, 0.0065f) *
-//		XMMatrixRotationX(XM_PI /*/ 4.0f*/) *  // 90도 눕히기
-//		w * v * p
-//	);
-//
-//
-//	context->UpdateSubresource(m_meshConstantBuffer, 0, nullptr, &cb, 0, 0);
-//	context->VSSetConstantBuffers(0, 1, &m_meshConstantBuffer);
-//	//qDebug() << "CB updated";
-//
-//	//qDebug() << "Constant buffer updated";
-//
-//
-//		// ✅ Cull mode 끄기
-//	D3D11_RASTERIZER_DESC rastDesc = {};
-//	rastDesc.FillMode = D3D11_FILL_SOLID;
-//	//rastDesc.CullMode = D3D11_CULL_NONE;  // 양면 그리기
-//	//rastDesc.CullMode = D3D11_CULL_FRONT;  // ✅ 앞면 대신 뒷면 컬링
-//	rastDesc.CullMode = D3D11_CULL_BACK;  // ✅ 앞면 대신 뒷면 컬링
-//	rastDesc.FrontCounterClockwise = FALSE;
-//	ID3D11RasterizerState* rastState = nullptr;
-//	m_pDevice->CreateRasterizerState(&rastDesc, &rastState);
-//	context->RSSetState(rastState);
-//	//qDebug() << "Rasterizer set";
-//
-//
-//	// 3. 텍스처 바인딩
-//	context->PSSetShaderResources(0, 1, &m_meshTexture);
-//	context->PSSetSamplers(0, 1, &m_MeshSamplerState);
-//
-//	//// ✅ 이 부분 추가!
-//	//context->OMSetDepthStencilState(m_disableDepthState.Get(), 1);
-//
-//	//// ✅ 이렇게 변경 (Mesh 전용 state)
-//	//context->OMSetDepthStencilState(m_meshDepthState, 1);
-//
-//
-//	UINT stride = sizeof(PLY::VertexWithTexture);
-//	UINT offset = 0;
-//	context->IASetVertexBuffers(0, 1, &m_meshVertexBuffer, &stride, &offset);
-//	context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-//	//qDebug() << "VB set, drawing" << m_meshVertexCount;
-//
-//
-//	//// 1단계
-//	//cb.renderPass = 0;
-//	//context->UpdateSubresource(m_meshConstantBuffer, 0, nullptr, &cb, 0, 0);
-//	//// 1단계: 불투명하게 먼저 그리기 (depth 채우기)
-//	////context->OMSetBlendState(nullptr, nullptr, 0xffffffff); // 블렌딩 끄기
-//
-//
-//
-//	context->OMSetBlendState(alphaBlendState, nullptr, 0xffffffff);
-//	context->Draw(m_meshVertexCount, 0);
-//
-//
-//	//// 2단계
-//	//cb.renderPass = 1;
-//	//context->UpdateSubresource(m_meshConstantBuffer, 0, nullptr, &cb, 0, 0);
-//	//// 2단계: 반투명으로 다시 그리기
-//	//context->OMSetBlendState(alphaBlendState, nullptr, 0xffffffff);
-//	////context->OMSetBlendState(nullptr, nullptr, 0xffffffff); // 블렌딩 끄기
-//	//context->Draw(m_meshVertexCount, 0);
-//
-//
-//
-//	//	// ✅ 4. 원래 depth buffer로 복원
-//	//context->OMSetRenderTargets(1, &currentRTV, originalDSV);
-//
-//	if (rastState) rastState->Release();
-//	//qDebug() << "=== RenderMesh END ===";
-//
-//	//if (currentRTV) currentRTV->Release();
-//	//if (originalDSV) originalDSV->Release();
-//}
 
-
-
-//void QDirect3D11Widget::RenderMesh(ID3D11DeviceContext* context)
-//{
-//	//// ✅ 1. Accumulation/Revealage 버퍼 클리어
-//	//float clearAccum[4] = { 0, 0, 0, 0 };
-//	//float clearReveal[4] = { 1, 1, 1, 1 };
-//	//context->ClearRenderTargetView(m_accumulationRTV, clearAccum);
-//	//context->ClearRenderTargetView(m_revealageRTV, clearReveal);
-//
-//	//// ✅ 2. 2개 렌더 타겟 동시 바인딩
-//	//ID3D11RenderTargetView* rtvs[2] = { m_accumulationRTV, m_revealageRTV };
-//	//context->OMSetRenderTargets(2, rtvs, m_pDepthStencilView); // 기본 depth 사용
-//
-//	// === 기존 코드 시작 ===
-//
-//	if (!m_meshVertexBuffer || m_meshVertexCount == 0) {
-//		qDebug() << "No mesh data!";
-//		return;
-//	}
-//
-//	if (!m_meshVS || !m_meshPS || !m_meshInputLayout) {
-//		qDebug() << "Shader resources missing!";
-//		return;
-//	}
-//
-//	// 셰이더 설정
-//	context->VSSetShader(m_meshVS, nullptr, 0);
-//	context->PSSetShader(m_meshPS, nullptr, 0);
-//	context->IASetInputLayout(m_meshInputLayout);
-//
-//	MeshConstantBuffer cb;
-//	cb.WVP = XMMatrixTranspose(
-//		XMMatrixScaling(0.0065f, 0.0065f, 0.0065f) *
-//		XMMatrixRotationX(XM_PI) *
-//		w * v * p
-//	);
-//
-//	context->UpdateSubresource(m_meshConstantBuffer, 0, nullptr, &cb, 0, 0);
-//	context->VSSetConstantBuffers(0, 1, &m_meshConstantBuffer);
-//
-//	// Rasterizer
-//	D3D11_RASTERIZER_DESC rastDesc = {};
-//	rastDesc.FillMode = D3D11_FILL_SOLID;
-//	rastDesc.CullMode = D3D11_CULL_BACK;
-//	rastDesc.FrontCounterClockwise = FALSE;
-//	ID3D11RasterizerState* rastState = nullptr;
-//	m_pDevice->CreateRasterizerState(&rastDesc, &rastState);
-//	context->RSSetState(rastState);
-//
-//	// 텍스처 바인딩
-//	context->PSSetShaderResources(0, 1, &m_meshTexture);
-//	context->PSSetSamplers(0, 1, &m_MeshSamplerState);
-//
-//
-//
-//	//// RenderTarget[0]: Accumulation
-//	//blendDesc.RenderTarget[0].BlendEnable = TRUE;
-//	//blendDesc.RenderTarget[0].SrcBlend = D3D11_BLEND_ONE;
-//	//blendDesc.RenderTarget[0].DestBlend = D3D11_BLEND_ONE;
-//	//blendDesc.RenderTarget[0].BlendOp = D3D11_BLEND_OP_ADD;
-//	//blendDesc.RenderTarget[0].SrcBlendAlpha = D3D11_BLEND_ONE;
-//	//blendDesc.RenderTarget[0].DestBlendAlpha = D3D11_BLEND_ONE;
-//	//blendDesc.RenderTarget[0].BlendOpAlpha = D3D11_BLEND_OP_ADD;
-//	//blendDesc.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
-//
-//	//// RenderTarget[1]: Revealage
-//	//blendDesc.RenderTarget[1].BlendEnable = TRUE;
-//	//blendDesc.RenderTarget[1].SrcBlend = D3D11_BLEND_ZERO;
-//	//blendDesc.RenderTarget[1].DestBlend = D3D11_BLEND_INV_SRC_COLOR;
-//	//blendDesc.RenderTarget[1].BlendOp = D3D11_BLEND_OP_ADD;
-//	//blendDesc.RenderTarget[1].SrcBlendAlpha = D3D11_BLEND_ZERO;
-//	//blendDesc.RenderTarget[1].DestBlendAlpha = D3D11_BLEND_INV_SRC_ALPHA;
-//	//blendDesc.RenderTarget[1].BlendOpAlpha = D3D11_BLEND_OP_ADD;
-//	//blendDesc.RenderTarget[1].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
-//
-//
-//	//   // ✅ 일반 블렌딩
-//	//D3D11_BLEND_DESC blendDesc = {};
-//	//blendDesc.RenderTarget[0].BlendEnable = TRUE;
-//	//blendDesc.RenderTarget[0].SrcBlend = D3D11_BLEND_SRC_ALPHA;
-//	//blendDesc.RenderTarget[0].DestBlend = D3D11_BLEND_INV_SRC_ALPHA;
-//	//blendDesc.RenderTarget[0].BlendOp = D3D11_BLEND_OP_ADD;
-//	//blendDesc.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
-//
-//	//ID3D11BlendState* oitBlendState = nullptr;
-//	//m_pDevice->CreateBlendState(&blendDesc, &oitBlendState);
-//	//context->OMSetBlendState(oitBlendState, nullptr, 0xffffffff);
-//
-//
-//		ID3D11BlendState* alphaBlendState = nullptr;
-//
-//	D3D11_BLEND_DESC blendDesc = {};
-//	blendDesc.AlphaToCoverageEnable = FALSE;
-//	blendDesc.IndependentBlendEnable = FALSE;
-//
-//	auto& rtDesc = blendDesc.RenderTarget[0];
-//	rtDesc.BlendEnable = TRUE;
-//	rtDesc.SrcBlend = D3D11_BLEND_SRC_ALPHA;
-//	rtDesc.DestBlend = D3D11_BLEND_INV_SRC_ALPHA;
-//	rtDesc.BlendOp = D3D11_BLEND_OP_ADD;
-//	rtDesc.SrcBlendAlpha = D3D11_BLEND_ONE;
-//	rtDesc.DestBlendAlpha = D3D11_BLEND_ZERO;
-//	rtDesc.BlendOpAlpha = D3D11_BLEND_OP_ADD;
-//	rtDesc.RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
-//
-//
-//	m_pDevice->CreateBlendState(&blendDesc, &alphaBlendState);
-//
-//
-//	context->OMSetBlendState(alphaBlendState, nullptr, 0xffffffff);
-//
-//	UINT stride = sizeof(PLY::VertexWithTexture);
-//	UINT offset = 0;
-//	context->IASetVertexBuffers(0, 1, &m_meshVertexBuffer, &stride, &offset);
-//	context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-//
-//	// ✅ 4. 메쉬 그리기
-//	context->Draw(m_meshVertexCount, 0);
-//
-//	// Cleanup
-//	if (rastState) rastState->Release();
-//	if (alphaBlendState) alphaBlendState->Release();
-//}
-
-
-
-
-//
-//void QDirect3D11Widget::RenderMesh(ID3D11DeviceContext* context)
-//{
-//	if (!m_meshVertexBuffer || m_meshVertexCount == 0) return;
-//
-//	context->VSSetShader(m_meshVS, nullptr, 0);
-//	context->PSSetShader(m_meshPS, nullptr, 0);
-//	context->IASetInputLayout(m_meshInputLayout);
-//
-//
-//
-//	ClipSettings cs;
-//	cs.clipPlane = DirectX::XMFLOAT4(0, 0, 1, 0);  // Z축 clipping (예시)
-//	cs.enableClip = 0;  // 일단 끄기
-//
-//	context->UpdateSubresource(m_clipSettingsBuffer, 0, nullptr, &cs, 0, 0);
-//	context->PSSetConstantBuffers(0, 1, &m_clipSettingsBuffer);
-//
-//	// 텍스처
-//	context->PSSetShaderResources(0, 1, &m_meshTexture);
-//	context->PSSetSamplers(0, 1, &m_MeshSamplerState);
-//
-//	// 그리기
-//	UINT stride = sizeof(PLY::VertexWithTexture);
-//	UINT offset = 0;
-//	context->IASetVertexBuffers(0, 1, &m_meshVertexBuffer, &stride, &offset);
-//	context->Draw(m_meshVertexCount, 0);
-//}
-
-//
-//void QDirect3D11Widget::RenderMesh(ID3D11DeviceContext* context)
-//{
-//	if (!m_meshVertexBuffer || m_meshVertexCount == 0) return;
-//
-//	context->VSSetShader(m_meshVS, nullptr, 0);
-//	context->PSSetShader(m_meshPS, nullptr, 0);
-//	context->IASetInputLayout(m_meshInputLayout);
-//
-//	// 기존 WVP만
-//	MeshConstantBuffer cb;
-//	cb.WVP = XMMatrixTranspose(
-//		XMMatrixScaling(0.0065f, 0.0065f, 0.0065f) *
-//		XMMatrixRotationX(XM_PI) *
-//		w * v * p
-//	);
-//
-//	context->UpdateSubresource(m_meshConstantBuffer, 0, nullptr, &cb, 0, 0);
-//	context->VSSetConstantBuffers(0, 1, &m_meshConstantBuffer);
-//
-//	// 텍스처
-//	context->PSSetShaderResources(0, 1, &m_meshTexture);
-//	context->PSSetSamplers(0, 1, &m_MeshSamplerState);
-//
-//	// 그리기
-//	UINT stride = sizeof(PLY::VertexWithTexture);
-//	UINT offset = 0;
-//	context->IASetVertexBuffers(0, 1, &m_meshVertexBuffer, &stride, &offset);
-//	context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-//	context->Draw(m_meshVertexCount, 0);
-//}
 void QDirect3D11Widget::RenderMesh(ID3D11DeviceContext* context)
 {
 	if (!m_meshVertexBuffer || m_meshVertexCount == 0) return;
@@ -1837,10 +1549,33 @@ void QDirect3D11Widget::RenderMesh(ID3D11DeviceContext* context)
 	context->PSSetShader(m_meshPS, nullptr, 0);
 	context->IASetInputLayout(m_meshInputLayout);
 
+
+
+
+	float meshToVolume = (maxMesh / maxPhysicalVol) * overallSize / maxMesh;
+
+	DirectX::XMMATRIX scale = XMMatrixScaling(
+		meshToVolume,  // 0.7952 * 1.5 = 1.1928
+		meshToVolume,
+		meshToVolume
+	);
+
+
+	// ✅ 값 출력
+	qDebug() << "=== Scale Debug ===";
+	qDebug() << "maxMesh:" << maxMesh;
+	qDebug() << "maxPhysicalVol:" << maxPhysicalVol;
+	qDebug() << "overallSize:" << overallSize;
+	qDebug() << "meshToVolume:" << meshToVolume;
+	qDebug() << "Final scale:" << (meshToVolume * overallSize);
+	qDebug() << "Original 0.0065 scale for comparison";
+	qDebug() << "Volume scaleX/Y/Z:" << scaleX << scaleY << scaleZ;
+
+
 	// ✅ MeshConstantBuffer (WVP + World)
 	MeshConstantBuffer cb;
 
-	DirectX::XMMATRIX scale = XMMatrixScaling(0.0065f, 0.0065f, 0.0065f);
+//	DirectX::XMMATRIX scale = XMMatrixScaling(0.0065f, 0.0065f, 0.0065f);
 	DirectX::XMMATRIX rotation = XMMatrixRotationX(XM_PI);
 	DirectX::XMMATRIX world = scale * rotation;
 
@@ -1870,7 +1605,7 @@ void QDirect3D11Widget::RenderMesh(ID3D11DeviceContext* context)
 	//cs.clipPlane = DirectX::XMFLOAT4(1, 0, 0, 0);
 
 // ✅ Y < 50 부분 자르기 (앞쪽만 남기기)
-	cs.clipPlane = DirectX::XMFLOAT4(0, -1, 0, 10);
+	cs.clipPlane = DirectX::XMFLOAT4(0, -1, 0, 5);
 
 
 
@@ -3729,7 +3464,7 @@ void QDirect3D11Widget::RenderAllQuads()
 
 		if (0 == i) {
 
-			//RenderVolumeView();
+			RenderVolumeView();
 
 			//   // ✅ 2. Depth Peeling으로 메쉬 렌더링
 			//RenderMeshWithDepthPeeling(m_pDeviceContext);
@@ -4682,7 +4417,7 @@ void QDirect3D11Widget::onAxialScroll(int value) {
 		// 렌더링 업데이트
 		update();
 
-		//RenderVolumeView(); // 강제 호출로 확인
+		RenderVolumeView(); // 강제 호출로 확인
 	}
 
 
@@ -4725,7 +4460,7 @@ void QDirect3D11Widget::onCoronalScroll(int value) {
 		// 렌더링 업데이트
 		update();
 
-		//RenderVolumeView(); // 강제 호출로 확인
+		RenderVolumeView(); // 강제 호출로 확인
 	}
 
 	sliceInfoCoronal->hide();
@@ -4763,7 +4498,7 @@ void QDirect3D11Widget::onSagittalScroll(int value) {
 		// 렌더링 업데이트
 		update();
 
-		//RenderVolumeView(); // 강제 호출로 확인
+		RenderVolumeView(); // 강제 호출로 확인
 	}
 
 	sliceInfoSagittal->hide();

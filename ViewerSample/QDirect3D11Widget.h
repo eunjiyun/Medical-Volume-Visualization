@@ -458,6 +458,8 @@ public:
 	XMVECTOR at /*= XMVectorSet(0.0f, 0.0f, 0.0f, 1.0f)*/;
 	XMVECTOR up /*= XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f)*/;
 	XMMATRIX v, iv, p, ip, rotx, roty, trans, /*scale,*/ w, iw, scale;
+	float maxPhysicalVol, maxMesh, overallSize;
+	float scaleX, scaleY, scaleZ;
 public:
 	bool isPlaster{ false };
 	void plasterVolumeShow();

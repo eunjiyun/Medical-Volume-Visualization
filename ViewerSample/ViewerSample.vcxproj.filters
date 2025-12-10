@@ -138,8 +138,6 @@
     <FxCompile Include="VolumeRaymarchPS.hlsl" />
     <FxCompile Include="MeshVS.hlsl" />
     <FxCompile Include="MeshPS.hlsl" />
-    <FxCompile Include="ComposePS.hlsl" />
-    <FxCompile Include="FullscreenVS.hlsl" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="icon.ico">
