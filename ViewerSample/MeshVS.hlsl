@@ -91,11 +91,22 @@ VS_OUTPUT main(VS_INPUT input)
 
 
 
+	//VS_OUTPUT output;
+	//output.Pos = mul(float4(input.Pos, 1.0), WVP);
+
+	//// ✅ 원본 input.Pos를 그대로 전달
+	//output.WorldPos = input.Pos;  // 변환 없이!
+
+	//output.Tex = input.Tex;
+	//output.Normal = input.Normal;
+	//return output;
+
+
 	VS_OUTPUT output;
 	output.Pos = mul(float4(input.Pos, 1.0), WVP);
 
-	// ✅ 원본 input.Pos를 그대로 전달
-	output.WorldPos = input.Pos;  // 변환 없이!
+	// ✅ World 행렬로 변환
+	output.WorldPos = mul(float4(input.Pos, 1.0), World).xyz;
 
 	output.Tex = input.Tex;
 	output.Normal = input.Normal;
