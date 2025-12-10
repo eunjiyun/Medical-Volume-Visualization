@@ -105,11 +105,34 @@ struct SlicePlane {
 };
 
 
+//
+//struct MeshConstantBuffer {
+//	XMMATRIX WVP;
+//	//int renderPass;
+//	//float padding[3];
+//};
 
-struct MeshConstantBuffer {
-	XMMATRIX WVP;
+//struct MeshConstantBuffer
+//{
+//	DirectX::XMMATRIX WVP;          // 64 bytes
+//	int peelLayer;                  // 4 bytes
+//	float viewportWidth;            // 4 bytes (✅ 분리!)
+//	float viewportHeight;           // 4 bytes (✅ 분리!)
+//	float padding;                  // 4 bytes
+//};  // 총 80 bytes
+
+struct MeshConstantBuffer
+{
+	DirectX::XMMATRIX WVP;
+	DirectX::XMMATRIX World;  // ✅ 추가
+};  // 총 64 bytes
+
+	// 상수 버퍼
+struct ClipSettings {
+	DirectX::XMFLOAT4 clipPlane;  // (nx, ny, nz, d)
+	int enableClip;
+	float padding[3];
 };
-
 
 class QDirect3D11Widget : public QWidget
 {
@@ -167,10 +190,14 @@ public:
 	bool LoadMeshTexture(const std::string& filename, ID3D11Device* device);
 	bool InitializeMeshShaders();
 	bool CreateMeshConstantBuffer();
+	//bool CreateMeshDepthState();
+	//bool CreateMeshDepthBuffer();
 
 	bool TestSimpleTriangle();
 	void RenderMesh(ID3D11DeviceContext* context);
-
+	/*bool CreateOITBuffers();
+	void ComposeMesh(ID3D11DeviceContext* context);*/
+	bool CreateClipSettingsBuffer();
 
 public:
 	QDirect3D11Widget(QWidget * parent);
@@ -482,6 +509,41 @@ public:
 	ID3D11ShaderResourceView* m_meshTexture{ nullptr };
 	ID3D11SamplerState* m_MeshSamplerState{ nullptr };
 	ID3D11Buffer* m_meshConstantBuffer{ nullptr };
+//	ID3D11DepthStencilState* m_meshDepthState{ nullptr };
+	ID3D11PixelShader* m_composePS{ nullptr };  // ✅ 추가
+	ID3D11VertexShader* m_fullscreenVS{ nullptr };
+	ID3D11Buffer* m_clipSettingsBuffer{ nullptr };  // ✅ 추가!
+
+	//// 헤더에 추가
+	//ID3D11Texture2D* m_meshDepthTexture{ nullptr };
+	//ID3D11DepthStencilView* m_meshDepthView{ nullptr };
+
+
+	//// 헤더에 추가
+	//ID3D11Texture2D* m_accumulationTexture = nullptr;
+	//ID3D11RenderTargetView* m_accumulationRTV = nullptr;
+	//ID3D11ShaderResourceView* m_accumulationSRV = nullptr;
+
+	//ID3D11Texture2D* m_revealageTexture = nullptr;
+	//ID3D11RenderTargetView* m_revealageRTV = nullptr;
+	//ID3D11ShaderResourceView* m_revealageSRV = nullptr;
+
+
+
+	// Depth Peeling
+	static const int MAX_DEPTH_PEELS = 4;
+
+	ID3D11Texture2D* m_depthPeelTextures[MAX_DEPTH_PEELS] = {};
+	ID3D11ShaderResourceView* m_depthPeelSRVs[MAX_DEPTH_PEELS] = {};
+	ID3D11DepthStencilView* m_depthPeelDSVs[MAX_DEPTH_PEELS] = {};
+
+	ID3D11Texture2D* m_colorPeelTextures[MAX_DEPTH_PEELS] = {};
+	ID3D11RenderTargetView* m_colorPeelRTVs[MAX_DEPTH_PEELS] = {};
+	ID3D11ShaderResourceView* m_colorPeelSRVs[MAX_DEPTH_PEELS] = {};
+
+	bool CreateDepthPeelingBuffers();
+	void RenderMeshWithDepthPeeling(ID3D11DeviceContext* context);
+	void ComposePeeledLayers(ID3D11DeviceContext* context);
 };
 
 
