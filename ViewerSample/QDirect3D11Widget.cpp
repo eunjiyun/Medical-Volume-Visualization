@@ -1549,9 +1549,6 @@ void QDirect3D11Widget::RenderMesh(ID3D11DeviceContext* context)
 	context->PSSetShader(m_meshPS, nullptr, 0);
 	context->IASetInputLayout(m_meshInputLayout);
 
-
-
-
 	float meshToVolume = (maxMesh / maxPhysicalVol) * overallSize / maxMesh;
 
 	DirectX::XMMATRIX scale = XMMatrixScaling(
@@ -1561,15 +1558,15 @@ void QDirect3D11Widget::RenderMesh(ID3D11DeviceContext* context)
 	);
 
 
-	// ✅ 값 출력
-	qDebug() << "=== Scale Debug ===";
-	qDebug() << "maxMesh:" << maxMesh;
-	qDebug() << "maxPhysicalVol:" << maxPhysicalVol;
-	qDebug() << "overallSize:" << overallSize;
-	qDebug() << "meshToVolume:" << meshToVolume;
-	qDebug() << "Final scale:" << (meshToVolume * overallSize);
-	qDebug() << "Original 0.0065 scale for comparison";
-	qDebug() << "Volume scaleX/Y/Z:" << scaleX << scaleY << scaleZ;
+	//// ✅ 값 출력
+	//qDebug() << "=== Scale Debug ===";
+	//qDebug() << "maxMesh:" << maxMesh;
+	//qDebug() << "maxPhysicalVol:" << maxPhysicalVol;
+	//qDebug() << "overallSize:" << overallSize;
+	//qDebug() << "meshToVolume:" << meshToVolume;
+	//qDebug() << "Final scale:" << (meshToVolume * overallSize);
+	//qDebug() << "Original 0.0065 scale for comparison";
+	//qDebug() << "Volume scaleX/Y/Z:" << scaleX << scaleY << scaleZ;
 
 
 	// ✅ MeshConstantBuffer (WVP + World)
@@ -1577,37 +1574,63 @@ void QDirect3D11Widget::RenderMesh(ID3D11DeviceContext* context)
 
 //	DirectX::XMMATRIX scale = XMMatrixScaling(0.0065f, 0.0065f, 0.0065f);
 	DirectX::XMMATRIX rotation = XMMatrixRotationX(XM_PI);
-	DirectX::XMMATRIX world = scale * rotation;
+	DirectX::XMMATRIX fullWorld = scale * rotation * w;  // ✅ w 포함
 
-	cb.WVP = XMMatrixTranspose(world * w * v * p);
-	cb.World = XMMatrixTranspose(world * w);  // ✅ World 행렬
+	cb.WVP = XMMatrixTranspose(fullWorld * v * p);
+	cb.World = XMMatrixTranspose(fullWorld);  // ✅ World 행렬
 
 	context->UpdateSubresource(m_meshConstantBuffer, 0, nullptr, &cb, 0, 0);
 	context->VSSetConstantBuffers(0, 1, &m_meshConstantBuffer);
 
-	// ✅ ClipSettings
+
+	// ------------------------------
+// 1) 로컬 평면 정의
+// ------------------------------
+	float localClipY = 0.01f;
+
+	//XMVECTOR localNormal = XMVectorSet(0, 1, 0, 0);        // y=constant 평면 normal
+	//XMVECTOR P0_local = XMVectorSet(0, localClipY, 0, 1); // 평면 위 점
+
+	XMVECTOR localNormal = XMVectorSet(0, 0, 1, 0);  // Z-up → Z 기준 클리핑
+	XMVECTOR P0_local = XMVectorSet(0, 0, localClipY, 1);
+
+
+	// ------------------------------
+	// 2) 로컬 → 월드 변환
+	// ------------------------------
+	XMVECTOR worldNormal = XMVector3TransformNormal(localNormal, fullWorld);
+	worldNormal = XMVector3Normalize(worldNormal);
+
+	XMVECTOR P0_world = XMVector3Transform(P0_local, fullWorld);
+
+
+	// ------------------------------
+	// 3) 평면 offset D 계산
+	// ------------------------------
+	float D = -XMVectorGetX(XMVector3Dot(worldNormal, P0_world));
+
+
+	// ------------------------------
+	// 4) ClipSettings 채우기 (nx,ny,nz 필요없음)
+	// ------------------------------
 	ClipSettings cs;
-
-	// ✅ Clipping Plane도 회전시키기!
-	DirectX::XMVECTOR originalPlane = XMVectorSet(0, -1, 0, 50);  // Y축 기준
-	DirectX::XMMATRIX worldMatrix = XMMatrixScaling(0.0065f, 0.0065f, 0.0065f) *
-		XMMatrixRotationX(XM_PI) *
-		w;
-
-	// ✅ Plane을 월드 변환으로 회전
-	DirectX::XMVECTOR rotatedPlane = XMPlaneTransform(originalPlane, worldMatrix);
-
-
-	XMStoreFloat4(&cs.clipPlane, rotatedPlane);
 	cs.enableClip = 1;
 
+	XMStoreFloat3(&cs.planeNormal, worldNormal);
+	cs.planeD = D;
 
-
-
-
+	// alignment padding 자동 초기화되면 더 좋음
+	// ZeroMemory(&cs, sizeof(cs)); 하고 필요한 것만 채워도 됨
 
 	context->UpdateSubresource(m_clipSettingsBuffer, 0, nullptr, &cs, 0, 0);
-	context->PSSetConstantBuffers(1, 1, &m_clipSettingsBuffer);  // ✅ slot 1
+	context->PSSetConstantBuffers(1, 1, &m_clipSettingsBuffer);
+
+
+
+
+
+
+
 
 	// 텍스처
 	context->PSSetShaderResources(0, 1, &m_meshTexture);
@@ -3438,7 +3461,7 @@ void QDirect3D11Widget::RenderAllQuads()
 
 		if (0 == i) {
 
-			RenderVolumeView();
+			//RenderVolumeView();
 
 			//   // ✅ 2. Depth Peeling으로 메쉬 렌더링
 			//RenderMeshWithDepthPeeling(m_pDeviceContext);

@@ -127,13 +127,14 @@ struct MeshConstantBuffer
 	DirectX::XMMATRIX World;  // ✅ 추가
 };  // 총 64 bytes
 
-	// 상수 버퍼
-struct ClipSettings {
-	DirectX::XMFLOAT4 clipPlane;  // (nx, ny, nz, d)
-	int enableClip;
-	float padding[3];
-};
+struct ClipSettings
+{
+	DirectX::XMFLOAT3 planeNormal;   // (nx, ny, nz)
+	float planeD;                    // 평면 오프셋
 
+	int enableClip;                  // 0 or 1
+	float padding[3];                // 16-byte alignment
+};
 class QDirect3D11Widget : public QWidget
 {
 	Q_OBJECT
