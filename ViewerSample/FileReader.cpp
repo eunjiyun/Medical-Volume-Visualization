@@ -261,7 +261,7 @@ bool FileReader::LoadDICOMSeries(std::string folderPath, ID3D11Device* g_pd3dDev
 	}
 
 
-	AnalyzeHUDistribution();
+	//AnalyzeHUDistribution();
 
 	return true;
 }

@@ -46,6 +46,7 @@ QDirect3D11Widget::QDirect3D11Widget(QWidget* parent)
 	, m_rotationX(0.0f)
 	, m_rotationY(0.0f)
 	, m_cameraDistance(3.0f)
+	
 {
 	setMouseTracking(false);
 	qDebug() << "[QDirect3D11Widget::QDirect3D11Widget] - Widget Handle: " << m_hWnd;
@@ -73,6 +74,7 @@ QDirect3D11Widget::QDirect3D11Widget(QWidget* parent)
 	m_rotation = m_initialRotation;
 
 
+	cb.CameraPosAndAlpha.w = 1.f;
 
 	QPalette pal = palette();
 	pal.setColor(QPalette::Window, Qt::black);
@@ -1002,7 +1004,7 @@ void QDirect3D11Widget::FullScreenPassSet()
 	m_pDeviceContext->RSSetViewports(1, &vp);
 
 	// ✅ 1️⃣ 상수 버퍼 준비
-	ComPtr<ID3D11Buffer> cbRay;
+
 	D3D11_BUFFER_DESC cbd{};
 	cbd.ByteWidth = sizeof(CB);
 	cbd.Usage = D3D11_USAGE_DYNAMIC;
@@ -1041,26 +1043,41 @@ void QDirect3D11Widget::FullScreenPassSet()
 
 	// ✅ 6️⃣ 상수 버퍼 데이터 채우기
 
-	cb.View = XMMatrixTranspose(v);
-	cb.Proj = XMMatrixTranspose(p);
-	cb.InvView = XMMatrixTranspose(iv);
-	cb.InvProj = XMMatrixTranspose(ip);
-	cb.VolumeWorld = XMMatrixTranspose(w);
-	cb.InvVolumeWorld = XMMatrixTranspose(iw);
+	////cb.View = XMMatrixTranspose(v);
+	////cb.Proj = XMMatrixTranspose(p);
+	//cb.InvView = XMMatrixTranspose(iv);
+	//cb.InvProj = XMMatrixTranspose(ip);
+	////cb.VolumeWorld = XMMatrixTranspose(w);
+	//cb.InvVolumeWorld = XMMatrixTranspose(iw);
 
 
-	// ✅ 실제 카메라 위치 사용
-	cb.CameraPosWS = XMFLOAT3(
-		XMVectorGetX(eye),
-		XMVectorGetY(up),
-		XMVectorGetZ(at)
-	);
+	XMStoreFloat4x4(&cb.InvView, XMMatrixTranspose(iv));
+	XMStoreFloat4x4(&cb.InvProj, XMMatrixTranspose(ip));
+	XMStoreFloat4x4(&cb.InvVolumeWorld, XMMatrixTranspose(iw));
 
-	// ✅ 권장값
-	cb.MaxSteps = 256;  // 또는 128~512 사이
-	//cb.MaxSteps =1536;  // 또는 128~512 사이
 
-	cb.Voxel = XMFLOAT3(fileReader->m_width, fileReader->m_height, fileReader->m_depth);
+	//// ✅ 실제 카메라 위치 사용
+	//cb.CameraPosWS = XMFLOAT3(
+	//	XMVectorGetX(eye),
+	//	XMVectorGetY(up),
+	//	XMVectorGetZ(at)
+	//);
+
+	cb.CameraPosAndAlpha.x = XMVectorGetX(eye);
+	cb.CameraPosAndAlpha.y = XMVectorGetY(up);
+	cb.CameraPosAndAlpha.z = XMVectorGetZ(at);
+
+
+	//// ✅ 권장값
+	//cb.MaxSteps = 256;  // 또는 128~512 사이
+	////cb.MaxSteps =1536;  // 또는 128~512 사이
+
+	//cb.Voxel = XMFLOAT3(fileReader->m_width, fileReader->m_height, fileReader->m_depth);
+
+	cb.VoxelAndMaxSteps.x = fileReader->m_width;
+	cb.VoxelAndMaxSteps.y = fileReader->m_height;
+	cb.VoxelAndMaxSteps.z = fileReader->m_depth;
+	cb.VoxelAndMaxSteps.w = 256.f;
 
 	cb.HuParams.x = fileReader->m_rescaleSlope;
 	cb.HuParams.y = fileReader->m_rescaleIntercept;
@@ -1104,6 +1121,7 @@ void QDirect3D11Widget::FullScreenPassSet()
 		m_tfSampler         // s1
 	};
 	m_pDeviceContext->PSSetSamplers(0, 2, samplers);
+
 
 	// ✅ 8️⃣ 드로우
 	m_pDeviceContext->Draw(4, 0);
@@ -2627,7 +2645,9 @@ void QDirect3D11Widget::RenderVolumeView()
 		UpdateVolumeMatrix();
 
 		// ✅ (3) 볼륨 렌더링 수행
-		FullScreenPassSet();
+
+	
+			FullScreenPassSet();
 
 	}
 
@@ -3541,7 +3561,7 @@ void QDirect3D11Widget::RenderAllQuads()
 
 		if (0 == i) {
 
-			//RenderVolumeView();
+			RenderVolumeView();
 
 			//   // ✅ 2. Depth Peeling으로 메쉬 렌더링
 			//RenderMeshWithDepthPeeling(m_pDeviceContext);

@@ -1,19 +1,13 @@
 
 cbuffer CB : register(b0)
 {
-	matrix View;
-	matrix Proj;
 	matrix InvView;
 	matrix InvProj;
-	matrix VolumeWorld;
 	matrix InvVolumeWorld;
-	float3 CameraPosWS;
-	float alphaScale;
-	int   MaxSteps;
-	float3 Voxel;
 
-
-	float4 HuParams;  // x=Slope, y=Intercept, z=Min, w=Max
+	float4 CameraPosAndAlpha;  // xyz=pos, w=alpha
+	float4 VoxelAndMaxSteps;   // xyz=voxel, w=maxSteps
+	float4 HuParams;
 };
 
 Texture3D<float> volumeTex : register(t0);
@@ -41,7 +35,7 @@ float4 main(float4 pos : SV_POSITION, float2 uv : TEXCOORD0) : SV_Target
 	viewDirVS /= viewDirVS.w;
 
 	float3 rayDirWS = normalize(mul(float4(viewDirVS.xyz, 0), InvView).xyz);
-	float3 rayPosWS = CameraPosWS;
+	float3 rayPosWS = CameraPosAndAlpha.xyz;
 
 
 	rayPosWS = float3(0, 0, -3.0);
@@ -73,7 +67,7 @@ float4 main(float4 pos : SV_POSITION, float2 uv : TEXCOORD0) : SV_Target
 	}
 
 
-	float stepSize = travelDist / float(MaxSteps);
+	float stepSize = travelDist / float(VoxelAndMaxSteps.w);
 
 	// ✅ Jittering
 	float jitter = frac(sin(dot(uv * 1000.0, float2(12.9898, 78.233))) * 43758.5453);
@@ -94,7 +88,7 @@ float4 main(float4 pos : SV_POSITION, float2 uv : TEXCOORD0) : SV_Target
 
 
 [loop]
-for (int i = 0; i < MaxSteps; i++)
+for (int i = 0; i < VoxelAndMaxSteps.w; i++)
 {
 	float3 currentPos = startPos + rayDir * (i * stepSize);
 	float3 uvw = (currentPos - boxMin) / (boxMax - boxMin);
@@ -118,7 +112,8 @@ for (int i = 0; i < MaxSteps; i++)
 	huNorm = saturate(huNorm);
 
 
-	float4 colorAlpha = transferFunction.Sample(tfSampler, huNorm);
+	//float4 colorAlpha = transferFunction.Sample(tfSampler, huNorm);
+	float4 colorAlpha = transferFunction.SampleLevel(tfSampler, huNorm, 0);
 
 	// ⭐ Window로 알파만 조절 (조직 분리 유지)
 	float huInWindow = (hu - HuParams.z) / (HuParams.w - HuParams.z);
@@ -132,7 +127,7 @@ for (int i = 0; i < MaxSteps; i++)
 
 
 	// 조명 계산
-	float3 eps = float3(1.0 / Voxel.x, 1.0 / Voxel.y, 1.0 / Voxel.z);
+	float3 eps = float3(1.0 / VoxelAndMaxSteps.x, 1.0 / VoxelAndMaxSteps.y, 1.0 / VoxelAndMaxSteps.z);
 
 	float dx = volumeTex.SampleLevel(samp, uvw + float3(eps.x, 0, 0), 0).r -
 		volumeTex.SampleLevel(samp, uvw - float3(eps.x, 0, 0), 0).r;
@@ -172,6 +167,11 @@ for (int i = 0; i < MaxSteps; i++)
 
 	// 후처리 (간단하게!)
 	acc.rgb = pow(saturate(acc.rgb), 1.0 / 2.2);
-	return float4(acc.rgb, 1.0);
+	//acc.a = 0.0;
+
+	if(CameraPosAndAlpha.w==1.0)
+		return float4(acc.rgb, 1.0);
+	else
+	    return float4(0,0,0, 0.0);
 }
 

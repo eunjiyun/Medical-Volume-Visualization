@@ -27,6 +27,7 @@ public slots:
 	void contrastWidthChanged(double value);   // Window Width
 	void sharpnessChanged(int value);   // Window Width
 
+	void volumeShowHide();
 private:
 	Ui::ViewerSampleClass* ui;
 	QDirect3D11Widget * m_pScene;

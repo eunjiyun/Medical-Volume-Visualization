@@ -38,6 +38,10 @@ void ViewerSample::connectSlots()
 	connect(m_pScene, &QDirect3D11Widget::rendered, this, &ViewerSample::render);
 
 	connect(ui->btnColorInvert, &QPushButton::clicked, this, &ViewerSample::onBtnColorInvertClicked);
+
+	connect(ui->btnViewHead, &QPushButton::clicked, this, &ViewerSample::volumeShowHide);
+
+
 	// ✅ 시그널 연결
 
 	connect(ui->huSlider, &QSlider::valueChanged, this, &ViewerSample::huValueChanged);
@@ -54,6 +58,9 @@ void ViewerSample::connectSlots()
 			brightnessCenterChanged(brightness);
 		});
 	connect(ui->sharpnessSlider, &QSlider::valueChanged, this, &ViewerSample::sharpnessChanged);
+
+
+
 }
 
 
@@ -67,6 +74,27 @@ void ViewerSample::onBtnColorInvertClicked() {
 		m_pScene->isPlaster = false;
 	else
 		m_pScene->isPlaster = true;
+
+	update();
+}
+
+void ViewerSample::volumeShowHide()
+{
+
+	if (1.0f==m_pScene->cb.CameraPosAndAlpha.w)
+		m_pScene->cb.CameraPosAndAlpha.w = 0.0f;
+	else
+		m_pScene->cb.CameraPosAndAlpha.w = 1.0f;
+
+	//// ⭐ 2. GPU로 전송!
+	//m_pScene->m_pDeviceContext->UpdateSubresource(
+	//	m_pScene->cbRay.Get(), 0, nullptr,
+	//	&m_pScene->cb, 0, 0
+	//);
+
+
+
+	std::cout << "clicked!!!!!!!!" << endl;
 
 	update();
 }
@@ -98,7 +126,7 @@ void ViewerSample::huValueChanged(int value)
 	float minBoost = 3.0f;   // HU 최소 → soft tissue 3배 진하게
 	float maxBoost = 0.4f;   // HU 최대 → soft tissue 40%만 남김
 
-	m_pScene->cb.alphaScale = minBoost * (1.0f - sliderNorm) + maxBoost * sliderNorm;
+	//m_pScene->cb.alphaScale = minBoost * (1.0f - sliderNorm) + maxBoost * sliderNorm;
 
 	update();
 }

@@ -34,18 +34,17 @@ using namespace DirectX;
 
 
 
+
 struct CB
 {
-	DirectX::XMMATRIX View;
-	DirectX::XMMATRIX Proj;
-	DirectX::XMMATRIX InvView;
-	DirectX::XMMATRIX InvProj;
-	DirectX::XMMATRIX VolumeWorld;     // 볼륨의 월드 변환(스케일/회전/이동)
-	DirectX::XMMATRIX InvVolumeWorld;
-	DirectX::XMFLOAT3 CameraPosWS;      float alphaScale;      // 샘플 간격 (예: 0.002~0.01)
-	int   MaxSteps;                   DirectX::XMFLOAT3 Voxel;
 
-	DirectX::XMFLOAT4 HuParams;  // x=Slope, y=Intercept, z=Min, w=Max
+	DirectX::XMFLOAT4X4  InvView;
+	DirectX::XMFLOAT4X4  InvProj;
+	DirectX::XMFLOAT4X4  InvVolumeWorld;
+	XMFLOAT4 CameraPosAndAlpha;  // xyz=pos, w=alpha
+	XMFLOAT4 VoxelAndMaxSteps;   // xyz=voxel, w=maxSteps
+	XMFLOAT4 HuParams;
+
 };
 
 
@@ -90,11 +89,13 @@ struct VolumeConstants {
 	DirectX::XMFLOAT4X4 World;
 	DirectX::XMFLOAT4X4 View;
 	DirectX::XMFLOAT4X4 Projection;
-
+//	DirectX::XMFLOAT4 colors;
 
 	DirectX::XMFLOAT4 Voxel;  // 선택사항: 와이어프레임 색상 등
 	DirectX::XMFLOAT4 HuParams;
+//	float alphaScale;
 };
+
 
 struct SlicePlane {
 	ID3D11Buffer* vertexBuffer;
@@ -454,7 +455,7 @@ public:
 
 	VolumeConstants constants{};
 	VolumeConstants constantsPrev{};
-
+	ComPtr<ID3D11Buffer> cbRay;
 
 	XMMATRIX view, proj;
 	CB cb{};
