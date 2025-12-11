@@ -180,10 +180,10 @@ float4 main(PS_INPUT input) : SV_TARGET
 		float z = input.ViewPos.z;
 
 		// ✅ 더 큰 범위
-		if (z < 2.0) return float4(1, 0, 0, 1);  // 빨강
+		if (z < 2.1) return float4(1, 0, 0, 1);  // 빨강
 		if (z < 2.5) return float4(1, 1, 0, 1);  // 노랑
 		if (z < 3.0) return float4(0, 1, 0, 1);  // 초록
-		if (z < 3.5) return float4(0, 1, 1, 1);  // 청록
+		if (z < 3.4) return float4(0, 1, 1, 1);  // 청록
 		return float4(0, 0, 1, 1);  // 파랑
 	}
 
