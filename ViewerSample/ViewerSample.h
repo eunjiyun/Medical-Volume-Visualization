@@ -28,6 +28,7 @@ public slots:
 	void sharpnessChanged(int value);   // Window Width
 
 	void volumeShowHide();
+	void meshShowHide();
 private:
 	Ui::ViewerSampleClass* ui;
 	QDirect3D11Widget * m_pScene;

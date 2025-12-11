@@ -468,6 +468,7 @@ public:
 	float scaleX, scaleY, scaleZ;
 public:
 	bool isPlaster{ false };
+	bool isMesh{ false };
 	void plasterVolumeShow();
 	void RenderVolumeView(/*const D3D11_VIEWPORT& vp*/);
 	void InitializeVolumeCamera();

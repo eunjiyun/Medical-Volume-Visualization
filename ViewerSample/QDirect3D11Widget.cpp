@@ -2623,8 +2623,9 @@ void QDirect3D11Widget::RenderVolumeView()
 
 
 
-	if (isPlaster)
+	if (isPlaster) {
 		plasterVolumeShow();
+	}
 	else {
 
 
@@ -3569,7 +3570,8 @@ void QDirect3D11Widget::RenderAllQuads()
 			//qDebug() << ">>> Calling ComposePeeledLayers";  // ✅ 이 줄 추가
 			//ComposePeeledLayers(m_pDeviceContext);
 
-			RenderMesh(m_pDeviceContext);
+			if(isMesh)
+				RenderMesh(m_pDeviceContext);
 
 
 			//// ✅ 여기에 최종 합성 추가!

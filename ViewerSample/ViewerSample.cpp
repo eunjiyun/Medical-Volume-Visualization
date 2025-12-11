@@ -40,6 +40,7 @@ void ViewerSample::connectSlots()
 	connect(ui->btnColorInvert, &QPushButton::clicked, this, &ViewerSample::onBtnColorInvertClicked);
 
 	connect(ui->btnViewHead, &QPushButton::clicked, this, &ViewerSample::volumeShowHide);
+	connect(ui->btnGraphAdjust, &QPushButton::clicked, this, &ViewerSample::meshShowHide);
 
 
 	// ✅ 시그널 연결
@@ -94,7 +95,16 @@ void ViewerSample::volumeShowHide()
 
 
 
-	std::cout << "clicked!!!!!!!!" << endl;
+	//std::cout << "clicked!!!!!!!!" << endl;
+
+	update();
+}
+void ViewerSample::meshShowHide()
+{
+	if (m_pScene->isMesh)
+		m_pScene->isMesh = false;
+	else
+		m_pScene->isMesh = true;
 
 	update();
 }
