@@ -4209,7 +4209,7 @@ void QDirect3D11Widget::UpdateSlicePlanePositions() {
 
 
 	// ✅ Scout line 평면 크기 조절 (1.5~2.0 정도로 조절)
-	float planeScale = 1.15f;
+	float planeScale = 1.5f;
 	XMMATRIX planeScaleMatrix = XMMatrixScaling(planeScale, planeScale, planeScale);
 
 	{
