@@ -712,7 +712,7 @@ bool QDirect3D11Widget::init()
 	InitShaders();
 	InitializeVolumeShaders();    // 셰이더 컴파일
 	InitializeSlicePlanes();      // ← 1번
-	InitializeBoundingCube();     // ← 2번
+	//InitializeBoundingCube();     // ← 2번
 	InitializeVolumeCamera();     // 카메라 설정
 	InitializeTFVolume();
 
@@ -1483,6 +1483,25 @@ bool QDirect3D11Widget::CreateMeshConstantBuffer() {
 		qDebug() << "Failed to create mesh constant buffer";
 		return false;
 	}
+
+
+	// Camera Buffer
+	bd.ByteWidth = sizeof(CameraBuffer);
+	hr = m_pDevice->CreateBuffer(&bd, nullptr, &cameraConstantBuffer);
+	if (FAILED(hr)) {
+		qDebug() << "Failed to create mesh camera constant buffer";
+		return false;
+	}
+
+	// Light Buffer
+	bd.ByteWidth = sizeof(LightBuffer);
+	hr = m_pDevice->CreateBuffer(&bd, nullptr, &lightConstantBuffer);
+	if (FAILED(hr)) {
+		qDebug() << "Failed to create mesh light constant buffer";
+		return false;
+	}
+
+
 
 	qDebug() << "Mesh constant buffer created successfully";
 	return true;
@@ -2964,11 +2983,9 @@ void QDirect3D11Widget::InitializeVolumeShaders()
 		vsBlob->GetBufferSize(),
 		&m_cubeInputLayout);
 
+
 	vsBlob->Release();
 	psBlob->Release();
-
-
-
 
 
 
@@ -4136,63 +4153,65 @@ void QDirect3D11Widget::InitializeSlicePlanes() {
 // ========================================
 // 2. 바운딩 큐브 초기화
 // ========================================
-void QDirect3D11Widget::InitializeBoundingCube() {
-	// 큐브의 8개 꼭짓점
-	XMFLOAT3 cubeVertices[] = {
-		// 앞면 (Z = -0.5)
-		XMFLOAT3(-0.5f, -0.5f, -0.5f), // 0
-		XMFLOAT3(0.5f, -0.5f, -0.5f), // 1
-		XMFLOAT3(0.5f,  0.5f, -0.5f), // 2
-		XMFLOAT3(-0.5f,  0.5f, -0.5f), // 3
-		// 뒷면 (Z = 0.5)
-		XMFLOAT3(-0.5f, -0.5f,  0.5f), // 4
-		XMFLOAT3(0.5f, -0.5f,  0.5f), // 5
-		XMFLOAT3(0.5f,  0.5f,  0.5f), // 6
-		XMFLOAT3(-0.5f,  0.5f,  0.5f)  // 7
-	};
 
-	// 12개 모서리를 선으로 그리기 위한 인덱스 (24개 = 12선 * 2정점)
-	UINT cubeIndices[] = {
-		// 앞면 4개 모서리
-		0, 1,  1, 2,  2, 3,  3, 0,
-		// 뒷면 4개 모서리
-		4, 5,  5, 6,  6, 7,  7, 4,
-		// 앞뒤 연결 4개 모서리
-		0, 4,  1, 5,  2, 6,  3, 7
-	};
 
-	// Vertex Buffer 생성
-	D3D11_BUFFER_DESC vbDesc = {};
-	vbDesc.Usage = D3D11_USAGE_DEFAULT;
-	vbDesc.ByteWidth = sizeof(cubeVertices);
-	vbDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
-
-	D3D11_SUBRESOURCE_DATA vbData = {};
-	vbData.pSysMem = cubeVertices;
-
-	HRESULT hr = m_pDevice->CreateBuffer(&vbDesc, &vbData, &m_cubeVertexBuffer);
-	if (FAILED(hr)) {
-		qDebug() << "Failed to create cube vertex buffer!";
-		return;
-	}
-
-	// Index Buffer 생성
-	D3D11_BUFFER_DESC ibDesc = {};
-	ibDesc.Usage = D3D11_USAGE_DEFAULT;
-	ibDesc.ByteWidth = sizeof(cubeIndices);
-	ibDesc.BindFlags = D3D11_BIND_INDEX_BUFFER;
-
-	D3D11_SUBRESOURCE_DATA ibData = {};
-	ibData.pSysMem = cubeIndices;
-
-	hr = m_pDevice->CreateBuffer(&ibDesc, &ibData, &m_cubeIndexBuffer);
-	if (FAILED(hr)) {
-		qDebug() << "Failed to create cube index buffer!";
-		return;
-	}
-
-	qDebug() << "Bounding cube initialized successfully!";
-}
+//void QDirect3D11Widget::InitializeBoundingCube() {
+//	// 큐브의 8개 꼭짓점
+//	XMFLOAT3 cubeVertices[] = {
+//		// 앞면 (Z = -0.5)
+//		XMFLOAT3(-0.5f, -0.5f, -0.5f), // 0
+//		XMFLOAT3(0.5f, -0.5f, -0.5f), // 1
+//		XMFLOAT3(0.5f,  0.5f, -0.5f), // 2
+//		XMFLOAT3(-0.5f,  0.5f, -0.5f), // 3
+//		// 뒷면 (Z = 0.5)
+//		XMFLOAT3(-0.5f, -0.5f,  0.5f), // 4
+//		XMFLOAT3(0.5f, -0.5f,  0.5f), // 5
+//		XMFLOAT3(0.5f,  0.5f,  0.5f), // 6
+//		XMFLOAT3(-0.5f,  0.5f,  0.5f)  // 7
+//	};
+//
+//	// 12개 모서리를 선으로 그리기 위한 인덱스 (24개 = 12선 * 2정점)
+//	UINT cubeIndices[] = {
+//		// 앞면 4개 모서리
+//		0, 1,  1, 2,  2, 3,  3, 0,
+//		// 뒷면 4개 모서리
+//		4, 5,  5, 6,  6, 7,  7, 4,
+//		// 앞뒤 연결 4개 모서리
+//		0, 4,  1, 5,  2, 6,  3, 7
+//	};
+//
+//	// Vertex Buffer 생성
+//	D3D11_BUFFER_DESC vbDesc = {};
+//	vbDesc.Usage = D3D11_USAGE_DEFAULT;
+//	vbDesc.ByteWidth = sizeof(cubeVertices);
+//	vbDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+//
+//	D3D11_SUBRESOURCE_DATA vbData = {};
+//	vbData.pSysMem = cubeVertices;
+//
+//	HRESULT hr = m_pDevice->CreateBuffer(&vbDesc, &vbData, &m_cubeVertexBuffer);
+//	if (FAILED(hr)) {
+//		qDebug() << "Failed to create cube vertex buffer!";
+//		return;
+//	}
+//
+//	// Index Buffer 생성
+//	D3D11_BUFFER_DESC ibDesc = {};
+//	ibDesc.Usage = D3D11_USAGE_DEFAULT;
+//	ibDesc.ByteWidth = sizeof(cubeIndices);
+//	ibDesc.BindFlags = D3D11_BIND_INDEX_BUFFER;
+//
+//	D3D11_SUBRESOURCE_DATA ibData = {};
+//	ibData.pSysMem = cubeIndices;
+//
+//	hr = m_pDevice->CreateBuffer(&ibDesc, &ibData, &m_cubeIndexBuffer);
+//	if (FAILED(hr)) {
+//		qDebug() << "Failed to create cube index buffer!";
+//		return;
+//	}
+//
+//	qDebug() << "Bounding cube initialized successfully!";
+//}
 
 
 
@@ -4264,40 +4283,42 @@ void QDirect3D11Widget::UpdateSlicePlanePositions() {
 // ========================================
 // 4. 바운딩 큐브 렌더링
 // ========================================
-void QDirect3D11Widget::RenderBoundingCube(const VolumeConstants& constants) {
-	if (!fileReader) return;
 
-	float width = fileReader->m_width * fileReader->views.spacing.x;
-	float height = fileReader->m_height * fileReader->views.spacing.y;
-	float depth = fileReader->m_depth * fileReader->views.spacing.z;
 
-	XMFLOAT3 origin = fileReader->views.origin;
-
-	VolumeConstants cubeConstants = constants;
-	XMMATRIX cubeWorld = XMMatrixScaling(width, height, depth) *
-		XMMatrixTranslation(origin.x + width * 0.5f,
-			origin.y + height * 0.5f,
-			origin.z + depth * 0.5f);
-	XMStoreFloat4x4(&cubeConstants.World, cubeWorld);
-	cubeConstants.Voxel = XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f);
-
-	// Constant Buffer 업데이트
-	m_pDeviceContext->UpdateSubresource(m_volumeConstantBuffer, 0, nullptr,
-		&cubeConstants, 0, 0);
-
-	// ✅ 큐브 전용 Input Layout 사용
-	m_pDeviceContext->IASetInputLayout(m_cubeInputLayout);
-
-	// 버퍼 바인딩
-	UINT stride = sizeof(XMFLOAT3);
-	UINT offset = 0;
-	m_pDeviceContext->IASetVertexBuffers(0, 1, &m_cubeVertexBuffer, &stride, &offset);
-	m_pDeviceContext->IASetIndexBuffer(m_cubeIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
-	m_pDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_LINELIST);
-
-	// 큐브 그리기
-	m_pDeviceContext->DrawIndexed(24, 0, 0);
-}
+//void QDirect3D11Widget::RenderBoundingCube(const VolumeConstants& constants) {
+//	if (!fileReader) return;
+//
+//	float width = fileReader->m_width * fileReader->views.spacing.x;
+//	float height = fileReader->m_height * fileReader->views.spacing.y;
+//	float depth = fileReader->m_depth * fileReader->views.spacing.z;
+//
+//	XMFLOAT3 origin = fileReader->views.origin;
+//
+//	VolumeConstants cubeConstants = constants;
+//	XMMATRIX cubeWorld = XMMatrixScaling(width, height, depth) *
+//		XMMatrixTranslation(origin.x + width * 0.5f,
+//			origin.y + height * 0.5f,
+//			origin.z + depth * 0.5f);
+//	XMStoreFloat4x4(&cubeConstants.World, cubeWorld);
+//	cubeConstants.Voxel = XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f);
+//
+//	// Constant Buffer 업데이트
+//	m_pDeviceContext->UpdateSubresource(m_volumeConstantBuffer, 0, nullptr,
+//		&cubeConstants, 0, 0);
+//
+//	// ✅ 큐브 전용 Input Layout 사용
+//	m_pDeviceContext->IASetInputLayout(m_cubeInputLayout);
+//
+//	// 버퍼 바인딩
+//	UINT stride = sizeof(XMFLOAT3);
+//	UINT offset = 0;
+//	m_pDeviceContext->IASetVertexBuffers(0, 1, &m_cubeVertexBuffer, &stride, &offset);
+//	m_pDeviceContext->IASetIndexBuffer(m_cubeIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
+//	m_pDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_LINELIST);
+//
+//	// 큐브 그리기
+//	m_pDeviceContext->DrawIndexed(24, 0, 0);
+//}
 
 // ========================================
 // 5. 평면 그리기

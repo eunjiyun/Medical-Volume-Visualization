@@ -82,6 +82,17 @@ struct ViewGeometry {
 	float sliceSpacing;
 };
 
+// ========== 구조체 정의 ==========
+struct CameraBuffer {
+	DirectX::XMFLOAT3 cameraPos;
+	float padding;
+};
+
+struct LightBuffer {
+	DirectX::XMFLOAT3 lightDir;
+	float padding;
+};
+
 
 // QDirect3D11Widget.h 또는 .cpp 상단에 선언
 
@@ -431,14 +442,15 @@ public:
 	ID3D11Buffer* m_volumeConstantBuffer;  // ← 여기 추가!
 	ID3D11Buffer* m_volumePrevConstantBuffer;  // ← 여기 추가!
 
+	ID3D11Buffer* cameraConstantBuffer{ nullptr };
+	ID3D11Buffer* lightConstantBuffer{ nullptr };
+
 	// D3D11 상태 객체들
 	Microsoft::WRL::ComPtr<ID3D11BlendState>        m_alphaBlendState;
 	Microsoft::WRL::ComPtr<ID3D11DepthStencilState> m_disableDepthState;
 
 
-	// ✅ 큐브 관련
-	ID3D11Buffer* m_cubeVertexBuffer;
-	ID3D11Buffer* m_cubeIndexBuffer;
+
 
 	// ✅ 3D 평면들
 	SlicePlane m_CoronalPlane;
@@ -477,9 +489,9 @@ public:
 	bool InitializeTFVolume();
 
 	void InitializeSlicePlanes();
-	void InitializeBoundingCube();
+	//void InitializeBoundingCube();
 	void UpdateSlicePlanePositions();
-	void RenderBoundingCube(const VolumeConstants& constants);
+	//void RenderBoundingCube(const VolumeConstants& constants);
 	void DrawPlane(const SlicePlane& plane);
 	void DrawSliceQuad();
 
