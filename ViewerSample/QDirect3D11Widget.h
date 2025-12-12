@@ -15,6 +15,7 @@
 #include<unordered_map>
 #include<vector>
 #include "ArcBall.h"
+#include "MeshRenderer.h"
 
 #include "TransferFunction.h"
 using namespace std;
@@ -49,6 +50,7 @@ struct CB
 
 
 class FileReader;
+//class MeshRenderer;
 
 
 struct Vertex {
@@ -106,40 +108,40 @@ struct SlicePlane {
 };
 
 
+////
+////struct MeshConstantBuffer {
+////	XMMATRIX WVP;
+////	//int renderPass;
+////	//float padding[3];
+////};
 //
-//struct MeshConstantBuffer {
-//	XMMATRIX WVP;
-//	//int renderPass;
-//	//float padding[3];
-//};
-
+////struct MeshConstantBuffer
+////{
+////	DirectX::XMMATRIX WVP;          // 64 bytes
+////	int peelLayer;                  // 4 bytes
+////	float viewportWidth;            // 4 bytes (✅ 분리!)
+////	float viewportHeight;           // 4 bytes (✅ 분리!)
+////	float padding;                  // 4 bytes
+////};  // 총 80 bytes
+//
 //struct MeshConstantBuffer
 //{
-//	DirectX::XMMATRIX WVP;          // 64 bytes
-//	int peelLayer;                  // 4 bytes
-//	float viewportWidth;            // 4 bytes (✅ 분리!)
-//	float viewportHeight;           // 4 bytes (✅ 분리!)
-//	float padding;                  // 4 bytes
-//};  // 총 80 bytes
-
-struct MeshConstantBuffer
-{
-	DirectX::XMMATRIX WVP;
-	DirectX::XMMATRIX World;
-	DirectX::XMMATRIX WorldView;  // ✅ 추가
-};
-
-//struct MeshCamConstantBuffer
-//{
-//	DirectX::XMFLOAT3 CameraPosWS;
-//	float  pad;
-//};  
-
-struct ClipSettings {
-	DirectX::XMFLOAT4 clipPlane;  // (nx, ny, nz, d)
-	int enableClip;
-	DirectX::XMFLOAT3 padding;
-};
+//	DirectX::XMMATRIX WVP;
+//	DirectX::XMMATRIX World;
+//	DirectX::XMMATRIX WorldView;  // ✅ 추가
+//};
+//
+////struct MeshCamConstantBuffer
+////{
+////	DirectX::XMFLOAT3 CameraPosWS;
+////	float  pad;
+////};  
+//
+//struct ClipSettings {
+//	DirectX::XMFLOAT4 clipPlane;  // (nx, ny, nz, d)
+//	int enableClip;
+//	DirectX::XMFLOAT3 padding;
+//};
 class QDirect3D11Widget : public QWidget
 {
 	Q_OBJECT
@@ -496,6 +498,7 @@ public:
 	std::vector < ID3D11SamplerState*> m_samplerState;
 
 	FileReader* fileReader = nullptr;
+	MeshRenderer* meshRenderer{ nullptr };
 
 	ID3D11ShaderResourceView* axialTextureSRV = nullptr;
 
@@ -523,6 +526,10 @@ public:
 	ID3D11VertexShader* m_fullscreenVS{ nullptr };
 	ID3D11Buffer* m_clipSettingsBuffer{ nullptr };  // ✅ 추가!    m_cameraBuffer
 	ID3D11Buffer* m_cameraBuffer{ nullptr };
+
+
+
+
 
 	//// 헤더에 추가
 	//ID3D11Texture2D* m_meshDepthTexture{ nullptr };

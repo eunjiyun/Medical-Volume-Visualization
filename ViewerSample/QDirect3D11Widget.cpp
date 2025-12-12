@@ -11,6 +11,8 @@
 #include "imgui_impl_dx11.h"
 #include "imgui_impl_win32.h"
 #include "PLYLoader.h"
+//#include "MeshRenderer.h"
+
 #include<algorithm>
 #include<iostream>
 
@@ -519,6 +521,9 @@ QDirect3D11Widget::~QDirect3D11Widget()
 		m_meshTexture->Release();
 		m_meshTexture = nullptr;
 	}
+
+	meshRenderer->Cleanup();
+
 }
 
 void QDirect3D11Widget::release()
@@ -633,7 +638,7 @@ bool QDirect3D11Widget::init()
 	resetEnvironment();
 
 	LoadDICOMSeries();  // 최초 표시 시 DICOM 로드
-
+	meshRenderer = new MeshRenderer();
 
 	eye = XMVectorSet(0.0f, 0.0f, -3.0f, 1.0f);  // 조금 더 뒤로
 	at = XMVectorSet(0.0f, 0.0f, 0.0f, 1.0f);
@@ -754,6 +759,9 @@ bool QDirect3D11Widget::init()
 	{
 		return false;
 	}
+
+	// ========== ✨ Two-Pass States 생성 ==========
+	meshRenderer->CreateTwoPassStates(m_pDevice);
 
 
 
@@ -3570,8 +3578,15 @@ void QDirect3D11Widget::RenderAllQuads()
 			//qDebug() << ">>> Calling ComposePeeledLayers";  // ✅ 이 줄 추가
 			//ComposePeeledLayers(m_pDeviceContext);
 
-			if(isMesh)
-				RenderMesh(m_pDeviceContext);
+			if (isMesh)
+				//RenderMesh(m_pDeviceContext);
+				meshRenderer->RenderMesh(
+					m_pDeviceContext, m_meshVertexBuffer, m_meshVS, m_meshPS, m_meshInputLayout,
+					m_clipSettingsBuffer, m_meshConstantBuffer, m_meshTexture,
+					m_MeshSamplerState, m_pDevice, m_meshVertexCount,
+					maxMesh, maxPhysicalVol, overallSize,
+					w, v, p
+				);
 
 
 			//// ✅ 여기에 최종 합성 추가!

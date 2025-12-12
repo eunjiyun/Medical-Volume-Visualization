@@ -195,17 +195,17 @@ struct PS_INPUT
 
 float4 main(PS_INPUT input) : SV_TARGET
 {
-	if (enableClip == 1)
-	{
-		// ✅ 파랑(z > 3.5) 자르기
-		if (input.ViewPos.z > 3.0)
-		{
-			discard;
+	//if (enableClip == 1)
+	//{
+	//	// ✅ 파랑(z > 3.5) 자르기
+	//	if (input.ViewPos.z > 3.0)
+	//	{
+	//		discard;
 
-			//return float4(1, 0, 0, 1);  // 빨강 = 잘릴 부분
-		}
-		
-	}
+	//		//return float4(1, 0, 0, 1);  // 빨강 = 잘릴 부분
+	//	}
+	//	
+	//}
 
 	float4 color = meshTexture.Sample(samplerState, input.Tex);
 	color.a = 0.65;
