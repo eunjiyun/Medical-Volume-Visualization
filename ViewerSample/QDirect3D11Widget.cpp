@@ -646,8 +646,8 @@ bool QDirect3D11Widget::init()
 
 
 
-	v = XMMatrixLookAtLH(eye, at, up);
-	p = XMMatrixPerspectiveFovLH(
+	viewMat = XMMatrixLookAtLH(eye, at, up);
+	projMat = XMMatrixPerspectiveFovLH(
 		XM_PIDIV4,
 		(float)width() / (float)height(),
 		0.1f,
@@ -655,8 +655,8 @@ bool QDirect3D11Widget::init()
 	);
 
 
-	iv = XMMatrixInverse(nullptr, v);
-	ip = XMMatrixInverse(nullptr, p);
+	invViewMat = XMMatrixInverse(nullptr, viewMat);
+	invProjMat = XMMatrixInverse(nullptr, projMat);
 
 
 	rotx = XMMatrixRotationX(-XM_PIDIV2);  // 90도 회전
@@ -664,7 +664,7 @@ bool QDirect3D11Widget::init()
 
 
 	// ✅ center 변환 제거
-	trans = XMMatrixTranslation(0.0f, 0.0f, 0.0f);
+	transMat = XMMatrixTranslation(0.0f, 0.0f, 0.0f);
 
 	// DICOM에서 읽어온 값
 	float voxelSpacingX = fileReader->views.spacing.x;  // mm
@@ -703,8 +703,8 @@ bool QDirect3D11Widget::init()
 	);
 
 
-	w = scale * roty*rotx;
-	iw = XMMatrixInverse(nullptr, w);
+	worldMat = scale * roty*rotx;
+	invWorldMat = XMMatrixInverse(nullptr, worldMat);
 
 
 	initializeRenderTargets();
@@ -1059,9 +1059,9 @@ void QDirect3D11Widget::FullScreenPassSet()
 	//cb.InvVolumeWorld = XMMatrixTranspose(iw);
 
 
-	XMStoreFloat4x4(&cb.InvView, XMMatrixTranspose(iv));
-	XMStoreFloat4x4(&cb.InvProj, XMMatrixTranspose(ip));
-	XMStoreFloat4x4(&cb.InvVolumeWorld, XMMatrixTranspose(iw));
+	XMStoreFloat4x4(&cb.InvView, XMMatrixTranspose(invViewMat));
+	XMStoreFloat4x4(&cb.InvProj, XMMatrixTranspose(invProjMat));
+	XMStoreFloat4x4(&cb.InvVolumeWorld, XMMatrixTranspose(invWorldMat));
 
 
 	//// ✅ 실제 카메라 위치 사용
@@ -1153,8 +1153,8 @@ void QDirect3D11Widget::UpdateVolumeMatrix()
 	XMMATRIX volumeWorld = scale * rotation/**rotx*/;
 
 	//CB cb{};
-	w = XMMatrixTranspose(volumeWorld);;
-	iw = XMMatrixTranspose(XMMatrixInverse(nullptr, volumeWorld));
+	worldMat = XMMatrixTranspose(volumeWorld);
+	invWorldMat = XMMatrixTranspose(XMMatrixInverse(nullptr, volumeWorld));
 
 }
 //======================================================================================
@@ -1600,11 +1600,11 @@ void QDirect3D11Widget::RenderMesh(ID3D11DeviceContext* context)
 
 //	DirectX::XMMATRIX scale = XMMatrixScaling(0.0065f, 0.0065f, 0.0065f);
 	DirectX::XMMATRIX rotation = XMMatrixRotationX(XM_PI);
-	DirectX::XMMATRIX fullWorld = scale * rotation * w;  // ✅ w 포함
+	DirectX::XMMATRIX fullWorld = scale * rotation * worldMat;  // ✅ w 포함
 
-	cb.WVP = XMMatrixTranspose(fullWorld * v * p);
+	cb.WVP = XMMatrixTranspose(fullWorld * viewMat * projMat);
 	cb.World = XMMatrixTranspose(fullWorld);
-	cb.WorldView = XMMatrixTranspose(fullWorld * v);  // ✅ v 곱하기!
+	cb.WorldView = XMMatrixTranspose(fullWorld * viewMat);  // ✅ v 곱하기!
 
 
 	//qDebug() << "=== Matrix Debug ===";
@@ -2091,7 +2091,7 @@ void QDirect3D11Widget::RenderMeshWithDepthPeeling(ID3D11DeviceContext* context)
 		cb.WVP = XMMatrixTranspose(
 			XMMatrixScaling(0.0065f, 0.0065f, 0.0065f) *
 			XMMatrixRotationX(XM_PI) *
-			w * v * p
+			worldMat * viewMat * projMat
 		);
 	/*	cb.peelLayer = layer;
 		cb.viewportWidth = this->width() / 2;
@@ -2583,7 +2583,7 @@ void QDirect3D11Widget::plasterVolumeShow()
 
 		XMMATRIX translation = XMMatrixTranslation(0.0f, offsetY, 0.0f);
 
-		XMMATRIX invView = XMMatrixInverse(nullptr, view);
+		XMMATRIX invView = XMMatrixInverse(nullptr, viewMat);
 		invView.r[3] = XMVectorSet(0, 0, 0, 1); // 위치 영향 제거, 회전만 적용
 
 		  // 6️⃣ 최종 World 구성: 스케일 → 회전 → 슬라이스 위치 → 카메라 정합 → 오프셋
@@ -2595,8 +2595,8 @@ void QDirect3D11Widget::plasterVolumeShow()
 			volOffset;
 
 
-		XMStoreFloat4x4(&constantsPrev.View, XMMatrixTranspose(view));
-		XMStoreFloat4x4(&constantsPrev.Projection, XMMatrixTranspose(proj));
+		XMStoreFloat4x4(&constantsPrev.View, XMMatrixTranspose(viewMat));
+		XMStoreFloat4x4(&constantsPrev.Projection, XMMatrixTranspose(projMat));
 		XMStoreFloat4x4(&constantsPrev.World, XMMatrixTranspose(volumeWorld));
 
 
@@ -2616,7 +2616,7 @@ void QDirect3D11Widget::RenderVolumeView()
 	XMVECTOR up = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
 
 
-	view = XMMatrixLookAtLH(eye, target, up);
+	//view = XMMatrixLookAtLH(eye, target, up);
 
 	float nearZ = 0.01f;
 	float farZ = 100.0f;
@@ -2627,7 +2627,7 @@ void QDirect3D11Widget::RenderVolumeView()
 	float viewWidth = viewHeight * aspect;
 
 
-	proj = XMMatrixOrthographicLH(viewWidth, viewHeight, nearZ, farZ);
+	//proj = XMMatrixOrthographicLH(viewWidth, viewHeight, nearZ, farZ);
 
 
 
@@ -2670,24 +2670,27 @@ void QDirect3D11Widget::RenderVolumeView()
 	m_pDeviceContext->PSSetConstantBuffers(0, 1, &m_volumeConstantBuffer);
 
 
-	XMStoreFloat4x4(&constants.View, XMMatrixTranspose(view));
-	XMStoreFloat4x4(&constants.Projection, XMMatrixTranspose(proj));
+	XMStoreFloat4x4(&constants.View, XMMatrixTranspose(viewMat));
+	XMStoreFloat4x4(&constants.Projection, XMMatrixTranspose(projMat));
 
 
 	// ---- Axial (XY plane, z=0)
-	{
-		constants.World = m_CoronalPlane.worldMatrix; // ✅ 저장된 World Matrix 사용
-		constants.Voxel = XMFLOAT4(0.0f, 1.0f, 1.0f, 1.0f); // 청록
-		m_pDeviceContext->UpdateSubresource(m_volumeConstantBuffer, 0, nullptr, &constants, 0, 0);
-		DrawPlane(m_CoronalPlane);
-	}
-
-	// ---- Coronal (XZ plane, y=0)
 	{
 		constants.World = m_AxialPlane.worldMatrix;  // ✅ 저장된 World Matrix 사용
 		constants.Voxel = XMFLOAT4(1.0f, 0.0f, 1.0f, 1.0f); // 자홍
 		m_pDeviceContext->UpdateSubresource(m_volumeConstantBuffer, 0, nullptr, &constants, 0, 0);
 		DrawPlane(m_AxialPlane);
+	
+	}
+
+	// ---- Coronal (XZ plane, y=0)
+	{
+
+
+		constants.World = m_CoronalPlane.worldMatrix; // ✅ 저장된 World Matrix 사용
+		constants.Voxel = XMFLOAT4(0.0f, 1.0f, 1.0f, 1.0f); // 청록
+		m_pDeviceContext->UpdateSubresource(m_volumeConstantBuffer, 0, nullptr, &constants, 0, 0);
+		DrawPlane(m_CoronalPlane);
 	}
 
 	// ---- Sagittal (YZ plane, x=0)
@@ -3585,7 +3588,7 @@ void QDirect3D11Widget::RenderAllQuads()
 					m_clipSettingsBuffer, m_meshConstantBuffer, m_meshTexture,
 					m_MeshSamplerState, m_pDevice, m_meshVertexCount,
 					maxMesh, maxPhysicalVol, overallSize,
-					w, v, p
+					worldMat, viewMat, projMat
 				);
 
 
@@ -4212,68 +4215,287 @@ void QDirect3D11Widget::InitializeBoundingCube() {
 
 
 void QDirect3D11Widget::UpdateSlicePlanePositions() {
-	if (!fileReader) return;
+	//if (!fileReader) return;
 
-	XMFLOAT3 origin = fileReader->views.origin;
-	XMFLOAT3 spacing = fileReader->views.spacing;
+	//XMFLOAT3 origin = fileReader->views.origin;
+	//XMFLOAT3 spacing = fileReader->views.spacing;
 
-	// ✅ 볼륨과 동일하게 inverse 변환 사용
-	XMMATRIX volumeRotation = XMMatrixRotationQuaternion(m_rotation);
-	XMMATRIX volumeWorld = scale * volumeRotation;
-	XMMATRIX invVolumeWorld = XMMatrixInverse(nullptr, volumeWorld);
+	////// ✅ 볼륨과 동일하게 inverse 변환 사용
+	//XMMATRIX volumeRotation = XMMatrixRotationQuaternion(m_rotation);
+	//XMMATRIX volumeWorld = scale * /*roty * rotx **/ volumeRotation;
+	//XMMATRIX invVolumeWorld = XMMatrixInverse(nullptr, volumeWorld);
 
 
-	// ✅ Scout line 평면 크기 조절 (1.5~2.0 정도로 조절)
-	float planeScale = 1.5f;
-	XMMATRIX planeScaleMatrix = XMMatrixScaling(planeScale, planeScale, planeScale);
+	//// ✅ Scout line 평면 크기 조절 (1.5~2.0 정도로 조절)
+	//float planeScale = 1.0f;
+	//XMMATRIX planeScaleMatrix = XMMatrixScaling(planeScale, planeScale, planeScale);
 
-	{
-		// ===== Axial 평면 =====
-		float totalDepth = fileReader->m_height * spacing.y;
-		float axialZ = origin.y + fileReader->currentIndex[2] * spacing.y;
-		float normalizedZ = -(axialZ - origin.y - totalDepth * 0.5f) / totalDepth;
-		normalizedZ *= 2.2f;
+	//{
+	//	// ===== Axial 평면 (XZ 평면) =====
+	//// ✅ invVolumeWorld의 역변환을 상쇄하기 위해 미리 볼륨 스케일 곱하기
+	//	//XMMATRIX axialScale = XMMatrixScaling(
+	//	//	scaleX * overallSize * planeScale,  // X축
+	//	//	scaleZ * overallSize * planeScale,  // Z축 (회전 후 Y축이 됨)
+	//	//	1.0f
+	//	//);
+	//	XMMATRIX axialScale = XMMatrixScaling(
+	//		planeScale,
+	//		planeScale,
+	//		1.0f
+	//	);
 
-		XMMATRIX axialLocal =
-			planeScaleMatrix *
-			XMMatrixRotationX(XM_PIDIV2) *
-			XMMatrixTranslation(0.0f, normalizedZ, 0.0f);
 
-		// ✅ inverse 변환 적용
-		XMMATRIX axialWorld = axialLocal * invVolumeWorld;
-		//XMStoreFloat4x4(&m_AxialPlane.worldMatrix, XMMatrixTranspose(axialWorld));
-		XMStoreFloat4x4(&m_CoronalPlane.worldMatrix, XMMatrixTranspose(axialWorld));
-	}
+	//	float totalDepth = fileReader->m_height * spacing.y;
+	//	float axialZ = origin.y + fileReader->currentIndex[2] * spacing.y;
+	//	float normalizedZ = -(axialZ - origin.y - totalDepth * 0.5f) / totalDepth;
+	//	//normalizedZ *= 2.2f;
+	//	//normalizedZ *= overallSize;  // 2.2 대신
+	//	normalizedZ *= planeScale;
 
-	{
-		// ===== Coronal 평면 =====
-		float totalHeight = fileReader->m_depth * spacing.z;
-		float coronalY = origin.z + fileReader->currentIndex[1] * spacing.z;
-		float normalizedY = (coronalY - origin.z - totalHeight * 0.5f) / totalHeight;
-		normalizedY *= 2.2f;
 
-		XMMATRIX coronalLocal = planeScaleMatrix * XMMatrixTranslation(0.0f, 0.0f, normalizedY);
+	//	XMMATRIX axialLocal =
+	//		axialScale *  // ✅ 정사각형 대신 비율 적용한 스케일
+	//		XMMatrixRotationX(XM_PIDIV2) *
+	//		XMMatrixTranslation(0.0f, normalizedZ, 0.0f);
 
-		XMMATRIX coronalWorld = coronalLocal * invVolumeWorld;
-		//XMStoreFloat4x4(&m_CoronalPlane.worldMatrix, XMMatrixTranspose(coronalWorld));
-		XMStoreFloat4x4(&m_AxialPlane.worldMatrix, XMMatrixTranspose(coronalWorld));
-	}
+	//	// ✅ inverse 변환 적용
+	//	XMMATRIX axialWorld = axialLocal * invVolumeWorld;
+	//	//XMStoreFloat4x4(&m_AxialPlane.worldMatrix, XMMatrixTranspose(axialWorld));
+	//	XMStoreFloat4x4(&m_CoronalPlane.worldMatrix, XMMatrixTranspose(axialWorld));
+	//}
 
-	{
-		// ===== Sagittal 평면 =====
-		float totalWidth = fileReader->m_width * spacing.x;
-		float sagittalX = origin.x + fileReader->currentIndex[3] * spacing.x;
-		float normalizedX = (sagittalX - origin.x - totalWidth * 0.5f) / totalWidth;
-		normalizedX *= -2.2f;
+	//{
+	//	// ===== Coronal 평면 (XY 평면) =====
+	//	//XMMATRIX coronalScale = XMMatrixScaling(
+	//	//	scaleX * overallSize * planeScale,  // X축
+	//	//	scaleY * overallSize * planeScale,  // Y축
+	//	//	1.0f
+	//	//);
+	//	XMMATRIX coronalScale = XMMatrixScaling(
+	//		planeScale,
+	//		planeScale,
+	//		1.0f
+	//	);
 
-		XMMATRIX sagittalLocal =
-			planeScaleMatrix *
-			XMMatrixRotationY(XM_PIDIV2) *
-			XMMatrixTranslation(normalizedX, 0.0f, 0.0f);
+	//	float totalHeight = fileReader->m_depth * spacing.z;
+	//	float coronalY = origin.z + fileReader->currentIndex[1] * spacing.z;
+	//	float normalizedY = (coronalY - origin.z - totalHeight * 0.5f) / totalHeight;
+	//	//normalizedY *= 2.2f;
+	//	//normalizedY *= overallSize;  // 2.2 대신
+	//	normalizedY *= planeScale;
 
-		XMMATRIX sagittalWorld = sagittalLocal * invVolumeWorld;
-		XMStoreFloat4x4(&m_SagittalPlane.worldMatrix, XMMatrixTranspose(sagittalWorld));
-	}
+	//	XMMATRIX coronalLocal = coronalScale * XMMatrixTranslation(0.0f, 0.0f, normalizedY);
+
+	//	XMMATRIX coronalWorld = coronalLocal * invVolumeWorld;
+	//	//XMStoreFloat4x4(&m_CoronalPlane.worldMatrix, XMMatrixTranspose(coronalWorld));
+	//	XMStoreFloat4x4(&m_AxialPlane.worldMatrix, XMMatrixTranspose(coronalWorld));
+	//}
+
+	//{
+	//	// ===== Sagittal 평면 (YZ 평면) =====
+	//	//XMMATRIX sagittalScale = XMMatrixScaling(
+	//	//	scaleY * overallSize * planeScale,  // Y축 (회전 후 X축이 됨)
+	//	//	scaleZ * overallSize * planeScale,  // Z축
+	//	//	1.0f
+	//	//);
+	//	XMMATRIX sagittalScale = XMMatrixScaling(
+	//		planeScale,
+	//		planeScale,
+	//		1.0f
+	//	);
+
+
+
+	//	float totalWidth = fileReader->m_width * spacing.x;
+	//	float sagittalX = origin.x + fileReader->currentIndex[3] * spacing.x;
+	//	float normalizedX = (sagittalX - origin.x - totalWidth * 0.5f) / totalWidth;
+	//	//normalizedX *= -2.2f;
+	//	//normalizedX *= -overallSize;
+	//	normalizedX *= -planeScale;
+
+	//	XMMATRIX sagittalLocal =
+	//		sagittalScale *
+	//		XMMatrixRotationY(XM_PIDIV2) *
+	//		XMMatrixTranslation(normalizedX, 0.0f, 0.0f);
+
+	//	XMMATRIX sagittalWorld = sagittalLocal * invVolumeWorld;
+	//	XMStoreFloat4x4(&m_SagittalPlane.worldMatrix, XMMatrixTranspose(sagittalWorld));
+	//}
+
+
+if (!fileReader) return;
+
+XMFLOAT3 origin = fileReader->views.origin;
+XMFLOAT3 spacing = fileReader->views.spacing;
+
+// ✅ 볼륨 월드 (볼륨 로컬 → 월드)
+XMMATRIX volumeRotation = XMMatrixRotationQuaternion(m_rotation);
+XMMATRIX volumeWorld =  volumeRotation;
+//XMMATRIX volumeWorld = XMMatrixIdentity();
+
+// ✅ Scout plane 크기: 볼륨 로컬 기준 (0.5~0.5 유닛쿼드라고 가정)
+// - overallSize를 이미 쓰고 있다면 여기서 반영
+//float planeScale = overallSize; // or 1.0f * overallSize
+//float planeScale = overallSize;
+float planeScale = 1.0f;
+XMMATRIX planeScaleMatrix = XMMatrixScaling(planeScale, planeScale, 1.0f);
+
+//
+// 주의:
+// - 여기서 planeScaleMatrix는 "plane 자체 크기"만 담당
+// - spacing 비율(scaleX/Y/Z)은 plane에서 다시 곱하지 않음 (가로 퍼짐 원인)
+//
+
+// ------------------------------
+// 1) AXIAL (XY 평면, Z로 이동)
+// ------------------------------
+{
+	// Axial은 "XY plane"이 정석
+	// 슬라이스 위치는 Z축으로 이동 (볼륨 로컬 기준)
+
+	float totalZ = fileReader->m_depth * spacing.z; // 너 코드에서 height*spacing.y 를 axial 축으로 사용중
+	float axialZ = origin.z + fileReader->currentIndex[1] * spacing.z;
+
+	// normalized [-0.5 ~ 0.5]로 만들기
+	float nz = (axialZ - origin.z) / totalZ;     // [0..1]
+	nz = (nz - 0.5f) * planeScale;               // [-0.5..0.5] * planeScale
+
+	XMMATRIX axialLocal =
+		planeScaleMatrix *
+		//XMMatrixRotationX(XM_PIDIV2) *
+		XMMatrixTranslation(0.0f, 0.0f, nz);
+
+
+	// ✅ 볼륨 로컬 → 월드
+	//XMMATRIX axialWorld = axialLocal * volumeWorld;
+	//XMMATRIX axialWorld = scale * worldMat;
+	XMMATRIX axialWorld = /*scale * */axialLocal* worldMat;
+	//XMMATRIX axialWorld = scale * axialLocal* volumeRotation;
+
+	XMStoreFloat4x4(&m_AxialPlane.worldMatrix, XMMatrixTranspose(axialWorld));
+
+}
+
+// ------------------------------
+// 2) CORONAL (XZ 평면, Y로 이동)
+// ------------------------------
+{
+	// Coronal은 "XZ plane"이 정석
+	// 슬라이스 위치는 Y축으로 이동
+
+	float totalY = fileReader->m_height * spacing.y; // 너 코드에서 depth*spacing.z를 coronal 축으로 사용중
+	float coronalY = origin.y + fileReader->currentIndex[2] * spacing.y;
+
+	float ny = (coronalY - origin.z) / totalY;   // [0..1]
+	ny = (ny - 0.5f) * planeScale;               // [-0.5..0.5] * planeScale
+
+	XMMATRIX coronalLocal = 
+		planeScaleMatrix *
+	///*	XMMatrixRotationX(XM_PIDIV2) *     */       // XY를 XZ로 눕힘
+		XMMatrixRotationX(XM_PIDIV2) *
+		XMMatrixTranslation(0.0f, -ny,0.0f);
+
+	//XMMATRIX coronalWorld = coronalLocal * volumeWorld;
+	//XMMATRIX coronalWorld = scale* XMMatrixRotationX(XM_PIDIV2) *worldMat;
+	XMMATRIX coronalWorld = /*scale **/ coronalLocal *worldMat;
+	//XMMATRIX coronalWorld = scale * coronalLocal *volumeRotation;
+
+	XMStoreFloat4x4(&m_CoronalPlane.worldMatrix, XMMatrixTranspose(coronalWorld));
+}
+
+// ------------------------------
+// 3) SAGITTAL (YZ 평면, X로 이동)
+// ------------------------------
+{
+	// Sagittal은 "YZ plane"이 정석
+	// 슬라이스 위치는 X축으로 이동
+
+	float totalX = fileReader->m_width * spacing.x;
+	float sagittalX = origin.x + fileReader->currentIndex[3] * spacing.x;
+
+	float nx = (sagittalX - origin.x) / totalX;  // [0..1]
+	nx = (nx - 0.5f) * planeScale;               // [-0.5..0.5] * planeScale
+
+	XMMATRIX sagittalLocal =
+		planeScaleMatrix *
+		XMMatrixRotationY(XM_PIDIV2) *            // XY를 YZ로 세움
+		//XMMatrixRotationX(XM_PIDIV2) *
+		XMMatrixTranslation(-nx, 0.0f, 0.0f);
+
+	//XMMATRIX sagittalWorld = sagittalLocal * volumeWorld;
+	//XMMATRIX sagittalWorld = scale * XMMatrixRotationY(XM_PIDIV2) *worldMat;
+	XMMATRIX sagittalWorld = /*scale **/ sagittalLocal *worldMat;
+	//XMMATRIX sagittalWorld = scale * sagittalLocal *volumeRotation;
+
+	XMStoreFloat4x4(&m_SagittalPlane.worldMatrix, XMMatrixTranspose(sagittalWorld));
+}
+
+
+	//// 볼륨 실제 크기
+	//float volumeWidth = fileReader->m_width * spacing.x;
+	//float volumeHeight = fileReader->m_height * spacing.y;
+	//float volumeDepth = fileReader->m_depth * spacing.z;
+
+	//// 평면은 대각선보다 조금 크게 (scout line이 볼륨 완전히 가로지르도록)
+	//float diagonal = sqrt(volumeWidth*volumeWidth + volumeHeight * volumeHeight + volumeDepth * volumeDepth);
+	////float planeScale = overallSize;
+	//// 또는 정확하게 계산
+	//float planeScale = max(max(scaleX, scaleY), scaleZ) * overallSize * 1.1f;
+	//planeScale = 1.0f;
+
+	//XMMATRIX planeScaleMatrix = XMMatrixScaling(planeScale, planeScale, 1.0f);
+
+	//{
+	//	// ===== Axial 평면 =====
+	//	// 정규화된 위치 계산
+	//	float totalDepth = fileReader->m_height * spacing.y;
+	//	float axialZ = origin.y + fileReader->currentIndex[2] * spacing.y;
+
+	//	// 실제 좌표를 정규화 좌표로 변환
+	//	float normalizedZ = (axialZ - origin.y - totalDepth * 0.5f) / maxPhysicalVol;
+	//	normalizedZ *= overallSize;  // 1.5배
+
+	//	XMMATRIX axialLocal =
+	//		planeScaleMatrix *
+	//		XMMatrixRotationX(XM_PIDIV2) *
+	//		XMMatrixTranslation(0.0f, normalizedZ, 0.0f);
+
+	//	// ✅ 볼륨과 같은 회전 적용
+	//	XMMATRIX axialWorld = axialLocal * roty * rotx;
+	//	XMStoreFloat4x4(&m_AxialPlane.worldMatrix, XMMatrixTranspose(axialWorld));
+	//}
+
+	//{
+	//	// ===== Coronal 평면 =====
+	//	float totalHeight = fileReader->m_depth * spacing.z;
+	//	float coronalY = origin.z + fileReader->currentIndex[1] * spacing.z;
+	//	float normalizedY = (coronalY - origin.z - totalHeight * 0.5f) / maxPhysicalVol;
+	//	normalizedY *= overallSize;
+
+	//	XMMATRIX coronalLocal =
+	//		planeScaleMatrix *
+	//		XMMatrixTranslation(0.0f, 0.0f, normalizedY);
+
+	//	XMMATRIX coronalWorld = coronalLocal * roty * rotx;
+	//	XMStoreFloat4x4(&m_CoronalPlane.worldMatrix, XMMatrixTranspose(coronalWorld));
+	//}
+
+
+	//{
+	//	// ===== Sagittal 평면 =====
+	//	float totalWidth = fileReader->m_width * spacing.x;
+	//	float sagittalX = origin.x + fileReader->currentIndex[3] * spacing.x;
+	//	float normalizedX = (sagittalX - origin.x - totalWidth * 0.5f) / maxPhysicalVol;
+	//	normalizedX *= overallSize;
+
+	//	XMMATRIX sagittalLocal =
+	//		planeScaleMatrix *
+	//		XMMatrixRotationY(XM_PIDIV2) *
+	//		XMMatrixTranslation(normalizedX, 0.0f, 0.0f);
+
+	//	XMMATRIX sagittalWorld = sagittalLocal * roty * rotx;
+	//	XMStoreFloat4x4(&m_SagittalPlane.worldMatrix, XMMatrixTranspose(sagittalWorld));
+	//}
 }
 
 // ========================================

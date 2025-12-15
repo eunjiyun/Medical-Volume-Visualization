@@ -459,13 +459,13 @@ public:
 	VolumeConstants constantsPrev{};
 	ComPtr<ID3D11Buffer> cbRay;
 
-	XMMATRIX view, proj;
+//	XMMATRIX view, proj;
 	CB cb{};
 
 	XMVECTOR eye /*= XMVectorSet(0.0f, 0.0f, -3.0f, 1.0f)*/;  // 조금 더 뒤로
 	XMVECTOR at /*= XMVectorSet(0.0f, 0.0f, 0.0f, 1.0f)*/;
 	XMVECTOR up /*= XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f)*/;
-	XMMATRIX v, iv, p, ip, rotx, roty, trans, /*scale,*/ w, iw, scale;
+	XMMATRIX viewMat, invViewMat, projMat, invProjMat, rotx, roty, transMat, /*scale,*/ worldMat, invWorldMat, scale;
 	float maxPhysicalVol, maxMesh, overallSize;
 	float scaleX, scaleY, scaleZ;
 public:
