@@ -640,24 +640,7 @@ bool QDirect3D11Widget::init()
 	LoadDICOMSeries();  // 최초 표시 시 DICOM 로드
 	meshRenderer = new MeshRenderer();
 
-	eye = XMVectorSet(0.0f, 0.0f, -3.0f, 1.0f);  // 조금 더 뒤로
-	at = XMVectorSet(0.0f, 0.0f, 0.0f, 1.0f);
-	up = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
-
-
-
-	viewMat = XMMatrixLookAtLH(eye, at, up);
-	projMat = XMMatrixPerspectiveFovLH(
-		XM_PIDIV4,
-		(float)width() / (float)height(),
-		0.1f,
-		100.0f  // Far plane 증가
-	);
-
-
-	invViewMat = XMMatrixInverse(nullptr, viewMat);
-	invProjMat = XMMatrixInverse(nullptr, projMat);
-
+	
 
 	rotx = XMMatrixRotationX(-XM_PIDIV2);  // 90도 회전
 	roty = XMMatrixRotationY(XM_PI);  // 90도 회전
@@ -672,9 +655,9 @@ bool QDirect3D11Widget::init()
 	float voxelSpacingZ = fileReader->views.spacing.z;  // mm (슬라이스 간격)
 
 	// 실제 물리적 크기
-	float physicalWidth = fileReader->m_width * voxelSpacingX;   // 512 * 0.4 = 204.8mm
-	float physicalHeight = fileReader->m_height * voxelSpacingY; // 512 * 0.4 = 204.8mm
-	float physicalDepth = fileReader->m_depth * voxelSpacingZ;   // 632 * 0.3 = 189.6mm
+	 physicalWidth = fileReader->m_width * voxelSpacingX;   // 512 * 0.4 = 204.8mm
+	 physicalHeight = fileReader->m_height * voxelSpacingY; // 512 * 0.4 = 204.8mm
+	 physicalDepth = fileReader->m_depth * voxelSpacingZ;   // 632 * 0.3 = 189.6mm
 
 
 
@@ -690,12 +673,11 @@ bool QDirect3D11Widget::init()
 
 	// 정규화된 스케일
 	 scaleX = physicalWidth / maxPhysicalVol;
-
 	 scaleY = physicalDepth / maxPhysicalVol;
 	 scaleZ = physicalHeight / maxPhysicalVol;
 
 	// 스케일 행렬
-	overallSize = 1.5f;
+	overallSize = 1.3f;
 	scale = XMMatrixScaling(
 		scaleX*overallSize,
 		scaleY*overallSize,
@@ -705,6 +687,10 @@ bool QDirect3D11Widget::init()
 
 	worldMat = scale * roty*rotx;
 	invWorldMat = XMMatrixInverse(nullptr, worldMat);
+
+
+	
+
 
 
 	initializeRenderTargets();
@@ -717,7 +703,7 @@ bool QDirect3D11Widget::init()
 	InitShaders();
 	InitializeVolumeShaders();    // 셰이더 컴파일
 	InitializeSlicePlanes();      // ← 1번
-	InitializeBoundingCube();     // ← 2번
+	//InitializeBoundingCube();     // ← 2번
 	InitializeVolumeCamera();     // 카메라 설정
 	InitializeTFVolume();
 
@@ -838,10 +824,80 @@ void QDirect3D11Widget::onFrame()
 {
 	if (m_bRenderActive) tick();
 
+
+
+	//// 볼륨 월드 행렬에서 실제 스케일 추출
+	//XMVECTOR scaleVec, rotQuat, transVec;
+	//XMMatrixDecompose(&scaleVec, &rotQuat, &transVec, worldMat);
+
+	//float sx = XMVectorGetX(scaleVec);
+	//float sy = XMVectorGetY(scaleVec);
+	//float sz = XMVectorGetZ(scaleVec);
+
+	//printf("Volume world scale = (%f, %f, %f)\n", sx, sy, sz);
+
+
+
+	//eye = XMVectorSet(0.0f, 0.0f, -3.0f, 1.0f);
+	//at = XMVectorSet(0.0f, 0.0f, 0.0f, 1.0f);
+	//up = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
+
+	//viewMat = XMMatrixLookAtLH(eye, at, up);
+
+	//// ---------- Orthographic 정석 계산 ----------
+
+	//// 화면 aspect
+	//float aspect = (float)width() / (float)height();
+
+	//// 볼륨 기준 크기 (-0.75 ~ +0.75)
+	///*float viewWidth = 1.5f;
+	//float viewHeight = 1.5f;*/
+	//float viewWidth = 2.2f;
+	//float viewHeight = 2.2f;
+
+	//// aspect 보정 (안 잘리게)
+	//if (viewWidth / viewHeight > aspect)
+	//{
+	//	viewHeight = viewWidth / aspect;
+	//}
+	//else
+	//{
+	//	viewWidth = viewHeight * aspect;
+	//}
+
+	//// 화면 여유
+	//float marginXY = 1.05f;
+	//viewWidth *= marginXY;
+	//viewHeight *= marginXY;
+
+	//// near / far
+	//float halfZ = 0.75f;
+	//float d = 3.0f;
+	//float marginZ = 0.05f;
+
+	//float nearZ = max(0.001f, d - halfZ - marginZ);
+	//float farZ = d + halfZ + marginZ;
+
+	//// Projection
+	//projMat = XMMatrixOrthographicLH(
+	//	viewWidth,
+	//	viewHeight,
+	//	nearZ,
+	//	farZ
+	//);
+
+	//invViewMat = XMMatrixInverse(nullptr, viewMat);
+	//invProjMat = XMMatrixInverse(nullptr, projMat);
+
+
+
+
 	////beginScene();
 	////render();
 	RenderAllQuads();
 	////RenderVolumeView();
+
+	
 
 	//RenderMesh(m_pDeviceContext);
 
@@ -1145,12 +1201,12 @@ void QDirect3D11Widget::UpdateVolumeMatrix()
 	XMMATRIX translation = XMMatrixTranslation(0, 0, 0);
 
 	// ✅ 쿼터니언 → 행렬
-	XMMATRIX rotation = XMMatrixRotationQuaternion(m_rotation);
+	userRotation = XMMatrixRotationQuaternion(m_rotation);
 
 	//// 4. 최종 행렬
 	//XMMATRIX volumeWorld = s * rotY * rotX * translation;
 
-	XMMATRIX volumeWorld = scale * rotation/**rotx*/;
+	XMMATRIX volumeWorld = scale * userRotation/**rotx*/;
 
 	//CB cb{};
 	worldMat = XMMatrixTranspose(volumeWorld);
@@ -1171,6 +1227,10 @@ bool QDirect3D11Widget::LoadMeshFromPLY(const std::string& filename, ID3D11Devic
 	const auto& vertices = plyLoader.GetRenderVertices();
 	m_meshVertexCount = static_cast<int>(vertices.size());
 
+	std::vector<PLY::VertexWithTexture> centeredVertices;
+	centeredVertices.reserve(vertices.size());
+
+
 	// ✅ 메쉬 범위 계산
 	if (vertices.size() > 0) {
 		float minX = FLT_MAX, maxX = -FLT_MAX;
@@ -1184,29 +1244,61 @@ bool QDirect3D11Widget::LoadMeshFromPLY(const std::string& filename, ID3D11Devic
 			if (v.y > maxY) maxY = v.y;
 			if (v.z < minZ) minZ = v.z;
 			if (v.z > maxZ) maxZ = v.z;
+
+
+
 		}
 
 		float meshWidth = maxX - minX;
 		float meshHeight = maxY - minY;
 		float meshDepth = maxZ - minZ;
 
+		float centerX = (minX + maxX) * 0.5f;
+		float centerY = (minY + maxY) * 0.5f;
+		float centerZ = (minZ + maxZ) * 0.5f;
+
+
+
+		for (auto& v : vertices) {
+			PLY::VertexWithTexture cv = v;
+			cv.x -= centerX;
+			cv.y -= centerY;
+			cv.z -= centerZ;
+			centeredVertices.push_back(cv);
+		}
+
+
 		maxMesh=
 		Max3(meshWidth, meshHeight, meshDepth);
 
-		qDebug() << "=== Mesh Size ===";
-		qDebug() << "Width (X):" << meshWidth;
-		qDebug() << "Height (Y):" << meshHeight;
-		qDebug() << "Depth (Z):" << meshDepth;
-		qDebug() << "Center:" << (minX + maxX) / 2 << (minY + maxY) / 2 << (minZ + maxZ) / 2;
+		//qDebug() << "=== Mesh Size ===";
+		//qDebug() << "Width (X):" << meshWidth;
+		//qDebug() << "Height (Y):" << meshHeight;
+		//qDebug() << "Depth (Z):" << meshDepth;
+		//qDebug() << "Center:" << (minX + maxX) / 2 << (minY + maxY) / 2 << (minZ + maxZ) / 2;
+
+
+		// ✅ 실제 좌표 범위 출력
+		qDebug() << "=== PLY Coordinates ===";
+		qDebug() << "X range:" << minX << "to" << maxX << "=" << (maxX - minX);
+		qDebug() << "Y range:" << minY << "to" << maxY << "=" << (maxY - minY);
+		qDebug() << "Z range:" << minZ << "to" << maxZ << "=" << (maxZ - minZ);
+		//qDebug() << "maxMesh:" << maxMesh;
+		qDebug() << "Center:" << centerX << centerY << centerZ;
+
+		qDebug() << "=== DICOM for comparison ===";
+		qDebug() << "Physical size (mm):" << physicalWidth << physicalHeight << physicalDepth;
 	}
 
 	// 버텍스 버퍼 생성
 	D3D11_BUFFER_DESC bd = {};
 	bd.Usage = D3D11_USAGE_DEFAULT;
+//	bd.ByteWidth = sizeof(PLY::VertexWithTexture) * centeredVertices.size();
 	bd.ByteWidth = sizeof(PLY::VertexWithTexture) * vertices.size();
 	bd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
 
 	D3D11_SUBRESOURCE_DATA initData = {};
+//	initData.pSysMem = centeredVertices.data();
 	initData.pSysMem = vertices.data();
 
 	HRESULT hr = device->CreateBuffer(&bd, &initData, &m_meshVertexBuffer);
@@ -1577,6 +1669,9 @@ void QDirect3D11Widget::RenderMesh(ID3D11DeviceContext* context)
 
 	float meshToVolume = (maxMesh / maxPhysicalVol) * overallSize / maxMesh;
 
+	//float meshToVolume = overallSize / maxPhysicalVol;  // 간단
+	//meshToVolume *= 1.5;
+
 	DirectX::XMMATRIX scale = XMMatrixScaling(
 		meshToVolume,  // 0.7952 * 1.5 = 1.1928
 		meshToVolume,
@@ -1600,7 +1695,7 @@ void QDirect3D11Widget::RenderMesh(ID3D11DeviceContext* context)
 
 //	DirectX::XMMATRIX scale = XMMatrixScaling(0.0065f, 0.0065f, 0.0065f);
 	DirectX::XMMATRIX rotation = XMMatrixRotationX(XM_PI);
-	DirectX::XMMATRIX fullWorld = scale * rotation * worldMat;  // ✅ w 포함
+	DirectX::XMMATRIX fullWorld = scale * rotation * XMMatrixTranspose(userRotation);  // ✅ w 포함
 
 	cb.WVP = XMMatrixTranspose(fullWorld * viewMat * projMat);
 	cb.World = XMMatrixTranspose(fullWorld);
@@ -2611,20 +2706,20 @@ void QDirect3D11Widget::plasterVolumeShow()
 
 void QDirect3D11Widget::RenderVolumeView()
 {
-	XMVECTOR eye = XMVectorSet(0.0f, 0.0f, -1.0f, 0.0f);  // 더 정면, 더 낮게
-	XMVECTOR target = XMVectorZero();                        // 원점(볼륨 중심)
-	XMVECTOR up = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
+	//XMVECTOR eye = XMVectorSet(0.0f, 0.0f, -1.0f, 0.0f);  // 더 정면, 더 낮게
+	//XMVECTOR target = XMVectorZero();                        // 원점(볼륨 중심)
+	//XMVECTOR up = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
 
 
-	//view = XMMatrixLookAtLH(eye, target, up);
+	////view = XMMatrixLookAtLH(eye, target, up);
 
-	float nearZ = 0.01f;
-	float farZ = 100.0f;
+	//float nearZ = 0.01f;
+	//float farZ = 100.0f;
 
 
-	float aspect = (float)(fileReader->m_width*1.1) / (float)(fileReader->m_depth); // Coronal 기준
-	float viewHeight = 2.0f;
-	float viewWidth = viewHeight * aspect;
+	//float aspect = (float)(fileReader->m_width*1.1) / (float)(fileReader->m_depth); // Coronal 기준
+	//float viewHeight = 2.0f;
+	//float viewWidth = viewHeight * aspect;
 
 
 	//proj = XMMatrixOrthographicLH(viewWidth, viewHeight, nearZ, farZ);
@@ -2703,26 +2798,91 @@ void QDirect3D11Widget::RenderVolumeView()
 
 }
 
-void QDirect3D11Widget::InitializeVolumeCamera() {
-	using namespace DirectX;
+void QDirect3D11Widget::InitializeVolumeCamera() 
+{
+	//using namespace DirectX;
 
-	// View 행렬 (카메라 위치 설정)
-	XMVECTOR eyePos = XMVectorSet(0.0f, 0.0f, -500.0f, 1.0f);  // 카메라 위치
-	XMVECTOR focusPos = XMVectorSet(0.0f, 0.0f, 0.0f, 1.0f);   // 바라보는 점
-	XMVECTOR upDir = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);      // 위쪽 방향
+	//// View 행렬 (카메라 위치 설정)
+	//XMVECTOR eyePos = XMVectorSet(0.0f, 0.0f, -500.0f, 1.0f);  // 카메라 위치
+	//XMVECTOR focusPos = XMVectorSet(0.0f, 0.0f, 0.0f, 1.0f);   // 바라보는 점
+	//XMVECTOR upDir = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);      // 위쪽 방향
 
-	XMMATRIX view = XMMatrixLookAtLH(eyePos, focusPos, upDir);
-	XMStoreFloat4x4(&m_volumeViewMatrix, view);
+	//XMMATRIX view = XMMatrixLookAtLH(eyePos, focusPos, upDir);
+	//XMStoreFloat4x4(&m_volumeViewMatrix, view);
 
-	// Projection 행렬 (원근 투영)
-	float aspectRatio = static_cast<float>(width()) / static_cast<float>(height());
-	XMMATRIX projection = XMMatrixPerspectiveFovLH(
-		XM_PIDIV4,      // 45도 시야각
-		aspectRatio,
-		1.0f,           // Near plane
-		1000.0f         // Far plane
+	//// Projection 행렬 (원근 투영)
+	//float aspectRatio = static_cast<float>(width()) / static_cast<float>(height());
+	//XMMATRIX projection = XMMatrixPerspectiveFovLH(
+	//	XM_PIDIV4,      // 45도 시야각
+	//	aspectRatio,
+	//	1.0f,           // Near plane
+	//	1000.0f         // Far plane
+	//);
+	//XMStoreFloat4x4(&m_volumeProjectionMatrix, projection);
+
+
+
+	// 볼륨 월드 행렬에서 실제 스케일 추출
+	XMVECTOR scaleVec, rotQuat, transVec;
+	XMMatrixDecompose(&scaleVec, &rotQuat, &transVec, worldMat);
+
+	float sx = XMVectorGetX(scaleVec);
+	float sy = XMVectorGetY(scaleVec);
+	float sz = XMVectorGetZ(scaleVec);
+
+	//printf("Volume world scale = (%f, %f, %f)\n", sx, sy, sz);
+
+
+
+	eye = XMVectorSet(0.0f, 0.0f, -3.0f, 1.0f);
+	at = XMVectorSet(0.0f, 0.0f, 0.0f, 1.0f);
+	up = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
+
+	viewMat = XMMatrixLookAtLH(eye, at, up);
+
+	// ---------- Orthographic 정석 계산 ----------
+
+	// 화면 aspect
+	float aspect = (float)width() / (float)height();
+
+	// 볼륨 기준 크기 (-0.75 ~ +0.75)
+	/*float viewWidth = 1.5f;
+	float viewHeight = 1.5f;*/
+	float viewWidth = 2.2f;
+	float viewHeight = 2.2f;
+
+	// aspect 보정 (안 잘리게)
+	if (viewWidth / viewHeight > aspect)
+	{
+		viewHeight = viewWidth / aspect;
+	}
+	else
+	{
+		viewWidth = viewHeight * aspect;
+	}
+
+	// 화면 여유
+	float marginXY = 1.05f;
+	viewWidth *= marginXY;
+	viewHeight *= marginXY;
+
+	// near / far
+	float halfZ = 0.75f;
+	float d = 3.0f;
+	float marginZ = 0.05f;
+
+	float nearZ = max(0.001f, d - halfZ - marginZ);
+	float farZ = d + halfZ + marginZ;
+
+	projMat = XMMatrixPerspectiveFovLH(
+		XM_PIDIV4,
+		(float)width() / (float)height(),
+		0.1f,
+		100.0f  // Far plane 증가
 	);
-	XMStoreFloat4x4(&m_volumeProjectionMatrix, projection);
+
+	invViewMat = XMMatrixInverse(nullptr, viewMat);
+	invProjMat = XMMatrixInverse(nullptr, projMat);
 }
 
 void QDirect3D11Widget::InitializeVolumeShaders()
@@ -3591,6 +3751,9 @@ void QDirect3D11Widget::RenderAllQuads()
 					worldMat, viewMat, projMat
 				);
 
+			//qDebug() << "Volume range:" << -scaleX * overallSize * 0.5f << "to"
+			//	<< scaleX * overallSize * 0.5f;  // -0.65 ~ 0.65
+
 
 			//// ✅ 여기에 최종 합성 추가!
 			//ComposeMesh(m_pDeviceContext);
@@ -4328,49 +4491,137 @@ if (!fileReader) return;
 XMFLOAT3 origin = fileReader->views.origin;
 XMFLOAT3 spacing = fileReader->views.spacing;
 
-// ✅ 볼륨 월드 (볼륨 로컬 → 월드)
+
+// ========== 볼륨의 World Space 크기 계산 ==========
+
+   // 1. 볼륨 로컬 좌표 8개 꼭짓점 (정규화 큐브)
+XMFLOAT3 volumeCorners[8] = {
+	{-scaleX / 2, -scaleY / 2, -scaleZ / 2},
+	{ scaleX / 2, -scaleY / 2, -scaleZ / 2},
+	{-scaleX / 2,  scaleY / 2, -scaleZ / 2},
+	{ scaleX / 2,  scaleY / 2, -scaleZ / 2},
+	{-scaleX / 2, -scaleY / 2,  scaleZ / 2},
+	{ scaleX / 2, -scaleY / 2,  scaleZ / 2},
+	{-scaleX / 2,  scaleY / 2,  scaleZ / 2},
+	{ scaleX / 2,  scaleY / 2,  scaleZ / 2}
+};
+
+
+
+// 2. World Transform 적용
 XMMATRIX volumeRotation = XMMatrixRotationQuaternion(m_rotation);
-XMMATRIX volumeWorld =  volumeRotation;
-//XMMATRIX volumeWorld = XMMatrixIdentity();
+XMMATRIX worldTransform =
+XMMatrixScaling(overallSize, overallSize, overallSize) *
+roty * rotx * volumeRotation;
 
-// ✅ Scout plane 크기: 볼륨 로컬 기준 (0.5~0.5 유닛쿼드라고 가정)
-// - overallSize를 이미 쓰고 있다면 여기서 반영
-//float planeScale = overallSize; // or 1.0f * overallSize
-//float planeScale = overallSize;
-float planeScale = 1.0f;
-XMMATRIX planeScaleMatrix = XMMatrixScaling(planeScale, planeScale, 1.0f);
+// 3. 변환 후 Bounding Box 계산
+float minX = FLT_MAX, minY = FLT_MAX, minZ = FLT_MAX;
+float maxX = -FLT_MAX, maxY = -FLT_MAX, maxZ = -FLT_MAX;
 
-//
-// 주의:
-// - 여기서 planeScaleMatrix는 "plane 자체 크기"만 담당
-// - spacing 비율(scaleX/Y/Z)은 plane에서 다시 곱하지 않음 (가로 퍼짐 원인)
-//
+for (int i = 0; i < 8; i++) {
+	XMVECTOR corner = XMLoadFloat3(&volumeCorners[i]);
+	XMVECTOR transformed = XMVector3Transform(corner, worldTransform);
 
+	XMFLOAT3 t;
+	XMStoreFloat3(&t, transformed);
+
+	minX = min(minX, t.x); maxX = max(maxX, t.x);
+	minY = min(minY, t.y); maxY = max(maxY, t.y);
+	minZ = min(minZ, t.z); maxZ = max(maxZ, t.z);
+}
+
+// 4. World Space 크기
+float worldWidth = maxX - minX;
+float worldHeight = maxY - minY;
+float worldDepth = maxZ - minZ;
+
+qDebug() << "World volume size:" << worldWidth << worldHeight << worldDepth;
+
+// worldMat을 분해
+XMMATRIX volumeRotationOnly = roty * rotx * volumeRotation;
+
+XMMATRIX s = XMMatrixScaling(0.95f, 0.95f, 0.95f);
 // ------------------------------
 // 1) AXIAL (XY 평면, Z로 이동)
 // ------------------------------
 {
-	// Axial은 "XY plane"이 정석
-	// 슬라이스 위치는 Z축으로 이동 (볼륨 로컬 기준)
-
+//	float axialSize = max(scaleX, scaleY) * overallSize;
+//	qDebug() << "axialSize :" << axialSize;
+//
+//	// ✅ XY 평면의 대각선 (overallSize 제외)
+//	float diagonalXY = sqrt(scaleX * scaleX + scaleY * scaleY);
+//
+//	XMMATRIX axialScale = XMMatrixScaling(diagonalXY, diagonalXY, 1.0f);
+//
+//	// Axial은 "XY plane"이 정석
+//	// 슬라이스 위치는 Z축으로 이동 (볼륨 로컬 기준)
+//
+//
+//	//슬라이스 개수 * 물리 단위?(mm) = 전체 깊이
 	float totalZ = fileReader->m_depth * spacing.z; // 너 코드에서 height*spacing.y 를 axial 축으로 사용중
 	float axialZ = origin.z + fileReader->currentIndex[1] * spacing.z;
+//	// 예: origin.z=-94.8 + 316 * 0.3 = -94.8 + 94.8 = 0.0mm (중간)
+//
+//
+//	// ========== 2. 정규화 [-0.5 ~ 0.5] ==========
+//	// normalized [-0.5 ~ 0.5]로 만들기
+//	float nz = (axialZ - origin.z) / totalZ;     // [0..1]
+//	nz = (nz - 0.5f);             // [-0.5..0.5] * planeScale
+//
+//
+//	//3. 로컬 변환 행렬
+//	XMMATRIX axialLocal =
+//		/*axialScale * */
+//		//XMMatrixRotationX(XM_PIDIV2) *
+//		XMMatrixTranslation(0.0f, 0.0f, nz);
+//	// 평면을 Z축으로 nz만큼 이동
+//	// 예: Z = 0.0 (중간)
+//	// 예: Z = -0.5 (맨 아래)
+//	// 예: Z = 0.5 (맨 위)
+//
+//
+//
+//	// ========== 4. 월드 변환 ==========
+//	// ✅ 볼륨 로컬 → 월드
+//	//XMMATRIX axialWorld = axialLocal * volumeWorld;
+//	//XMMATRIX axialWorld = scale * worldMat;
+//	XMMATRIX axialWorld = s*axialLocal* worldMat;
+//	//XMMATRIX axialWorld = scale * axialLocal* volumeRotationOnly;
+//
+//	// 행렬 곱셈 순서:
+//// 1. 평면을 Z축으로 nz 이동
+//// 2. scale 적용 (scaleX, scaleY, scaleZ로 늘림)
+//// 3. roty * rotx 회전 (좌표축 변환)
+//// 4. volumeRotation (사용자 회전)
+//	//```
+//
+//	XMStoreFloat4x4(&m_AxialPlane.worldMatrix, XMMatrixTranspose(axialWorld));
+//
+//	{
+//		// Axial
+//		float axialSize = max(worldWidth, worldHeight);
+//		qDebug() << "Axial plane size:" << axialSize;
+//		qDebug() << "Volume X range:" << -scaleX / 2 * overallSize << "to" << scaleX / 2 * overallSize;
+//		qDebug() << "Volume Y range:" << -scaleY / 2 * overallSize << "to" << scaleY / 2 * overallSize;
+//	}
 
-	// normalized [-0.5 ~ 0.5]로 만들기
-	float nz = (axialZ - origin.z) / totalZ;     // [0..1]
-	nz = (nz - 0.5f) * planeScale;               // [-0.5..0.5] * planeScale
+	// Axial (XY 평면)
+	float axialSize = max(scaleX, scaleY) * overallSize;
+
+	XMMATRIX axialScale = XMMatrixScaling(axialSize, axialSize, 1.0f);
+
+	float nz = (axialZ - origin.z) / totalZ - 0.5f;
 
 	XMMATRIX axialLocal =
-		planeScaleMatrix *
-		//XMMatrixRotationX(XM_PIDIV2) *
-		XMMatrixTranslation(0.0f, 0.0f, nz);
+		axialScale *  // ✅ 주석 해제! 
+		roty*
+		XMMatrixTranslation(0.0f, 0.0f, nz * scaleZ * overallSize);
 
-
-	// ✅ 볼륨 로컬 → 월드
-	//XMMATRIX axialWorld = axialLocal * volumeWorld;
-	//XMMATRIX axialWorld = scale * worldMat;
-	XMMATRIX axialWorld = /*scale * */axialLocal* worldMat;
-	//XMMATRIX axialWorld = scale * axialLocal* volumeRotation;
+	XMMATRIX volumeRotationOnly = roty * /*rotx **/ volumeRotation;  // scale 제외!
+	//XMMATRIX axialWorld = axialLocal * volumeRotation;
+	XMMATRIX axialWorld = axialScale *  // ✅ 주석 해제! 
+		roty*	XMMatrixTranslation(0.0f, 0.0f, nz * scaleZ * overallSize)
+		*XMMatrixTranspose(volumeRotation);
 
 	XMStoreFloat4x4(&m_AxialPlane.worldMatrix, XMMatrixTranspose(axialWorld));
 
@@ -4384,21 +4635,30 @@ XMMATRIX planeScaleMatrix = XMMatrixScaling(planeScale, planeScale, 1.0f);
 	// 슬라이스 위치는 Y축으로 이동
 
 	float totalY = fileReader->m_height * spacing.y; // 너 코드에서 depth*spacing.z를 coronal 축으로 사용중
+
+
+
+		// Coronal (XZ 평면)
+	float coronalSize = max(scaleX, scaleZ) * overallSize;
+
+	XMMATRIX coronalScale = XMMatrixScaling(coronalSize, 1.0f, coronalSize);
+
+
 	float coronalY = origin.y + fileReader->currentIndex[2] * spacing.y;
 
-	float ny = (coronalY - origin.z) / totalY;   // [0..1]
-	ny = (ny - 0.5f) * planeScale;               // [-0.5..0.5] * planeScale
+	float ny = (coronalY - origin.y) / totalY;   // [0..1]
+	ny = (ny - 0.5f) ;               // [-0.5..0.5] * planeScale
 
 	XMMATRIX coronalLocal = 
-		planeScaleMatrix *
+
 	///*	XMMatrixRotationX(XM_PIDIV2) *     */       // XY를 XZ로 눕힘
 		XMMatrixRotationX(XM_PIDIV2) *
 		XMMatrixTranslation(0.0f, -ny,0.0f);
 
 	//XMMATRIX coronalWorld = coronalLocal * volumeWorld;
 	//XMMATRIX coronalWorld = scale* XMMatrixRotationX(XM_PIDIV2) *worldMat;
-	XMMATRIX coronalWorld = /*scale **/ coronalLocal *worldMat;
-	//XMMATRIX coronalWorld = scale * coronalLocal *volumeRotation;
+	//XMMATRIX coronalWorld = s* coronalLocal *worldMat;
+	XMMATRIX coronalWorld = coronalScale*rotx* XMMatrixTranslation(0.0f, -ny, 0.0f)* XMMatrixTranspose(volumeRotation);
 
 	XMStoreFloat4x4(&m_CoronalPlane.worldMatrix, XMMatrixTranspose(coronalWorld));
 }
@@ -4411,21 +4671,32 @@ XMMATRIX planeScaleMatrix = XMMatrixScaling(planeScale, planeScale, 1.0f);
 	// 슬라이스 위치는 X축으로 이동
 
 	float totalX = fileReader->m_width * spacing.x;
+
+
+	// Sagittal (yz 평면)
+	float sagittalSize = max(scaleY, scaleZ) * overallSize;
+
+	XMMATRIX sagittalScale = XMMatrixScaling(sagittalSize, 1.0f, sagittalSize);
+
+
 	float sagittalX = origin.x + fileReader->currentIndex[3] * spacing.x;
 
 	float nx = (sagittalX - origin.x) / totalX;  // [0..1]
-	nx = (nx - 0.5f) * planeScale;               // [-0.5..0.5] * planeScale
+	nx = (nx - 0.5f) ;               // [-0.5..0.5] * planeScale
 
 	XMMATRIX sagittalLocal =
-		planeScaleMatrix *
+
 		XMMatrixRotationY(XM_PIDIV2) *            // XY를 YZ로 세움
 		//XMMatrixRotationX(XM_PIDIV2) *
 		XMMatrixTranslation(-nx, 0.0f, 0.0f);
 
 	//XMMATRIX sagittalWorld = sagittalLocal * volumeWorld;
 	//XMMATRIX sagittalWorld = scale * XMMatrixRotationY(XM_PIDIV2) *worldMat;
-	XMMATRIX sagittalWorld = /*scale **/ sagittalLocal *worldMat;
+	//XMMATRIX sagittalWorld =s*sagittalLocal *XMMatrixTranspose(volumeRotation);
 	//XMMATRIX sagittalWorld = scale * sagittalLocal *volumeRotation;
+
+	XMMATRIX sagittalWorld = sagittalScale*
+		XMMatrixRotationY(XM_PIDIV2)  * XMMatrixTranslation(-nx, 0.0f, 0.0f)*XMMatrixTranspose(volumeRotation);
 
 	XMStoreFloat4x4(&m_SagittalPlane.worldMatrix, XMMatrixTranspose(sagittalWorld));
 }
@@ -4497,6 +4768,8 @@ XMMATRIX planeScaleMatrix = XMMatrixScaling(planeScale, planeScale, 1.0f);
 	//	XMStoreFloat4x4(&m_SagittalPlane.worldMatrix, XMMatrixTranspose(sagittalWorld));
 	//}
 }
+
+
 
 // ========================================
 // 4. 바운딩 큐브 렌더링
@@ -4921,8 +5194,6 @@ void QDirect3D11Widget::resizeEvent(QResizeEvent* event)
 	sliceInfoSagittal->move(w + labelMargin, h + labelMargin + sliceInfoOffset);
 
 	QWidget::resizeEvent(event);
-
-
 
 }
 

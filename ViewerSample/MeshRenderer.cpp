@@ -53,7 +53,7 @@ void MeshRenderer::CreateTwoPassStates(ID3D11Device* device)
 		// 에러 처리
 	}
 }
-
+#include<iostream>
 
 void MeshRenderer::RenderMesh(ID3D11DeviceContext* context, ID3D11Buffer* m_meshVertexBuffer, 
 	ID3D11VertexShader* m_meshVS, ID3D11PixelShader* m_meshPS, ID3D11InputLayout* m_meshInputLayout,
@@ -70,12 +70,32 @@ void MeshRenderer::RenderMesh(ID3D11DeviceContext* context, ID3D11Buffer* m_mesh
 	context->IASetInputLayout(m_meshInputLayout);
 
 	// ========== Transform 계산 ==========
-	float meshToVolume = (maxMesh / maxPhysicalVol) * overallSize / maxMesh;
+	//float meshToVolume = (maxMesh / maxPhysicalVol) * overallSize / maxMesh * (float)(1.5f / overallSize);
+
+	float meshScale = 1.5f / maxPhysicalVol;  // 이게 전부!
+
+	float correctionFactor = maxPhysicalVol / maxMesh; // 0.796
+	//float meshScale = correctionFactor * overallSize;
+
+	 // ✅ mm 좌표 → 정규화 좌표
+	//float meshScale = overallSize / maxPhysicalVol;
+
+ 
+	//std::cout << "meshScale:" << meshScale << std::endl; // 0.00521
+	//std::cout << "Sample vertex -109mm * scale =" << (-109 * meshScale);  // -0.568
+	////qDebug() << "Volume range:" << -scaleX * overallSize * 0.5f << "to"
+	////	<< scaleX * overallSize * 0.5f;  // -0.65 ~ 0.65
+
+
 
 	DirectX::XMMATRIX scale = XMMatrixScaling(
+	/*	meshToVolume,
 		meshToVolume,
-		meshToVolume,
-		meshToVolume
+		meshToVolume*/
+
+		meshScale,
+		meshScale,
+		meshScale
 	);
 
 	MeshConstantBuffer cb;

@@ -184,6 +184,7 @@ public:
 
 	XMVECTOR m_rotation;  // 쿼터니언
 	XMVECTOR m_initialRotation;
+	XMMATRIX userRotation;
 
 	// ⭐ Transfer Function 추가
 	TransferFunction* m_transferFunction;
@@ -467,6 +468,7 @@ public:
 	XMVECTOR up /*= XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f)*/;
 	XMMATRIX viewMat, invViewMat, projMat, invProjMat, rotx, roty, transMat, /*scale,*/ worldMat, invWorldMat, scale;
 	float maxPhysicalVol, maxMesh, overallSize;
+	float physicalWidth, physicalHeight, physicalDepth;
 	float scaleX, scaleY, scaleZ;
 public:
 	bool isPlaster{ false };
