@@ -5,6 +5,9 @@ cbuffer CB : register(b0)
 	matrix InvProj;
 	matrix InvVolumeWorld;
 
+	matrix View;           // ✅ 추가
+	matrix Projection;     // ✅ 추가
+
 	float4 CameraPosAndAlpha;  // xyz=pos, w=alpha
 	float4 VoxelAndMaxSteps;   // xyz=voxel, w=maxSteps
 	float4 HuParams;
@@ -19,13 +22,25 @@ Texture1D<float4> transferFunction : register(t1);
 SamplerState tfSampler : register(s1);
 
 
-float4 main(float4 pos : SV_POSITION, float2 uv : TEXCOORD0) : SV_Target
+// ========== 추가: Depth 텍스처 ==========
+Texture2D<float> SceneDepth : register(t5);  // ← 메쉬 depth
+
+
+struct PSInput
+{
+	float4 pos : SV_POSITION; // ⭐ 이게 화면 픽셀 좌표
+	float2 uv       : TEXCOORD0;
+};
+
+
+
+float4 main(PSInput input) : SV_Target
 {
 	float2 offset = float2(0.0, 0.0);
 	float2 scale = float2(0.5, 0.5);
-	float2 localUV = (uv - offset) / scale;
+	float2 localUV = (input.uv - offset) / scale;
 
-	float2 screenUV = uv;
+	float2 screenUV = input.uv;
 
 	float2 ndc = screenUV * 2.0 - 1.0;
 	ndc.y = -ndc.y;
@@ -42,6 +57,30 @@ float4 main(float4 pos : SV_POSITION, float2 uv : TEXCOORD0) : SV_Target
 
 	float3 rayPos = mul(float4(rayPosWS, 1), InvVolumeWorld).xyz;
 	float3 rayDir = normalize(mul(float4(rayDirWS, 0), InvVolumeWorld).xyz);
+
+
+
+	// ✅ 현재 픽셀의 메쉬 depth 읽기
+	float meshDepthNDC = SceneDepth.Load(int3(input.pos.xy, 0));
+	//float depth01 = meshDepth;   // ⭐ 이 줄이 빠졌던 것
+	//// NDC Z
+	//float ndcZ = depth01 * 2.0f - 1.0f;
+
+	//// NDC position
+	//float4 clipPos = float4(ndc.x, ndc.y, ndcZ, 1.0f);
+
+	//// View space
+	//float4 meshViewPos = mul(clipPos, InvProj);
+	//meshViewPos /= meshViewPos.w;
+
+	//float meshDepthVS = meshViewPos.z;
+
+
+	//////   // 디버그: mesh depth 시각화
+	//return float4(meshDepthNDC, meshDepthNDC, meshDepthNDC, 1.0);
+
+
+
 
 
 	float3 boxMin = float3(-1, -0.75, -0.75);
@@ -70,26 +109,60 @@ float4 main(float4 pos : SV_POSITION, float2 uv : TEXCOORD0) : SV_Target
 	float stepSize = travelDist / float(VoxelAndMaxSteps.w);
 
 	// ✅ Jittering
-	float jitter = frac(sin(dot(uv * 1000.0, float2(12.9898, 78.233))) * 43758.5453);
+	float jitter = frac(sin(dot(input.uv * 1000.0, float2(12.9898, 78.233))) * 43758.5453);
 	// 시작점에 랜덤 오프셋
 	float3 startPos = rayPos + rayDir * (tNear + jitter * stepSize);
 
 
 	startPos = clamp(startPos, boxMin, boxMax);
 
-	float3 currentPos = startPos;
+	/*float3 currentPos = startPos;
 
-	float3 uvw = (startPos - boxMin) / (boxMax - boxMin);
+	float3 uvw = (startPos - boxMin) / (boxMax - boxMin);*/
 
 	float4 acc = float4(0, 0, 0, 0);
 
-	int sampleCount = 0;
+
+	// ✅✅✅ View space ray 정보 (depth 계산용) ✅✅✅
+	float3 rayPosVS = mul(float4(rayPosWS, 1), View).xyz;
+	float3 rayDirVS = normalize(mul(float4(rayDirWS, 0), View).xyz);
+
+
+
+
+	//int sampleCount = 0;
 
 
 
 [loop]
 for (int i = 0; i < VoxelAndMaxSteps.w; i++)
 {
+
+	//// ========== Depth 체크 ==========
+	//	// 현재 ray 위치를 클립 공간으로 변환
+	//float4 worldPos = float4(rayPos, 1.0f);
+	//float4 viewPos = mul(worldPos, View);
+	//float4 clipPos = mul(viewPos, Projection);
+
+	////// Perspective divide
+	////float currentDepth = clipPos.z / clipPos.w;
+
+
+	//// Perspective divide
+	//float currentDepth = viewPos.z;
+
+	//// ✅ 메쉬보다 뒤에 있으면 중단
+	//if (currentDepth > meshDepth)
+	//{
+	//	break;  // 더 이상 샘플링 안 함
+	//}
+
+
+	////return float4(meshDepth, meshDepth, meshDepth, 1);
+
+
+
+
 	float3 currentPos = startPos + rayDir * (i * stepSize);
 	float3 uvw = (currentPos - boxMin) / (boxMax - boxMin);
 
@@ -97,6 +170,24 @@ for (int i = 0; i < VoxelAndMaxSteps.w; i++)
 
 	if (any(uvw < 0.0) || any(uvw > 1.0))
 		break;
+
+
+
+	// ✅✅✅ Depth 체크 (메쉬보다 뒤면 안 그림!) ✅✅✅
+	float tCurrent = tNear + i * stepSize;
+	float3 currentPosVS = rayPosVS + rayDirVS * tCurrent;
+	float4 clipPos = mul(float4(currentPosVS, 1.0), Projection);
+	float currentDepthNDC = clipPos.z / clipPos.w;  // NDC depth (0~1)
+
+	if (currentDepthNDC > meshDepthNDC) {
+		break;  // ✅ Volume이 mesh 뒤에 있으면 중단!
+	}
+
+
+
+
+
+
 
 
 	// 1) Raw 기반 density
@@ -147,10 +238,7 @@ for (int i = 0; i < VoxelAndMaxSteps.w; i++)
 	float spec = pow(max(dot(N, H), 0.0), 48.0);
 
 	float lighting = 0.88 + lambert * 0.12;
-
 	colorAlpha.rgb *= lighting;
-
-
 	colorAlpha.rgb += spec * float3(0.08, 0.07, 0.06);
 
 	float3 color = colorAlpha.rgb;
@@ -170,8 +258,8 @@ for (int i = 0; i < VoxelAndMaxSteps.w; i++)
 	//acc.a = 0.0;
 
 	if(CameraPosAndAlpha.w==1.0)
-		return float4(acc.rgb, 1.0);
+		return float4(acc.rgb, acc.a);
 	else
-	    return float4(0,0,0, 0.0);
+		return float4(acc.rgb, 0.0);    // ← RGB는 같지만 alpha=0 (투명)
 }
 

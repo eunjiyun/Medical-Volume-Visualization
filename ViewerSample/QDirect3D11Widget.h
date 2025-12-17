@@ -42,6 +42,11 @@ struct CB
 	DirectX::XMFLOAT4X4  InvView;
 	DirectX::XMFLOAT4X4  InvProj;
 	DirectX::XMFLOAT4X4  InvVolumeWorld;
+
+
+	DirectX::XMFLOAT4X4 View;           // ✅ 추가
+	DirectX::XMFLOAT4X4 Projection;     // ✅ 추가
+
 	XMFLOAT4 CameraPosAndAlpha;  // xyz=pos, w=alpha
 	XMFLOAT4 VoxelAndMaxSteps;   // xyz=voxel, w=maxSteps
 	XMFLOAT4 HuParams;
@@ -203,7 +208,7 @@ public:
 	//bool CreateMeshDepthBuffer();
 
 	bool TestSimpleTriangle();
-	void RenderMesh(ID3D11DeviceContext* context);
+	//void RenderMesh(ID3D11DeviceContext* context);
 	/*bool CreateOITBuffers();
 	void ComposeMesh(ID3D11DeviceContext* context);*/
 	bool CreateClipSettingsBuffer();
@@ -453,6 +458,7 @@ public:
 	DirectX::XMFLOAT4X4 m_volumeProjectionMatrix;
 
 	ID3D11DepthStencilView* m_pDepthStencilView;  // ← 이게 있는지 확인
+	ID3D11Texture2D* m_depthTexture = nullptr;
 
 	// // ✅ 각 평면의 World Matrix를 저장
 
@@ -488,7 +494,9 @@ public:
 	void DrawSliceQuad();
 
 	void CreateDepthStencilBuffer();
-
+	//void InitializeDepthStencil();
+	void CreateDepthStencil();
+	//void resizeSwapChain();
 
 	ComPtr<ID3D11Buffer> m_quadVB;
 	void CreateTexture3D();
@@ -559,6 +567,11 @@ public:
 	ID3D11Texture2D* m_colorPeelTextures[MAX_DEPTH_PEELS] = {};
 	ID3D11RenderTargetView* m_colorPeelRTVs[MAX_DEPTH_PEELS] = {};
 	ID3D11ShaderResourceView* m_colorPeelSRVs[MAX_DEPTH_PEELS] = {};
+
+	ID3D11ShaderResourceView* m_depthSRV = {};
+
+
+
 
 	bool CreateDepthPeelingBuffers();
 	void RenderMeshWithDepthPeeling(ID3D11DeviceContext* context);

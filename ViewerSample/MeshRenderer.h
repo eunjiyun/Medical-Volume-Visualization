@@ -29,6 +29,13 @@ public:
 	ID3D11BlendState* m_noColorWriteState;        // Pass 1: Color Off
 	ID3D11BlendState* m_alphaBlendState;          // Pass 2: Alpha Blend
 
+	ID3D11RasterizerState* rastState{ nullptr };
+
+	ID3D11DepthStencilState* depthWriteState{ nullptr };
+	ID3D11BlendState* noColorWriteState{ nullptr };
+	ID3D11DepthStencilState* depthReadState{ nullptr };
+	ID3D11BlendState* alphaBlendState{ nullptr };
+
 public:
 	void CreateTwoPassStates(ID3D11Device* device);
 	//void RenderMeshTwoPass(ID3D11DeviceContext* context);
