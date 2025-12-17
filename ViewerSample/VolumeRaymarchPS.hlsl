@@ -179,7 +179,12 @@ for (int i = 0; i < VoxelAndMaxSteps.w; i++)
 	float4 clipPos = mul(float4(currentPosVS, 1.0), Projection);
 	float currentDepthNDC = clipPos.z / clipPos.w;  // NDC depth (0~1)
 
-	if (currentDepthNDC > meshDepthNDC) {
+
+	// ✅ Depth margin 추가
+	float depthMargin = 0.001;  // 약간의 여유
+
+	//if (currentDepthNDC > meshDepthNDC) {
+	if (currentDepthNDC > meshDepthNDC + depthMargin) {
 		break;  // ✅ Volume이 mesh 뒤에 있으면 중단!
 	}
 
@@ -258,8 +263,10 @@ for (int i = 0; i < VoxelAndMaxSteps.w; i++)
 	//acc.a = 0.0;
 
 	if(CameraPosAndAlpha.w==1.0)
-		return float4(acc.rgb, acc.a);
-	else
+		return float4(acc.rgb, 1.0);
+	else if(CameraPosAndAlpha.w == 0.0)
 		return float4(acc.rgb, 0.0);    // ← RGB는 같지만 alpha=0 (투명)
+	else
+		return float4(acc.rgb, acc.a);
 }
 

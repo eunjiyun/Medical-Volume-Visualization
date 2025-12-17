@@ -82,29 +82,39 @@ void ViewerSample::onBtnColorInvertClicked() {
 void ViewerSample::volumeShowHide()
 {
 
-	if (1.0f==m_pScene->cb.CameraPosAndAlpha.w)
+	if (0.0f != m_pScene->cb.CameraPosAndAlpha.w)
 		m_pScene->cb.CameraPosAndAlpha.w = 0.0f;
-	else
+	else if(0.0f==m_pScene->cb.CameraPosAndAlpha.w && !m_pScene->isMesh)
 		m_pScene->cb.CameraPosAndAlpha.w = 1.0f;
+	else if(0.0f == m_pScene->cb.CameraPosAndAlpha.w && m_pScene->isMesh)
+		m_pScene->cb.CameraPosAndAlpha.w = 2.0f;
 
-	//// ⭐ 2. GPU로 전송!
-	//m_pScene->m_pDeviceContext->UpdateSubresource(
-	//	m_pScene->cbRay.Get(), 0, nullptr,
-	//	&m_pScene->cb, 0, 0
-	//);
-
-
-
-	//std::cout << "clicked!!!!!!!!" << endl;
-
+	cout << "volume type : " << m_pScene->cb.CameraPosAndAlpha.w << endl;
 	update();
 }
 void ViewerSample::meshShowHide()
 {
+
+
+
 	if (m_pScene->isMesh)
 		m_pScene->isMesh = false;
 	else
 		m_pScene->isMesh = true;
+///*
+//	if (0.0f != m_pScene->cb.CameraPosAndAlpha.w)
+//		m_pScene->cb.CameraPosAndAlpha.w = 0.0f;
+//	else*/ if (1.0f == m_pScene->cb.CameraPosAndAlpha.w && !m_pScene->isMesh)
+//		m_pScene->cb.CameraPosAndAlpha.w = 1.0f;
+//	else if (0.0f == m_pScene->cb.CameraPosAndAlpha.w && m_pScene->isMesh)
+//		m_pScene->cb.CameraPosAndAlpha.w = 2.0f;
+//
+
+
+	if (1.0f == m_pScene->cb.CameraPosAndAlpha.w && m_pScene->isMesh)
+		m_pScene->cb.CameraPosAndAlpha.w = 2.0f;
+	else if (2.0f == m_pScene->cb.CameraPosAndAlpha.w && !m_pScene->isMesh)
+		m_pScene->cb.CameraPosAndAlpha.w = 1.0f;
 
 	update();
 }

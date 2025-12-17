@@ -240,38 +240,38 @@ void MeshRenderer::RenderMesh(ID3D11DeviceContext* context, ID3D11Buffer* m_mesh
 
 
 
-	 // World
-	XMFLOAT4X4 worldFloat;
-	XMStoreFloat4x4(&worldFloat, fullWorld);
-	std::cout << "World Matrix _44:" << worldFloat._44 << std::endl;
+	// // World
+	//XMFLOAT4X4 worldFloat;
+	//XMStoreFloat4x4(&worldFloat, fullWorld);
+	//std::cout << "World Matrix _44:" << worldFloat._44 << std::endl;
 
-	// View
-	XMFLOAT4X4 viewFloat;
-	XMStoreFloat4x4(&viewFloat, v);
-	std::cout << "View Matrix:";
-	std::cout << "_43 (z translation):" << viewFloat._43 << std::endl;
+	//// View
+	//XMFLOAT4X4 viewFloat;
+	//XMStoreFloat4x4(&viewFloat, v);
+	//std::cout << "View Matrix:";
+	//std::cout << "_43 (z translation):" << viewFloat._43 << std::endl;
 
-	// Projection
-	XMFLOAT4X4 projFloat;
-	XMStoreFloat4x4(&projFloat, p);
-	std::cout <<"Projection Matrix:";
-	std::cout <<"_33:" << projFloat._33<< std::endl; // Far / (Far - Near)
-	std::cout <<"_34:" << projFloat._34<< std::endl; // -Far * Near / (Far - Near)
-	std::cout <<"_43:" << projFloat._43<< std::endl; // -1
-	std::cout <<"_44:" << projFloat._44<< std::endl; // 0
+	//// Projection
+	//XMFLOAT4X4 projFloat;
+	//XMStoreFloat4x4(&projFloat, p);
+	//std::cout <<"Projection Matrix:";
+	//std::cout <<"_33:" << projFloat._33<< std::endl; // Far / (Far - Near)
+	//std::cout <<"_34:" << projFloat._34<< std::endl; // -Far * Near / (Far - Near)
+	//std::cout <<"_43:" << projFloat._43<< std::endl; // -1
+	//std::cout <<"_44:" << projFloat._44<< std::endl; // 0
 
-	// Near/Far 역산
-	if (projFloat._43 == -1.0f) {
-		float c = projFloat._33;
-		float d = projFloat._34;
-		// c = f / (f - n)
-		// d = -f * n / (f - n)
-		// 해결: n = d / (c - 1), f = d / c
-		float nearPlane = d / (c - 1.0f);
-		float farPlane = d / c;
-		std::cout << "✅ Estimated Near: " << nearPlane << std::endl;
-		std::cout << "✅ Estimated Far: " << farPlane << std::endl;
-	}
+	//// Near/Far 역산
+	//if (projFloat._43 == -1.0f) {
+	//	float c = projFloat._33;
+	//	float d = projFloat._34;
+	//	// c = f / (f - n)
+	//	// d = -f * n / (f - n)
+	//	// 해결: n = d / (c - 1), f = d / c
+	//	float nearPlane = d / (c - 1.0f);
+	//	float farPlane = d / c;
+	//	std::cout << "✅ Estimated Near: " << nearPlane << std::endl;
+	//	std::cout << "✅ Estimated Far: " << farPlane << std::endl;
+	//}
 
 	context->UpdateSubresource(m_meshConstantBuffer, 0, nullptr, &cb, 0, 0);
 	context->VSSetConstantBuffers(0, 1, &m_meshConstantBuffer);
@@ -330,7 +330,7 @@ void MeshRenderer::RenderMesh(ID3D11DeviceContext* context, ID3D11Buffer* m_mesh
 	UINT stencilRef;
 	context->OMGetDepthStencilState(&currentDepthState, &stencilRef);
 
-	std::cout << "Actually bound depth state:" << currentDepthState << std::endl;
+	//std::cout << "Actually bound depth state:" << currentDepthState << std::endl;
 
 	//if (currentDepthState) {
 	//	if (currentDepthState == depthWriteState) {
@@ -348,7 +348,7 @@ void MeshRenderer::RenderMesh(ID3D11DeviceContext* context, ID3D11Buffer* m_mesh
 
 
 
-	std::cout << "Drawing" << m_meshVertexCount << "vertices..." << std::endl;
+	//std::cout << "Drawing" << m_meshVertexCount << "vertices..." << std::endl;
 
 
 

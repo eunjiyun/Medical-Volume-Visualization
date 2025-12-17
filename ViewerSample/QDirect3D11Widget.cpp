@@ -3908,26 +3908,26 @@ void QDirect3D11Widget::RenderAllQuads()
 			if (isMesh) {
 
 
-				qDebug() << "Before mesh render:";
+			/*	qDebug() << "Before mesh render:";
 				qDebug() << "  m_pDepthStencilView:" << m_pDepthStencilView;
-				qDebug() << "  m_depthSRV:" << m_depthSRV;
+				qDebug() << "  m_depthSRV:" << m_depthSRV;*/
 
 				// DSV가 가리키는 리소스
 				ID3D11Resource* dsvResource = nullptr;
 				m_pDepthStencilView->GetResource(&dsvResource);
-				qDebug() << "  DSV resource:" << dsvResource;
+				//qDebug() << "  DSV resource:" << dsvResource;
 
 				// SRV가 가리키는 리소스
 				ID3D11Resource* srvResource = nullptr;
 				m_depthSRV->GetResource(&srvResource);
-				qDebug() << "  SRV resource:" << srvResource;
+				//qDebug() << "  SRV resource:" << srvResource;
 
-				if (dsvResource == srvResource) {
-					qDebug() << "  ✅ SAME TEXTURE!";
-				}
-				else {
-					qDebug() << "  ❌ DIFFERENT TEXTURES! This is the problem!";
-				}
+				//if (dsvResource == srvResource) {
+				//	qDebug() << "  ✅ SAME TEXTURE!";
+				//}
+				//else {
+				//	qDebug() << "  ❌ DIFFERENT TEXTURES! This is the problem!";
+				//}
 
 				dsvResource->Release();
 				srvResource->Release();
