@@ -1153,8 +1153,8 @@ void QDirect3D11Widget::FullScreenPassSet()
 
 
 	cb.CameraPosAndAlpha.x = XMVectorGetX(eye);
-	cb.CameraPosAndAlpha.y = XMVectorGetY(up);
-	cb.CameraPosAndAlpha.z = XMVectorGetZ(at);
+	cb.CameraPosAndAlpha.y = XMVectorGetY(eye);
+	cb.CameraPosAndAlpha.z = XMVectorGetZ(eye);
 
 
 	//// ✅ 권장값

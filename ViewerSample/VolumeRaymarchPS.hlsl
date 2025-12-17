@@ -53,7 +53,7 @@ float4 main(PSInput input) : SV_Target
 	float3 rayPosWS = CameraPosAndAlpha.xyz;
 
 
-	rayPosWS = float3(0, 0, -3.0);
+	//rayPosWS = float3(0, 0, -3.0);
 
 	float3 rayPos = mul(float4(rayPosWS, 1), InvVolumeWorld).xyz;
 	float3 rayDir = normalize(mul(float4(rayDirWS, 0), InvVolumeWorld).xyz);
