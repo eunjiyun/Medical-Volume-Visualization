@@ -678,7 +678,17 @@ bool QDirect3D11Widget::init()
 	physicalDepth = fileReader->m_depth * voxelSpacingZ;   // 632 * 0.3 = 189.6mm
 
 
+	XMFLOAT3 volCenterMM = {
+	physicalWidth  * 0.5f,
+	physicalHeight * 0.5f,
+	physicalDepth  * 0.5f
+	};
 
+	XMMATRIX centerTranslate = XMMatrixTranslation(
+		-volCenterMM.x,
+		-volCenterMM.y,
+		-volCenterMM.z
+	);
 
 
    // 최대 크기
@@ -703,7 +713,15 @@ bool QDirect3D11Widget::init()
 	);
 
 
-	worldMat = scale * roty*rotx;
+//	worldMat = scale * roty*rotx;
+
+	worldMat =
+		centerTranslate *   // ① 볼륨 물리 중심(mm)을 원점으로 이동
+		roty *              // ② Y축 회전
+		rotx *              // ③ X축 회전
+		scale;              // ④ mm → 정규화 world
+
+
 	invWorldMat = XMMatrixInverse(nullptr, worldMat);
 
 
@@ -1296,11 +1314,11 @@ bool QDirect3D11Widget::LoadMeshFromPLY(const std::string& filename, ID3D11Devic
 		maxMesh =
 			Max3(meshWidth, meshHeight, meshDepth);
 
-		//qDebug() << "=== Mesh Size ===";
-		//qDebug() << "Width (X):" << meshWidth;
-		//qDebug() << "Height (Y):" << meshHeight;
-		//qDebug() << "Depth (Z):" << meshDepth;
-		//qDebug() << "Center:" << (minX + maxX) / 2 << (minY + maxY) / 2 << (minZ + maxZ) / 2;
+		qDebug() << "=== Mesh Size ===";
+		qDebug() << "Width (X):" << meshWidth;
+		qDebug() << "Height (Y):" << meshHeight;
+		qDebug() << "Depth (Z):" << meshDepth;
+		qDebug() << "Center:" << (minX + maxX) / 2 << (minY + maxY) / 2 << (minZ + maxZ) / 2;
 
 
 		// ✅ 실제 좌표 범위 출력
@@ -1318,12 +1336,12 @@ bool QDirect3D11Widget::LoadMeshFromPLY(const std::string& filename, ID3D11Devic
 	// 버텍스 버퍼 생성
 	D3D11_BUFFER_DESC bd = {};
 	bd.Usage = D3D11_USAGE_DEFAULT;
-	//	bd.ByteWidth = sizeof(PLY::VertexWithTexture) * centeredVertices.size();
+	bd.ByteWidth = sizeof(PLY::VertexWithTexture) * centeredVertices.size();
 	bd.ByteWidth = sizeof(PLY::VertexWithTexture) * vertices.size();
-	bd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+	//bd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
 
 	D3D11_SUBRESOURCE_DATA initData = {};
-	//	initData.pSysMem = centeredVertices.data();
+//	initData.pSysMem = centeredVertices.data();
 	initData.pSysMem = vertices.data();
 
 	HRESULT hr = device->CreateBuffer(&bd, &initData, &m_meshVertexBuffer);
@@ -4195,12 +4213,12 @@ int QDirect3D11Widget::ComputeSliceIndexFromPatientCoord_Robust(
 	jj = std::clamp(jj, 0, static_cast<int>(dims.y) - 1);
 	kk = std::clamp(kk, 0, static_cast<int>(dims.z) - 1);
 
-	qDebug() << "ComputeSliceIndexFromPatientCoord_Robust\n";
-	qDebug() << "🔍 Debug Info:";
-	qDebug() << "  ViewIndex:" << viewIndex;
-	qDebug() << "  Computed indices (i, j, k):" << ii << jj << kk;
-	qDebug() << "  dims:" << dims.x << dims.y << dims.z;
-	qDebug() << "  fileReader->sliceIndex[viewIndex]:" << fileReader->sliceIndex[viewIndex];
+	//qDebug() << "ComputeSliceIndexFromPatientCoord_Robust\n";
+	//qDebug() << "🔍 Debug Info:";
+	//qDebug() << "  ViewIndex:" << viewIndex;
+	//qDebug() << "  Computed indices (i, j, k):" << ii << jj << kk;
+	//qDebug() << "  dims:" << dims.x << dims.y << dims.z;
+	//qDebug() << "  fileReader->sliceIndex[viewIndex]:" << fileReader->sliceIndex[viewIndex];
 
 	switch (viewIndex)
 	{
@@ -4753,7 +4771,7 @@ void QDirect3D11Widget::UpdateSlicePlanePositions() {
 	float worldHeight = maxY - minY;
 	float worldDepth = maxZ - minZ;
 
-	qDebug() << "World volume size:" << worldWidth << worldHeight << worldDepth;
+	//qDebug() << "World volume size:" << worldWidth << worldHeight << worldDepth;
 
 	// worldMat을 분해
 	XMMATRIX volumeRotationOnly = roty * rotx * volumeRotation;

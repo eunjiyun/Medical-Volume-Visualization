@@ -59,6 +59,12 @@ float4 main(PSInput input) : SV_Target
 	float3 rayDir = normalize(mul(float4(rayDirWS, 0), InvVolumeWorld).xyz);
 
 
+	// ---- 의료용 연출 파라미터 ----
+	float skinBias = 0.0025;   // 0.001~0.006 사이에서 튜닝 (화면/near/far에 따라 달라짐)
+	float fadeWidth = 0.006;    // 경계 페이드 폭
+
+
+
 
 	// ✅ 현재 픽셀의 메쉬 depth 읽기
 	float meshDepthNDC = SceneDepth.Load(int3(input.pos.xy, 0));
@@ -79,8 +85,12 @@ float4 main(PSInput input) : SV_Target
 	//////   // 디버그: mesh depth 시각화
 	//return float4(meshDepthNDC, meshDepthNDC, meshDepthNDC, 1.0);
 
+	// meshDepthNDC는 0~1이라고 가정
+	float meshDepth = meshDepthNDC - skinBias; // ✅ 의도적으로 메쉬를 "앞"으로 당김 => CT가 뒤로 밀려 보임
 
+	
 
+	
 
 
 	float3 boxMin = float3(-1, -0.75, -0.75);
@@ -178,22 +188,16 @@ for (int i = 0; i < VoxelAndMaxSteps.w; i++)
 	float3 currentPosVS = rayPosVS + rayDirVS * tCurrent;
 	float4 clipPos = mul(float4(currentPosVS, 1.0), Projection);
 	float currentDepthNDC = clipPos.z / clipPos.w;  // NDC depth (0~1)
-
-
-	// ✅ Depth margin 추가
-	float depthMargin = 0.001;  // 약간의 여유
-
-	//if (currentDepthNDC > meshDepthNDC) {
-	if (currentDepthNDC > meshDepthNDC + depthMargin) {
-		break;  // ✅ Volume이 mesh 뒤에 있으면 중단!
-	}
-
-
-
-
-
-
-
+//
+//	// currentDepthNDC가 mesh보다 얼마나 앞/뒤인지
+//	float d = meshDepth - currentDepthNDC;     // d>0 : 볼륨이 메쉬 "앞"(가까움), d<0 : 볼륨이 메쉬 "뒤"(가려져야 함)
+//
+//
+//	// ---- Soft occlusion factor ----
+//// d가 0 근처(경계)면 서서히 사라지고, 충분히 뒤면 0
+//	float occ = saturate((d) / fadeWidth);   // 0..1
+//	// occ = 1  => 메쉬보다 앞이므로 정상 표시
+//	// occ ~ 0  => 메쉬 뒤쪽이므로 투명해짐
 
 	// 1) Raw 기반 density
 	float raw = volumeTex.SampleLevel(samp, uvw, 0).r;
@@ -207,6 +211,8 @@ for (int i = 0; i < VoxelAndMaxSteps.w; i++)
 	float huNorm = (hu - HuParams.z) / (HuParams.w - HuParams.z);
 	huNorm = saturate(huNorm);
 
+	// Volume shader
+	if (hu < 400 && CameraPosAndAlpha.w == 2.0) continue;  // Threshold 높이기
 
 	//float4 colorAlpha = transferFunction.Sample(tfSampler, huNorm);
 	float4 colorAlpha = transferFunction.SampleLevel(tfSampler, huNorm, 0);
@@ -246,6 +252,26 @@ for (int i = 0; i < VoxelAndMaxSteps.w; i++)
 	colorAlpha.rgb *= lighting;
 	colorAlpha.rgb += spec * float3(0.08, 0.07, 0.06);
 
+	//colorAlpha.a *= occ;
+	//if (acc.a < 0.001) continue;
+
+
+	// ✅ Depth margin 추가
+	float depthMargin = 0.001;  // 약간의 여유
+
+	//if (currentDepthNDC > meshDepthNDC) {
+	if (currentDepthNDC > meshDepthNDC + depthMargin) {
+		break;  // ✅ Volume이 mesh 뒤에 있으면 중단!
+	}
+
+	//if (occ <= 0.0) break;
+
+
+	//// 경계 근처(occ가 낮아질수록) CT 존재감 더 낮추기
+	//float boundarySoft = pow(occ, 1.5);     // 1~3 정도로 취향 튜닝
+	//colorAlpha.rgb *= lerp(0.7, 1.0, boundarySoft);
+	//colorAlpha.a *= boundarySoft;
+
 	float3 color = colorAlpha.rgb;
 	float alpha = colorAlpha.a * stepSize * 8.0;
 
@@ -261,6 +287,8 @@ for (int i = 0; i < VoxelAndMaxSteps.w; i++)
 	// 후처리 (간단하게!)
 	acc.rgb = pow(saturate(acc.rgb), 1.0 / 2.2);
 	//acc.a = 0.0;
+
+
 
 	if(CameraPosAndAlpha.w==1.0)
 		return float4(acc.rgb, 1.0);

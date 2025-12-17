@@ -51,13 +51,13 @@ void MeshRenderer::CreateTwoPassStates(ID3D11Device* device)
 
 
 
-	// Blend State: Color Write OFF
+	//// Blend State: Color Write OFF
 
-	blendDesc.RenderTarget[0].BlendEnable = FALSE;
-	blendDesc.RenderTarget[0].RenderTargetWriteMask = 0;  // ColorMask 0
+	//blendDesc.RenderTarget[0].BlendEnable = FALSE;
+	//blendDesc.RenderTarget[0].RenderTargetWriteMask = 0;  // ColorMask 0
 
 
-	hr=device->CreateBlendState(&blendDesc, &noColorWriteState);
+	//hr=device->CreateBlendState(&blendDesc, &noColorWriteState);
 
 
 	// ✅ 디버그 추가!
@@ -67,6 +67,28 @@ void MeshRenderer::CreateTwoPassStates(ID3D11Device* device)
 	else {
 		std::cout << "✅ noColorWriteState created:" << noColorWriteState << std::endl;
 	}
+
+	ID3D11BlendState* noColorWriteState = nullptr;
+
+	D3D11_BLEND_DESC noColorDesc = {};
+	noColorDesc.AlphaToCoverageEnable = FALSE;
+	noColorDesc.IndependentBlendEnable = FALSE;
+
+	D3D11_RENDER_TARGET_BLEND_DESC& rt = noColorDesc.RenderTarget[0];
+	rt.BlendEnable = FALSE;                 // ❗ 블렌딩 자체도 꺼도 됨
+	rt.RenderTargetWriteMask = 0;           // ❗❗ 컬러 출력 완전 차단 (핵심)
+
+	hr = device->CreateBlendState(&noColorDesc, &noColorWriteState);
+
+	if (FAILED(hr))
+	{
+		std::cout << "❌ Failed to create noColorWriteState!" << std::endl;
+	}
+	else
+	{
+		std::cout << "✅ noColorWriteState created: " << noColorWriteState << std::endl;
+	}
+
 
 
 
@@ -177,15 +199,21 @@ void MeshRenderer::RenderMesh(ID3D11DeviceContext* context, ID3D11Buffer* m_mesh
 	context->IASetInputLayout(m_meshInputLayout);
 
 	// ========== Transform 계산 ==========
-	//float meshToVolume = (maxMesh / maxPhysicalVol) * overallSize / maxMesh * (float)(1.5f / overallSize);
+	//float meshToVolume = (maxMesh / maxPhysicalVol) * overallSize / maxMesh /** (float)(1.5f / overallSize)*/;
 
-	float meshScale = 1.5f / maxPhysicalVol;  // 이게 전부!
+	//float meshScale = 1.5f / maxPhysicalVol;  // 이게 전부!
 
-	float correctionFactor = maxPhysicalVol / maxMesh; // 0.796
+
+	//float meshScale = maxMesh / maxPhysicalVol;  // 이게 전부!
+	//float meshScale = 1.5f / maxMesh;  // 이게 전부!
+
+	//float correctionFactor = maxPhysicalVol / maxMesh; // 0.796
 	//float meshScale = correctionFactor * overallSize;
 
 	 // ✅ mm 좌표 → 정규화 좌표
 	//float meshScale = overallSize / maxPhysicalVol;
+	float meshScale = 1.5f / maxPhysicalVol;
+
 
  
 	//std::cout << "meshScale:" << meshScale << std::endl; // 0.00521
@@ -209,9 +237,41 @@ void MeshRenderer::RenderMesh(ID3D11DeviceContext* context, ID3D11Buffer* m_mesh
 	DirectX::XMMATRIX rotation = XMMatrixRotationX(XM_PI);
 	DirectX::XMMATRIX fullWorld = scale * rotation * w;
 
+
+	float volHalfWorld = overallSize * 0.5f;
+	float meshHalfWorld = (maxMesh * meshScale) * 0.5f;
+
+	std::cout << "===== World Half Extent Check =====" << std::endl;
+	std::cout << "Volume half extent (world):" << volHalfWorld << std::endl;
+	std::cout << "Mesh half extent   (world):" << meshHalfWorld << std::endl;
+	std::cout << "Mesh / Volume ratio:"
+		<< (meshHalfWorld / volHalfWorld) << std::endl;
+	std::cout << "Expected ratio (maxMesh / maxPhysicalVol):"
+		<< (maxMesh / maxPhysicalVol) << std::endl;
+	std::cout << "===================================" << std::endl;
+
 	cb.WVP = XMMatrixTranspose(fullWorld * v * p);
 	cb.World = XMMatrixTranspose(fullWorld);
 	cb.WorldView = XMMatrixTranspose(fullWorld * v);
+
+	////rotx = XMMatrixRotationX(-XM_PIDIV2);  // 90도 회전
+	////roty = XMMatrixRotationY(XM_PI);  // 90도 회전
+
+
+	//XMMATRIX meshWorld =
+	//	w *                      // 사용자 입력
+	//	XMMatrixRotationY(XM_PI) *
+	//	XMMatrixRotationX(-XM_PIDIV2)*
+	//	XMMatrixScaling(meshScale, meshScale, meshScale);
+
+	//cb.WVP = XMMatrixTranspose(meshWorld * v * p);
+	//cb.World = XMMatrixTranspose(meshWorld);
+	//cb.WorldView = XMMatrixTranspose(meshWorld * v);
+
+
+
+
+
 
 
 	//// ✅ 디버그: WVP 출력
@@ -321,8 +381,8 @@ void MeshRenderer::RenderMesh(ID3D11DeviceContext* context, ID3D11Buffer* m_mesh
 	// 바인딩
 	context->OMSetDepthStencilState(depthWriteState, 0);
 	//context->OMSetBlendState(noColorWriteState, nullptr, 0xffffffff);
-	context->OMSetBlendState(nullptr, nullptr, 0xffffffff);
-
+	//context->OMSetBlendState(nullptr, nullptr, 0xffffffff);
+	context->OMSetBlendState(noColorWriteState, nullptr, 0xffffffff);
 
 
 	// ✅ 실제로 바인딩되었는지 확인
