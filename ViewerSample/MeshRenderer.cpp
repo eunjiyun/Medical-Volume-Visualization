@@ -30,16 +30,22 @@ void MeshRenderer::CreateTwoPassStates(ID3D11Device* device)
 	}
 
 
+	//// Depth State: Write ON
+	////D3D11_DEPTH_STENCIL_DESC depthDesc = {};
+	//depthDesc.DepthEnable = TRUE;
+	//depthDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ALL;  // ZWrite On
+	//depthDesc.DepthFunc = D3D11_COMPARISON_LESS;
+	//depthDesc.StencilEnable = FALSE;
 
+	D3D11_DEPTH_STENCIL_DESC depthWriteDesc = {};
+	depthWriteDesc.DepthEnable = TRUE;
+	//depthWriteDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ZERO; // 중요
+	depthWriteDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ALL;  // 🔥 반드시 ALL
+	//depthWriteDesc.DepthFunc = D3D11_COMPARISON_LESS_EQUAL;      // 🔥 핵심
+	depthWriteDesc.DepthFunc = D3D11_COMPARISON_LESS;
+	depthWriteDesc.StencilEnable = FALSE;
 
-	// Depth State: Write ON
-	//D3D11_DEPTH_STENCIL_DESC depthDesc = {};
-	depthDesc.DepthEnable = TRUE;
-	depthDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ALL;  // ZWrite On
-	depthDesc.DepthFunc = D3D11_COMPARISON_LESS;
-
-
-	device->CreateDepthStencilState(&depthDesc, &depthWriteState);
+	device->CreateDepthStencilState(&depthWriteDesc, &depthWriteState);
 
 	// ✅ 디버그 추가!
 	if (FAILED(hr)) {
@@ -97,9 +103,17 @@ void MeshRenderer::CreateTwoPassStates(ID3D11Device* device)
 	// ==========================================
 
 	// Depth State: Write OFF, Test ON
-	depthDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ZERO;  // ZWrite Off
-	depthDesc.DepthFunc = D3D11_COMPARISON_LESS_EQUAL;  // ✅ LESS_EQUAL!
-	hr=device->CreateDepthStencilState(&depthDesc, &depthReadState);
+	D3D11_DEPTH_STENCIL_DESC pass3DepthDesc = {};
+//	pass3DepthDesc.DepthEnable = FALSE;                         // ✅ Test OFF!
+	pass3DepthDesc.DepthEnable = TRUE;                      // 🔥 ON
+	pass3DepthDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ZERO; // ✅ Write OFF
+	pass3DepthDesc.DepthFunc = D3D11_COMPARISON_LESS_EQUAL; // 🔥 핵심
+	pass3DepthDesc.StencilEnable = FALSE;
+	hr = device->CreateDepthStencilState(&pass3DepthDesc, &depthReadState);
+	
+	//depthDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ZERO;  // ZWrite Off
+	//depthDesc.DepthFunc = D3D11_COMPARISON_LESS_EQUAL;  // ✅ LESS_EQUAL!
+	//hr=device->CreateDepthStencilState(&depthDesc, &depthReadState);
 
 	// ✅ 디버그 추가!
 	if (FAILED(hr)) {
@@ -183,19 +197,18 @@ void MeshRenderer::CreateTwoPassStates(ID3D11Device* device)
 	//}
 }
 
-
-void MeshRenderer::RenderMesh(ID3D11DeviceContext* context, ID3D11Buffer* m_meshVertexBuffer, 
+void MeshRenderer::RenderMeshDepth(ID3D11DeviceContext* context, ID3D11Buffer* m_meshVertexBuffer,
 	ID3D11VertexShader* m_meshVS, ID3D11PixelShader* m_meshPS, ID3D11InputLayout* m_meshInputLayout,
 	ID3D11Buffer* m_clipSettingsBuffer, ID3D11Buffer* m_meshConstantBuffer, ID3D11ShaderResourceView* m_meshTexture,
 	ID3D11SamplerState* m_MeshSamplerState, ID3D11Device* m_pDevice, int m_meshVertexCount,
-	float maxMesh,float maxPhysicalVol,float overallSize,
+	float maxMesh, float maxPhysicalVol, float overallSize,
 	XMMATRIX w, XMMATRIX v, XMMATRIX p)
 {
 	if (!m_meshVertexBuffer || m_meshVertexCount == 0) return;
 
 	// ========== Shader 바인딩 ==========
 	context->VSSetShader(m_meshVS, nullptr, 0);
-	context->PSSetShader(m_meshPS, nullptr, 0);
+	context->PSSetShader(nullptr, nullptr, 0); // 🔥
 	context->IASetInputLayout(m_meshInputLayout);
 
 	// ========== Transform 계산 ==========
@@ -215,7 +228,7 @@ void MeshRenderer::RenderMesh(ID3D11DeviceContext* context, ID3D11Buffer* m_mesh
 	float meshScale = 1.5f / maxPhysicalVol;
 
 
- 
+
 	//std::cout << "meshScale:" << meshScale << std::endl; // 0.00521
 	//std::cout << "Sample vertex -109mm * scale =" << (-109 * meshScale);  // -0.568
 	////qDebug() << "Volume range:" << -scaleX * overallSize * 0.5f << "to"
@@ -224,9 +237,9 @@ void MeshRenderer::RenderMesh(ID3D11DeviceContext* context, ID3D11Buffer* m_mesh
 
 
 	DirectX::XMMATRIX scale = XMMatrixScaling(
-	/*	meshToVolume,
-		meshToVolume,
-		meshToVolume*/
+		/*	meshToVolume,
+			meshToVolume,
+			meshToVolume*/
 
 		meshScale,
 		meshScale,
@@ -382,13 +395,14 @@ void MeshRenderer::RenderMesh(ID3D11DeviceContext* context, ID3D11Buffer* m_mesh
 	context->OMSetDepthStencilState(depthWriteState, 0);
 	//context->OMSetBlendState(noColorWriteState, nullptr, 0xffffffff);
 	//context->OMSetBlendState(nullptr, nullptr, 0xffffffff);
-	context->OMSetBlendState(noColorWriteState, nullptr, 0xffffffff);
+	//context->OMSetBlendState(noColorWriteState, nullptr, 0xffffffff);
+	context->OMSetBlendState(nullptr, nullptr, 0xffffffff);
 
 
-	// ✅ 실제로 바인딩되었는지 확인
-	ID3D11DepthStencilState* currentDepthState = nullptr;
-	UINT stencilRef;
-	context->OMGetDepthStencilState(&currentDepthState, &stencilRef);
+	//// ✅ 실제로 바인딩되었는지 확인
+	//ID3D11DepthStencilState* currentDepthState = nullptr;
+	//UINT stencilRef;
+	//context->OMGetDepthStencilState(&currentDepthState, &stencilRef);
 
 	//std::cout << "Actually bound depth state:" << currentDepthState << std::endl;
 
@@ -411,23 +425,69 @@ void MeshRenderer::RenderMesh(ID3D11DeviceContext* context, ID3D11Buffer* m_mesh
 	//std::cout << "Drawing" << m_meshVertexCount << "vertices..." << std::endl;
 
 
-
-
 	// 렌더링 (Depth만 기록)
 	context->Draw(m_meshVertexCount, 0);
 
 
+}
 
-	// 바인딩
+
+void MeshRenderer::RenderMesh(ID3D11DeviceContext* context, ID3D11Buffer* m_meshVertexBuffer,
+	ID3D11VertexShader* m_meshVS, ID3D11PixelShader* m_meshPS, ID3D11InputLayout* m_meshInputLayout,
+	ID3D11Buffer* m_clipSettingsBuffer, ID3D11Buffer* m_meshConstantBuffer, ID3D11ShaderResourceView* m_meshTexture,
+	ID3D11SamplerState* m_MeshSamplerState, ID3D11Device* m_pDevice, int m_meshVertexCount,
+	float maxMesh, float maxPhysicalVol, float overallSize,
+	XMMATRIX w, XMMATRIX v, XMMATRIX p)
+{
+	if (!m_meshVertexBuffer || m_meshVertexCount == 0) return;
+
+	// ========== Shader 바인딩 ==========
+	context->VSSetShader(m_meshVS, nullptr, 0);
+	context->PSSetShader(m_meshPS, nullptr, 0);
+	context->IASetInputLayout(m_meshInputLayout);
+
+	// ========== Transform 계산 ==========
+	float meshScale = 1.5f / maxPhysicalVol;
+
+	DirectX::XMMATRIX scale = XMMatrixScaling(meshScale, meshScale, meshScale);
+	DirectX::XMMATRIX rotation = XMMatrixRotationX(XM_PI);
+	DirectX::XMMATRIX fullWorld = scale * rotation * w;
+
+	MeshConstantBuffer cb;
+	cb.WVP = XMMatrixTranspose(fullWorld * v * p);
+	cb.World = XMMatrixTranspose(fullWorld);
+	cb.WorldView = XMMatrixTranspose(fullWorld * v);
+
+	context->UpdateSubresource(m_meshConstantBuffer, 0, nullptr, &cb, 0, 0);
+	context->VSSetConstantBuffers(0, 1, &m_meshConstantBuffer);
+
+	// ========== Clipping Settings ==========
+	ClipSettings cs;
+	cs.clipPlane = DirectX::XMFLOAT4(0, 0, 1, -0.15f);
+	cs.enableClip = 1;
+
+	context->UpdateSubresource(m_clipSettingsBuffer, 0, nullptr, &cs, 0, 0);
+	context->PSSetConstantBuffers(1, 1, &m_clipSettingsBuffer);
+
+	// ========== Texture/Sampler ==========
+	context->PSSetShaderResources(0, 1, &m_meshTexture);
+	context->PSSetSamplers(0, 1, &m_MeshSamplerState);
+
+	// ========== Rasterizer ==========
+	context->RSSetState(rastState);
+
+	// ========== Vertex Buffer ==========
+	UINT stride = sizeof(PLY::VertexWithTexture);
+	UINT offset = 0;
+	context->IASetVertexBuffers(0, 1, &m_meshVertexBuffer, &stride, &offset);
+	context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+	// ========== PASS 3: 반투명 상태 설정 ==========
 	context->OMSetDepthStencilState(depthReadState, 0);
 	context->OMSetBlendState(alphaBlendState, nullptr, 0xffffffff);
-	//context->OMSetBlendState(nullptr, nullptr, 0xffffffff);
 
 	// 렌더링 (반투명)
 	context->Draw(m_meshVertexCount, 0);
-
-
-	
 }
 
 
@@ -440,10 +500,6 @@ void MeshRenderer::Cleanup()
 	if (noColorWriteState) noColorWriteState->Release();
 	if (depthReadState) depthReadState->Release();
 	if (alphaBlendState) alphaBlendState->Release();
-
-
-
-
 
 	// State 해제
 	if (m_depthWriteState) m_depthWriteState->Release();

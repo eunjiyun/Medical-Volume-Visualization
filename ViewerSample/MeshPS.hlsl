@@ -19,7 +19,7 @@ float4 main(PS_INPUT input) : SV_TARGET
 {
 
 	float4 color = meshTexture.Sample(samplerState, input.Tex);
-	color.a = 0.1;
+	color.a = 0.65;
 	return color;
 
 

@@ -442,6 +442,7 @@ public:
 	// D3D11 상태 객체들
 	Microsoft::WRL::ComPtr<ID3D11BlendState>        m_alphaBlendState;
 	Microsoft::WRL::ComPtr<ID3D11DepthStencilState> m_disableDepthState;
+	Microsoft::WRL::ComPtr<ID3D11DepthStencilState> m_VolumeDepthState;
 
 
 	// ✅ 큐브 관련

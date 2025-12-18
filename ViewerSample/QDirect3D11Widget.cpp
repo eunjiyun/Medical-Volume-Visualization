@@ -1088,6 +1088,18 @@ void QDirect3D11Widget::CreateTexture3D()
 	if (FAILED(hr)) {
 		qDebug() << "❌ Failed to create disable depth state";
 	}
+
+
+	D3D11_DEPTH_STENCIL_DESC pass2DepthDesc = {};
+	pass2DepthDesc.DepthEnable = TRUE;                          // ✅ Test ON
+	pass2DepthDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ALL; // ✅ Write ON
+	pass2DepthDesc.DepthFunc = D3D11_COMPARISON_LESS;           // ✅ 정상 depth test
+	pass2DepthDesc.StencilEnable = FALSE;
+
+	hr = m_pDevice->CreateDepthStencilState(&pass2DepthDesc, &m_VolumeDepthState);
+	if (FAILED(hr)) {
+		qDebug() << "❌ Failed to create disable depth state";
+	}
 }
 
 
@@ -1097,6 +1109,7 @@ struct Vtx { XMFLOAT2 pos; XMFLOAT2 uv; }; // NDC용이 아니라 스크린→ND
 
 void QDirect3D11Widget::FullScreenPassSet()
 {
+
 	D3D11_VIEWPORT vp{};
 	vp.TopLeftX = 0;
 	vp.TopLeftY = 0;
@@ -1152,6 +1165,9 @@ void QDirect3D11Widget::FullScreenPassSet()
 	//cb.InvProj = XMMatrixTranspose(ip);
 	////cb.VolumeWorld = XMMatrixTranspose(w);
 	//cb.InvVolumeWorld = XMMatrixTranspose(iw);
+
+
+	m_pDeviceContext->OMSetDepthStencilState(m_VolumeDepthState.Get(), 0);
 
 
 	XMStoreFloat4x4(&cb.InvView, XMMatrixTranspose(invViewMat));
@@ -1232,7 +1248,6 @@ void QDirect3D11Widget::FullScreenPassSet()
 
 	// ✅ 8️⃣ 드로우
 	m_pDeviceContext->Draw(4, 0);
-
 }
 
 
@@ -3961,6 +3976,43 @@ void QDirect3D11Widget::RenderAllQuads()
 				// ✅ RTV + DSV 바인딩 유지
 				m_pDeviceContext->OMSetRenderTargets(1, &m_pSwapChainRTV, m_pDepthStencilView);
 
+				meshRenderer->RenderMeshDepth(
+					m_pDeviceContext, m_meshVertexBuffer, m_meshVS, m_meshPS, m_meshInputLayout,
+					m_clipSettingsBuffer, m_meshConstantBuffer, m_meshTexture,
+					m_MeshSamplerState, m_pDevice, m_meshVertexCount,
+					maxMesh, maxPhysicalVol, overallSize,
+					worldMat, viewMat, projMat
+				);
+
+
+
+
+
+
+
+
+				////// ✅ RTV + DSV 바인딩 유지
+				//m_pDeviceContext->OMSetRenderTargets(1, &m_pSwapChainRTV, m_pDepthStencilView);
+
+				//meshRenderer->RenderMeshDepth(
+				//	m_pDeviceContext, m_meshVertexBuffer, m_meshVS, m_meshPS, m_meshInputLayout,
+				//	m_clipSettingsBuffer, m_meshConstantBuffer, m_meshTexture,
+				//	m_MeshSamplerState, m_pDevice, m_meshVertexCount,
+				//	maxMesh, maxPhysicalVol, overallSize,
+				//	worldMat, viewMat, projMat
+				//);
+
+
+				// ✅ 4. SRV 언바인딩 (중요!)
+				ID3D11ShaderResourceView* nullSRV = nullptr;
+				m_pDeviceContext->PSSetShaderResources(5, 1, &nullSRV);
+
+
+
+				//// ✅ Alpha blending ON
+				//m_pDeviceContext->OMSetBlendState(meshRenderer->alphaBlendState, nullptr, 0xffffffff);
+				//m_pDeviceContext->OMSetDepthStencilState(meshRenderer->depthReadState, 0);
+
 				meshRenderer->RenderMesh(
 					m_pDeviceContext, m_meshVertexBuffer, m_meshVS, m_meshPS, m_meshInputLayout,
 					m_clipSettingsBuffer, m_meshConstantBuffer, m_meshTexture,
@@ -3968,6 +4020,10 @@ void QDirect3D11Widget::RenderAllQuads()
 					maxMesh, maxPhysicalVol, overallSize,
 					worldMat, viewMat, projMat
 				);
+
+
+
+
 			}
 
 			// ========== 2. DSV Unbind (중요!) ==========
@@ -3990,9 +4046,35 @@ void QDirect3D11Widget::RenderAllQuads()
 			RenderVolumeView();
 
 
-			// ✅ 4. SRV 언바인딩 (중요!)
-			ID3D11ShaderResourceView* nullSRV = nullptr;
-			m_pDeviceContext->PSSetShaderResources(5, 1, &nullSRV);
+			////// ✅ RTV + DSV 바인딩 유지
+			//m_pDeviceContext->OMSetRenderTargets(1, &m_pSwapChainRTV, m_pDepthStencilView);
+
+			//meshRenderer->RenderMeshDepth(
+			//	m_pDeviceContext, m_meshVertexBuffer, m_meshVS, m_meshPS, m_meshInputLayout,
+			//	m_clipSettingsBuffer, m_meshConstantBuffer, m_meshTexture,
+			//	m_MeshSamplerState, m_pDevice, m_meshVertexCount,
+			//	maxMesh, maxPhysicalVol, overallSize,
+			//	worldMat, viewMat, projMat
+			//);
+
+
+			//// ✅ 4. SRV 언바인딩 (중요!)
+			//ID3D11ShaderResourceView* nullSRV = nullptr;
+			//m_pDeviceContext->PSSetShaderResources(5, 1, &nullSRV);
+
+
+
+			////// ✅ Alpha blending ON
+			////m_pDeviceContext->OMSetBlendState(meshRenderer->alphaBlendState, nullptr, 0xffffffff);
+			////m_pDeviceContext->OMSetDepthStencilState(meshRenderer->depthReadState, 0);
+
+			//meshRenderer->RenderMesh(
+			//	m_pDeviceContext, m_meshVertexBuffer, m_meshVS, m_meshPS, m_meshInputLayout,
+			//	m_clipSettingsBuffer, m_meshConstantBuffer, m_meshTexture,
+			//	m_MeshSamplerState, m_pDevice, m_meshVertexCount,
+			//	maxMesh, maxPhysicalVol, overallSize,
+			//	worldMat, viewMat, projMat
+			//);
 		}
 		else {
 
