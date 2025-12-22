@@ -691,7 +691,7 @@ bool QDirect3D11Widget::init()
 	);
 
 
-   // 최대 크기
+	// 최대 크기
 	maxPhysicalVol = Max3(physicalWidth, physicalHeight, physicalDepth);
 
 
@@ -713,7 +713,7 @@ bool QDirect3D11Widget::init()
 	);
 
 
-//	worldMat = scale * roty*rotx;
+	//	worldMat = scale * roty*rotx;
 
 	worldMat =
 		centerTranslate *   // ① 볼륨 물리 중심(mm)을 원점으로 이동
@@ -1185,7 +1185,7 @@ void QDirect3D11Widget::FullScreenPassSet()
 	//	I._31 << " " << I._32 << " " << I._33 << " " << I._34 << "\n" <<
 	//	I._41 << " " << I._42 << " " << I._43 << " " << I._44 << "\n\n";
 
-		
+
 
 
 	//// ✅ 실제 카메라 위치 사용
@@ -1369,7 +1369,7 @@ bool QDirect3D11Widget::LoadMeshFromPLY(const std::string& filename, ID3D11Devic
 	//bd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
 
 	D3D11_SUBRESOURCE_DATA initData = {};
-//	initData.pSysMem = centeredVertices.data();
+	//	initData.pSysMem = centeredVertices.data();
 	initData.pSysMem = vertices.data();
 
 	HRESULT hr = device->CreateBuffer(&bd, &initData, &m_meshVertexBuffer);
@@ -1462,7 +1462,7 @@ bool QDirect3D11Widget::LoadMeshTexture(const std::string& filename, ID3D11Devic
 	pointClampDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
 	pointClampDesc.MinLOD = 0;
 	pointClampDesc.MaxLOD = D3D11_FLOAT32_MAX;
-	
+
 
 	hr = device->CreateSamplerState(&pointClampDesc, &meshRenderer->m_PointClampSampler);
 	if (FAILED(hr)) {
@@ -2351,7 +2351,7 @@ void QDirect3D11Widget::CreateDepthStencil()  // 또는 initializeGL 안에서
 	// ========== Depth Texture 생성 ==========
 	D3D11_TEXTURE2D_DESC depthDesc = {};
 	depthDesc.Width = width();
-	depthDesc.Height = height() ;
+	depthDesc.Height = height();
 	depthDesc.MipLevels = 1;
 	depthDesc.ArraySize = 1;
 	depthDesc.Format = DXGI_FORMAT_R32_TYPELESS;  // ✅ 변경!
@@ -3990,11 +3990,11 @@ void QDirect3D11Widget::RenderAllQuads()
 			if (isMesh) {
 
 
-			/*	qDebug() << "Before mesh render:";
-				qDebug() << "  m_pDepthStencilView:" << m_pDepthStencilView;
-				qDebug() << "  m_depthSRV:" << m_depthSRV;*/
+				/*	qDebug() << "Before mesh render:";
+					qDebug() << "  m_pDepthStencilView:" << m_pDepthStencilView;
+					qDebug() << "  m_depthSRV:" << m_depthSRV;*/
 
-				// DSV가 가리키는 리소스
+					// DSV가 가리키는 리소스
 				ID3D11Resource* dsvResource = nullptr;
 				m_pDepthStencilView->GetResource(&dsvResource);
 				//qDebug() << "  DSV resource:" << dsvResource;
@@ -4061,7 +4061,7 @@ void QDirect3D11Widget::RenderAllQuads()
 				//);
 
 
-			
+
 
 
 
@@ -4109,7 +4109,7 @@ void QDirect3D11Widget::RenderAllQuads()
 
 
 
-			
+
 
 
 			ID3D11SamplerState* samplers[2] = {

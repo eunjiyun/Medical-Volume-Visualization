@@ -18,7 +18,7 @@ void MeshRenderer::CreateTwoPassStates(ID3D11Device* device)
 	rastDesc.DepthBias = 0;
 	rastDesc.DepthBiasClamp = 0.0f;
 	rastDesc.SlopeScaledDepthBias = 0.0f;
-	hr=device->CreateRasterizerState(&rastDesc, &rastState);
+	hr = device->CreateRasterizerState(&rastDesc, &rastState);
 
 
 	// ✅ 디버그 추가!
@@ -104,13 +104,13 @@ void MeshRenderer::CreateTwoPassStates(ID3D11Device* device)
 
 	// Depth State: Write OFF, Test ON
 	D3D11_DEPTH_STENCIL_DESC pass3DepthDesc = {};
-//	pass3DepthDesc.DepthEnable = FALSE;                         // ✅ Test OFF!
+	//	pass3DepthDesc.DepthEnable = FALSE;                         // ✅ Test OFF!
 	pass3DepthDesc.DepthEnable = TRUE;                      // 🔥 ON
 	pass3DepthDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ZERO; // ✅ Write OFF
 	pass3DepthDesc.DepthFunc = D3D11_COMPARISON_LESS_EQUAL; // 🔥 핵심
 	pass3DepthDesc.StencilEnable = FALSE;
 	hr = device->CreateDepthStencilState(&pass3DepthDesc, &depthReadState);
-	
+
 	//depthDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ZERO;  // ZWrite Off
 	//depthDesc.DepthFunc = D3D11_COMPARISON_LESS_EQUAL;  // ✅ LESS_EQUAL!
 	//hr=device->CreateDepthStencilState(&depthDesc, &depthReadState);
@@ -202,7 +202,7 @@ void MeshRenderer::RenderMeshDepth(ID3D11DeviceContext* context, ID3D11Buffer* m
 	ID3D11Buffer* m_clipSettingsBuffer, ID3D11Buffer* m_meshConstantBuffer, ID3D11ShaderResourceView* m_meshTexture,
 	ID3D11SamplerState* m_MeshSamplerState, ID3D11Device* m_pDevice, int m_meshVertexCount,
 	float maxMesh, float maxPhysicalVol, float overallSize,
-	XMMATRIX w, XMMATRIX v, XMMATRIX p, float width,float height)
+	XMMATRIX w, XMMATRIX v, XMMATRIX p, float width, float height)
 {
 	ID3D11RenderTargetView* curRTV = nullptr;
 	ID3D11DepthStencilView* curDSV = nullptr;
@@ -416,7 +416,7 @@ void MeshRenderer::RenderMeshDepth(ID3D11DeviceContext* context, ID3D11Buffer* m
 	// ========== PASS 1: Depth Write ===========
 	// ==========================================
 
-	
+
 
 	// 바인딩
 	context->OMSetDepthStencilState(depthWriteState, 0);
@@ -492,7 +492,7 @@ void MeshRenderer::RenderMesh(ID3D11DeviceContext* context, ID3D11Buffer* m_mesh
 	ClipSettings cs;
 	cs.clipPlane = DirectX::XMFLOAT4(0, 0, 1, -0.15f);
 	cs.enableClip = 1;
-	
+
 	context->UpdateSubresource(m_clipSettingsBuffer, 0, nullptr, &cs, 0, 0);
 	context->PSSetConstantBuffers(1, 1, &m_clipSettingsBuffer);
 
