@@ -36,6 +36,14 @@ public:
 	ID3D11DepthStencilState* depthReadState{ nullptr };
 	ID3D11BlendState* alphaBlendState{ nullptr };
 
+	ID3D11SamplerState* m_PointClampSampler{ nullptr };
+
+	ID3D11Texture2D* m_faceColorTex;
+
+	ID3D11RenderTargetView* m_faceColorRTV;
+
+	ID3D11ShaderResourceView* m_faceColorSRV;
+
 public:
 	void CreateTwoPassStates(ID3D11Device* device);
 	//void RenderMeshTwoPass(ID3D11DeviceContext* context);
@@ -45,7 +53,7 @@ public:
 		ID3D11Buffer* m_clipSettingsBuffer, ID3D11Buffer* m_meshConstantBuffer, ID3D11ShaderResourceView* m_meshTexture,
 		ID3D11SamplerState* m_MeshSamplerState, ID3D11Device* m_pDevice, int m_meshVertexCount,
 		float maxMesh, float maxPhysicalVol, float overallSize,
-		XMMATRIX w, XMMATRIX v, XMMATRIX p);
+		XMMATRIX w, XMMATRIX v, XMMATRIX p, float width, float height);
 
 	void RenderMesh(ID3D11DeviceContext* context, ID3D11Buffer* m_meshVertexBuffer,
 		ID3D11VertexShader* m_meshVS, ID3D11PixelShader* m_meshPS, ID3D11InputLayout* m_meshInputLayout,

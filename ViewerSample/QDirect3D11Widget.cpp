@@ -1174,6 +1174,19 @@ void QDirect3D11Widget::FullScreenPassSet()
 	XMStoreFloat4x4(&cb.InvProj, XMMatrixTranspose(invProjMat));
 	XMStoreFloat4x4(&cb.InvVolumeWorld, XMMatrixTranspose(invWorldMat));
 
+	//// 디버깅용
+	//XMMATRIX i= XMMatrixMultiply(projMat, invProjMat);
+
+	//XMFLOAT4X4 I;
+	//XMStoreFloat4x4(&I, i);
+	//std::cout <<
+	//	 I._11 << " " << I._12 << " " << I._13 << " " << I._14 << "\n" <<
+	//	I._21 << " " << I._22 << " " << I._23 << " " << I._24 << "\n" <<
+	//	I._31 << " " << I._32 << " " << I._33 << " " << I._34 << "\n" <<
+	//	I._41 << " " << I._42 << " " << I._43 << " " << I._44 << "\n\n";
+
+		
+
 
 	//// ✅ 실제 카메라 위치 사용
 	//cb.CameraPosWS = XMFLOAT3(
@@ -1434,6 +1447,31 @@ bool QDirect3D11Widget::LoadMeshTexture(const std::string& filename, ID3D11Devic
 		qDebug() << "Failed to create sampler state";
 		return false;
 	}
+
+
+
+
+	// ================================
+// Point + Clamp Sampler (Depth용)
+// ================================
+	D3D11_SAMPLER_DESC pointClampDesc = {};
+	pointClampDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_POINT;   // 🔥 핵심
+	pointClampDesc.AddressU = D3D11_TEXTURE_ADDRESS_CLAMP;
+	pointClampDesc.AddressV = D3D11_TEXTURE_ADDRESS_CLAMP;
+	pointClampDesc.AddressW = D3D11_TEXTURE_ADDRESS_CLAMP;
+	pointClampDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
+	pointClampDesc.MinLOD = 0;
+	pointClampDesc.MaxLOD = D3D11_FLOAT32_MAX;
+	
+
+	hr = device->CreateSamplerState(&pointClampDesc, &meshRenderer->m_PointClampSampler);
+	if (FAILED(hr)) {
+		qDebug() << "Failed to create point clamp sampler";
+		return false;
+	}
+
+
+
 
 	qDebug() << "Texture loaded successfully:" << QString::fromStdString(filename);
 	return true;
@@ -2299,10 +2337,21 @@ void QDirect3D11Widget::CreateDepthStencil()  // 또는 initializeGL 안에서
 		m_depthTexture = nullptr;
 	}
 
+
+	//D3D11_VIEWPORT vp{};
+	//vp.TopLeftX = 0;
+	//vp.TopLeftY = 0;
+	//vp.Width = width() / 2;   // width()/2
+	//vp.Height = height() / 2;  // height()/2
+	//vp.MinDepth = 0.0f;
+	//vp.MaxDepth = 1.0f;
+
+	//m_pDeviceContext->RSSetViewports(1, &vp);
+
 	// ========== Depth Texture 생성 ==========
 	D3D11_TEXTURE2D_DESC depthDesc = {};
 	depthDesc.Width = width();
-	depthDesc.Height = height();
+	depthDesc.Height = height() ;
 	depthDesc.MipLevels = 1;
 	depthDesc.ArraySize = 1;
 	depthDesc.Format = DXGI_FORMAT_R32_TYPELESS;  // ✅ 변경!
@@ -2895,32 +2944,32 @@ void QDirect3D11Widget::RenderVolumeView()
 	XMStoreFloat4x4(&constants.Projection, XMMatrixTranspose(projMat));
 
 
-	// ---- Axial (XY plane, z=0)
-	{
-		constants.World = m_AxialPlane.worldMatrix;  // ✅ 저장된 World Matrix 사용
-		constants.Voxel = XMFLOAT4(1.0f, 0.0f, 1.0f, 1.0f); // 자홍
-		m_pDeviceContext->UpdateSubresource(m_volumeConstantBuffer, 0, nullptr, &constants, 0, 0);
-		DrawPlane(m_AxialPlane);
+	//// ---- Axial (XY plane, z=0)
+	//{
+	//	constants.World = m_AxialPlane.worldMatrix;  // ✅ 저장된 World Matrix 사용
+	//	constants.Voxel = XMFLOAT4(1.0f, 0.0f, 1.0f, 1.0f); // 자홍
+	//	m_pDeviceContext->UpdateSubresource(m_volumeConstantBuffer, 0, nullptr, &constants, 0, 0);
+	//	DrawPlane(m_AxialPlane);
 
-	}
+	//}
 
-	// ---- Coronal (XZ plane, y=0)
-	{
+	//// ---- Coronal (XZ plane, y=0)
+	//{
 
 
-		constants.World = m_CoronalPlane.worldMatrix; // ✅ 저장된 World Matrix 사용
-		constants.Voxel = XMFLOAT4(0.0f, 1.0f, 1.0f, 1.0f); // 청록
-		m_pDeviceContext->UpdateSubresource(m_volumeConstantBuffer, 0, nullptr, &constants, 0, 0);
-		DrawPlane(m_CoronalPlane);
-	}
+	//	constants.World = m_CoronalPlane.worldMatrix; // ✅ 저장된 World Matrix 사용
+	//	constants.Voxel = XMFLOAT4(0.0f, 1.0f, 1.0f, 1.0f); // 청록
+	//	m_pDeviceContext->UpdateSubresource(m_volumeConstantBuffer, 0, nullptr, &constants, 0, 0);
+	//	DrawPlane(m_CoronalPlane);
+	//}
 
-	// ---- Sagittal (YZ plane, x=0)
-	{
-		constants.World = m_SagittalPlane.worldMatrix; // ✅ 저장된 World Matrix 사용
-		constants.Voxel = XMFLOAT4(1.0f, 1.0f, 0.0f, 1.0f); // 노랑
-		m_pDeviceContext->UpdateSubresource(m_volumeConstantBuffer, 0, nullptr, &constants, 0, 0);
-		DrawPlane(m_SagittalPlane);
-	}
+	//// ---- Sagittal (YZ plane, x=0)
+	//{
+	//	constants.World = m_SagittalPlane.worldMatrix; // ✅ 저장된 World Matrix 사용
+	//	constants.Voxel = XMFLOAT4(1.0f, 1.0f, 0.0f, 1.0f); // 노랑
+	//	m_pDeviceContext->UpdateSubresource(m_volumeConstantBuffer, 0, nullptr, &constants, 0, 0);
+	//	DrawPlane(m_SagittalPlane);
+	//}
 
 }
 
@@ -3924,7 +3973,7 @@ void QDirect3D11Widget::RenderAllQuads()
 	if (m_pDepthStencilView) {
 		m_pDeviceContext->ClearDepthStencilView(m_pDepthStencilView,
 			D3D11_CLEAR_DEPTH,
-			1.0f, 0);
+			0.0f, 0);
 	}
 
 	// 3. 각 렌더 타겟 텍스처를 quad로 출력
@@ -3976,12 +4025,21 @@ void QDirect3D11Widget::RenderAllQuads()
 				// ✅ RTV + DSV 바인딩 유지
 				m_pDeviceContext->OMSetRenderTargets(1, &m_pSwapChainRTV, m_pDepthStencilView);
 
+				m_pDeviceContext->ClearDepthStencilView(
+					m_pDepthStencilView,
+					D3D11_CLEAR_DEPTH,
+					1.0f,
+					0
+				);
+
+				//m_pDeviceContext->PSSetSamplers(5, 1, &m_pointClampSampler);  // s5 채우기
+
 				meshRenderer->RenderMeshDepth(
 					m_pDeviceContext, m_meshVertexBuffer, m_meshVS, m_meshPS, m_meshInputLayout,
 					m_clipSettingsBuffer, m_meshConstantBuffer, m_meshTexture,
 					m_MeshSamplerState, m_pDevice, m_meshVertexCount,
 					maxMesh, maxPhysicalVol, overallSize,
-					worldMat, viewMat, projMat
+					worldMat, viewMat, projMat, width(), height()
 				);
 
 
@@ -4003,9 +4061,7 @@ void QDirect3D11Widget::RenderAllQuads()
 				//);
 
 
-				// ✅ 4. SRV 언바인딩 (중요!)
-				ID3D11ShaderResourceView* nullSRV = nullptr;
-				m_pDeviceContext->PSSetShaderResources(5, 1, &nullSRV);
+			
 
 
 
@@ -4020,8 +4076,6 @@ void QDirect3D11Widget::RenderAllQuads()
 					maxMesh, maxPhysicalVol, overallSize,
 					worldMat, viewMat, projMat
 				);
-
-
 
 
 			}
@@ -4041,9 +4095,45 @@ void QDirect3D11Widget::RenderAllQuads()
 			//else {
 			//	qDebug() << "❌ ERROR: m_depthSRV is NULL!";
 			//}
-			m_pDeviceContext->PSSetShaderResources(5, 1, &m_depthSRV);
+
+
+			ID3D11ShaderResourceView* srvs[2] = {
+	m_depthSRV,     // t5
+	m_meshTexture  // t6 (❌ m_meshTexture 아님)
+			};
+
+			m_pDeviceContext->PSSetShaderResources(5, 2, srvs);
+			//m_pDeviceContext->PSSetShaderResources(5, 1, &m_depthSRV);
+			//// face texture -> t6
+			//m_pDeviceContext->PSSetShaderResources(6, 1, &m_meshTexture);
+
+
+
+			
+
+
+			ID3D11SamplerState* samplers[2] = {
+	meshRenderer->m_PointClampSampler, // s5 : depth
+	m_MeshSamplerState   // s6 : face color
+			};
+
+
+			m_pDeviceContext->PSSetSamplers(5, 2, samplers);
+
+
+
+			// face sampler -> s6
+			//m_pDeviceContext->PSSetSamplers(6, 1, &m_MeshSamplerState);
+
 
 			RenderVolumeView();
+
+			//// ✅ 4. SRV 언바인딩 (중요!)
+			//ID3D11ShaderResourceView* nullSRV = nullptr;
+			//m_pDeviceContext->PSSetShaderResources(5, 1, &nullSRV);
+
+			ID3D11ShaderResourceView* nullSRVs[2] = { nullptr, nullptr };
+			m_pDeviceContext->PSSetShaderResources(5, 2, nullSRVs);
 
 
 			////// ✅ RTV + DSV 바인딩 유지

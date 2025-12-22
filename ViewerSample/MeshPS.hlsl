@@ -13,19 +13,14 @@ struct PS_INPUT
 	float4 Pos : SV_POSITION;
 	float3 ViewPos : TEXCOORD0;
 	float2 Tex : TEXCOORD1;
+	float WorldY : TEXCOORD2;  // ✅ 추가!
 };
 
 float4 main(PS_INPUT input) : SV_TARGET
 {
 
-	float4 color = meshTexture.Sample(samplerState, input.Tex);
-	color.a = 0.65;
-	return color;
-
-
-		// ✅ 무조건 빨간색 출력
-	//return float4(1, 0, 0, 0.65);
-
-	//	return float4(1.0, 0.0, 1.0, 0.65);  // 자홍색
+float4 color = meshTexture.Sample(samplerState, input.Tex);
+color.a = 0.55;
+return color;
 }
 

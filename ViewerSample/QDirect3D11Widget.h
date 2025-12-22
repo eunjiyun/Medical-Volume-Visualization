@@ -530,7 +530,10 @@ public:
 	ID3D11PixelShader* m_meshPS{ nullptr };
 	ID3D11InputLayout* m_meshInputLayout{ nullptr };
 	ID3D11ShaderResourceView* m_meshTexture{ nullptr };
+
+	//m_pointClampSampler
 	ID3D11SamplerState* m_MeshSamplerState{ nullptr };
+
 	ID3D11Buffer* m_meshConstantBuffer{ nullptr };
 //	ID3D11DepthStencilState* m_meshDepthState{ nullptr };
 	ID3D11PixelShader* m_composePS{ nullptr };  // ✅ 추가

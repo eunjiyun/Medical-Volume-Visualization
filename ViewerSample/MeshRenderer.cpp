@@ -202,12 +202,39 @@ void MeshRenderer::RenderMeshDepth(ID3D11DeviceContext* context, ID3D11Buffer* m
 	ID3D11Buffer* m_clipSettingsBuffer, ID3D11Buffer* m_meshConstantBuffer, ID3D11ShaderResourceView* m_meshTexture,
 	ID3D11SamplerState* m_MeshSamplerState, ID3D11Device* m_pDevice, int m_meshVertexCount,
 	float maxMesh, float maxPhysicalVol, float overallSize,
-	XMMATRIX w, XMMATRIX v, XMMATRIX p)
+	XMMATRIX w, XMMATRIX v, XMMATRIX p, float width,float height)
 {
+	ID3D11RenderTargetView* curRTV = nullptr;
+	ID3D11DepthStencilView* curDSV = nullptr;
+	context->OMGetRenderTargets(1, &curRTV, &curDSV);
+	//std::cout << "Bound DSV: " << curDSV << " expected: " << m_pDepthStencilView << std::endl;
+	if (curRTV) curRTV->Release();
+	if (curDSV) curDSV->Release();
+
+
+
 	if (!m_meshVertexBuffer || m_meshVertexCount == 0) return;
+
+
+	//// 🔥 Depth pass는 반드시 full-res viewport
+	//D3D11_VIEWPORT fullVP = {};
+	//fullVP.TopLeftX = 0.0f;
+	//fullVP.TopLeftY = 0.0f;
+	//fullVP.Width = static_cast<float>(width/2);   // 전체 화면 width
+	//fullVP.Height = static_cast<float>(height/2);  // 전체 화면 height
+	//fullVP.MinDepth = 0.0f;
+	//fullVP.MaxDepth = 1.0f;
+
+	//context->RSSetViewports(1, &vp);
+
+	//context->RSSetViewports(1, &fullVP);
+
+	context->PSSetSamplers(5, 1, &m_PointClampSampler);  // s5 채우기
+
 
 	// ========== Shader 바인딩 ==========
 	context->VSSetShader(m_meshVS, nullptr, 0);
+	//context->PSSetShader(m_meshPS, nullptr, 0); // 🔥
 	context->PSSetShader(nullptr, nullptr, 0); // 🔥
 	context->IASetInputLayout(m_meshInputLayout);
 
@@ -254,14 +281,14 @@ void MeshRenderer::RenderMeshDepth(ID3D11DeviceContext* context, ID3D11Buffer* m
 	float volHalfWorld = overallSize * 0.5f;
 	float meshHalfWorld = (maxMesh * meshScale) * 0.5f;
 
-	std::cout << "===== World Half Extent Check =====" << std::endl;
+	/*std::cout << "===== World Half Extent Check =====" << std::endl;
 	std::cout << "Volume half extent (world):" << volHalfWorld << std::endl;
 	std::cout << "Mesh half extent   (world):" << meshHalfWorld << std::endl;
 	std::cout << "Mesh / Volume ratio:"
 		<< (meshHalfWorld / volHalfWorld) << std::endl;
 	std::cout << "Expected ratio (maxMesh / maxPhysicalVol):"
 		<< (maxMesh / maxPhysicalVol) << std::endl;
-	std::cout << "===================================" << std::endl;
+	std::cout << "===================================" << std::endl;*/
 
 	cb.WVP = XMMatrixTranspose(fullWorld * v * p);
 	cb.World = XMMatrixTranspose(fullWorld);
@@ -465,7 +492,7 @@ void MeshRenderer::RenderMesh(ID3D11DeviceContext* context, ID3D11Buffer* m_mesh
 	ClipSettings cs;
 	cs.clipPlane = DirectX::XMFLOAT4(0, 0, 1, -0.15f);
 	cs.enableClip = 1;
-
+	
 	context->UpdateSubresource(m_clipSettingsBuffer, 0, nullptr, &cs, 0, 0);
 	context->PSSetConstantBuffers(1, 1, &m_clipSettingsBuffer);
 
