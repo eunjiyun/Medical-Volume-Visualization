@@ -76,6 +76,12 @@
     <ClCompile Include="PLYLoader.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="MeshRenderer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ToothMaskRenderer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <QtMoc Include="QDirect3D11Widget.h">
@@ -125,6 +131,12 @@
     <ClInclude Include="PLYLoader.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="MeshRenderer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ToothMaskRenderer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="PixelShader.hlsl" />
@@ -138,6 +150,7 @@
     <FxCompile Include="VolumeRaymarchPS.hlsl" />
     <FxCompile Include="MeshVS.hlsl" />
     <FxCompile Include="MeshPS.hlsl" />
+    <FxCompile Include="ToothMaskPS.hlsl" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="icon.ico">
