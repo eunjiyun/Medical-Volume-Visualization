@@ -274,6 +274,6 @@ float4 main(PSInput input) : SV_Target
 
 	if (CameraPosAndAlpha.w == 1.0) return float4(acc.rgb, 1.0);
 	if (CameraPosAndAlpha.w == 0.0) return float4(acc.rgb, 0.0);
-	if (CameraPosAndAlpha.w == 2.0) return float4(acc.rgb, 0.5);
+	if (CameraPosAndAlpha.w == 2.0) return float4(acc.rgb, 0.2);
 	return float4(acc.rgb, acc.a);
 }

@@ -27,13 +27,13 @@ float4 main(PS_INPUT input) : SV_TARGET
 	color.rgb *= 0.95;  // 밝기 살짝 낮춤
 
 	// ===== 알파: 매우 투명하게 ===== ★핵심★
-	float alpha = 0.25;  // 기본 투명도 (0.5 → 0.25)
+	float alpha = 0.8;  // 기본 투명도 (0.5 → 0.25)
 
 	// 텍스처 밝기에 따라 약간 조절 (선택사항)
 	float brightness = (color.r + color.g + color.b) / 3.0;
 	alpha += brightness * 0.1;  // 밝은 부분만 살짝 더 보이게
 
-	alpha = clamp(alpha, 0.6, 0.85);  // 범위: 매우 투명
+	alpha = clamp(alpha, 0.8, 0.9);  // 범위: 매우 투명
 
 	color.a = alpha;
 
