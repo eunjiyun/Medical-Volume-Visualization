@@ -253,7 +253,7 @@ void MeshRenderer::RenderMeshDepth(ID3D11DeviceContext* context, ID3D11Buffer* m
 	 // ✅ mm 좌표 → 정규화 좌표
 	//float meshScale = overallSize / maxPhysicalVol;
 	float meshScale = 1.5f / maxPhysicalVol;
-
+	 
 
 
 	//std::cout << "meshScale:" << meshScale << std::endl; // 0.00521

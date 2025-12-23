@@ -4065,18 +4065,7 @@ void QDirect3D11Widget::RenderAllQuads()
 
 
 
-				//// ✅ Alpha blending ON
-				//m_pDeviceContext->OMSetBlendState(meshRenderer->alphaBlendState, nullptr, 0xffffffff);
-				//m_pDeviceContext->OMSetDepthStencilState(meshRenderer->depthReadState, 0);
-
-				meshRenderer->RenderMesh(
-					m_pDeviceContext, m_meshVertexBuffer, m_meshVS, m_meshPS, m_meshInputLayout,
-					m_clipSettingsBuffer, m_meshConstantBuffer, m_meshTexture,
-					m_MeshSamplerState, m_pDevice, m_meshVertexCount,
-					maxMesh, maxPhysicalVol, overallSize,
-					worldMat, viewMat, projMat
-				);
-
+				
 
 			}
 
@@ -4165,6 +4154,21 @@ void QDirect3D11Widget::RenderAllQuads()
 			//	maxMesh, maxPhysicalVol, overallSize,
 			//	worldMat, viewMat, projMat
 			//);
+
+
+			if(isMesh)
+				//// ✅ Alpha blending ON
+				//m_pDeviceContext->OMSetBlendState(meshRenderer->alphaBlendState, nullptr, 0xffffffff);
+				//m_pDeviceContext->OMSetDepthStencilState(meshRenderer->depthReadState, 0);
+
+				meshRenderer->RenderMesh(
+					m_pDeviceContext, m_meshVertexBuffer, m_meshVS, m_meshPS, m_meshInputLayout,
+					m_clipSettingsBuffer, m_meshConstantBuffer, m_meshTexture,
+					m_MeshSamplerState, m_pDevice, m_meshVertexCount,
+					maxMesh, maxPhysicalVol, overallSize,
+					worldMat, viewMat, projMat
+				);
+
 		}
 		else {
 
