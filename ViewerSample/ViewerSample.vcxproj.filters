@@ -67,13 +67,16 @@
     <ClCompile Include="imgui.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="ArcBall.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="TransferFunction.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="PLYLoader.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="MeshRenderer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="VolumeToTexture.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -116,13 +119,19 @@
     <ClInclude Include="imstb_truetype.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="ArcBall.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="TransferFunction.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="PLYLoader.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="MeshRenderer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="resource1.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="VolumeToTexture.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -138,10 +147,19 @@
     <FxCompile Include="VolumeRaymarchPS.hlsl" />
     <FxCompile Include="MeshVS.hlsl" />
     <FxCompile Include="MeshPS.hlsl" />
+    <FxCompile Include="FaceMesh_WithCT_VS.hlsl" />
+    <FxCompile Include="FaceMesh_WithCT_PS.hlsl" />
+    <FxCompile Include="SimpleQuad_PS.hlsl" />
+    <FxCompile Include="SimpleQuad_VS.hlsl" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="icon.ico">
       <Filter>Resource Files</Filter>
     </Image>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="ViewerSample.rc">
+      <Filter>Resource Files</Filter>
+    </ResourceCompile>
   </ItemGroup>
 </Project>

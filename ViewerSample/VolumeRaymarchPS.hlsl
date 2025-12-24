@@ -70,11 +70,11 @@ float4 main(PSInput input) : SV_Target
 
 	float2 uv = input.uv;
 
-	// 예: 좌상단 쿼드만 depth가 있을 경우
-	uv.x *= 0.5;
-	uv.y *= 0.5;
+	//// 예: 좌상단 쿼드만 depth가 있을 경우
+	//uv.x *= 0.5;
+	//uv.y *= 0.5;
 
-	
+	//return float4(1, 0, 0, 1);
 
 
 
@@ -448,8 +448,8 @@ float4 main(PSInput input) : SV_Target
 
 			float3 skinTint = float3(0.78, 0.62, 0.55);
 
-			ca.rgb = lerp(skinTint, ca.rgb, skinFade);
-			ca.a *= skinFade;
+		//	ca.rgb = lerp(skinTint, ca.rgb, skinFade);
+		//	ca.a *= skinFade;
 		//}
 
 		//return float4(saturate(dist * 50), 0, 0, 1);
@@ -507,7 +507,7 @@ float4 main(PSInput input) : SV_Target
 		float lighting = (CameraPosAndAlpha.w == 2.0)
 						 ? (0.92 + lambert * 0.08)
 						 : (0.88 + lambert * 0.12);
-
+		spec *= 0.05;   // 지금보다 훨씬 줄여
 		ca.rgb *= lighting;
 		ca.rgb += spec * float3(0.06,0.05,0.04);
 
@@ -632,5 +632,5 @@ float4 main(PSInput input) : SV_Target
 
 	if (CameraPosAndAlpha.w == 1.0) return float4(acc.rgb, 1.0);
 	if (CameraPosAndAlpha.w == 0.0) return float4(acc.rgb, 0.0);
-	return float4(acc.rgb, acc.a);
+	return float4(acc.rgb, 1.0);
 }

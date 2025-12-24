@@ -21,6 +21,7 @@ public slots:
 	void render();
 	void onBtnColorInvertClicked();
 	void huValueChanged(int value);
+	void transparencyValueChanged(int value);
 
 
 	void brightnessCenterChanged(double value);  // Window Center

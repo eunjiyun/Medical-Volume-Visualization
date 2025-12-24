@@ -47,6 +47,7 @@ void ViewerSample::connectSlots()
 
 	connect(ui->huSlider, &QSlider::valueChanged, this, &ViewerSample::huValueChanged);
 	connect(ui->contrastSlider, &QSlider::valueChanged, this, &ViewerSample::contrastWidthChanged);
+	connect(ui->slider2, &QSlider::valueChanged, this, &ViewerSample::transparencyValueChanged);
 
 
 	// 시그널 연결
@@ -150,6 +151,42 @@ void ViewerSample::huValueChanged(int value)
 
 	update();
 }
+
+
+
+void ViewerSample::transparencyValueChanged(int value)
+{
+
+	float trans = (float)value;
+	//ui->huValueLabel->setText(QString::number((int)huCenter));
+
+	if (!m_pScene || !m_pScene->fileReader) return;
+
+	m_pScene->meshRenderer->faceBlend = trans/1000.f;
+
+	//// ⭐ Width를 늘림
+	//m_pScene->fileReader->volWC = huCenter;
+	//// ⭐ HU 값을 0~1로 정규화
+	//float t = (huCenter + 1000.0f) / 4000.0f;  // -1000~3000 → 0~1
+	//// ⭐ Window Width를 역으로 조정 (HU 높을수록 좁게)
+	//float windowWidth = 4000.0f - t * 3000.0f;  // 4000 → 1000
+
+	//m_pScene->fileReader->volWW = windowWidth;  // 1500 → 3000
+
+
+	//float sliderNorm = (huCenter - (-1000.0f)) / (3000.0f - (-1000.0f));
+	//// 결과: HU=-3600 → 0.0
+	////       HU=-1000 → 1.0
+	//sliderNorm = std::clamp(sliderNorm, 0.0f, 1.0f);
+
+	//float minBoost = 3.0f;   // HU 최소 → soft tissue 3배 진하게
+	//float maxBoost = 0.4f;   // HU 최대 → soft tissue 40%만 남김
+
+	////m_pScene->cb.alphaScale = minBoost * (1.0f - sliderNorm) + maxBoost * sliderNorm;
+
+	update();
+}
+
 
 void ViewerSample::brightnessCenterChanged(double brightness)
 {
@@ -418,6 +455,11 @@ void ViewerSample::init(bool success)
 	ui->brightnessSlider->setValue(0);
 	ui->brightnessSlider->setInvertedAppearance(true);  // ⭐ UI 방향 반대로
 	ui->brightnessSlider->setInvertedControls(true);
+
+	// ViewerSample 초기화
+	ui->slider2->setMinimum(0);
+	ui->slider2->setMaximum(500);
+	ui->slider2->setValue(1000);  // 뼈 중심
 
 
 	//contrast

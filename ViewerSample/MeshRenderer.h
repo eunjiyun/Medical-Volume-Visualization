@@ -11,6 +11,15 @@ struct MeshConstantBuffer
 	DirectX::XMMATRIX WorldView;  // ✅ 추가
 };
 
+
+struct MeshConstantBufferWithCT
+{
+	XMMATRIX WVP;
+	XMMATRIX World;
+	XMMATRIX WorldView;
+	XMFLOAT4 CTBlendParams;  // ⭐ x = strength, yzw = unused
+};
+
 struct ClipSettings {
 	DirectX::XMFLOAT4 clipPlane;  // (nx, ny, nz, d)
 	int enableClip;
@@ -44,6 +53,10 @@ public:
 
 	ID3D11ShaderResourceView* m_faceColorSRV;
 
+	// ⭐ 메쉬 셰이더는 여기서 관리
+	ID3D11VertexShader* m_meshVS;  // FaceMesh_WithCT_VS
+	ID3D11PixelShader* m_meshPS;   // FaceMesh_WithCT_PS
+
 public:
 	void CreateTwoPassStates(ID3D11Device* device);
 	//void RenderMeshTwoPass(ID3D11DeviceContext* context);
@@ -61,6 +74,28 @@ public:
 		ID3D11SamplerState* m_MeshSamplerState, ID3D11Device* m_pDevice, int m_meshVertexCount,
 		float maxMesh, float maxPhysicalVol, float overallSize,
 		XMMATRIX w, XMMATRIX v, XMMATRIX p);
+	MeshConstantBufferWithCT cbM;
+	float faceBlend{ 0.5f };
+	void MeshRenderer::RenderMeshWithCT(
+		ID3D11DeviceContext* context,
+		ID3D11Buffer* m_meshVertexBuffer,
+		ID3D11VertexShader* m_meshVS,
+		ID3D11PixelShader* m_meshPS,
+		ID3D11InputLayout* m_meshInputLayout,
+		ID3D11Buffer* m_clipSettingsBuffer,
+		ID3D11Buffer* m_meshConstantBuffer,
+		ID3D11ShaderResourceView* m_meshTexture,      // 얼굴 텍스처
+		ID3D11ShaderResourceView* ctTexture,          // ⭐ CT 텍스처
+		ID3D11SamplerState* m_MeshSamplerState,
+		ID3D11Device* m_pDevice,
+		int m_meshVertexCount,
+		float maxMesh,
+		float maxPhysicalVol,
+		float overallSize,
+		XMMATRIX w,
+		XMMATRIX v,
+		XMMATRIX p,
+		float ctBlendStrength);
 	void Cleanup();
 };
 

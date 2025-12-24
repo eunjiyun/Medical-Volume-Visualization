@@ -1,6 +1,7 @@
 #include<iostream>
 #include "MeshRenderer.h"
 #include "PLYLoader.h"
+//#include "QDirect3D11Widget.h"
 
 void MeshRenderer::CreateTwoPassStates(ID3D11Device* device)
 {
@@ -517,7 +518,95 @@ void MeshRenderer::RenderMesh(ID3D11DeviceContext* context, ID3D11Buffer* m_mesh
 	context->Draw(m_meshVertexCount, 0);
 }
 
+void MeshRenderer::RenderMeshWithCT(
+	ID3D11DeviceContext* context,
+	ID3D11Buffer* m_meshVertexBuffer,
+	ID3D11VertexShader* m_meshVS,
+	ID3D11PixelShader* m_meshPS,
+	ID3D11InputLayout* m_meshInputLayout,
+	ID3D11Buffer* m_clipSettingsBuffer,
+	ID3D11Buffer* m_meshConstantBuffer,
+	ID3D11ShaderResourceView* m_meshTexture,      // 얼굴 텍스처
+	ID3D11ShaderResourceView* ctTexture,          // ⭐ CT 텍스처
+	ID3D11SamplerState* m_MeshSamplerState,
+	ID3D11Device* m_pDevice,
+	int m_meshVertexCount,
+	float maxMesh,
+	float maxPhysicalVol,
+	float overallSize,
+	XMMATRIX w,
+	XMMATRIX v,
+	XMMATRIX p,
+	float ctBlendStrength)                        // ⭐ CT 합성 강도
+{
+	if (!m_meshVertexBuffer || m_meshVertexCount == 0) return;
 
+	// ========== Shader 바인딩 ==========
+	context->VSSetShader(m_meshVS, nullptr, 0);
+	context->PSSetShader(m_meshPS, nullptr, 0);   // ⭐ FaceMesh_WithCT.hlsl 사용
+	context->IASetInputLayout(m_meshInputLayout);
+
+	// ========== Transform 계산 ==========
+	float meshScale = 1.5f / maxPhysicalVol;  // ⭐ XMFLOAT3 대응
+	DirectX::XMMATRIX scale = XMMatrixScaling(meshScale, meshScale, meshScale);
+	DirectX::XMMATRIX rotation = XMMatrixRotationX(XM_PI);
+	DirectX::XMMATRIX fullWorld = scale * rotation * w;
+
+	// ========== Constant Buffer 업데이트 ==========
+	// ⭐ MeshConstantBuffer에 ctBlendStrength 추가 필요
+	
+
+	
+	cbM.WVP = XMMatrixTranspose(fullWorld * v * p);
+	cbM.World = XMMatrixTranspose(fullWorld);
+	cbM.WorldView = XMMatrixTranspose(fullWorld * v);
+	cbM.CTBlendParams = XMFLOAT4(ctBlendStrength, 0.0f, 0.0f, faceBlend);  // ⭐ CT 강도
+
+	context->UpdateSubresource(m_meshConstantBuffer, 0, nullptr, &cbM, 0, 0);
+	context->VSSetConstantBuffers(0, 1, &m_meshConstantBuffer);
+	context->PSSetConstantBuffers(0, 1, &m_meshConstantBuffer);  // ⭐ PS에도 전달
+
+	// ========== Clipping Settings ==========
+	ClipSettings cs;
+	cs.clipPlane = DirectX::XMFLOAT4(0, 0, 1, -0.15f);
+	cs.enableClip = 1;
+
+	context->UpdateSubresource(m_clipSettingsBuffer, 0, nullptr, &cs, 0, 0);
+	context->PSSetConstantBuffers(1, 1, &m_clipSettingsBuffer);
+
+	// ========== Texture/Sampler 바인딩 ==========
+	// ⭐ t0 = 얼굴 텍스처, t1 = CT 텍스처
+	ID3D11ShaderResourceView* srvs[2] = {
+		m_meshTexture,  // t0
+		ctTexture       // t1 ⭐ CT 텍스처
+	};
+	context->PSSetShaderResources(0, 2, srvs);
+
+	// ⭐ s0 = linear sampler (양쪽 다 사용)
+	context->PSSetSamplers(0, 1, &m_MeshSamplerState);
+
+	// ========== Rasterizer ==========
+	context->RSSetState(rastState);
+
+	// ========== Vertex Buffer ==========
+	UINT stride = sizeof(PLY::VertexWithTexture);
+	UINT offset = 0;
+	context->IASetVertexBuffers(0, 1, &m_meshVertexBuffer, &stride, &offset);
+	context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+	// ========== 렌더 스테이트 설정 ==========
+	// ⭐ 불투명하게 그리기 (CT 합성 후 완전 불투명)
+	context->OMSetDepthStencilState(depthReadState, 0);      // Depth test ON, write OFF
+	//context->OMSetBlendState(nullptr, nullptr, 0xffffffff);  // ⭐ 블렌딩 OFF (불투명)
+	context->OMSetBlendState(alphaBlendState, nullptr, 0xffffffff);
+
+	// ========== 렌더링 ==========
+	context->Draw(m_meshVertexCount, 0);
+
+	// ========== SRV Unbind ==========
+	ID3D11ShaderResourceView* nullSRVs[2] = { nullptr, nullptr };
+	context->PSSetShaderResources(0, 2, nullSRVs);
+}
 
 void MeshRenderer::Cleanup()
 {

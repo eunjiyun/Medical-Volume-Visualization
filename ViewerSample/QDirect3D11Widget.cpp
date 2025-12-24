@@ -541,6 +541,7 @@ QDirect3D11Widget::~QDirect3D11Widget()
 	}
 
 	meshRenderer->Cleanup();
+	m_volumeToTexture->Shutdown();
 
 }
 
@@ -659,6 +660,17 @@ bool QDirect3D11Widget::init()
 	meshRenderer = new MeshRenderer();
 
 
+	
+	// ⭐ 한 번만 생성 + 초기화
+	if (!m_volumeToTexture) {
+		m_volumeToTexture = std::make_unique<VolumeToTexture>();
+		m_volumeToTexture->Initialize(m_pDevice, width() / 2, height() / 2);
+
+		std::cout << "VolumeToTexture object created at: " << m_volumeToTexture->m_quadVertexBuffer << std::endl;
+	
+
+	
+	}
 
 	rotx = XMMatrixRotationX(-XM_PIDIV2);  // 90도 회전
 	roty = XMMatrixRotationY(XM_PI);  // 90도 회전
@@ -691,7 +703,7 @@ bool QDirect3D11Widget::init()
 	);
 
 
-   // 최대 크기
+	// 최대 크기
 	maxPhysicalVol = Max3(physicalWidth, physicalHeight, physicalDepth);
 
 
@@ -713,7 +725,7 @@ bool QDirect3D11Widget::init()
 	);
 
 
-//	worldMat = scale * roty*rotx;
+	//	worldMat = scale * roty*rotx;
 
 	worldMat =
 		centerTranslate *   // ① 볼륨 물리 중심(mm)을 원점으로 이동
@@ -1185,7 +1197,7 @@ void QDirect3D11Widget::FullScreenPassSet()
 	//	I._31 << " " << I._32 << " " << I._33 << " " << I._34 << "\n" <<
 	//	I._41 << " " << I._42 << " " << I._43 << " " << I._44 << "\n\n";
 
-		
+
 
 
 	//// ✅ 실제 카메라 위치 사용
@@ -1260,7 +1272,7 @@ void QDirect3D11Widget::FullScreenPassSet()
 
 
 	// ✅ 8️⃣ 드로우
-	m_pDeviceContext->Draw(4, 0);
+	//m_pDeviceContext->Draw(4, 0);
 }
 
 
@@ -1369,7 +1381,7 @@ bool QDirect3D11Widget::LoadMeshFromPLY(const std::string& filename, ID3D11Devic
 	//bd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
 
 	D3D11_SUBRESOURCE_DATA initData = {};
-//	initData.pSysMem = centeredVertices.data();
+	//	initData.pSysMem = centeredVertices.data();
 	initData.pSysMem = vertices.data();
 
 	HRESULT hr = device->CreateBuffer(&bd, &initData, &m_meshVertexBuffer);
@@ -1462,7 +1474,7 @@ bool QDirect3D11Widget::LoadMeshTexture(const std::string& filename, ID3D11Devic
 	pointClampDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
 	pointClampDesc.MinLOD = 0;
 	pointClampDesc.MaxLOD = D3D11_FLOAT32_MAX;
-	
+
 
 	hr = device->CreateSamplerState(&pointClampDesc, &meshRenderer->m_PointClampSampler);
 	if (FAILED(hr)) {
@@ -1504,7 +1516,7 @@ bool QDirect3D11Widget::InitializeMeshShaders() {
 	ID3DBlob* errorBlob = nullptr;
 
 	hr = D3DCompileFromFile(
-		L"MeshVS.hlsl",
+		L"FaceMesh_WithCT_VS.hlsl",
 		nullptr,
 		nullptr,
 		"main",
@@ -1560,7 +1572,7 @@ bool QDirect3D11Widget::InitializeMeshShaders() {
 	// Pixel Shader 컴파일
 	ID3DBlob* psBlob = nullptr;
 	hr = D3DCompileFromFile(
-		L"MeshPS.hlsl",
+		L"FaceMesh_WithCT_PS.hlsl",
 		nullptr,
 		nullptr,
 		"main",
@@ -1670,7 +1682,7 @@ bool QDirect3D11Widget::InitializeMeshShaders() {
 bool QDirect3D11Widget::CreateMeshConstantBuffer() {
 	D3D11_BUFFER_DESC bd = {};
 	bd.Usage = D3D11_USAGE_DEFAULT;
-	bd.ByteWidth = sizeof(MeshConstantBuffer);  // 16바이트 배수 (64바이트)
+	bd.ByteWidth = sizeof(MeshConstantBufferWithCT);  // 16바이트 배수 (64바이트)
 	bd.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
 	bd.CPUAccessFlags = 0;
 
@@ -2284,7 +2296,7 @@ void QDirect3D11Widget::RenderMeshWithDepthPeeling(ID3D11DeviceContext* context)
 		}
 
 		// 상수 버퍼 업데이트
-		MeshConstantBuffer cb;
+		MeshConstantBufferWithCT cb;
 		cb.WVP = XMMatrixTranspose(
 			XMMatrixScaling(0.0065f, 0.0065f, 0.0065f) *
 			XMMatrixRotationX(XM_PI) *
@@ -2351,7 +2363,7 @@ void QDirect3D11Widget::CreateDepthStencil()  // 또는 initializeGL 안에서
 	// ========== Depth Texture 생성 ==========
 	D3D11_TEXTURE2D_DESC depthDesc = {};
 	depthDesc.Width = width();
-	depthDesc.Height = height() ;
+	depthDesc.Height = height();
 	depthDesc.MipLevels = 1;
 	depthDesc.ArraySize = 1;
 	depthDesc.Format = DXGI_FORMAT_R32_TYPELESS;  // ✅ 변경!
@@ -2926,50 +2938,141 @@ void QDirect3D11Widget::RenderVolumeView()
 
 		FullScreenPassSet();
 
+					// ⭐ VolumeToTexture 사용
+		XMFLOAT3 voxelDim(fileReader->m_width, fileReader->m_height, fileReader->m_depth);
+
+
+		float huMin = fileReader->volWC - fileReader->volWW / 2.0f;  // -500
+		float huMax = fileReader->volWC + fileReader->volWW / 2.0f;  // +1500
+
+		//		renderMode,
+
+
+	//	//// ✅ 7️⃣ 파이프라인 세팅
+	//	//UINT stride = sizeof(Vtx);
+	//	//UINT offset = 0;
+	//	//ID3D11Buffer* vb[] = { m_quadVB.Get() };
+
+	//	//m_pDeviceContext->IASetVertexBuffers(0, 1, vb, &stride, &offset);
+	//	//m_pDeviceContext->IASetInputLayout(layoutQuad);
+
+
+
+
+	///*	void VolumeToTexture::RenderVolumeToTexture(
+	//		ID3D11DeviceContext* context,
+	//		ID3D11ShaderResourceView* volumeSRV,
+	//		ID3D11ShaderResourceView* transferFunctionSRV,
+	//		ID3D11ShaderResourceView* sceneDepthSRV,
+	//		const XMMATRIX& invView,
+	//		const XMMATRIX& invProj,
+	//		const XMMATRIX& invVolumeWorld,
+	//		const XMMATRIX& view,
+	//		const XMMATRIX& projection,
+	//		const XMFLOAT3& cameraPos,
+	//		float renderMode,
+	//		const XMFLOAT3& voxelDim,
+	//		float maxSteps,
+	//		float huMin,
+	//		float huMax
+	//		,
+	//		ID3D11VertexShader* vs, ID3D11PixelShader* ps,
+	//		ID3D11InputLayout* layout, ID3D11Buffer* cb
+	//		, UINT stride, UINT offset, ID3D11Buffer* m_quadVertexBuffer)*/
+
+
+	//	//m_pDeviceContext->VSSetShader(vsFullscreen, nullptr, 0);
+	//	//m_pDeviceContext->PSSetShader(psRaymarch, nullptr, 0);
+
+
+	//		// ✅ 7️⃣ 파이프라인 세팅
+	//	UINT stride = sizeof(Vtx);
+	//	UINT offset = 0;
+	//	ID3D11Buffer* vb[] = { m_quadVB.Get() };
+
+	//	m_pDeviceContext->IASetVertexBuffers(0, 1, vb, &stride, &offset);
+	//	m_pDeviceContext->IASetInputLayout(layoutQuad);
+	//	m_pDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
+
+	//	m_pDeviceContext->VSSetShader(vsFullscreen, nullptr, 0);
+	//	m_pDeviceContext->PSSetShader(psRaymarch, nullptr, 0);
+
+	//	ID3D11Buffer* cbs[] = { cbRay.Get() };
+	//	m_pDeviceContext->VSSetConstantBuffers(0, 1, cbs);
+	//	m_pDeviceContext->PSSetConstantBuffers(0, 1, cbs);
+
+
+		size_t s = sizeof(Vtx);
+		ID3D11Buffer* cbs[] = { cbRay.Get() };
+		ID3D11Buffer* vb[] = { m_quadVB.Get() };
+
+		m_volumeToTexture->RenderVolumeToTexture(
+			m_pDeviceContext,
+			m_volumeSRV.Get(),
+			m_transferFunction->GetSRV(),
+			nullptr,  // ⭐ mesh depth 없음
+			XMMatrixInverse(nullptr, viewMat),
+			XMMatrixInverse(nullptr, projMat),
+			XMMatrixInverse(nullptr, worldMat),
+			viewMat,
+			projMat,
+			XMFLOAT3(XMVectorGetX(eye), XMVectorGetY(eye), XMVectorGetZ(eye)),
+			cb.CameraPosAndAlpha.w,
+			voxelDim,
+			256.0f,
+			huMin,
+			huMax,
+			vsFullscreen,
+			psRaymarch, layoutQuad, *cbs,
+			s,0, *vb
+		);
+
+
+
 	}
 
 
 
 
-	//m_pDeviceContext->ClearDepthStencilView(m_pDepthStencilView, D3D11_CLEAR_DEPTH, 1.0f, 0);
-	m_pDeviceContext->OMSetRenderTargets(1, &m_pSwapChainRTV, m_pDepthStencilView);
+	////m_pDeviceContext->ClearDepthStencilView(m_pDepthStencilView, D3D11_CLEAR_DEPTH, 1.0f, 0);
+	//m_pDeviceContext->OMSetRenderTargets(1, &m_pSwapChainRTV, m_pDepthStencilView);
 
-	m_pDeviceContext->VSSetShader(m_volumeVS, nullptr, 0);
-	m_pDeviceContext->PSSetShader(m_volumePS, nullptr, 0);
-	m_pDeviceContext->VSSetConstantBuffers(0, 1, &m_volumeConstantBuffer);
-	m_pDeviceContext->PSSetConstantBuffers(0, 1, &m_volumeConstantBuffer);
-
-
-	XMStoreFloat4x4(&constants.View, XMMatrixTranspose(viewMat));
-	XMStoreFloat4x4(&constants.Projection, XMMatrixTranspose(projMat));
+	//m_pDeviceContext->VSSetShader(m_volumeVS, nullptr, 0);
+	//m_pDeviceContext->PSSetShader(m_volumePS, nullptr, 0);
+	//m_pDeviceContext->VSSetConstantBuffers(0, 1, &m_volumeConstantBuffer);
+	//m_pDeviceContext->PSSetConstantBuffers(0, 1, &m_volumeConstantBuffer);
 
 
-	//// ---- Axial (XY plane, z=0)
-	//{
-	//	constants.World = m_AxialPlane.worldMatrix;  // ✅ 저장된 World Matrix 사용
-	//	constants.Voxel = XMFLOAT4(1.0f, 0.0f, 1.0f, 1.0f); // 자홍
-	//	m_pDeviceContext->UpdateSubresource(m_volumeConstantBuffer, 0, nullptr, &constants, 0, 0);
-	//	DrawPlane(m_AxialPlane);
-
-	//}
-
-	//// ---- Coronal (XZ plane, y=0)
-	//{
+	//XMStoreFloat4x4(&constants.View, XMMatrixTranspose(viewMat));
+	//XMStoreFloat4x4(&constants.Projection, XMMatrixTranspose(projMat));
 
 
-	//	constants.World = m_CoronalPlane.worldMatrix; // ✅ 저장된 World Matrix 사용
-	//	constants.Voxel = XMFLOAT4(0.0f, 1.0f, 1.0f, 1.0f); // 청록
-	//	m_pDeviceContext->UpdateSubresource(m_volumeConstantBuffer, 0, nullptr, &constants, 0, 0);
-	//	DrawPlane(m_CoronalPlane);
-	//}
+	////// ---- Axial (XY plane, z=0)
+	////{
+	////	constants.World = m_AxialPlane.worldMatrix;  // ✅ 저장된 World Matrix 사용
+	////	constants.Voxel = XMFLOAT4(1.0f, 0.0f, 1.0f, 1.0f); // 자홍
+	////	m_pDeviceContext->UpdateSubresource(m_volumeConstantBuffer, 0, nullptr, &constants, 0, 0);
+	////	DrawPlane(m_AxialPlane);
 
-	//// ---- Sagittal (YZ plane, x=0)
-	//{
-	//	constants.World = m_SagittalPlane.worldMatrix; // ✅ 저장된 World Matrix 사용
-	//	constants.Voxel = XMFLOAT4(1.0f, 1.0f, 0.0f, 1.0f); // 노랑
-	//	m_pDeviceContext->UpdateSubresource(m_volumeConstantBuffer, 0, nullptr, &constants, 0, 0);
-	//	DrawPlane(m_SagittalPlane);
-	//}
+	////}
+
+	////// ---- Coronal (XZ plane, y=0)
+	////{
+
+
+	////	constants.World = m_CoronalPlane.worldMatrix; // ✅ 저장된 World Matrix 사용
+	////	constants.Voxel = XMFLOAT4(0.0f, 1.0f, 1.0f, 1.0f); // 청록
+	////	m_pDeviceContext->UpdateSubresource(m_volumeConstantBuffer, 0, nullptr, &constants, 0, 0);
+	////	DrawPlane(m_CoronalPlane);
+	////}
+
+	////// ---- Sagittal (YZ plane, x=0)
+	////{
+	////	constants.World = m_SagittalPlane.worldMatrix; // ✅ 저장된 World Matrix 사용
+	////	constants.Voxel = XMFLOAT4(1.0f, 1.0f, 0.0f, 1.0f); // 노랑
+	////	m_pDeviceContext->UpdateSubresource(m_volumeConstantBuffer, 0, nullptr, &constants, 0, 0);
+	////	DrawPlane(m_SagittalPlane);
+	////}
 
 }
 
@@ -3953,86 +4056,294 @@ void QDirect3D11Widget::CreateDepthStencilBuffer()
 
 
 
+//void QDirect3D11Widget::RenderAllQuads()
+//{
+//
+//	// 클릭된 위치 → 환자 좌표
+//	patientCoord = GetPatientCoordFromClick(clickedViewIndex, currentUV[clickedViewIndex]);
+//
+//
+//	//// ✅ 디버그 추가
+//	//qDebug() << "m_pDepthStencilView:" << m_pDepthStencilView;
+//	//qDebug() << "m_depthSRV:" << m_depthSRV;
+//	//qDebug() << "m_depthTexture:" << m_depthTexture;
+//
+//	//// 2. 백버퍼에 출력할 준비
+//	m_pDeviceContext->OMSetRenderTargets(1, &m_pSwapChainRTV, m_pDepthStencilView);
+//	m_pDeviceContext->ClearRenderTargetView(m_pSwapChainRTV, reinterpret_cast<float*>(&m_BackColor));
+//
+//	// ✅ 깊이 버퍼 클리어 (3D 렌더링에 필요)
+//	if (m_pDepthStencilView) {
+//		m_pDeviceContext->ClearDepthStencilView(m_pDepthStencilView,
+//			D3D11_CLEAR_DEPTH,
+//			0.0f, 0);
+//	}
+//
+//	// 3. 각 렌더 타겟 텍스처를 quad로 출력
+//	for (int i{}; i < 4; ++i)
+//	{
+//		D3D11_VIEWPORT vp = CreateViewport(i); // ← 4분할 뷰포트 계산
+//
+//		m_pDeviceContext->RSSetViewports(1, &vp); // ✅ 모든 뷰에 설정
+//
+//
+//		if (0 == i) {
+//
+//
+//			if (isMesh) {
+//
+//
+//			/*	qDebug() << "Before mesh render:";
+//				qDebug() << "  m_pDepthStencilView:" << m_pDepthStencilView;
+//				qDebug() << "  m_depthSRV:" << m_depthSRV;*/
+//
+//				// DSV가 가리키는 리소스
+//				ID3D11Resource* dsvResource = nullptr;
+//				m_pDepthStencilView->GetResource(&dsvResource);
+//				//qDebug() << "  DSV resource:" << dsvResource;
+//
+//				// SRV가 가리키는 리소스
+//				ID3D11Resource* srvResource = nullptr;
+//				m_depthSRV->GetResource(&srvResource);
+//				//qDebug() << "  SRV resource:" << srvResource;
+//
+//				//if (dsvResource == srvResource) {
+//				//	qDebug() << "  ✅ SAME TEXTURE!";
+//				//}
+//				//else {
+//				//	qDebug() << "  ❌ DIFFERENT TEXTURES! This is the problem!";
+//				//}
+//
+//				dsvResource->Release();
+//				srvResource->Release();
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//				// ✅ RTV + DSV 바인딩 유지
+//				m_pDeviceContext->OMSetRenderTargets(1, &m_pSwapChainRTV, m_pDepthStencilView);
+//
+//				m_pDeviceContext->ClearDepthStencilView(
+//					m_pDepthStencilView,
+//					D3D11_CLEAR_DEPTH,
+//					1.0f,
+//					0
+//				);
+//
+//				//m_pDeviceContext->PSSetSamplers(5, 1, &m_pointClampSampler);  // s5 채우기
+//
+//				meshRenderer->RenderMeshDepth(
+//					m_pDeviceContext, m_meshVertexBuffer, m_meshVS, m_meshPS, m_meshInputLayout,
+//					m_clipSettingsBuffer, m_meshConstantBuffer, m_meshTexture,
+//					m_MeshSamplerState, m_pDevice, m_meshVertexCount,
+//					maxMesh, maxPhysicalVol, overallSize,
+//					worldMat, viewMat, projMat, width(), height()
+//				);
+//
+//
+//
+//
+//
+//
+//
+//
+//				////// ✅ RTV + DSV 바인딩 유지
+//				//m_pDeviceContext->OMSetRenderTargets(1, &m_pSwapChainRTV, m_pDepthStencilView);
+//
+//				//meshRenderer->RenderMeshDepth(
+//				//	m_pDeviceContext, m_meshVertexBuffer, m_meshVS, m_meshPS, m_meshInputLayout,
+//				//	m_clipSettingsBuffer, m_meshConstantBuffer, m_meshTexture,
+//				//	m_MeshSamplerState, m_pDevice, m_meshVertexCount,
+//				//	maxMesh, maxPhysicalVol, overallSize,
+//				//	worldMat, viewMat, projMat
+//				//);
+//
+//
+//			
+//
+//
+//
+//				//// ✅ Alpha blending ON
+//				//m_pDeviceContext->OMSetBlendState(meshRenderer->alphaBlendState, nullptr, 0xffffffff);
+//				//m_pDeviceContext->OMSetDepthStencilState(meshRenderer->depthReadState, 0);
+//
+//				meshRenderer->RenderMesh(
+//					m_pDeviceContext, m_meshVertexBuffer, m_meshVS, m_meshPS, m_meshInputLayout,
+//					m_clipSettingsBuffer, m_meshConstantBuffer, m_meshTexture,
+//					m_MeshSamplerState, m_pDevice, m_meshVertexCount,
+//					maxMesh, maxPhysicalVol, overallSize,
+//					worldMat, viewMat, projMat
+//				);
+//
+//
+//			}
+//
+//			// ========== 2. DSV Unbind (중요!) ==========
+//// ✅ DSV로 쓰고 있으면 SRV로 읽을 수 없음!
+//			m_pDeviceContext->OMSetRenderTargets(1, &m_pSwapChainRTV, nullptr);
+//
+//			//// ========== 2. Depth SRV를 Volume에 전달 ==========
+//			//// ✅ 2. Depth SRV를 Volume Shader에 전달
+// // ========== Depth SRV 바인딩 ==========
+//			//// ✅ 디버그 확인
+//			//if (m_depthSRV) {
+//			//	qDebug() << "✅ Binding depth SRV to slot 5";
+//			//	m_pDeviceContext->PSSetShaderResources(5, 1, &m_depthSRV);
+//			//}
+//			//else {
+//			//	qDebug() << "❌ ERROR: m_depthSRV is NULL!";
+//			//}
+//
+//
+//			ID3D11ShaderResourceView* srvs[2] = {
+//	m_depthSRV,     // t5
+//	m_meshTexture  // t6 (❌ m_meshTexture 아님)
+//			};
+//
+//			m_pDeviceContext->PSSetShaderResources(5, 2, srvs);
+//			//m_pDeviceContext->PSSetShaderResources(5, 1, &m_depthSRV);
+//			//// face texture -> t6
+//			//m_pDeviceContext->PSSetShaderResources(6, 1, &m_meshTexture);
+//
+//
+//
+//			
+//
+//
+//			ID3D11SamplerState* samplers[2] = {
+//	meshRenderer->m_PointClampSampler, // s5 : depth
+//	m_MeshSamplerState   // s6 : face color
+//			};
+//
+//
+//			m_pDeviceContext->PSSetSamplers(5, 2, samplers);
+//
+//
+//
+//			// face sampler -> s6
+//			//m_pDeviceContext->PSSetSamplers(6, 1, &m_MeshSamplerState);
+//
+//
+//			RenderVolumeView();
+//
+//			//// ✅ 4. SRV 언바인딩 (중요!)
+//			//ID3D11ShaderResourceView* nullSRV = nullptr;
+//			//m_pDeviceContext->PSSetShaderResources(5, 1, &nullSRV);
+//
+//			ID3D11ShaderResourceView* nullSRVs[2] = { nullptr, nullptr };
+//			m_pDeviceContext->PSSetShaderResources(5, 2, nullSRVs);
+//
+//
+//			////// ✅ RTV + DSV 바인딩 유지
+//			//m_pDeviceContext->OMSetRenderTargets(1, &m_pSwapChainRTV, m_pDepthStencilView);
+//
+//			//meshRenderer->RenderMeshDepth(
+//			//	m_pDeviceContext, m_meshVertexBuffer, m_meshVS, m_meshPS, m_meshInputLayout,
+//			//	m_clipSettingsBuffer, m_meshConstantBuffer, m_meshTexture,
+//			//	m_MeshSamplerState, m_pDevice, m_meshVertexCount,
+//			//	maxMesh, maxPhysicalVol, overallSize,
+//			//	worldMat, viewMat, projMat
+//			//);
+//
+//
+//			//// ✅ 4. SRV 언바인딩 (중요!)
+//			//ID3D11ShaderResourceView* nullSRV = nullptr;
+//			//m_pDeviceContext->PSSetShaderResources(5, 1, &nullSRV);
+//
+//
+//
+//			////// ✅ Alpha blending ON
+//			////m_pDeviceContext->OMSetBlendState(meshRenderer->alphaBlendState, nullptr, 0xffffffff);
+//			////m_pDeviceContext->OMSetDepthStencilState(meshRenderer->depthReadState, 0);
+//
+//			//meshRenderer->RenderMesh(
+//			//	m_pDeviceContext, m_meshVertexBuffer, m_meshVS, m_meshPS, m_meshInputLayout,
+//			//	m_clipSettingsBuffer, m_meshConstantBuffer, m_meshTexture,
+//			//	m_MeshSamplerState, m_pDevice, m_meshVertexCount,
+//			//	maxMesh, maxPhysicalVol, overallSize,
+//			//	worldMat, viewMat, projMat
+//			//);
+//		}
+//		else {
+//
+//			// ✅ Depth Buffer 해제 (2D는 필요 없음)
+//			m_pDeviceContext->OMSetRenderTargets(1, &m_pSwapChainRTV, nullptr);
+//			DrawQuadWithTexture(m_SRViews.slices[i], vp, i);      // ← 여기서 호출!
+//		}
+//	}
+//
+//
+//	ImGuiIO& io = ImGui::GetIO();
+//
+//
+//
+//	// ✅ 여기에 ImGui 렌더링 추가!
+//	ImGui_ImplDX11_NewFrame();
+//	ImGui_ImplWin32_NewFrame();
+//	ImGui::NewFrame();
+//
+//
+//
+//
+//	// ✅ Begin/End 없이 바로 그리기
+//	ImDrawList* drawList = ImGui::GetBackgroundDrawList();
+//	ImVec2 screenSize = ImGui::GetIO().DisplaySize;
+//	float cx = screenSize.x * 0.5f;
+//	float cy = screenSize.y * 0.5f;
+//
+//	// 수직선 (연한 회색)
+//	drawList->AddLine(ImVec2(cx, 0), ImVec2(cx, screenSize.y), IM_COL32(211, 211, 211, 255), 2.0f);
+//
+//	// 수평선 (연한 회색)
+//	drawList->AddLine(ImVec2(0, cy), ImVec2(screenSize.x, cy), IM_COL32(211, 211, 211, 255), 2.0f);
+//
+//
+//	// ImGui 렌더링 마무리
+//	ImGui::Render();
+//	ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
+//
+//	m_pSwapChain->Present(1, 0);
+//
+//	emit rendered();
+//}
 void QDirect3D11Widget::RenderAllQuads()
 {
+	////m_quadVertexBuffer.Get()
+
+	//std::cout << "\n=== IN m_quadVertexBuffer ===" << std::endl;
+	//std::cout << "m_quadVertexBuffer.get(): " << m_volumeToTexture->m_quadVertexBuffer.Get() << std::endl;
 
 	// 클릭된 위치 → 환자 좌표
 	patientCoord = GetPatientCoordFromClick(clickedViewIndex, currentUV[clickedViewIndex]);
 
-
-	//// ✅ 디버그 추가
-	//qDebug() << "m_pDepthStencilView:" << m_pDepthStencilView;
-	//qDebug() << "m_depthSRV:" << m_depthSRV;
-	//qDebug() << "m_depthTexture:" << m_depthTexture;
-
-	//// 2. 백버퍼에 출력할 준비
+	// 백버퍼 준비
 	m_pDeviceContext->OMSetRenderTargets(1, &m_pSwapChainRTV, m_pDepthStencilView);
 	m_pDeviceContext->ClearRenderTargetView(m_pSwapChainRTV, reinterpret_cast<float*>(&m_BackColor));
 
-	// ✅ 깊이 버퍼 클리어 (3D 렌더링에 필요)
+	// 깊이 버퍼 클리어
 	if (m_pDepthStencilView) {
 		m_pDeviceContext->ClearDepthStencilView(m_pDepthStencilView,
-			D3D11_CLEAR_DEPTH,
-			0.0f, 0);
+			D3D11_CLEAR_DEPTH, 1.0f, 0);
 	}
 
-	// 3. 각 렌더 타겟 텍스처를 quad로 출력
+	// 각 뷰 렌더링
 	for (int i{}; i < 4; ++i)
 	{
-		D3D11_VIEWPORT vp = CreateViewport(i); // ← 4분할 뷰포트 계산
+		D3D11_VIEWPORT vp = CreateViewport(i);
+		m_pDeviceContext->RSSetViewports(1, &vp);
 
-		m_pDeviceContext->RSSetViewports(1, &vp); // ✅ 모든 뷰에 설정
-
-
-		if (0 == i) {
-
+		if (0 == i) {  // 3D View
 
 			if (isMesh) {
-
-
-			/*	qDebug() << "Before mesh render:";
-				qDebug() << "  m_pDepthStencilView:" << m_pDepthStencilView;
-				qDebug() << "  m_depthSRV:" << m_depthSRV;*/
-
-				// DSV가 가리키는 리소스
-				ID3D11Resource* dsvResource = nullptr;
-				m_pDepthStencilView->GetResource(&dsvResource);
-				//qDebug() << "  DSV resource:" << dsvResource;
-
-				// SRV가 가리키는 리소스
-				ID3D11Resource* srvResource = nullptr;
-				m_depthSRV->GetResource(&srvResource);
-				//qDebug() << "  SRV resource:" << srvResource;
-
-				//if (dsvResource == srvResource) {
-				//	qDebug() << "  ✅ SAME TEXTURE!";
-				//}
-				//else {
-				//	qDebug() << "  ❌ DIFFERENT TEXTURES! This is the problem!";
-				//}
-
-				dsvResource->Release();
-				srvResource->Release();
-
-
-
-
-
-
-
-
-
-				// ✅ RTV + DSV 바인딩 유지
+				// ========== 1단계: Mesh Depth Pre-pass ==========
 				m_pDeviceContext->OMSetRenderTargets(1, &m_pSwapChainRTV, m_pDepthStencilView);
-
-				m_pDeviceContext->ClearDepthStencilView(
-					m_pDepthStencilView,
-					D3D11_CLEAR_DEPTH,
-					1.0f,
-					0
-				);
-
-				//m_pDeviceContext->PSSetSamplers(5, 1, &m_pointClampSampler);  // s5 채우기
+				m_pDeviceContext->ClearDepthStencilView(m_pDepthStencilView,
+					D3D11_CLEAR_DEPTH, 1.0f, 0);
 
 				meshRenderer->RenderMeshDepth(
 					m_pDeviceContext, m_meshVertexBuffer, m_meshVS, m_meshPS, m_meshInputLayout,
@@ -4042,165 +4353,108 @@ void QDirect3D11Widget::RenderAllQuads()
 					worldMat, viewMat, projMat, width(), height()
 				);
 
+				// ========== 2단계: Volume → Texture (CT 렌더링) ==========
+				// ⭐ DSV unbind (SRV로 읽기 위해)
+				m_pDeviceContext->OMSetRenderTargets(1, &m_pSwapChainRTV, nullptr);
 
-
-
-
-
-
-
-				////// ✅ RTV + DSV 바인딩 유지
-				//m_pDeviceContext->OMSetRenderTargets(1, &m_pSwapChainRTV, m_pDepthStencilView);
-
-				//meshRenderer->RenderMeshDepth(
-				//	m_pDeviceContext, m_meshVertexBuffer, m_meshVS, m_meshPS, m_meshInputLayout,
-				//	m_clipSettingsBuffer, m_meshConstantBuffer, m_meshTexture,
-				//	m_MeshSamplerState, m_pDevice, m_meshVertexCount,
-				//	maxMesh, maxPhysicalVol, overallSize,
-				//	worldMat, viewMat, projMat
+	
+				//volumeToTexture->RenderVolumeToTexture(
+				//	m_pDeviceContext,
+				//	m_volumeSRV,              // 볼륨 텍스처
+				//	m_transferFunctionSRV,    // Transfer Function
+				//	m_depthSRV,               // Mesh depth
+				//	XMMatrixInverse(nullptr, viewMat),   // invView
+				//	XMMatrixInverse(nullptr, projMat),   // invProj
+				//	XMMatrixInverse(nullptr, volumeWorldMat),  // invVolumeWorld
+				//	viewMat,
+				//	projMat,
+				//	cameraPos,
+				//	renderMode,
+				//	voxelDim,
+				//	maxRaymarchSteps,
+				//	huMin,
+				//	huMax
 				//);
 
+				RenderVolumeView();
 
-			
+				//// ========== 3단계: Mesh 최종 렌더링 (CT 합성) ==========
+				m_pDeviceContext->OMSetRenderTargets(1, &m_pSwapChainRTV, m_pDepthStencilView);
+
+				//// ⭐ CT 텍스처를 메쉬 렌더러에 전달
+				ID3D11ShaderResourceView* ctTexture = m_volumeToTexture->m_resultSRV;
+
+
+				////// ⭐ 텍스처를 화면에 복사 (Fullscreen Quad)
+				//m_volumeToTexture->DrawTextureToScreen(m_pDevice,m_volumeToTexture->m_resultSRV, m_pDeviceContext);
+
+				meshRenderer->RenderMeshWithCT(
+					m_pDeviceContext,
+					m_meshVertexBuffer,
+					m_meshVS,
+					m_meshPS,
+					m_meshInputLayout,
+					m_clipSettingsBuffer,
+					m_meshConstantBuffer,
+					m_meshTexture,      // 얼굴 텍스처
+					ctTexture,          // ⭐ CT 텍스처
+					m_MeshSamplerState,
+					m_pDevice,
+					m_meshVertexCount,
+					maxMesh,
+					maxPhysicalVol,
+					overallSize,
+					worldMat,
+					viewMat,
+					projMat,
+					m_volumeToTexture->ctBlendStrength     // 0.15 ~ 0.3
+				);
 
 
 
-				//// ✅ Alpha blending ON
-				//m_pDeviceContext->OMSetBlendState(meshRenderer->alphaBlendState, nullptr, 0xffffffff);
-				//m_pDeviceContext->OMSetDepthStencilState(meshRenderer->depthReadState, 0);
-
-				meshRenderer->RenderMesh(
+			/*	meshRenderer->RenderMesh(
 					m_pDeviceContext, m_meshVertexBuffer, m_meshVS, m_meshPS, m_meshInputLayout,
 					m_clipSettingsBuffer, m_meshConstantBuffer, m_meshTexture,
 					m_MeshSamplerState, m_pDevice, m_meshVertexCount,
 					maxMesh, maxPhysicalVol, overallSize,
 					worldMat, viewMat, projMat
-				);
+				);*/
 
-
+				// ⭐ SRV unbind
+				ID3D11ShaderResourceView* nullSRV = nullptr;
+				m_pDeviceContext->PSSetShaderResources(1, 1, &nullSRV);
 			}
-
-			// ========== 2. DSV Unbind (중요!) ==========
-// ✅ DSV로 쓰고 있으면 SRV로 읽을 수 없음!
-			m_pDeviceContext->OMSetRenderTargets(1, &m_pSwapChainRTV, nullptr);
-
-			//// ========== 2. Depth SRV를 Volume에 전달 ==========
-			//// ✅ 2. Depth SRV를 Volume Shader에 전달
- // ========== Depth SRV 바인딩 ==========
-			//// ✅ 디버그 확인
-			//if (m_depthSRV) {
-			//	qDebug() << "✅ Binding depth SRV to slot 5";
-			//	m_pDeviceContext->PSSetShaderResources(5, 1, &m_depthSRV);
-			//}
-			//else {
-			//	qDebug() << "❌ ERROR: m_depthSRV is NULL!";
-			//}
-
-
-			ID3D11ShaderResourceView* srvs[2] = {
-	m_depthSRV,     // t5
-	m_meshTexture  // t6 (❌ m_meshTexture 아님)
-			};
-
-			m_pDeviceContext->PSSetShaderResources(5, 2, srvs);
-			//m_pDeviceContext->PSSetShaderResources(5, 1, &m_depthSRV);
-			//// face texture -> t6
-			//m_pDeviceContext->PSSetShaderResources(6, 1, &m_meshTexture);
+			else {
+				// Mesh 없을 때: 기존 볼륨 렌더링
+				m_pDeviceContext->OMSetRenderTargets(1, &m_pSwapChainRTV, nullptr);
+				RenderVolumeView();
 
 
 
-			
-
-
-			ID3D11SamplerState* samplers[2] = {
-	meshRenderer->m_PointClampSampler, // s5 : depth
-	m_MeshSamplerState   // s6 : face color
-			};
-
-
-			m_pDeviceContext->PSSetSamplers(5, 2, samplers);
-
-
-
-			// face sampler -> s6
-			//m_pDeviceContext->PSSetSamplers(6, 1, &m_MeshSamplerState);
-
-
-			RenderVolumeView();
-
-			//// ✅ 4. SRV 언바인딩 (중요!)
-			//ID3D11ShaderResourceView* nullSRV = nullptr;
-			//m_pDeviceContext->PSSetShaderResources(5, 1, &nullSRV);
-
-			ID3D11ShaderResourceView* nullSRVs[2] = { nullptr, nullptr };
-			m_pDeviceContext->PSSetShaderResources(5, 2, nullSRVs);
-
-
-			////// ✅ RTV + DSV 바인딩 유지
-			//m_pDeviceContext->OMSetRenderTargets(1, &m_pSwapChainRTV, m_pDepthStencilView);
-
-			//meshRenderer->RenderMeshDepth(
-			//	m_pDeviceContext, m_meshVertexBuffer, m_meshVS, m_meshPS, m_meshInputLayout,
-			//	m_clipSettingsBuffer, m_meshConstantBuffer, m_meshTexture,
-			//	m_MeshSamplerState, m_pDevice, m_meshVertexCount,
-			//	maxMesh, maxPhysicalVol, overallSize,
-			//	worldMat, viewMat, projMat
-			//);
-
-
-			//// ✅ 4. SRV 언바인딩 (중요!)
-			//ID3D11ShaderResourceView* nullSRV = nullptr;
-			//m_pDeviceContext->PSSetShaderResources(5, 1, &nullSRV);
-
-
-
-			////// ✅ Alpha blending ON
-			////m_pDeviceContext->OMSetBlendState(meshRenderer->alphaBlendState, nullptr, 0xffffffff);
-			////m_pDeviceContext->OMSetDepthStencilState(meshRenderer->depthReadState, 0);
-
-			//meshRenderer->RenderMesh(
-			//	m_pDeviceContext, m_meshVertexBuffer, m_meshVS, m_meshPS, m_meshInputLayout,
-			//	m_clipSettingsBuffer, m_meshConstantBuffer, m_meshTexture,
-			//	m_MeshSamplerState, m_pDevice, m_meshVertexCount,
-			//	maxMesh, maxPhysicalVol, overallSize,
-			//	worldMat, viewMat, projMat
-			//);
+				// ⭐ 텍스처를 화면에 복사 (Fullscreen Quad)
+				m_volumeToTexture->DrawTextureToScreen(m_pDevice,m_volumeToTexture->m_resultSRV, m_pDeviceContext);
+			}
 		}
 		else {
-
-			// ✅ Depth Buffer 해제 (2D는 필요 없음)
+			// 2D Views
 			m_pDeviceContext->OMSetRenderTargets(1, &m_pSwapChainRTV, nullptr);
-			DrawQuadWithTexture(m_SRViews.slices[i], vp, i);      // ← 여기서 호출!
+			DrawQuadWithTexture(m_SRViews.slices[i], vp, i);
 		}
 	}
 
-
-	ImGuiIO& io = ImGui::GetIO();
-
-
-
-	// ✅ 여기에 ImGui 렌더링 추가!
+	// ImGui 렌더링
 	ImGui_ImplDX11_NewFrame();
 	ImGui_ImplWin32_NewFrame();
 	ImGui::NewFrame();
 
-
-
-
-	// ✅ Begin/End 없이 바로 그리기
 	ImDrawList* drawList = ImGui::GetBackgroundDrawList();
 	ImVec2 screenSize = ImGui::GetIO().DisplaySize;
 	float cx = screenSize.x * 0.5f;
 	float cy = screenSize.y * 0.5f;
 
-	// 수직선 (연한 회색)
 	drawList->AddLine(ImVec2(cx, 0), ImVec2(cx, screenSize.y), IM_COL32(211, 211, 211, 255), 2.0f);
-
-	// 수평선 (연한 회색)
 	drawList->AddLine(ImVec2(0, cy), ImVec2(screenSize.x, cy), IM_COL32(211, 211, 211, 255), 2.0f);
 
-
-	// ImGui 렌더링 마무리
 	ImGui::Render();
 	ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
 
@@ -4208,7 +4462,6 @@ void QDirect3D11Widget::RenderAllQuads()
 
 	emit rendered();
 }
-
 void QDirect3D11Widget::DrawFullScreenQuad()
 {
 	UINT stride = sizeof(Vertex);
@@ -5344,13 +5597,37 @@ void QDirect3D11Widget::mouseMoveEvent(QMouseEvent* event)
 		m_pDeviceContext->VSSetConstantBuffers(0, 1, &m_meshConstantBuffer);
 
 		m_lastMousePos = currentPos;
-		meshRenderer->RenderMesh(
+		/*meshRenderer->RenderMesh(
 			m_pDeviceContext, m_meshVertexBuffer, m_meshVS, m_meshPS, m_meshInputLayout,
 			m_clipSettingsBuffer, m_meshConstantBuffer, m_meshTexture,
 			m_MeshSamplerState, m_pDevice, m_meshVertexCount,
 			maxMesh, maxPhysicalVol, overallSize,
 			worldMat, viewMat, projMat
+		);*/
+
+
+		meshRenderer->RenderMeshWithCT(
+			m_pDeviceContext,
+			m_meshVertexBuffer,
+			m_meshVS,
+			m_meshPS,
+			m_meshInputLayout,
+			m_clipSettingsBuffer,
+			m_meshConstantBuffer,
+			m_meshTexture,      // 얼굴 텍스처
+			m_volumeToTexture->m_resultSRV,          // ⭐ CT 텍스처
+			m_MeshSamplerState,
+			m_pDevice,
+			m_meshVertexCount,
+			maxMesh,
+			maxPhysicalVol,
+			overallSize,
+			worldMat,
+			viewMat,
+			projMat,
+			m_volumeToTexture->ctBlendStrength     // 0.15 ~ 0.3
 		);
+
 		UpdateVolumeMatrix();
 
 		UpdateSlicePlanePositions();  // ✅ 추가

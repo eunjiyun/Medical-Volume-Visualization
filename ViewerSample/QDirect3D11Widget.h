@@ -14,8 +14,9 @@
 #include<stdexcept>
 #include<unordered_map>
 #include<vector>
-#include "ArcBall.h"
+
 #include "MeshRenderer.h"
+#include "VolumeToTexture.h"
 
 #include "TransferFunction.h"
 using namespace std;
@@ -194,6 +195,7 @@ public:
 	// ⭐ Transfer Function 추가
 	TransferFunction* m_transferFunction;
 	ID3D11SamplerState* m_tfSampler;
+
 
 public:
 
@@ -510,6 +512,7 @@ public:
 
 	FileReader* fileReader = nullptr;
 	MeshRenderer* meshRenderer{ nullptr };
+	std::unique_ptr<VolumeToTexture> m_volumeToTexture;  // ⭐ 추가
 
 	ID3D11ShaderResourceView* axialTextureSRV = nullptr;
 
