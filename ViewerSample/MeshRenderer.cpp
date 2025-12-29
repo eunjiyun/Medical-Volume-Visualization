@@ -252,8 +252,9 @@ void MeshRenderer::RenderMeshDepth(ID3D11DeviceContext* context, ID3D11Buffer* m
 	//float meshScale = correctionFactor * overallSize;
 
 	 // ✅ mm 좌표 → 정규화 좌표
-	//float meshScale = overallSize / maxPhysicalVol;
-	float meshScale = 1.5f / maxPhysicalVol;
+	float meshScale = overallSize / maxPhysicalVol;
+	//float meshScale = 1.5f / maxPhysicalVol;
+	//float meshScale = 1.f;
 
 
 
@@ -475,7 +476,9 @@ void MeshRenderer::RenderMesh(ID3D11DeviceContext* context, ID3D11Buffer* m_mesh
 	context->IASetInputLayout(m_meshInputLayout);
 
 	// ========== Transform 계산 ==========
-	float meshScale = 1.5f / maxPhysicalVol;
+	//float meshScale = 1.5f / maxPhysicalVol;
+	//float meshScale = 1.f;
+	float meshScale = overallSize / maxPhysicalVol;
 
 	DirectX::XMMATRIX scale = XMMatrixScaling(meshScale, meshScale, meshScale);
 	DirectX::XMMATRIX rotation = XMMatrixRotationX(XM_PI);
@@ -528,6 +531,7 @@ void MeshRenderer::RenderMeshWithCT(
 	ID3D11Buffer* m_meshConstantBuffer,
 	ID3D11ShaderResourceView* m_meshTexture,      // 얼굴 텍스처
 	ID3D11ShaderResourceView* ctTexture,          // ⭐ CT 텍스처
+	ID3D11ShaderResourceView* depthTexture,          // ⭐ depth 텍스처
 	ID3D11SamplerState* m_MeshSamplerState,
 	ID3D11Device* m_pDevice,
 	int m_meshVertexCount,
@@ -547,7 +551,9 @@ void MeshRenderer::RenderMeshWithCT(
 	context->IASetInputLayout(m_meshInputLayout);
 
 	// ========== Transform 계산 ==========
-	float meshScale = 1.5f / maxPhysicalVol;  // ⭐ XMFLOAT3 대응
+	//float meshScale = 1.5f / maxPhysicalVol;  // ⭐ XMFLOAT3 대응
+	//float meshScale =1.f;  // ⭐ XMFLOAT3 대응
+	float meshScale = overallSize / maxPhysicalVol;  // ⭐ XMFLOAT3 대응
 	DirectX::XMMATRIX scale = XMMatrixScaling(meshScale, meshScale, meshScale);
 	DirectX::XMMATRIX rotation = XMMatrixRotationX(XM_PI);
 	DirectX::XMMATRIX fullWorld = scale * rotation * w;
@@ -576,11 +582,12 @@ void MeshRenderer::RenderMeshWithCT(
 
 	// ========== Texture/Sampler 바인딩 ==========
 	// ⭐ t0 = 얼굴 텍스처, t1 = CT 텍스처
-	ID3D11ShaderResourceView* srvs[2] = {
+	ID3D11ShaderResourceView* srvs[3] = {
 		m_meshTexture,  // t0
-		ctTexture       // t1 ⭐ CT 텍스처
+		ctTexture ,      // t1 ⭐ CT 텍스처
+		depthTexture
 	};
-	context->PSSetShaderResources(0, 2, srvs);
+	context->PSSetShaderResources(0, 3, srvs);
 
 	// ⭐ s0 = linear sampler (양쪽 다 사용)
 	context->PSSetSamplers(0, 1, &m_MeshSamplerState);

@@ -717,7 +717,8 @@ bool QDirect3D11Widget::init()
 	scaleZ = physicalHeight / maxPhysicalVol;
 
 	// 스케일 행렬
-	overallSize = 1.3f;
+	//overallSize = 1.3f;
+	overallSize = 1.f;
 	scale = XMMatrixScaling(
 		scaleX*overallSize,
 		scaleY*overallSize,
@@ -3010,7 +3011,7 @@ void QDirect3D11Widget::RenderVolumeView()
 			m_pDeviceContext,
 			m_volumeSRV.Get(),
 			m_transferFunction->GetSRV(),
-			nullptr,  // ⭐ mesh depth 없음
+			m_depthSRV,  // ⭐ mesh depth 없음
 			XMMatrixInverse(nullptr, viewMat),
 			XMMatrixInverse(nullptr, projMat),
 			XMMatrixInverse(nullptr, worldMat),
@@ -3113,6 +3114,8 @@ void QDirect3D11Widget::InitializeVolumeCamera()
 
 
 	eye = XMVectorSet(0.0f, 0.0f, -3.0f, 1.0f);
+
+	//eye = XMVectorSet(0.0f, 0.0f, -300.0f, 1.0f);
 	at = XMVectorSet(0.0f, 0.0f, 0.0f, 1.0f);
 	up = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
 
@@ -3152,11 +3155,19 @@ void QDirect3D11Widget::InitializeVolumeCamera()
 	float nearZ = max(0.001f, d - halfZ - marginZ);
 	float farZ = d + halfZ + marginZ;
 
-	projMat = XMMatrixPerspectiveFovLH(
-		XM_PIDIV4,
-		(float)width() / (float)height(),
-		0.1f,
-		100.0f  // Far plane 증가
+	//projMat = XMMatrixPerspectiveFovLH(
+	//	XM_PIDIV4,
+	//	(float)width() / (float)height(),
+	//	0.1f,
+	//	100.0f  // Far plane 증가
+	//);
+
+
+	projMat = XMMatrixOrthographicLH(
+		viewWidth,
+		viewHeight,
+		nearZ,
+		farZ
 	);
 
 	invViewMat = XMMatrixInverse(nullptr, viewMat);
@@ -4388,6 +4399,9 @@ void QDirect3D11Widget::RenderAllQuads()
 				////// ⭐ 텍스처를 화면에 복사 (Fullscreen Quad)
 				//m_volumeToTexture->DrawTextureToScreen(m_pDevice,m_volumeToTexture->m_resultSRV, m_pDeviceContext);
 
+
+				//m_depthSRV,
+
 				meshRenderer->RenderMeshWithCT(
 					m_pDeviceContext,
 					m_meshVertexBuffer,
@@ -4398,6 +4412,7 @@ void QDirect3D11Widget::RenderAllQuads()
 					m_meshConstantBuffer,
 					m_meshTexture,      // 얼굴 텍스처
 					ctTexture,          // ⭐ CT 텍스처
+					m_depthSRV,
 					m_MeshSamplerState,
 					m_pDevice,
 					m_meshVertexCount,
@@ -5616,6 +5631,7 @@ void QDirect3D11Widget::mouseMoveEvent(QMouseEvent* event)
 			m_meshConstantBuffer,
 			m_meshTexture,      // 얼굴 텍스처
 			m_volumeToTexture->m_resultSRV,          // ⭐ CT 텍스처
+			m_depthSRV,
 			m_MeshSamplerState,
 			m_pDevice,
 			m_meshVertexCount,

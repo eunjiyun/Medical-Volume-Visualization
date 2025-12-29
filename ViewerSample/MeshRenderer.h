@@ -86,6 +86,7 @@ public:
 		ID3D11Buffer* m_meshConstantBuffer,
 		ID3D11ShaderResourceView* m_meshTexture,      // 얼굴 텍스처
 		ID3D11ShaderResourceView* ctTexture,          // ⭐ CT 텍스처
+		ID3D11ShaderResourceView* depthTexture,
 		ID3D11SamplerState* m_MeshSamplerState,
 		ID3D11Device* m_pDevice,
 		int m_meshVertexCount,
