@@ -729,7 +729,7 @@ bool QDirect3D11Widget::init()
 
 	// 스케일 행렬
 	//overallSize = 1.3f;
-	overallSize = 1.f;
+	//overallSize = 1.f;
 	scale = XMMatrixScaling(
 		scaleX*overallSize,
 		scaleY*overallSize,

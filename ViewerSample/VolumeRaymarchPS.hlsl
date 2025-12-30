@@ -349,9 +349,9 @@ float4 main(PSInput input) : SV_Target
 		float3 posVS = rayPosVS + rayDirVS * t;
 		float rayViewZ = posVS.z;
 
-		// ⭐ HARD DEPTH BLOCK
-		if (hasMesh && rayViewZ < meshViewZ)
-			continue;
+		//// ⭐ HARD DEPTH BLOCK
+		//if (hasMesh && rayViewZ < meshViewZ)
+		//	continue;
 
 		//		//if (hasMesh && rayViewZ < meshViewZ)
 //		//	continue; // mesh 앞이면 차단
@@ -373,26 +373,34 @@ float4 main(PSInput input) : SV_Target
 				float3 uvw = (currentPos - boxMin) / (boxMax - boxMin);
 		uvw.y = 1.0 - uvw.y;
 
-		if (any(uvw < 0.0) || any(uvw > 1.0))
-			break;
+		//if (any(uvw < 0.0) || any(uvw > 1.0))
+		//	break;
 
 		float hu = volumeTex.SampleLevel(samp, uvw, 0).r;
 		float huNorm = saturate((hu - HuParams.z) / (HuParams.w - HuParams.z));
 		float4 col = transferFunction.SampleLevel(tfSampler, huNorm, 0);
 
-		if (col.a < 0.001)
-			continue;
+		//if (col.a < 0.001)
+		//	continue;
 
 		float alpha = col.a * stepSize * 10.0;
 		acc.rgb += (1.0 - acc.a) * alpha * col.rgb;
 		acc.a += (1.0 - acc.a) * alpha;
 
-		if (acc.a > 0.98)
-			break;
+		//if (acc.a > 0.98)
+		//	break;
 	}
 
 	acc.rgb = pow(saturate(acc.rgb), 1.0 / 2.2);
-	return float4(acc.rgb, 1.0);
+
+
+		if (CameraPosAndAlpha.w == 1.0) return float4(acc.rgb, 1.0);
+	if (CameraPosAndAlpha.w == 0.0) return float4(acc.rgb, 0.0);
+
+
+	//return float4(acc.rgb, acc.a);
+//	return float4(acc.rgb, 1.0);
+	return float4(acc.rgb, 0.6);
 }
 
 

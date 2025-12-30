@@ -265,19 +265,36 @@ void MeshRenderer::RenderMeshDepth(ID3D11DeviceContext* context, ID3D11Buffer* m
 
 
 
+	//DirectX::XMMATRIX scale = XMMatrixScaling(
+	//	/*	meshToVolume,
+	//		meshToVolume,
+	//		meshToVolume*/
+
+	//		meshScale*overallSize,
+	//		meshScale*overallSize,
+	//		meshScale*overallSize
+	//	//volWidth / meshWidth / maxPhysicalVol * 1.42f,
+	//	//volHeight / meshHeight / maxPhysicalVol * 1.42f*1.09f,
+	//	//volDepth / meshDepth / maxPhysicalVol * 1.42f
+	//	
+	//);
+
+
+
 	DirectX::XMMATRIX scale = XMMatrixScaling(
 		/*	meshToVolume,
 			meshToVolume,
 			meshToVolume*/
 
-			meshScale,
-			meshScale,
-			meshScale
+		meshScale*1.f,
+		meshScale*1.f,
+		meshScale*1.f
 		//volWidth / meshWidth / maxPhysicalVol * 1.42f,
 		//volHeight / meshHeight / maxPhysicalVol * 1.42f*1.09f,
 		//volDepth / meshDepth / maxPhysicalVol * 1.42f
-		
+
 	);
+
 
 	/*std::cout << "=================mesh and volume scale======" << std::endl;
 	std::cout << "width : " << volWidth / meshWidth / maxPhysicalVol * 1.42f << std::endl;
@@ -512,19 +529,35 @@ void MeshRenderer::RenderMesh(ID3D11DeviceContext* context, ID3D11Buffer* m_mesh
 
 	
 
+	//DirectX::XMMATRIX scale = XMMatrixScaling(
+	//	/*	meshToVolume,
+	//		meshToVolume,
+	//		meshToVolume*/
+
+	//		meshScale*overallSize,
+	//		meshScale*overallSize,
+	//		meshScale*overallSize
+	//	//volWidth / meshWidth / maxPhysicalVol*1.42f,
+	//	//volHeight / meshHeight / maxPhysicalVol * 1.42f*1.09f,
+	//	//volDepth / meshDepth / maxPhysicalVol * 1.42f
+
+	//);
+
+
 	DirectX::XMMATRIX scale = XMMatrixScaling(
 		/*	meshToVolume,
 			meshToVolume,
 			meshToVolume*/
 
-			meshScale,
-			meshScale,
-			meshScale
-		//volWidth / meshWidth / maxPhysicalVol*1.42f,
+		meshScale*1.f,
+		meshScale*1.f,
+		meshScale*1.f
+		//volWidth / meshWidth / maxPhysicalVol * 1.42f,
 		//volHeight / meshHeight / maxPhysicalVol * 1.42f*1.09f,
 		//volDepth / meshDepth / maxPhysicalVol * 1.42f
 
 	);
+
 
 
 	std::cout << "meshScale : " << meshScale << std::endl;
@@ -609,19 +642,34 @@ void MeshRenderer::RenderMeshWithCT(
 	//DirectX::XMMATRIX scale = XMMatrixScaling(meshScale, meshScale, meshScale);
 
 
+	//DirectX::XMMATRIX scale = XMMatrixScaling(
+	//	/*	meshToVolume,
+	//		meshToVolume,
+	//		meshToVolume*/
+
+	//		meshScale*overallSize,
+	//		meshScale*overallSize,
+	//		meshScale*overallSize
+	//	//volWidth / meshWidth / maxPhysicalVol * 1.42f,
+	//	//volHeight / meshHeight / maxPhysicalVol * 1.42f*1.09f,
+	//	//volDepth / meshDepth / maxPhysicalVol * 1.42f
+
+	//);
+
 	DirectX::XMMATRIX scale = XMMatrixScaling(
 		/*	meshToVolume,
 			meshToVolume,
 			meshToVolume*/
 
-			meshScale,
-			meshScale,
-			meshScale
+		meshScale*1.f,
+		meshScale*1.f,
+		meshScale*1.f
 		//volWidth / meshWidth / maxPhysicalVol * 1.42f,
 		//volHeight / meshHeight / maxPhysicalVol * 1.42f*1.09f,
 		//volDepth / meshDepth / maxPhysicalVol * 1.42f
 
 	);
+
 
 
 

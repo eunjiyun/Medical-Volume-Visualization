@@ -476,7 +476,7 @@ public:
 	XMVECTOR at /*= XMVectorSet(0.0f, 0.0f, 0.0f, 1.0f)*/;
 	XMVECTOR up /*= XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f)*/;
 	XMMATRIX viewMat, invViewMat, projMat, invProjMat, rotx, roty, transMat, /*scale,*/ worldMat, invWorldMat, scale;
-	float maxPhysicalVol, maxMesh, overallSize;
+	float maxPhysicalVol, maxMesh, overallSize{ 1.5f };
 	float physicalWidth, physicalHeight, physicalDepth;
 	float scaleX, scaleY, scaleZ;
 public:
