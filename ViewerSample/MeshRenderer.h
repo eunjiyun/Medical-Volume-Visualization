@@ -58,6 +58,7 @@ public:
 	ID3D11PixelShader* m_meshPS;   // FaceMesh_WithCT_PS
 
 	float meshWidth, meshHeight, meshDepth;
+	float meshScale{ 0.006755915f };
 
 public:
 	void CreateTwoPassStates(ID3D11Device* device);

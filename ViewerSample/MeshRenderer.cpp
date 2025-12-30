@@ -252,7 +252,7 @@ void MeshRenderer::RenderMeshDepth(ID3D11DeviceContext* context, ID3D11Buffer* m
 	//float meshScale = correctionFactor * overallSize;
 
 	 // ✅ mm 좌표 → 정규화 좌표
-	float meshScale = overallSize / maxPhysicalVol;
+	
 	//float meshScale = 1.5f / maxPhysicalVol;
 	//float meshScale = 1.f;
 
@@ -270,14 +270,19 @@ void MeshRenderer::RenderMeshDepth(ID3D11DeviceContext* context, ID3D11Buffer* m
 			meshToVolume,
 			meshToVolume*/
 
-			/*meshScale,
 			meshScale,
-			meshScale*/
-		volWidth / meshWidth / maxPhysicalVol,
-		volHeight / meshHeight / maxPhysicalVol,
-		volDepth / meshDepth / maxPhysicalVol
+			meshScale,
+			meshScale
+		//volWidth / meshWidth / maxPhysicalVol * 1.42f,
+		//volHeight / meshHeight / maxPhysicalVol * 1.42f*1.09f,
+		//volDepth / meshDepth / maxPhysicalVol * 1.42f
 		
 	);
+
+	/*std::cout << "=================mesh and volume scale======" << std::endl;
+	std::cout << "width : " << volWidth / meshWidth / maxPhysicalVol * 1.42f << std::endl;
+	std::cout << "height : " << volHeight / meshHeight / maxPhysicalVol * 1.42f*1.09f << std::endl << std::endl << std::endl;*/
+
 
 
 
@@ -501,7 +506,7 @@ void MeshRenderer::RenderMesh(ID3D11DeviceContext* context, ID3D11Buffer* m_mesh
 	// ========== Transform 계산 ==========
 	//float meshScale = 1.5f / maxPhysicalVol;
 	//float meshScale = 1.f;
-	float meshScale = overallSize / maxPhysicalVol;
+	//float meshScale = overallSize / maxPhysicalVol;
 
 	//DirectX::XMMATRIX scale = XMMatrixScaling(meshScale, meshScale, meshScale);
 
@@ -512,12 +517,12 @@ void MeshRenderer::RenderMesh(ID3D11DeviceContext* context, ID3D11Buffer* m_mesh
 			meshToVolume,
 			meshToVolume*/
 
-			/*meshScale,
 			meshScale,
-			meshScale*/
-		volWidth / meshWidth / maxPhysicalVol,
-		volHeight / meshHeight / maxPhysicalVol,
-		volDepth / meshDepth / maxPhysicalVol
+			meshScale,
+			meshScale
+		//volWidth / meshWidth / maxPhysicalVol*1.42f,
+		//volHeight / meshHeight / maxPhysicalVol * 1.42f*1.09f,
+		//volDepth / meshDepth / maxPhysicalVol * 1.42f
 
 	);
 
@@ -600,7 +605,7 @@ void MeshRenderer::RenderMeshWithCT(
 	// ========== Transform 계산 ==========
 	//float meshScale = 1.5f / maxPhysicalVol;  // ⭐ XMFLOAT3 대응
 	//float meshScale =1.f;  // ⭐ XMFLOAT3 대응
-	float meshScale = overallSize / maxPhysicalVol;  // ⭐ XMFLOAT3 대응
+	
 	//DirectX::XMMATRIX scale = XMMatrixScaling(meshScale, meshScale, meshScale);
 
 
@@ -609,12 +614,12 @@ void MeshRenderer::RenderMeshWithCT(
 			meshToVolume,
 			meshToVolume*/
 
-			/*meshScale,
 			meshScale,
-			meshScale*/
-		volWidth / meshWidth / maxPhysicalVol,
-		volHeight / meshHeight / maxPhysicalVol,
-		volDepth / meshDepth / maxPhysicalVol
+			meshScale,
+			meshScale
+		//volWidth / meshWidth / maxPhysicalVol * 1.42f,
+		//volHeight / meshHeight / maxPhysicalVol * 1.42f*1.09f,
+		//volDepth / meshDepth / maxPhysicalVol * 1.42f
 
 	);
 

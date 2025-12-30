@@ -60,231 +60,6 @@ float ReconstructViewZ_InvProj(float2 uv,float depth01, matrix proj)
 
 
 
-float4 main(PSInput input) : SV_Target
-{
-	float2 uv = input.uv;
-
-
-	//return float4(1, 0, 0, 1);
-
-
-
-	/* ---------------------------
-	   Ray setup (view / world)
-	--------------------------- */
-
-	float2 ndc = uv * 2.0 - 1.0;
-	ndc.y = -ndc.y;
-
-	float4 farClip = float4(ndc, 1, 1);
-	float4 farVS = mul(farClip, InvProj);
-	farVS /= max(farVS.w, 1e-6);
-
-	float3 rayDirVS = normalize(farVS.xyz);
-	float3 rayDirWS = normalize(mul(float4(rayDirVS, 0), InvView).xyz);
-	float3 rayPosWS = CameraPosAndAlpha.xyz;
-
-	float3 rayPos = mul(float4(rayPosWS, 1), InvVolumeWorld).xyz;
-	//	float3 rayPos = mul(float4(rayPosWS, 1), InvVolumeWorld).xyz;
-	float3 rayDir = normalize(mul(float4(rayDirWS, 0), InvVolumeWorld).xyz);
-	//	float3 rayDir = normalize(mul(float4(rayDirWS, 0), InvVolumeWorld).xyz);
-
-	/* ---------------------------
-	   Volume bounds
-	--------------------------- */
-
-	//float3 boxMin = float3(-1, -0.75, -0.75);
-	//float3 boxMax = float3(1,  0.75,  0.75);
-
-
-
-	float3 boxMin = float3(-0.5, -0.5, -0.5);
-	float3 boxMax = float3(0.5, 0.5, 0.5);
-
-	float3 invDir = 1.0 / (rayDir + 1e-6);
-	float3 t0 = (boxMin - rayPos) * invDir;
-	float3 t1 = (boxMax - rayPos) * invDir;
-
-	float3 tmin = min(t0, t1);
-	float3 tmax = max(t0, t1);
-
-	float tNear = max(max(tmin.x, tmin.y), tmin.z);
-	float tFar = min(min(tmax.x, tmax.y), tmax.z);
-
-	if (tFar < max(tNear, 0.0))
-		return float4(0,0,0,1);
-
-	tNear = max(tNear, 0.0);
-	float stepSize = (tFar - tNear) / VoxelAndMaxSteps.w;
-
-	/* ---------------------------
-	   Mesh depth (once!)
-	--------------------------- */
-
-	float meshDepth01 = SceneDepth.SampleLevel(pointClamp, uv, 0);
-	bool hasMesh = (meshDepth01 < 0.9999);
-
-
-
-	//return float4(1, 0, 0, 1);
-
-	float meshViewZ = hasMesh
-		? ReconstructViewZ_InvProj(uv, meshDepth01, InvProj)
-		: -1e9;
-
-
-	//hasMesh = false;
-	//meshViewZ = -1e9;
-
-	float3 rayPosVS = mul(float4(rayPosWS, 1), View).xyz;
-
-	/* ---------------------------
-	   Accumulation
-	--------------------------- */
-	float4 acc = float4(0, 0, 0, 0);
-
-	[loop]
-	for (int i = 0; i < VoxelAndMaxSteps.w; ++i)
-	{
-		float t = tNear + (i + 0.5) * stepSize;
-
-		// view space (depth compare)
-		float3 posVS = rayPosVS + rayDirVS * t;
-		float rayViewZ = posVS.z;
-
-		if (hasMesh && rayViewZ < meshViewZ)
-			continue;
-
-
-	/*	float diff = rayViewZ - meshViewZ;
-		return float4(diff < 0 ? 1 : 0, diff > 0 ? 1 : 0, 0, 1);*/
-
-
-
-
-		//// volume space
-		//float3 posVol = rayPos + rayDir * t;
-		//float3 uvw = (posVol - boxMin) / (boxMax - boxMin);
-		//uvw.y = 1.0 - uvw.y;
-
-		//if (any(uvw < 0.0) || any(uvw > 1.0))
-		//	continue;   // ❗ break ❌
-
-
-		float tCurrent = tNear + i * stepSize;
-							float jitter = frac(sin(dot(input.uv * 1000.0, float2(12.9898,78.233))) * 43758.5453);
-			float3 startPos = rayPos + rayDir * (tNear + jitter * stepSize);
-				float3 currentPos = startPos + rayDir * (i * stepSize);
-						float3 uvw = (currentPos - boxMin) / (boxMax - boxMin);
-				uvw.y = 1.0 - uvw.y;
-		
-		/*		if (any(uvw < 0.0) || any(uvw > 1.0))
-					break;*/
-
-
-		
-		float hu = volumeTex.SampleLevel(samp, uvw, 0).r;
-		float huNorm = saturate((hu - HuParams.z) / (HuParams.w - HuParams.z));
-		float4 col = transferFunction.SampleLevel(tfSampler, huNorm, 0);
-
-		if (col.a < 0.001)
-			continue;
-
-
-
-
-		float alpha = col.a * stepSize * 10.0;
-
-		// --- gradient lighting ---
-		float3 eps = 1.0 / VoxelAndMaxSteps.xyz;
-
-		// central difference gradient
-		float3 g;
-		g.x = volumeTex.SampleLevel(samp, uvw + float3(eps.x, 0, 0), 0).r -
-			volumeTex.SampleLevel(samp, uvw - float3(eps.x, 0, 0), 0).r;
-		g.y = volumeTex.SampleLevel(samp, uvw + float3(0, eps.y, 0), 0).r -
-			volumeTex.SampleLevel(samp, uvw - float3(0, eps.y, 0), 0).r;
-		g.z = volumeTex.SampleLevel(samp, uvw + float3(0, 0, eps.z), 0).r -
-			volumeTex.SampleLevel(samp, uvw - float3(0, 0, eps.z), 0).r;
-
-		// gradient magnitude (edge detector)
-		float gradMag = length(g);
-
-		// HU 기반 bone gate (먼저!)
-		float boneGate = saturate((hu - 600.0) / 1200.0);
-		boneGate = smoothstep(0.1, 0.6, boneGate);
-
-		// --- edge boost (경계 강조) ---
-		float edgeGate = saturate((gradMag - 0.02) / 0.08);
-		edgeGate = smoothstep(0.0, 1.0, edgeGate);
-		edgeGate *= boneGate;                     // bone 영역에서만
-
-		float edgeBoost = lerp(1.0, 1.08, edgeGate);
-		col.rgb *= edgeBoost;                     // 색만 조정
-
-		// --- soft lighting (view-aligned) ---
-		float3 N = normalize(g + 1e-6);
-		float3 L = normalize(-rayDir);
-
-		float lambert = saturate(dot(N, L));
-		lambert = pow(lambert, 1.5);
-
-		// ⭐ 아주 약한 대비 조명
-		float lighting = lerp(0.96, 1.04, lambert);
-		lighting = lerp(1.0, lighting, boneGate * 0.35);
-
-		// 색에만 곱하기 (알파 ❌)
-		col.rgb *= lighting;
-
-
-
-
-
-
-
-
-		//float distVS = rayViewZ - meshViewZ;
-
-
-
-		////float dbg = saturate(distVS / 5.0); // 0~5mm 기준
-		////return float4(dbg, dbg, dbg, 1);
-
-		//// 안전장치 1: 음수 방지
-		//distVS = max(distVS, 0.0);
-
-		//// 페이드 계산
-		//float skinDepthVS = 2.0;   // mm
-		//float fade = saturate(distVS / skinDepthVS);
-		//fade = fade * fade * (3.0 - 2.0 * fade); // smoothstep
-
-		//// ⭐ 핵심: 최소 기여 보장
-		//float minFade = 0.25;      // 0.2 ~ 0.4 사이 튜닝
-		//fade = max(fade, minFade);
-
-		//alpha *= fade;
-
-		//return float4(fade, fade, fade, 1);
-
-
-		acc.rgb += (1.0 - acc.a) * alpha * col.rgb;
-		acc.a += (1.0 - acc.a) * alpha;
-
-		if (acc.a > 0.98)
-			break;
-	}
-
-
-	acc.rgb = pow(saturate(acc.rgb), 1.0 / 2.2);
-	//return float4(acc.rgb, 1.0);
-
-
-	if (CameraPosAndAlpha.w == 1.0) return float4(acc.rgb, 1.0);
-	if (CameraPosAndAlpha.w == 0.0) return float4(acc.rgb, 0.0);
-	return float4(acc.rgb, acc.a);
-}
-
-
 //float4 main(PSInput input) : SV_Target
 //{
 //	float2 uv = input.uv;
@@ -313,8 +88,13 @@ float4 main(PSInput input) : SV_Target
 //	   Volume bounds
 //	--------------------------- */
 //
-//	float3 boxMin = float3(-1, -0.75, -0.75);
-//	float3 boxMax = float3(1,  0.75,  0.75);
+//	//float3 boxMin = float3(-1, -0.75, -0.75);
+//	//float3 boxMax = float3(1,  0.75,  0.75);
+//
+//
+//
+//	float3 boxMin = float3(-0.5, -0.5, -0.5);
+//	float3 boxMax = float3(0.5, 0.5, 0.5);
 //
 //	float3 invDir = 1.0 / (rayDir + 1e-6);
 //	float3 t0 = (boxMin - rayPos) * invDir;
@@ -348,44 +128,48 @@ float4 main(PSInput input) : SV_Target
 //	/* ---------------------------
 //	   Accumulation
 //	--------------------------- */
-//
-//	float4 acc = float4(0,0,0,0);
+//	float4 acc = float4(0, 0, 0, 0);
 //
 //	[loop]
 //	for (int i = 0; i < VoxelAndMaxSteps.w; ++i)
 //	{
-//		float t = tNear + i * stepSize;
+//		float t = tNear + (i + 0.5) * stepSize;
 //
+//		// view space (depth compare)
 //		float3 posVS = rayPosVS + rayDirVS * t;
 //		float rayViewZ = posVS.z;
 //
-//		// ⭐ HARD DEPTH BLOCK
 //		if (hasMesh && rayViewZ < meshViewZ)
 //			continue;
 //
-//		//		//if (hasMesh && rayViewZ < meshViewZ)
-////		//	continue; // mesh 앞이면 차단
+//
+//	/*	float diff = rayViewZ - meshViewZ;
+//		return float4(diff < 0 ? 1 : 0, diff > 0 ? 1 : 0, 0, 1);*/
 //
 //
 //
 //
-//		float3 pos = rayPos + rayDir * t;
-//		//float3 uvw = (pos - boxMin) / (boxMax - boxMin);
+//		//// volume space
+//		//float3 posVol = rayPos + rayDir * t;
+//		//float3 uvw = (posVol - boxMin) / (boxMax - boxMin);
 //		//uvw.y = 1.0 - uvw.y;
 //
 //		//if (any(uvw < 0.0) || any(uvw > 1.0))
-//		//	break;
+//		//	continue;   // ❗ break ❌
 //
-//				float tCurrent = tNear + i * stepSize;
-//					float jitter = frac(sin(dot(input.uv * 1000.0, float2(12.9898,78.233))) * 43758.5453);
-//	float3 startPos = rayPos + rayDir * (tNear + jitter * stepSize);
-//		float3 currentPos = startPos + rayDir * (i * stepSize);
-//				float3 uvw = (currentPos - boxMin) / (boxMax - boxMin);
-//		uvw.y = 1.0 - uvw.y;
 //
-//		if (any(uvw < 0.0) || any(uvw > 1.0))
-//			break;
+//		float tCurrent = tNear + i * stepSize;
+//							float jitter = frac(sin(dot(input.uv * 1000.0, float2(12.9898,78.233))) * 43758.5453);
+//			float3 startPos = rayPos + rayDir * (tNear + jitter * stepSize);
+//				float3 currentPos = startPos + rayDir * (i * stepSize);
+//						float3 uvw = (currentPos - boxMin) / (boxMax - boxMin);
+//				uvw.y = 1.0 - uvw.y;
+//		
+//				if (any(uvw < 0.0) || any(uvw > 1.0))
+//					break;
 //
+//
+//		
 //		float hu = volumeTex.SampleLevel(samp, uvw, 0).r;
 //		float huNorm = saturate((hu - HuParams.z) / (HuParams.w - HuParams.z));
 //		float4 col = transferFunction.SampleLevel(tfSampler, huNorm, 0);
@@ -393,7 +177,83 @@ float4 main(PSInput input) : SV_Target
 //		if (col.a < 0.001)
 //			continue;
 //
+//
+//
+//
 //		float alpha = col.a * stepSize * 10.0;
+//
+//		// --- gradient lighting ---
+//		float3 eps = 1.0 / VoxelAndMaxSteps.xyz;
+//
+//		// central difference gradient
+//		float3 g;
+//		g.x = volumeTex.SampleLevel(samp, uvw + float3(eps.x, 0, 0), 0).r -
+//			volumeTex.SampleLevel(samp, uvw - float3(eps.x, 0, 0), 0).r;
+//		g.y = volumeTex.SampleLevel(samp, uvw + float3(0, eps.y, 0), 0).r -
+//			volumeTex.SampleLevel(samp, uvw - float3(0, eps.y, 0), 0).r;
+//		g.z = volumeTex.SampleLevel(samp, uvw + float3(0, 0, eps.z), 0).r -
+//			volumeTex.SampleLevel(samp, uvw - float3(0, 0, eps.z), 0).r;
+//
+//		// gradient magnitude (edge detector)
+//		float gradMag = length(g);
+//
+//		// HU 기반 bone gate (먼저!)
+//		float boneGate = saturate((hu - 600.0) / 1200.0);
+//		boneGate = smoothstep(0.1, 0.6, boneGate);
+//
+//		// --- edge boost (경계 강조) ---
+//		float edgeGate = saturate((gradMag - 0.02) / 0.08);
+//		edgeGate = smoothstep(0.0, 1.0, edgeGate);
+//		edgeGate *= boneGate;                     // bone 영역에서만
+//
+//		float edgeBoost = lerp(1.0, 1.08, edgeGate);
+//		col.rgb *= edgeBoost;                     // 색만 조정
+//
+//		// --- soft lighting (view-aligned) ---
+//		float3 N = normalize(g + 1e-6);
+//		float3 L = normalize(-rayDir);
+//
+//		float lambert = saturate(dot(N, L));
+//		lambert = pow(lambert, 1.5);
+//
+//		// ⭐ 아주 약한 대비 조명
+//		float lighting = lerp(0.96, 1.04, lambert);
+//		lighting = lerp(1.0, lighting, boneGate * 0.35);
+//
+//		// 색에만 곱하기 (알파 ❌)
+//		col.rgb *= lighting;
+//
+//
+//
+//
+//
+//
+//
+//
+//		//float distVS = rayViewZ - meshViewZ;
+//
+//
+//
+//		////float dbg = saturate(distVS / 5.0); // 0~5mm 기준
+//		////return float4(dbg, dbg, dbg, 1);
+//
+//		//// 안전장치 1: 음수 방지
+//		//distVS = max(distVS, 0.0);
+//
+//		//// 페이드 계산
+//		//float skinDepthVS = 2.0;   // mm
+//		//float fade = saturate(distVS / skinDepthVS);
+//		//fade = fade * fade * (3.0 - 2.0 * fade); // smoothstep
+//
+//		//// ⭐ 핵심: 최소 기여 보장
+//		//float minFade = 0.25;      // 0.2 ~ 0.4 사이 튜닝
+//		//fade = max(fade, minFade);
+//
+//		//alpha *= fade;
+//
+//		//return float4(fade, fade, fade, 1);
+//
+//
 //		acc.rgb += (1.0 - acc.a) * alpha * col.rgb;
 //		acc.a += (1.0 - acc.a) * alpha;
 //
@@ -401,9 +261,139 @@ float4 main(PSInput input) : SV_Target
 //			break;
 //	}
 //
+//
 //	acc.rgb = pow(saturate(acc.rgb), 1.0 / 2.2);
-//	return float4(acc.rgb, 1.0);
+//	//return float4(acc.rgb, 1.0);
+//
+//
+//	if (CameraPosAndAlpha.w == 1.0) return float4(acc.rgb, 1.0);
+//	if (CameraPosAndAlpha.w == 0.0) return float4(acc.rgb, 0.0);
+//	return float4(acc.rgb, acc.a);
 //}
+
+
+float4 main(PSInput input) : SV_Target
+{
+	float2 uv = input.uv;
+
+	/* ---------------------------
+	   Ray setup (view / world)
+	--------------------------- */
+
+	float2 ndc = uv * 2.0 - 1.0;
+	ndc.y = -ndc.y;
+
+	float4 farClip = float4(ndc, 1, 1);
+	float4 farVS = mul(farClip, InvProj);
+	farVS /= max(farVS.w, 1e-6);
+
+	float3 rayDirVS = normalize(farVS.xyz);
+	float3 rayDirWS = normalize(mul(float4(rayDirVS, 0), InvView).xyz);
+	float3 rayPosWS = CameraPosAndAlpha.xyz;
+
+	float3 rayPos = mul(float4(rayPosWS, 1), InvVolumeWorld).xyz;
+	//	float3 rayPos = mul(float4(rayPosWS, 1), InvVolumeWorld).xyz;
+	float3 rayDir = normalize(mul(float4(rayDirWS, 0), InvVolumeWorld).xyz);
+	//	float3 rayDir = normalize(mul(float4(rayDirWS, 0), InvVolumeWorld).xyz);
+
+	/* ---------------------------
+	   Volume bounds
+	--------------------------- */
+
+	//float3 boxMin = float3(-1, -0.75, -0.75);
+	//float3 boxMax = float3(1,  0.75,  0.75);
+
+		float3 boxMin = float3(-0.5, -0.5, -0.5);
+	float3 boxMax = float3(0.5, 0.5, 0.5);
+
+	float3 invDir = 1.0 / (rayDir + 1e-6);
+	float3 t0 = (boxMin - rayPos) * invDir;
+	float3 t1 = (boxMax - rayPos) * invDir;
+
+	float3 tmin = min(t0, t1);
+	float3 tmax = max(t0, t1);
+
+	float tNear = max(max(tmin.x, tmin.y), tmin.z);
+	float tFar = min(min(tmax.x, tmax.y), tmax.z);
+
+	if (tFar < max(tNear, 0.0))
+		return float4(0,0,0,1);
+
+	tNear = max(tNear, 0.0);
+	float stepSize = (tFar - tNear) / VoxelAndMaxSteps.w;
+
+	/* ---------------------------
+	   Mesh depth (once!)
+	--------------------------- */
+
+	float meshDepth01 = SceneDepth.SampleLevel(pointClamp, uv, 0);
+	bool hasMesh = (meshDepth01 < 0.9999);
+
+	float meshViewZ = hasMesh
+		? ReconstructViewZ_InvProj(uv, meshDepth01, InvProj)
+		: -1e9;
+
+	float3 rayPosVS = mul(float4(rayPosWS, 1), View).xyz;
+
+	/* ---------------------------
+	   Accumulation
+	--------------------------- */
+
+	float4 acc = float4(0,0,0,0);
+
+	[loop]
+	for (int i = 0; i < VoxelAndMaxSteps.w; ++i)
+	{
+		float t = tNear + i * stepSize;
+
+		float3 posVS = rayPosVS + rayDirVS * t;
+		float rayViewZ = posVS.z;
+
+		// ⭐ HARD DEPTH BLOCK
+		if (hasMesh && rayViewZ < meshViewZ)
+			continue;
+
+		//		//if (hasMesh && rayViewZ < meshViewZ)
+//		//	continue; // mesh 앞이면 차단
+
+
+
+
+		float3 pos = rayPos + rayDir * t;
+		//float3 uvw = (pos - boxMin) / (boxMax - boxMin);
+		//uvw.y = 1.0 - uvw.y;
+
+		//if (any(uvw < 0.0) || any(uvw > 1.0))
+		//	break;
+
+				float tCurrent = tNear + i * stepSize;
+					float jitter = frac(sin(dot(input.uv * 1000.0, float2(12.9898,78.233))) * 43758.5453);
+	float3 startPos = rayPos + rayDir * (tNear + jitter * stepSize);
+		float3 currentPos = startPos + rayDir * (i * stepSize);
+				float3 uvw = (currentPos - boxMin) / (boxMax - boxMin);
+		uvw.y = 1.0 - uvw.y;
+
+		if (any(uvw < 0.0) || any(uvw > 1.0))
+			break;
+
+		float hu = volumeTex.SampleLevel(samp, uvw, 0).r;
+		float huNorm = saturate((hu - HuParams.z) / (HuParams.w - HuParams.z));
+		float4 col = transferFunction.SampleLevel(tfSampler, huNorm, 0);
+
+		if (col.a < 0.001)
+			continue;
+
+		float alpha = col.a * stepSize * 10.0;
+		acc.rgb += (1.0 - acc.a) * alpha * col.rgb;
+		acc.a += (1.0 - acc.a) * alpha;
+
+		if (acc.a > 0.98)
+			break;
+	}
+
+	acc.rgb = pow(saturate(acc.rgb), 1.0 / 2.2);
+	return float4(acc.rgb, 1.0);
+}
 
 
 

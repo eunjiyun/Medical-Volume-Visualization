@@ -1284,7 +1284,7 @@ void QDirect3D11Widget::FullScreenPassSet()
 
 
 	// ✅ 8️⃣ 드로우
-	//m_pDeviceContext->Draw(4, 0);
+	m_pDeviceContext->Draw(4, 0);
 }
 
 
@@ -1353,9 +1353,9 @@ bool QDirect3D11Widget::LoadMeshFromPLY(const std::string& filename, ID3D11Devic
 
 		for (auto& v : vertices) {
 			PLY::VertexWithTexture cv = v;
-			cv.x -= centerX;
-			cv.y -= centerY;
-			cv.z -= centerZ;
+			cv.x -= centerX* 0.006755915f;
+			cv.y -= centerY * 0.006755915f;
+			cv.z -= centerZ * 0.006755915f;
 			centeredVertices.push_back(cv);
 		}
 
@@ -1386,12 +1386,12 @@ bool QDirect3D11Widget::LoadMeshFromPLY(const std::string& filename, ID3D11Devic
 	D3D11_BUFFER_DESC bd = {};
 	bd.Usage = D3D11_USAGE_DEFAULT;
 	bd.ByteWidth = sizeof(PLY::VertexWithTexture) * centeredVertices.size();
-	bd.ByteWidth = sizeof(PLY::VertexWithTexture) * vertices.size();
+	//bd.ByteWidth = sizeof(PLY::VertexWithTexture) * vertices.size();
 	//bd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
 
 	D3D11_SUBRESOURCE_DATA initData = {};
-	//	initData.pSysMem = centeredVertices.data();
-	initData.pSysMem = vertices.data();
+		initData.pSysMem = centeredVertices.data();
+	//initData.pSysMem = vertices.data();
 
 	HRESULT hr = device->CreateBuffer(&bd, &initData, &m_meshVertexBuffer);
 	if (FAILED(hr)) {
@@ -2945,7 +2945,7 @@ void QDirect3D11Widget::RenderVolumeView()
 		// ✅ (3) 볼륨 렌더링 수행
 
 
-		//FullScreenPassSet();
+		FullScreenPassSet();
 
 					// ⭐ VolumeToTexture 사용
 		XMFLOAT3 voxelDim(fileReader->m_width, fileReader->m_height, fileReader->m_depth);
@@ -4462,9 +4462,9 @@ void QDirect3D11Widget::RenderAllQuads()
 				RenderVolumeView();
 
 
-				// ⭐ 텍스처를 화면에 복사 (Fullscreen Quad)
-				m_volumeToTexture->DrawTextureToScreen(m_pDevice,m_volumeToTexture->m_resultSRV, m_pDeviceContext,
-					vsFullscreen, psRaymarch);
+				//// ⭐ 텍스처를 화면에 복사 (Fullscreen Quad)
+				//m_volumeToTexture->DrawTextureToScreen(m_pDevice,m_volumeToTexture->m_resultSRV, m_pDeviceContext,
+				//	vsFullscreen, psRaymarch);
 			}
 		}
 		else {
