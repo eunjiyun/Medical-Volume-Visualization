@@ -286,9 +286,9 @@ void MeshRenderer::RenderMeshDepth(ID3D11DeviceContext* context, ID3D11Buffer* m
 			meshToVolume,
 			meshToVolume*/
 
-		meshScale*1.f,
-		meshScale*1.f,
-		meshScale*1.f
+		volWidth / meshWidth / maxPhysicalVol * meshScale*1.f,
+		volWidth / meshWidth / maxPhysicalVol * meshScale*1.f,
+		volWidth / meshWidth / maxPhysicalVol * meshScale*1.f
 		//volWidth / meshWidth / maxPhysicalVol * 1.42f,
 		//volHeight / meshHeight / maxPhysicalVol * 1.42f*1.09f,
 		//volDepth / meshDepth / maxPhysicalVol * 1.42f
@@ -322,7 +322,7 @@ void MeshRenderer::RenderMeshDepth(ID3D11DeviceContext* context, ID3D11Buffer* m
 
 	MeshConstantBuffer cb;
 	DirectX::XMMATRIX rotation = XMMatrixRotationX(XM_PI);
-	DirectX::XMMATRIX fullWorld = scale * rotation * w;
+	DirectX::XMMATRIX fullWorld = /*centerTranslate **/scale * rotation * w;
 
 
 	float volHalfWorld = overallSize * 0.5f;
@@ -549,9 +549,9 @@ void MeshRenderer::RenderMesh(ID3D11DeviceContext* context, ID3D11Buffer* m_mesh
 			meshToVolume,
 			meshToVolume*/
 
-		meshScale*1.f,
-		meshScale*1.f,
-		meshScale*1.f
+		volWidth / meshWidth / maxPhysicalVol * meshScale*1.f,
+		volWidth / meshWidth / maxPhysicalVol * meshScale*1.f,
+		volWidth / meshWidth / maxPhysicalVol * meshScale*1.f
 		//volWidth / meshWidth / maxPhysicalVol * 1.42f,
 		//volHeight / meshHeight / maxPhysicalVol * 1.42f*1.09f,
 		//volDepth / meshDepth / maxPhysicalVol * 1.42f
@@ -661,9 +661,9 @@ void MeshRenderer::RenderMeshWithCT(
 			meshToVolume,
 			meshToVolume*/
 
-		meshScale*1.f,
-		meshScale*1.f,
-		meshScale*1.f
+		volWidth / meshWidth / maxPhysicalVol * meshScale*1.f,
+		volWidth / meshWidth / maxPhysicalVol * meshScale*1.f,
+		volWidth / meshWidth / maxPhysicalVol * meshScale*1.f
 		//volWidth / meshWidth / maxPhysicalVol * 1.42f,
 		//volHeight / meshHeight / maxPhysicalVol * 1.42f*1.09f,
 		//volDepth / meshDepth / maxPhysicalVol * 1.42f

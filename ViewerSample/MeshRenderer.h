@@ -53,12 +53,19 @@ public:
 
 	ID3D11ShaderResourceView* m_faceColorSRV;
 
+	XMMATRIX centerTranslate = XMMatrixTranslation(
+		1,
+		1,
+		1
+	);
+
 	// ⭐ 메쉬 셰이더는 여기서 관리
 	ID3D11VertexShader* m_meshVS;  // FaceMesh_WithCT_VS
 	ID3D11PixelShader* m_meshPS;   // FaceMesh_WithCT_PS
 
 	float meshWidth, meshHeight, meshDepth;
-	float meshScale{ 0.006755915f };
+	//float meshScale{ /*0.006755915f*/ };
+	float meshScale{ 1};
 
 public:
 	void CreateTwoPassStates(ID3D11Device* device);

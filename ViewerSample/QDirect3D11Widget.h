@@ -112,7 +112,21 @@ struct SlicePlane {
 	DirectX::XMFLOAT4X4 worldMatrix;
 	int viewType; // 1: Axial, 2: Coronal, 3: Sagittal
 };
+struct ScreenPoint
+{
+	float x;
+	float y;
+};
 
+enum class LandmarkStep
+{
+	None = 0,
+	CT_LeftEye,
+	CT_RightEye,
+	Mesh_LeftEye,
+	Mesh_RightEye,
+	Done
+};
 
 ////
 ////struct MeshConstantBuffer {
@@ -232,7 +246,19 @@ public:
 
 
 	void mousePressEvent(QMouseEvent* event);
+	float ComputeMeshScaleFromLandmarks(
+		const ScreenPoint& meshLeftEye,
+		const ScreenPoint& meshRightEye,
+		const ScreenPoint& volumeLeftEye,
+		const ScreenPoint& volumeRightEye
+	);
 
+	ScreenPoint ctLeftEye;
+	ScreenPoint ctRightEye;
+	ScreenPoint meshLeftEye;
+	ScreenPoint meshRightEye;
+	LandmarkStep m_landmarkStep = LandmarkStep::CT_LeftEye;
+	float Distance2D(const ScreenPoint& a, const ScreenPoint& b);
 
 	void mouseMoveEvent(QMouseEvent* event);
 	void mouseReleaseEvent(QMouseEvent* event);

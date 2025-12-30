@@ -701,7 +701,7 @@ bool QDirect3D11Widget::init()
 		-volCenterMM.y,
 		-volCenterMM.z
 	);
-
+	meshRenderer->centerTranslate = centerTranslate;
 
 	// 최대 크기
 	maxPhysicalVol = Max3(physicalWidth, physicalHeight, physicalDepth);
@@ -1358,6 +1358,14 @@ bool QDirect3D11Widget::LoadMeshFromPLY(const std::string& filename, ID3D11Devic
 			cv.z -= centerZ * 0.006755915f;
 			centeredVertices.push_back(cv);
 		}
+
+	/*	for (auto& v : vertices) {
+			PLY::VertexWithTexture cv = v;
+			cv.x -= centerX * meshRenderer->meshScale;
+			cv.y -= centerY * meshRenderer->meshScale;
+			cv.z -= centerZ * meshRenderer->meshScale;
+			centeredVertices.push_back(cv);
+		}*/
 
 
 		maxMesh =
@@ -3786,8 +3794,28 @@ int QDirect3D11Widget::ComputeSliceIndexForView(const XMFLOAT3& patientCoord, in
 		dims
 	);
 }
+float QDirect3D11Widget::Distance2D(const ScreenPoint& a, const ScreenPoint& b)
+{
+	float dx = a.x - b.x;
+	float dy = a.y - b.y;
+	return std::sqrt(dx * dx + dy * dy);
+}
 
+float QDirect3D11Widget::ComputeMeshScaleFromLandmarks(
+	const ScreenPoint& meshLeftEye,
+	const ScreenPoint& meshRightEye,
+	const ScreenPoint& volumeLeftEye,
+	const ScreenPoint& volumeRightEye
+)
+{
+	float meshDist = Distance2D(meshLeftEye, meshRightEye);
+	float volumeDist = Distance2D(volumeLeftEye, volumeRightEye);
 
+	if (meshDist < 1e-6f)
+		return 1.0f; // 안전장치
+
+	return volumeDist / meshDist;
+}
 
 void QDirect3D11Widget::mousePressEvent(QMouseEvent* event)
 {
@@ -3799,6 +3827,63 @@ void QDirect3D11Widget::mousePressEvent(QMouseEvent* event)
 		setCursor(Qt::ClosedHandCursor);
 
 		qDebug() << "Mouse Pressed at:" << event->pos();
+
+
+
+
+		ScreenPoint sp{ float(event->pos().x()), float(event->pos().y()) };
+
+		//qDebug() << "Mouse Pressed at:" << p;
+
+		switch (m_landmarkStep)
+		{
+		case LandmarkStep::CT_LeftEye:
+			ctLeftEye = sp;
+			qDebug() << "[Landmark] CT Left Eye set";
+			m_landmarkStep = LandmarkStep::CT_RightEye;
+			break;
+
+		case LandmarkStep::CT_RightEye:
+			ctRightEye = sp;
+			qDebug() << "[Landmark] CT Right Eye set";
+			m_landmarkStep = LandmarkStep::Mesh_LeftEye;
+			break;
+
+		case LandmarkStep::Mesh_LeftEye:
+			meshLeftEye = sp;
+			qDebug() << "[Landmark] Mesh Left Eye set";
+			m_landmarkStep = LandmarkStep::Mesh_RightEye;
+			break;
+
+		case LandmarkStep::Mesh_RightEye:
+			meshRightEye = sp;
+			qDebug() << "[Landmark] Mesh Right Eye set";
+			m_landmarkStep = LandmarkStep::Done;
+			qDebug() << "[Landmark] All points set";
+			break;
+
+		case LandmarkStep::Done:
+			qDebug() << "[Landmark] Already completed";
+			meshRenderer->meshScale=
+
+			 ComputeMeshScaleFromLandmarks(
+				meshLeftEye,
+				meshRightEye,
+				ctLeftEye,
+				ctRightEye
+			);
+
+			qDebug() << "[Landmark] Computed mesh scale:" ;
+
+
+
+
+			break;
+
+		default:
+			break;
+		}
+		
 	}
 
 	if (event->button() == Qt::RightButton) {}
@@ -3840,6 +3925,8 @@ void QDirect3D11Widget::mousePressEvent(QMouseEvent* event)
 	// 마우스 클릭 좌표 정규화
 	float normX = static_cast<float>(px[clickedViewIndex] - viewX) / viewWidth;
 	float normY = static_cast<float>(py[clickedViewIndex] - viewY) / viewHeight;
+
+
 
 
 	// 모든 뷰에 동일한 십자선 위치 적용
