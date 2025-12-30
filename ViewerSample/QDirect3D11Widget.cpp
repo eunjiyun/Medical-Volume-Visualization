@@ -685,9 +685,9 @@ bool QDirect3D11Widget::init()
 	float voxelSpacingZ = fileReader->views.spacing.z;  // mm (슬라이스 간격)
 
 	// 실제 물리적 크기
-	physicalWidth = fileReader->m_width * voxelSpacingX;   // 512 * 0.4 = 204.8mm
-	physicalHeight = fileReader->m_height * voxelSpacingY; // 512 * 0.4 = 204.8mm
-	physicalDepth = fileReader->m_depth * voxelSpacingZ;   // 632 * 0.3 = 189.6mm
+	physicalWidth = fileReader->m_width * voxelSpacingX;   // 994 * 0.2 = 198.8mm
+	physicalHeight = fileReader->m_height * voxelSpacingY; // 994 * 0.2 = 198.8mm
+	physicalDepth = fileReader->m_depth * voxelSpacingZ;   // 982 * 0.2 = 196.4mm
 
 
 	XMFLOAT3 volCenterMM = {
@@ -705,6 +705,17 @@ bool QDirect3D11Widget::init()
 
 	// 최대 크기
 	maxPhysicalVol = Max3(physicalWidth, physicalHeight, physicalDepth);
+
+
+	qDebug() << "Volume width :" << fileReader->m_width;
+	qDebug() << "Volume height :" << fileReader->m_height;
+	qDebug() << "Volume depth :" << fileReader->m_depth;
+
+
+	qDebug() << "voxelSpacingX :" << voxelSpacingX;
+	qDebug() << "voxelSpacingY :" << voxelSpacingY;
+	qDebug() << "voxelSpacingZ :" << voxelSpacingZ;
+
 
 
 
@@ -1328,14 +1339,11 @@ bool QDirect3D11Widget::LoadMeshFromPLY(const std::string& filename, ID3D11Devic
 			if (v.y > maxY) maxY = v.y;
 			if (v.z < minZ) minZ = v.z;
 			if (v.z > maxZ) maxZ = v.z;
-
-
-
 		}
-
-		float meshWidth = maxX - minX;
-		float meshHeight = maxY - minY;
-		float meshDepth = maxZ - minZ;
+		meshRenderer->meshWidth = maxX - minX;
+		
+		meshRenderer->meshHeight = maxY - minY;
+		meshRenderer->meshDepth = maxZ - minZ;
 
 		float centerX = (minX + maxX) * 0.5f;
 		float centerY = (minY + maxY) * 0.5f;
@@ -1353,12 +1361,12 @@ bool QDirect3D11Widget::LoadMeshFromPLY(const std::string& filename, ID3D11Devic
 
 
 		maxMesh =
-			Max3(meshWidth, meshHeight, meshDepth);
+			Max3(meshRenderer->meshWidth, meshRenderer->meshHeight, meshRenderer->meshDepth);
 
 		qDebug() << "=== Mesh Size ===";
-		qDebug() << "Width (X):" << meshWidth;
-		qDebug() << "Height (Y):" << meshHeight;
-		qDebug() << "Depth (Z):" << meshDepth;
+		qDebug() << "Width (X):" << meshRenderer->meshWidth;
+		qDebug() << "Height (Y):" << meshRenderer->meshHeight;
+		qDebug() << "Depth (Z):" << meshRenderer->meshDepth;
 		qDebug() << "Center:" << (minX + maxX) / 2 << (minY + maxY) / 2 << (minZ + maxZ) / 2;
 
 
@@ -2937,7 +2945,7 @@ void QDirect3D11Widget::RenderVolumeView()
 		// ✅ (3) 볼륨 렌더링 수행
 
 
-		FullScreenPassSet();
+		//FullScreenPassSet();
 
 					// ⭐ VolumeToTexture 사용
 		XMFLOAT3 voxelDim(fileReader->m_width, fileReader->m_height, fileReader->m_depth);
@@ -3024,7 +3032,8 @@ void QDirect3D11Widget::RenderVolumeView()
 			huMin,
 			huMax,
 			vsFullscreen,
-			psRaymarch, layoutQuad, *cbs,
+			psRaymarch, 
+			layoutQuad, *cbs,
 			s,0, *vb
 		);
 
@@ -4360,7 +4369,12 @@ void QDirect3D11Widget::RenderAllQuads()
 					m_pDeviceContext, m_meshVertexBuffer, m_meshVS, m_meshPS, m_meshInputLayout,
 					m_clipSettingsBuffer, m_meshConstantBuffer, m_meshTexture,
 					m_MeshSamplerState, m_pDevice, m_meshVertexCount,
-					maxMesh, maxPhysicalVol, overallSize,
+					maxMesh, maxPhysicalVol, 
+					physicalWidth,
+					physicalHeight,
+					physicalDepth,
+					overallSize,
+					
 					worldMat, viewMat, projMat, width(), height()
 				);
 
@@ -4418,6 +4432,9 @@ void QDirect3D11Widget::RenderAllQuads()
 					m_meshVertexCount,
 					maxMesh,
 					maxPhysicalVol,
+					physicalWidth,
+					physicalHeight,
+					physicalDepth,
 					overallSize,
 					worldMat,
 					viewMat,
@@ -4445,9 +4462,9 @@ void QDirect3D11Widget::RenderAllQuads()
 				RenderVolumeView();
 
 
-
 				// ⭐ 텍스처를 화면에 복사 (Fullscreen Quad)
-				m_volumeToTexture->DrawTextureToScreen(m_pDevice,m_volumeToTexture->m_resultSRV, m_pDeviceContext);
+				m_volumeToTexture->DrawTextureToScreen(m_pDevice,m_volumeToTexture->m_resultSRV, m_pDeviceContext,
+					vsFullscreen, psRaymarch);
 			}
 		}
 		else {
@@ -5637,6 +5654,9 @@ void QDirect3D11Widget::mouseMoveEvent(QMouseEvent* event)
 			m_meshVertexCount,
 			maxMesh,
 			maxPhysicalVol,
+			fileReader->m_width,
+			fileReader->m_height,
+			fileReader->m_depth,
 			overallSize,
 			worldMat,
 			viewMat,

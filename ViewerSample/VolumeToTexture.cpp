@@ -779,6 +779,7 @@ void VolumeToTexture::RenderVolumeToTexture(
 	context->VSSetShader(vs, nullptr, 0);
 	context->PSSetShader(ps, nullptr, 0);
 
+
 	// Constant Buffer
 	context->PSSetConstantBuffers(0, 1, &cb);
 
@@ -825,7 +826,8 @@ void VolumeToTexture::RenderVolumeToTexture(
 }
 
 
-void VolumeToTexture::DrawTextureToScreen(ID3D11Device* device, ID3D11ShaderResourceView* srv, ID3D11DeviceContext* context)
+void VolumeToTexture::DrawTextureToScreen(ID3D11Device* device, ID3D11ShaderResourceView* srv, ID3D11DeviceContext* context
+	,ID3D11VertexShader* vs, ID3D11PixelShader* ps )
 {
 	//if (!m_quadVertexBuffer.Get()) {
 	//	std::cout << "✅ DrawTextureToScreen called" << std::endl;
@@ -866,9 +868,14 @@ void VolumeToTexture::DrawTextureToScreen(ID3D11Device* device, ID3D11ShaderReso
 	UINT offset = 0;
 	context->IASetVertexBuffers(0, 1, &m_quadVertexBuffer, &stride, &offset);
 
-	// Shaders
+
+
+	//// Shaders
 	context->VSSetShader(m_vertexShader.Get(), nullptr, 0);
 	context->PSSetShader(m_pixelShader.Get(), nullptr, 0);
+
+	//context->VSSetShader(vs, nullptr, 0);
+	//context->PSSetShader(ps, nullptr, 0);
 
 	context->PSSetShaderResources(0, 1, &srv);
 	context->PSSetSamplers(0, 1, &m_linearSampler);

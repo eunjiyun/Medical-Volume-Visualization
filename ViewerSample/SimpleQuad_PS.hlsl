@@ -10,6 +10,7 @@ struct PSInput
 
 float4 main(PSInput input) : SV_Target
 {
+	//return float4(1,0,0,1);
 	return tex.Sample(samp, input.uv);
 	return float4(input.uv.x,input.uv.x,input.uv.x,1.0f);
 }

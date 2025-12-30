@@ -202,7 +202,7 @@ void MeshRenderer::RenderMeshDepth(ID3D11DeviceContext* context, ID3D11Buffer* m
 	ID3D11VertexShader* m_meshVS, ID3D11PixelShader* m_meshPS, ID3D11InputLayout* m_meshInputLayout,
 	ID3D11Buffer* m_clipSettingsBuffer, ID3D11Buffer* m_meshConstantBuffer, ID3D11ShaderResourceView* m_meshTexture,
 	ID3D11SamplerState* m_MeshSamplerState, ID3D11Device* m_pDevice, int m_meshVertexCount,
-	float maxMesh, float maxPhysicalVol, float overallSize,
+	float maxMesh, float maxPhysicalVol, float volWidth, float volHeight, float volDepth, float overallSize,
 	XMMATRIX w, XMMATRIX v, XMMATRIX p, float width,float height)
 {
 	ID3D11RenderTargetView* curRTV = nullptr;
@@ -270,10 +270,33 @@ void MeshRenderer::RenderMeshDepth(ID3D11DeviceContext* context, ID3D11Buffer* m
 			meshToVolume,
 			meshToVolume*/
 
-		meshScale,
-		meshScale,
-		meshScale
+			/*meshScale,
+			meshScale,
+			meshScale*/
+		volWidth / meshWidth / maxPhysicalVol,
+		volHeight / meshHeight / maxPhysicalVol,
+		volDepth / meshDepth / maxPhysicalVol
+		
 	);
+
+
+
+	//std::cout << "meshWidth  : " << meshWidth << std::endl;
+	//std::cout << "meshHeight : " << meshHeight << std::endl;
+	//std::cout << "meshDepth  : " << meshDepth << std::endl;
+
+	//std::cout << "volWidth   : " << volWidth << std::endl;
+	//std::cout << "volHeight  : " << volHeight << std::endl;
+	//std::cout << "volDepth   : " << volDepth << std::endl;
+
+	//std::cout << "maxPhysicalVol : " << maxPhysicalVol << std::endl;
+
+	//std::cout << "meshScale : " << meshScale << std::endl;
+	//std::cout << "scale x : " << volWidth / meshWidth / maxPhysicalVol << std::endl;
+	//std::cout << "scale y : " << volHeight / meshHeight / maxPhysicalVol << std::endl;
+	//std::cout << "scale z : " << volDepth / meshDepth / maxPhysicalVol << std::endl << std::endl << std::endl;
+
+
 
 	MeshConstantBuffer cb;
 	DirectX::XMMATRIX rotation = XMMatrixRotationX(XM_PI);
@@ -465,7 +488,7 @@ void MeshRenderer::RenderMesh(ID3D11DeviceContext* context, ID3D11Buffer* m_mesh
 	ID3D11VertexShader* m_meshVS, ID3D11PixelShader* m_meshPS, ID3D11InputLayout* m_meshInputLayout,
 	ID3D11Buffer* m_clipSettingsBuffer, ID3D11Buffer* m_meshConstantBuffer, ID3D11ShaderResourceView* m_meshTexture,
 	ID3D11SamplerState* m_MeshSamplerState, ID3D11Device* m_pDevice, int m_meshVertexCount,
-	float maxMesh, float maxPhysicalVol, float overallSize,
+	float maxMesh, float maxPhysicalVol, float volWidth, float volHeight, float volDepth, float overallSize,
 	XMMATRIX w, XMMATRIX v, XMMATRIX p)
 {
 	if (!m_meshVertexBuffer || m_meshVertexCount == 0) return;
@@ -480,7 +503,30 @@ void MeshRenderer::RenderMesh(ID3D11DeviceContext* context, ID3D11Buffer* m_mesh
 	//float meshScale = 1.f;
 	float meshScale = overallSize / maxPhysicalVol;
 
-	DirectX::XMMATRIX scale = XMMatrixScaling(meshScale, meshScale, meshScale);
+	//DirectX::XMMATRIX scale = XMMatrixScaling(meshScale, meshScale, meshScale);
+
+	
+
+	DirectX::XMMATRIX scale = XMMatrixScaling(
+		/*	meshToVolume,
+			meshToVolume,
+			meshToVolume*/
+
+			/*meshScale,
+			meshScale,
+			meshScale*/
+		volWidth / meshWidth / maxPhysicalVol,
+		volHeight / meshHeight / maxPhysicalVol,
+		volDepth / meshDepth / maxPhysicalVol
+
+	);
+
+
+	std::cout << "meshScale : " << meshScale << std::endl;
+	std::cout << "scale x : " << volWidth / meshWidth / maxPhysicalVol << std::endl;
+	std::cout << "scale y : " << volHeight / meshHeight / maxPhysicalVol << std::endl;
+	std::cout << "scale z : " << volDepth / meshDepth / maxPhysicalVol << std::endl << std::endl << std::endl;
+
 	DirectX::XMMATRIX rotation = XMMatrixRotationX(XM_PI);
 	DirectX::XMMATRIX fullWorld = scale * rotation * w;
 
@@ -537,6 +583,7 @@ void MeshRenderer::RenderMeshWithCT(
 	int m_meshVertexCount,
 	float maxMesh,
 	float maxPhysicalVol,
+	float volWidth, float volHeight, float volDepth,
 	float overallSize,
 	XMMATRIX w,
 	XMMATRIX v,
@@ -554,7 +601,25 @@ void MeshRenderer::RenderMeshWithCT(
 	//float meshScale = 1.5f / maxPhysicalVol;  // ⭐ XMFLOAT3 대응
 	//float meshScale =1.f;  // ⭐ XMFLOAT3 대응
 	float meshScale = overallSize / maxPhysicalVol;  // ⭐ XMFLOAT3 대응
-	DirectX::XMMATRIX scale = XMMatrixScaling(meshScale, meshScale, meshScale);
+	//DirectX::XMMATRIX scale = XMMatrixScaling(meshScale, meshScale, meshScale);
+
+
+	DirectX::XMMATRIX scale = XMMatrixScaling(
+		/*	meshToVolume,
+			meshToVolume,
+			meshToVolume*/
+
+			/*meshScale,
+			meshScale,
+			meshScale*/
+		volWidth / meshWidth / maxPhysicalVol,
+		volHeight / meshHeight / maxPhysicalVol,
+		volDepth / meshDepth / maxPhysicalVol
+
+	);
+
+
+
 	DirectX::XMMATRIX rotation = XMMatrixRotationX(XM_PI);
 	DirectX::XMMATRIX fullWorld = scale * rotation * w;
 

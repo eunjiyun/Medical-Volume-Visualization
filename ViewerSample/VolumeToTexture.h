@@ -39,7 +39,8 @@ public:
 
 	);
 
-	void DrawTextureToScreen(ID3D11Device* device, ID3D11ShaderResourceView* srv, ID3D11DeviceContext* context);
+	void DrawTextureToScreen(ID3D11Device* device, ID3D11ShaderResourceView* srv, ID3D11DeviceContext* context,
+		ID3D11VertexShader* vs, ID3D11PixelShader* ps);
 
 	// 결과 텍스처 가져오기
 	//ID3D11ShaderResourceView* GetResultSRV() const { return m_resultSRV.Get(); }

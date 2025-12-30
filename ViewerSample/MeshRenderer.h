@@ -57,6 +57,8 @@ public:
 	ID3D11VertexShader* m_meshVS;  // FaceMesh_WithCT_VS
 	ID3D11PixelShader* m_meshPS;   // FaceMesh_WithCT_PS
 
+	float meshWidth, meshHeight, meshDepth;
+
 public:
 	void CreateTwoPassStates(ID3D11Device* device);
 	//void RenderMeshTwoPass(ID3D11DeviceContext* context);
@@ -65,14 +67,14 @@ public:
 		ID3D11VertexShader* m_meshVS, ID3D11PixelShader* m_meshPS, ID3D11InputLayout* m_meshInputLayout,
 		ID3D11Buffer* m_clipSettingsBuffer, ID3D11Buffer* m_meshConstantBuffer, ID3D11ShaderResourceView* m_meshTexture,
 		ID3D11SamplerState* m_MeshSamplerState, ID3D11Device* m_pDevice, int m_meshVertexCount,
-		float maxMesh, float maxPhysicalVol, float overallSize,
+		float maxMesh, float maxPhysicalVol,float volWidth,float volheight, float volDepth, float overallSize,
 		XMMATRIX w, XMMATRIX v, XMMATRIX p, float width, float height);
 
 	void RenderMesh(ID3D11DeviceContext* context, ID3D11Buffer* m_meshVertexBuffer,
 		ID3D11VertexShader* m_meshVS, ID3D11PixelShader* m_meshPS, ID3D11InputLayout* m_meshInputLayout,
 		ID3D11Buffer* m_clipSettingsBuffer, ID3D11Buffer* m_meshConstantBuffer, ID3D11ShaderResourceView* m_meshTexture,
 		ID3D11SamplerState* m_MeshSamplerState, ID3D11Device* m_pDevice, int m_meshVertexCount,
-		float maxMesh, float maxPhysicalVol, float overallSize,
+		float maxMesh, float maxPhysicalVol,float volWidth, float volHeight, float volDepth, float overallSize,
 		XMMATRIX w, XMMATRIX v, XMMATRIX p);
 	MeshConstantBufferWithCT cbM;
 	float faceBlend{ 0.5f };
@@ -92,6 +94,7 @@ public:
 		int m_meshVertexCount,
 		float maxMesh,
 		float maxPhysicalVol,
+		float volWidth, float volHeight, float volDepth,
 		float overallSize,
 		XMMATRIX w,
 		XMMATRIX v,
