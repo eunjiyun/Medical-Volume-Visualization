@@ -15,6 +15,10 @@
 #include<unordered_map>
 #include<vector>
 
+#include "imgui.h"
+#include "imgui_impl_dx11.h"
+#include "imgui_impl_win32.h"
+
 #include "MeshRenderer.h"
 #include "VolumeToTexture.h"
 
@@ -119,10 +123,16 @@ struct ScreenPoint
 };
 
 
-struct DebugScreenPoint
+//struct DebugScreenPoint
+//{
+//	bool valid = false;
+//	QPoint pos;
+//};
+
+struct DebugPoint
 {
-	bool valid = false;
 	QPoint pos;
+	ImU32 color;
 };
 
 
@@ -251,7 +261,7 @@ public:
 	bool init();
 
 	void LoadDICOMSeries();
-
+	void ResetLandmarks();
 
 	void mousePressEvent(QMouseEvent* event);
 	float ComputeMeshScaleFromLandmarks(
@@ -515,7 +525,10 @@ public:
 	float physicalWidth, physicalHeight, physicalDepth;
 	float scaleX, scaleY, scaleZ;
 
-	DebugScreenPoint m_debugPoint;
+	//DebugScreenPoint m_debugPoint;
+
+	bool m_debugPointValid{ false };
+	std::vector<DebugPoint> m_debugPoints;
 public:
 	bool isPlaster{ false };
 	bool isMesh{ false };

@@ -7,9 +7,6 @@
 #include <vector>
 #include <algorithm>
 #include "FileReader.h"
-#include "imgui.h"
-#include "imgui_impl_dx11.h"
-#include "imgui_impl_win32.h"
 #include "PLYLoader.h"
 //#include "MeshRenderer.h"
 
@@ -3817,6 +3814,14 @@ float QDirect3D11Widget::ComputeMeshScaleFromLandmarks(
 	return volumeDist / meshDist;
 }
 
+
+void QDirect3D11Widget::ResetLandmarks()
+{
+	m_debugPoints.clear();
+	m_landmarkStep = LandmarkStep::CT_LeftEye;
+	update();
+}
+
 void QDirect3D11Widget::mousePressEvent(QMouseEvent* event)
 {
 	if (event->button() == Qt::LeftButton)
@@ -3833,9 +3838,13 @@ void QDirect3D11Widget::mousePressEvent(QMouseEvent* event)
 
 		qDebug() << "Mouse Pressed at:" << event->pos();
 
+	
+		if (m_debugPointValid) {
+			DebugPoint dp;
+			dp.pos = event->pos();
 
-		if (m_debugPoint.valid) {
-			m_debugPoint.pos = event->pos();
+
+		//	m_debugPoint.pos = event->pos();
 
 			ScreenPoint sp{ float(event->pos().x()), float(event->pos().y()) };
 
@@ -3844,24 +3853,32 @@ void QDirect3D11Widget::mousePressEvent(QMouseEvent* event)
 			switch (m_landmarkStep)
 			{
 			case LandmarkStep::CT_LeftEye:
+
+				dp.color = IM_COL32(255, 0, 0, 255);   // 빨강
 				ctLeftEye = sp;
 				qDebug() << "[Landmark] CT Left Eye set";
 				m_landmarkStep = LandmarkStep::CT_RightEye;
 				break;
 
 			case LandmarkStep::CT_RightEye:
+
+				dp.color = IM_COL32(255, 100, 100, 255);
 				ctRightEye = sp;
 				qDebug() << "[Landmark] CT Right Eye set";
 				m_landmarkStep = LandmarkStep::Mesh_LeftEye;
 				break;
 
 			case LandmarkStep::Mesh_LeftEye:
+
+				dp.color = IM_COL32(0, 255, 0, 255);   // 초록
 				meshLeftEye = sp;
 				qDebug() << "[Landmark] Mesh Left Eye set";
 				m_landmarkStep = LandmarkStep::Mesh_RightEye;
 				break;
 
 			case LandmarkStep::Mesh_RightEye:
+
+				dp.color = IM_COL32(100, 255, 100, 255);
 				meshRightEye = sp;
 				qDebug() << "[Landmark] Mesh Right Eye set";
 				m_landmarkStep = LandmarkStep::Done;
@@ -3889,6 +3906,9 @@ void QDirect3D11Widget::mousePressEvent(QMouseEvent* event)
 			default:
 				break;
 			}
+
+			m_debugPoints.push_back(dp);
+			update();
 		}
 		
 	}
@@ -4583,22 +4603,37 @@ void QDirect3D11Widget::RenderAllQuads()
 	// ============================
 // 🔴 클릭 지점 디버그 점
 // ============================
-	if (m_debugPoint.valid)
+	if (m_debugPointValid)
 	{
-		ImVec2 p(
-			(float)m_debugPoint.pos.x(),
-			(float)m_debugPoint.pos.y()
-		);
+		//ImVec2 p(
+		//	(float)m_debugPoints.pos.x(),
+		//	(float)m_debugPoints.pos.y()
+		//);
 
-		drawList->AddCircleFilled(
-			p,
-			6.0f,                         // 반지름
-			IM_COL32(0, 255, 0, 255)      // 빨간색
-		);
+		//drawList->AddCircleFilled(
+		//	p,
+		//	6.0f,                         // 반지름
+		//	IM_COL32(0, 255, 0, 255)      // 빨간색
+		//);
 
-		// 십자 보조선 (선택)
-		drawList->AddLine(ImVec2(p.x - 8, p.y), ImVec2(p.x + 8, p.y), IM_COL32(255, 0, 0, 255), 1.5f);
-		drawList->AddLine(ImVec2(p.x, p.y - 8), ImVec2(p.x, p.y + 8), IM_COL32(255, 0, 0, 255), 1.5f);
+		//// 십자 보조선 (선택)
+		//drawList->AddLine(ImVec2(p.x - 8, p.y), ImVec2(p.x + 8, p.y), IM_COL32(255, 0, 0, 255), 1.5f);
+		//drawList->AddLine(ImVec2(p.x, p.y - 8), ImVec2(p.x, p.y + 8), IM_COL32(255, 0, 0, 255), 1.5f);
+
+
+
+		for (const DebugPoint& dp : m_debugPoints)
+		{
+			ImVec2 p((float)dp.pos.x(), (float)dp.pos.y());
+
+			drawList->AddCircleFilled(p, 6.0f, dp.color);
+
+			drawList->AddLine(ImVec2(p.x - 8, p.y), ImVec2(p.x + 8, p.y),
+				dp.color, 1.5f);
+			drawList->AddLine(ImVec2(p.x, p.y - 8), ImVec2(p.x, p.y + 8),
+				dp.color, 1.5f);
+		}
+
 	}
 
 
