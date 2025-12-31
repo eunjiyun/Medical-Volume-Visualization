@@ -118,6 +118,14 @@ struct ScreenPoint
 	float y;
 };
 
+
+struct DebugScreenPoint
+{
+	bool valid = false;
+	QPoint pos;
+};
+
+
 enum class LandmarkStep
 {
 	None = 0,
@@ -277,6 +285,7 @@ public:
 	D3D11_VIEWPORT viewPort;
 
 	ComPtr<ID3D11ShaderResourceView> texArraySRV;
+	void RenderAllQuads();
 private:
 
 
@@ -305,7 +314,7 @@ private:
 
 	void UpdateCrosshairFromPatientCoord(DirectX::XMFLOAT3 patientCoord, int i);
 	DirectX::XMFLOAT3 GetDefaultPatientCenter();
-	void RenderAllQuads();
+
 	void DrawFullScreenQuad();
 	void DrawQuadWithTexture(ID3D11ShaderResourceView* pSRV, const D3D11_VIEWPORT& vp, int i);
 
@@ -505,6 +514,8 @@ public:
 	float maxPhysicalVol, maxMesh, overallSize{ 1.5f };
 	float physicalWidth, physicalHeight, physicalDepth;
 	float scaleX, scaleY, scaleZ;
+
+	DebugScreenPoint m_debugPoint;
 public:
 	bool isPlaster{ false };
 	bool isMesh{ false };

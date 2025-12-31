@@ -306,6 +306,22 @@ float4 main(PSInput input) : SV_Target
 		float3 boxMin = float3(-0.5, -0.5, -0.5);
 	float3 boxMax = float3(0.5, 0.5, 0.5);
 
+	//float3 boxMin = float3(-0.75, -0.75, -0.75);
+	//float3 boxMax = float3(0.75, 0.75, 0.75);
+
+
+	//float margin = 0.01;
+
+	//float3 boxMin = float3(-0.5 - margin, -0.5 - margin, -0.5 - margin);
+	//float3 boxMax = float3(0.5 + margin, 0.5 + margin, 0.5 + margin);
+
+
+//	float3 volBoxMin = float3(-0.5, -0.5, -0.5);
+//float3 volBoxMax = float3( 0.5,  0.5,  0.5);
+
+
+
+
 	float3 invDir = 1.0 / (rayDir + 1e-6);
 	float3 t0 = (boxMin - rayPos) * invDir;
 	float3 t1 = (boxMax - rayPos) * invDir;
@@ -320,7 +336,24 @@ float4 main(PSInput input) : SV_Target
 		return float4(0,0,0,1);
 
 	tNear = max(tNear, 0.0);
+
+
+
+	
+
 	float stepSize = (tFar - tNear) / VoxelAndMaxSteps.w;
+
+
+	//// 교차 후
+	//tNear += stepSize * 2.0;
+	//tFar -= stepSize * 2.0;
+
+
+
+	//// ⭐ 여기서 한 번만!
+	//float entryBias = stepSize * 2.0;   // 또는 0.002
+	//tNear += entryBias;
+
 
 	/* ---------------------------
 	   Mesh depth (once!)
@@ -341,6 +374,10 @@ float4 main(PSInput input) : SV_Target
 
 	float4 acc = float4(0,0,0,0);
 
+
+	float entryBias = stepSize * 2.0;
+	tNear += entryBias;
+
 	[loop]
 	for (int i = 0; i < VoxelAndMaxSteps.w; ++i)
 	{
@@ -349,12 +386,18 @@ float4 main(PSInput input) : SV_Target
 		float3 posVS = rayPosVS + rayDirVS * t;
 		float rayViewZ = posVS.z;
 
-		//// ⭐ HARD DEPTH BLOCK
-		//if (hasMesh && rayViewZ < meshViewZ)
-		//	continue;
+//		//// ⭐ HARD DEPTH BLOCK
+//		if (hasMesh && rayViewZ < meshViewZ)
+//			continue;
+//
+//		//		//if (hasMesh && rayViewZ < meshViewZ)
+////		//	continue; // mesh 앞이면 차단
 
-		//		//if (hasMesh && rayViewZ < meshViewZ)
-//		//	continue; // mesh 앞이면 차단
+		float depthDiff = rayViewZ - meshViewZ;
+
+		// 메쉬보다 앞이면 차단
+		if (hasMesh && depthDiff < -stepSize * 2.0)
+			continue;
 
 
 
@@ -368,27 +411,33 @@ float4 main(PSInput input) : SV_Target
 
 				float tCurrent = tNear + i * stepSize;
 					float jitter = frac(sin(dot(input.uv * 1000.0, float2(12.9898,78.233))) * 43758.5453);
+
+					//jitter = 0;
+
 	float3 startPos = rayPos + rayDir * (tNear + jitter * stepSize);
 		float3 currentPos = startPos + rayDir * (i * stepSize);
 				float3 uvw = (currentPos - boxMin) / (boxMax - boxMin);
 		uvw.y = 1.0 - uvw.y;
 
-		//if (any(uvw < 0.0) || any(uvw > 1.0))
-		//	break;
+		if (any(uvw < 0.02) || any(uvw > 0.99))
+			continue;
+		if (any(uvw < 0.0) || any(uvw > 1.0))
+			continue;
+
 
 		float hu = volumeTex.SampleLevel(samp, uvw, 0).r;
 		float huNorm = saturate((hu - HuParams.z) / (HuParams.w - HuParams.z));
 		float4 col = transferFunction.SampleLevel(tfSampler, huNorm, 0);
 
-		//if (col.a < 0.001)
-		//	continue;
+		if (col.a < 0.001)
+			continue;
 
 		float alpha = col.a * stepSize * 10.0;
 		acc.rgb += (1.0 - acc.a) * alpha * col.rgb;
 		acc.a += (1.0 - acc.a) * alpha;
 
-		//if (acc.a > 0.98)
-		//	break;
+		if (acc.a > 0.98)
+			break;
 	}
 
 	acc.rgb = pow(saturate(acc.rgb), 1.0 / 2.2);

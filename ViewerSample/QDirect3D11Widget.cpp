@@ -1192,7 +1192,7 @@ void QDirect3D11Widget::FullScreenPassSet()
 
 
 	m_pDeviceContext->OMSetDepthStencilState(m_VolumeDepthState.Get(), 0);
-
+	//m_pDeviceContext->OMSetDepthStencilState(meshRenderer->depthReadState, 0);
 
 	XMStoreFloat4x4(&cb.InvView, XMMatrixTranspose(invViewMat));
 	XMStoreFloat4x4(&cb.InvProj, XMMatrixTranspose(invProjMat));
@@ -2976,26 +2976,26 @@ void QDirect3D11Widget::RenderVolumeView()
 
 
 
-	///*	void VolumeToTexture::RenderVolumeToTexture(
-	//		ID3D11DeviceContext* context,
-	//		ID3D11ShaderResourceView* volumeSRV,
-	//		ID3D11ShaderResourceView* transferFunctionSRV,
-	//		ID3D11ShaderResourceView* sceneDepthSRV,
-	//		const XMMATRIX& invView,
-	//		const XMMATRIX& invProj,
-	//		const XMMATRIX& invVolumeWorld,
-	//		const XMMATRIX& view,
-	//		const XMMATRIX& projection,
-	//		const XMFLOAT3& cameraPos,
-	//		float renderMode,
-	//		const XMFLOAT3& voxelDim,
-	//		float maxSteps,
-	//		float huMin,
-	//		float huMax
-	//		,
-	//		ID3D11VertexShader* vs, ID3D11PixelShader* ps,
-	//		ID3D11InputLayout* layout, ID3D11Buffer* cb
-	//		, UINT stride, UINT offset, ID3D11Buffer* m_quadVertexBuffer)*/
+	/*	void VolumeToTexture::RenderVolumeToTexture(
+			ID3D11DeviceContext* context,
+			ID3D11ShaderResourceView* volumeSRV,
+			ID3D11ShaderResourceView* transferFunctionSRV,
+			ID3D11ShaderResourceView* sceneDepthSRV,
+			const XMMATRIX& invView,
+			const XMMATRIX& invProj,
+			const XMMATRIX& invVolumeWorld,
+			const XMMATRIX& view,
+			const XMMATRIX& projection,
+			const XMFLOAT3& cameraPos,
+			float renderMode,
+			const XMFLOAT3& voxelDim,
+			float maxSteps,
+			float huMin,
+			float huMax
+			,
+			ID3D11VertexShader* vs, ID3D11PixelShader* ps,
+			ID3D11InputLayout* layout, ID3D11Buffer* cb
+			, UINT stride, UINT offset, ID3D11Buffer* m_quadVertexBuffer)*/
 
 
 	//	//m_pDeviceContext->VSSetShader(vsFullscreen, nullptr, 0);
@@ -3023,27 +3023,27 @@ void QDirect3D11Widget::RenderVolumeView()
 		ID3D11Buffer* cbs[] = { cbRay.Get() };
 		ID3D11Buffer* vb[] = { m_quadVB.Get() };
 
-		m_volumeToTexture->RenderVolumeToTexture(
-			m_pDeviceContext,
-			m_volumeSRV.Get(),
-			m_transferFunction->GetSRV(),
-			m_depthSRV,  // ⭐ mesh depth 없음
-			XMMatrixInverse(nullptr, viewMat),
-			XMMatrixInverse(nullptr, projMat),
-			XMMatrixInverse(nullptr, worldMat),
-			viewMat,
-			projMat,
-			XMFLOAT3(XMVectorGetX(eye), XMVectorGetY(eye), XMVectorGetZ(eye)),
-			cb.CameraPosAndAlpha.w,
-			voxelDim,
-			256.0f,
-			huMin,
-			huMax,
-			vsFullscreen,
-			psRaymarch, 
-			layoutQuad, *cbs,
-			s,0, *vb
-		);
+		//m_volumeToTexture->RenderVolumeToTexture(
+		//	m_pDeviceContext,
+		//	m_volumeSRV.Get(),
+		//	m_transferFunction->GetSRV(),
+		//	m_depthSRV,  // ⭐ mesh depth 없음
+		//	XMMatrixInverse(nullptr, viewMat),
+		//	XMMatrixInverse(nullptr, projMat),
+		//	XMMatrixInverse(nullptr, worldMat),
+		//	viewMat,
+		//	projMat,
+		//	XMFLOAT3(XMVectorGetX(eye), XMVectorGetY(eye), XMVectorGetZ(eye)),
+		//	cb.CameraPosAndAlpha.w,
+		//	voxelDim,
+		//	256.0f,
+		//	huMin,
+		//	huMax,
+		//	vsFullscreen,
+		//	psRaymarch, 
+		//	layoutQuad, *cbs,
+		//	s,0, *vb
+		//);
 
 
 
@@ -3826,62 +3826,69 @@ void QDirect3D11Widget::mousePressEvent(QMouseEvent* event)
 		m_lastMousePos = event->pos();
 		setCursor(Qt::ClosedHandCursor);
 
+		//m_debugPoint.valid = true;
+
+	
+
+
 		qDebug() << "Mouse Pressed at:" << event->pos();
 
 
+		if (m_debugPoint.valid) {
+			m_debugPoint.pos = event->pos();
+
+			ScreenPoint sp{ float(event->pos().x()), float(event->pos().y()) };
+
+			//qDebug() << "Mouse Pressed at:" << p;
+
+			switch (m_landmarkStep)
+			{
+			case LandmarkStep::CT_LeftEye:
+				ctLeftEye = sp;
+				qDebug() << "[Landmark] CT Left Eye set";
+				m_landmarkStep = LandmarkStep::CT_RightEye;
+				break;
+
+			case LandmarkStep::CT_RightEye:
+				ctRightEye = sp;
+				qDebug() << "[Landmark] CT Right Eye set";
+				m_landmarkStep = LandmarkStep::Mesh_LeftEye;
+				break;
+
+			case LandmarkStep::Mesh_LeftEye:
+				meshLeftEye = sp;
+				qDebug() << "[Landmark] Mesh Left Eye set";
+				m_landmarkStep = LandmarkStep::Mesh_RightEye;
+				break;
+
+			case LandmarkStep::Mesh_RightEye:
+				meshRightEye = sp;
+				qDebug() << "[Landmark] Mesh Right Eye set";
+				m_landmarkStep = LandmarkStep::Done;
+				qDebug() << "[Landmark] All points set";
+				break;
+
+			case LandmarkStep::Done:
+				qDebug() << "[Landmark] Already completed";
+				meshRenderer->meshScale =
+
+					ComputeMeshScaleFromLandmarks(
+						meshLeftEye,
+						meshRightEye,
+						ctLeftEye,
+						ctRightEye
+					);
+
+				qDebug() << "[Landmark] Computed mesh scale:";
 
 
-		ScreenPoint sp{ float(event->pos().x()), float(event->pos().y()) };
-
-		//qDebug() << "Mouse Pressed at:" << p;
-
-		switch (m_landmarkStep)
-		{
-		case LandmarkStep::CT_LeftEye:
-			ctLeftEye = sp;
-			qDebug() << "[Landmark] CT Left Eye set";
-			m_landmarkStep = LandmarkStep::CT_RightEye;
-			break;
-
-		case LandmarkStep::CT_RightEye:
-			ctRightEye = sp;
-			qDebug() << "[Landmark] CT Right Eye set";
-			m_landmarkStep = LandmarkStep::Mesh_LeftEye;
-			break;
-
-		case LandmarkStep::Mesh_LeftEye:
-			meshLeftEye = sp;
-			qDebug() << "[Landmark] Mesh Left Eye set";
-			m_landmarkStep = LandmarkStep::Mesh_RightEye;
-			break;
-
-		case LandmarkStep::Mesh_RightEye:
-			meshRightEye = sp;
-			qDebug() << "[Landmark] Mesh Right Eye set";
-			m_landmarkStep = LandmarkStep::Done;
-			qDebug() << "[Landmark] All points set";
-			break;
-
-		case LandmarkStep::Done:
-			qDebug() << "[Landmark] Already completed";
-			meshRenderer->meshScale=
-
-			 ComputeMeshScaleFromLandmarks(
-				meshLeftEye,
-				meshRightEye,
-				ctLeftEye,
-				ctRightEye
-			);
-
-			qDebug() << "[Landmark] Computed mesh scale:" ;
 
 
+				break;
 
-
-			break;
-
-		default:
-			break;
+			default:
+				break;
+			}
 		}
 		
 	}
@@ -4515,6 +4522,10 @@ void QDirect3D11Widget::RenderAllQuads()
 					ctTexture,          // ⭐ CT 텍스처
 					m_depthSRV,
 					m_MeshSamplerState,
+
+
+		/*			m_pointClampSampler,*/
+
 					m_pDevice,
 					m_meshVertexCount,
 					maxMesh,
@@ -4567,6 +4578,32 @@ void QDirect3D11Widget::RenderAllQuads()
 	ImGui::NewFrame();
 
 	ImDrawList* drawList = ImGui::GetBackgroundDrawList();
+
+
+	// ============================
+// 🔴 클릭 지점 디버그 점
+// ============================
+	if (m_debugPoint.valid)
+	{
+		ImVec2 p(
+			(float)m_debugPoint.pos.x(),
+			(float)m_debugPoint.pos.y()
+		);
+
+		drawList->AddCircleFilled(
+			p,
+			6.0f,                         // 반지름
+			IM_COL32(0, 255, 0, 255)      // 빨간색
+		);
+
+		// 십자 보조선 (선택)
+		drawList->AddLine(ImVec2(p.x - 8, p.y), ImVec2(p.x + 8, p.y), IM_COL32(255, 0, 0, 255), 1.5f);
+		drawList->AddLine(ImVec2(p.x, p.y - 8), ImVec2(p.x, p.y + 8), IM_COL32(255, 0, 0, 255), 1.5f);
+	}
+
+
+
+
 	ImVec2 screenSize = ImGui::GetIO().DisplaySize;
 	float cx = screenSize.x * 0.5f;
 	float cy = screenSize.y * 0.5f;

@@ -30,6 +30,7 @@ public slots:
 
 	void volumeShowHide();
 	void meshShowHide();
+	void meshScaleSet();
 private:
 	Ui::ViewerSampleClass* ui;
 	QDirect3D11Widget * m_pScene;

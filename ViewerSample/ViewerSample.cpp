@@ -42,6 +42,10 @@ void ViewerSample::connectSlots()
 	connect(ui->btnViewHead, &QPushButton::clicked, this, &ViewerSample::volumeShowHide);
 	connect(ui->btnGraphAdjust, &QPushButton::clicked, this, &ViewerSample::meshShowHide);
 
+	//btnReset
+	connect(ui->btnAutoAdjust, &QPushButton::clicked, this, &ViewerSample::meshScaleSet);
+
+
 
 	// ✅ 시그널 연결
 
@@ -119,6 +123,41 @@ void ViewerSample::meshShowHide()
 
 	update();
 }
+
+
+void ViewerSample::meshScaleSet()
+{
+	if (m_pScene->m_debugPoint.valid) {
+
+
+		m_pScene->meshRenderer->meshScale =
+
+			m_pScene->ComputeMeshScaleFromLandmarks(
+				m_pScene->meshLeftEye,
+				m_pScene->meshRightEye,
+				m_pScene->ctLeftEye,
+				m_pScene->ctRightEye
+			);
+
+
+	
+		m_pScene->m_debugPoint.valid = false;
+	/*	m_pScene->update();
+		m_pScene->RenderAllQuads();*/
+		
+	}
+	else {
+	
+		m_pScene->m_debugPoint.valid = true;
+
+	
+	}
+
+	m_pScene->update();
+
+
+}
+
 
 
 void ViewerSample::huValueChanged(int value)

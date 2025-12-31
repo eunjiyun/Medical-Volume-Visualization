@@ -614,9 +614,11 @@ void MeshRenderer::RenderMeshWithCT(
 	ID3D11Buffer* m_clipSettingsBuffer,
 	ID3D11Buffer* m_meshConstantBuffer,
 	ID3D11ShaderResourceView* m_meshTexture,      // 얼굴 텍스처
+
 	ID3D11ShaderResourceView* ctTexture,          // ⭐ CT 텍스처
 	ID3D11ShaderResourceView* depthTexture,          // ⭐ depth 텍스처
 	ID3D11SamplerState* m_MeshSamplerState,
+	//ID3D11SamplerState* depthSamplerState,
 	ID3D11Device* m_pDevice,
 	int m_meshVertexCount,
 	float maxMesh,
@@ -707,8 +709,11 @@ void MeshRenderer::RenderMeshWithCT(
 	};
 	context->PSSetShaderResources(0, 3, srvs);
 
+
+
 	// ⭐ s0 = linear sampler (양쪽 다 사용)
 	context->PSSetSamplers(0, 1, &m_MeshSamplerState);
+	context->PSSetSamplers(1, 1, &m_PointClampSampler);
 
 	// ========== Rasterizer ==========
 	context->RSSetState(rastState);

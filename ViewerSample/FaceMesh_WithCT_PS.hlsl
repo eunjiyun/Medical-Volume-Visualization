@@ -3,6 +3,7 @@
 Texture2D faceColorTex : register(t0);  // 얼굴 색상
 Texture2D ctTex : register(t1);         // CT 텍스처 (1단계 결과)
 SamplerState linearSamp : register(s0);
+SamplerState pointClamp : register(s1); // 포인트+클램프 추천 (디버그용)
 
 Texture2D<float> SceneDepth : register(t2);
 
@@ -27,9 +28,15 @@ float4 main(PSInput input) : SV_Target
 
 	float3 faceColor = faceColorTex.Sample(linearSamp, input.uv).rgb;
 	float4 ct = ctTex.Sample(linearSamp, input.screenUV); // rgb + a
+	float meshDepth = SceneDepth.Sample(pointClamp, input.uv).r;
+	float hasFace = step(meshDepth, 0.999); // 메쉬가 있는 픽셀만
+	//return float4(hasFace, hasFace, hasFace, 1);
 
 	float ctLuma = dot(ct.rgb, float3(0.299, 0.587, 0.114));
 	float ctAlpha = saturate(ct.a);   // 깊이 proxy (0~1)
+
+	// 경계 불안정 픽셀 제거
+	ctAlpha = smoothstep(0.05, 0.2, ctAlpha);
 
 	/* ============================
 	   1️⃣ Bone mask (넓고 부드럽게)
@@ -39,6 +46,8 @@ float4 main(PSInput input) : SV_Target
 	float boneMask =
 		ctLuma * 0.65 +     // 구조 정보
 		ctAlpha * 0.35;      // 깊이 보조
+
+	boneMask *= ctAlpha;   // 핵심 한 줄
 
 	boneMask = saturate(boneMask);
 
@@ -52,6 +61,10 @@ float4 main(PSInput input) : SV_Target
 
 	boneMask = smoothstep(0.12, 0.75, boneMask);
 	boneMask = pow(boneMask, 0.7);   // 🔥 중심 강화
+
+
+
+	boneMask *= hasFace;
 
 
 	/* ============================
@@ -70,8 +83,13 @@ float4 main(PSInput input) : SV_Target
 	   3️⃣ 국소 음영만 추출 (핵심)
 	============================ */
 
-	// CT가 강한 곳만 음영으로
-	float localShadow = ctField * boneMask;
+	float ctPresence = smoothstep(0.25, 0.45, ctField);
+	// 0.25 이하는 CT 없음 취급, 0.45 이상만 확실
+
+	float localShadow = ctField * boneMask * ctPresence;
+
+	//// CT가 강한 곳만 음영으로
+	//float localShadow = ctField * boneMask;
 
 	// 전체 얼굴 덮지 않게 컷
 	localShadow = saturate(localShadow - 0.15);
@@ -101,9 +119,14 @@ float4 main(PSInput input) : SV_Target
 	float shadow = localShadow * 0.35; // 0.25 → 0.35
 
 	// 밝아지는 양 (핵심)
-	float lift = boneMask * 0.15;
+	//float lift = boneMask * 0.15;
+	float lift = boneMask * (0.15 * ctAlpha);
 
 	float3 color = skinLayer * (1.0 - shadow);
+
+	//float3 color = float3(1, 1, 1);// = skinLayer * (1.0 - shadow);
+
+
 	color += lift.xxx;
 
 	/* ============================
@@ -132,6 +155,8 @@ float4 main(PSInput input) : SV_Target
 	//float finalAlpha = 1.0;
 
 	float finalAlpha = lerp(CTBlendParams.w*1.5f, 0.6, boneMask);  // ⭐ 피부(0.3) → 뼈(0.95)
+
+	finalAlpha *= hasFace;
 
 	return float4(color, finalAlpha);
 }
