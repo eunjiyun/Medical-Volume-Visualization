@@ -58,7 +58,9 @@ public:
 		1,
 		1
 	);
-
+	float centerX ;
+	float centerY ;
+	float centerZ ;
 	// ⭐ 메쉬 셰이더는 여기서 관리
 	ID3D11VertexShader* m_meshVS;  // FaceMesh_WithCT_VS
 	ID3D11PixelShader* m_meshPS;   // FaceMesh_WithCT_PS

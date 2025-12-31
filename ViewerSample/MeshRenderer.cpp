@@ -281,19 +281,19 @@ void MeshRenderer::RenderMeshDepth(ID3D11DeviceContext* context, ID3D11Buffer* m
 
 
 
-	DirectX::XMMATRIX scale = XMMatrixScaling(
-		/*	meshToVolume,
-			meshToVolume,
-			meshToVolume*/
+	//DirectX::XMMATRIX scale = XMMatrixScaling(
+	//	/*	meshToVolume,
+	//		meshToVolume,
+	//		meshToVolume*/
 
-		volWidth / meshWidth / maxPhysicalVol * meshScale*1.f,
-		volWidth / meshWidth / maxPhysicalVol * meshScale*1.f,
-		volWidth / meshWidth / maxPhysicalVol * meshScale*1.f
-		//volWidth / meshWidth / maxPhysicalVol * 1.42f,
-		//volHeight / meshHeight / maxPhysicalVol * 1.42f*1.09f,
-		//volDepth / meshDepth / maxPhysicalVol * 1.42f
+	//	volWidth / meshWidth / maxPhysicalVol * meshScale*1.f,
+	//	volWidth / meshWidth / maxPhysicalVol * meshScale*1.f,
+	//	volWidth / meshWidth / maxPhysicalVol * meshScale*1.f
+	//	//volWidth / meshWidth / maxPhysicalVol * 1.42f,
+	//	//volHeight / meshHeight / maxPhysicalVol * 1.42f*1.09f,
+	//	//volDepth / meshDepth / maxPhysicalVol * 1.42f
 
-	);
+	//);
 
 
 	/*std::cout << "=================mesh and volume scale======" << std::endl;
@@ -320,9 +320,57 @@ void MeshRenderer::RenderMeshDepth(ID3D11DeviceContext* context, ID3D11Buffer* m
 
 
 
+	float volToMesh{ volWidth / meshWidth / maxPhysicalVol * meshScale };
+
+	DirectX::XMMATRIX scale = XMMatrixScaling(
+		/*	meshToVolume,
+			meshToVolume,
+			meshToVolume*/
+
+		volToMesh, volToMesh, volToMesh
+		//volWidth / meshWidth / maxPhysicalVol * 1.42f,
+		//volHeight / meshHeight / maxPhysicalVol * 1.42f*1.09f,
+		//volDepth / meshDepth / maxPhysicalVol * 1.42f
+
+	);
+
+
+	
+
+	//XMMATRIX centerTranslate =
+	//	XMMatrixTranslation(
+	//		-centerX * volToMesh,
+	//		-centerY * volToMesh,
+	//		-centerZ * volToMesh
+	//	);
+
+
+	//XMMATRIX centerTranslate =
+	//	XMMatrixTranslation(
+	//		volToMesh,
+	//		volToMesh,
+	//		volToMesh
+	//	);
+
+
+	XMMATRIX centerTranslate =
+		XMMatrixTranslation(
+			-centerX,
+			-centerY,
+			-centerZ
+		);
+
+
+
 	MeshConstantBuffer cb;
 	DirectX::XMMATRIX rotation = XMMatrixRotationX(XM_PI);
-	DirectX::XMMATRIX fullWorld = /*centerTranslate **/scale * rotation * w;
+//	DirectX::XMMATRIX fullWorld = /*centerTranslate **/scale * rotation * w;
+
+	//s r t v p
+	//DirectX::XMMATRIX fullWorld = scale * rotation *centerTranslate* w;
+	//DirectX::XMMATRIX fullWorld = centerTranslate  * rotation *scale* w;
+
+	DirectX::XMMATRIX fullWorld = /*centerTranslate * */scale   * rotation  * w;
 
 
 	float volHalfWorld = overallSize * 0.5f;
@@ -544,14 +592,29 @@ void MeshRenderer::RenderMesh(ID3D11DeviceContext* context, ID3D11Buffer* m_mesh
 	//);
 
 
+	//DirectX::XMMATRIX scale = XMMatrixScaling(
+	//	/*	meshToVolume,
+	//		meshToVolume,
+	//		meshToVolume*/
+
+	//	volWidth / meshWidth / maxPhysicalVol * meshScale*1.f,
+	//	volWidth / meshWidth / maxPhysicalVol * meshScale*1.f,
+	//	volWidth / meshWidth / maxPhysicalVol * meshScale*1.f
+	//	//volWidth / meshWidth / maxPhysicalVol * 1.42f,
+	//	//volHeight / meshHeight / maxPhysicalVol * 1.42f*1.09f,
+	//	//volDepth / meshDepth / maxPhysicalVol * 1.42f
+
+	//);
+
+
+	float volToMesh{ volWidth / meshWidth / maxPhysicalVol * meshScale };
+
 	DirectX::XMMATRIX scale = XMMatrixScaling(
 		/*	meshToVolume,
 			meshToVolume,
 			meshToVolume*/
 
-		volWidth / meshWidth / maxPhysicalVol * meshScale*1.f,
-		volWidth / meshWidth / maxPhysicalVol * meshScale*1.f,
-		volWidth / meshWidth / maxPhysicalVol * meshScale*1.f
+		volToMesh, volToMesh, volToMesh
 		//volWidth / meshWidth / maxPhysicalVol * 1.42f,
 		//volHeight / meshHeight / maxPhysicalVol * 1.42f*1.09f,
 		//volDepth / meshDepth / maxPhysicalVol * 1.42f
@@ -559,14 +622,42 @@ void MeshRenderer::RenderMesh(ID3D11DeviceContext* context, ID3D11Buffer* m_mesh
 	);
 
 
+	//DirectX::XMMATRIX rotation = XMMatrixRotationX(XM_PI);
 
-	std::cout << "meshScale : " << meshScale << std::endl;
+
+
+	XMMATRIX centerTranslate =
+		XMMatrixTranslation(
+			/*-centerX * volToMesh,
+			-centerY * volToMesh,
+			-centerZ * volToMesh*/
+
+
+
+			 volToMesh,
+			volToMesh,
+			 volToMesh
+		);
+
+
+
+
+	//MeshConstantBuffer cb;
+	DirectX::XMMATRIX rotation = XMMatrixRotationX(XM_PI);
+	//	DirectX::XMMATRIX fullWorld = /*centerTranslate **/scale * rotation * w;
+	//DirectX::XMMATRIX fullWorld = scale * rotation * w;
+
+		//s r t v p
+    DirectX::XMMATRIX fullWorld = scale * rotation /**centerTranslate*/* w;
+	//DirectX::XMMATRIX fullWorld = centerTranslate * rotation *scale* w;
+
+
+	/*std::cout << "meshScale : " << meshScale << std::endl;
 	std::cout << "scale x : " << volWidth / meshWidth / maxPhysicalVol << std::endl;
 	std::cout << "scale y : " << volHeight / meshHeight / maxPhysicalVol << std::endl;
-	std::cout << "scale z : " << volDepth / meshDepth / maxPhysicalVol << std::endl << std::endl << std::endl;
+	std::cout << "scale z : " << volDepth / meshDepth / maxPhysicalVol << std::endl << std::endl << std::endl;*/
 
-	DirectX::XMMATRIX rotation = XMMatrixRotationX(XM_PI);
-	DirectX::XMMATRIX fullWorld = scale * rotation * w;
+
 
 	MeshConstantBuffer cb;
 	cb.WVP = XMMatrixTranspose(fullWorld * v * p);
@@ -657,15 +748,14 @@ void MeshRenderer::RenderMeshWithCT(
 	//	//volDepth / meshDepth / maxPhysicalVol * 1.42f
 
 	//);
+	float volToMesh{ volWidth / meshWidth / maxPhysicalVol * meshScale };
 
 	DirectX::XMMATRIX scale = XMMatrixScaling(
 		/*	meshToVolume,
 			meshToVolume,
 			meshToVolume*/
 
-		volWidth / meshWidth / maxPhysicalVol * meshScale*1.f,
-		volWidth / meshWidth / maxPhysicalVol * meshScale*1.f,
-		volWidth / meshWidth / maxPhysicalVol * meshScale*1.f
+		volToMesh, volToMesh, volToMesh
 		//volWidth / meshWidth / maxPhysicalVol * 1.42f,
 		//volHeight / meshHeight / maxPhysicalVol * 1.42f*1.09f,
 		//volDepth / meshDepth / maxPhysicalVol * 1.42f
@@ -673,10 +763,30 @@ void MeshRenderer::RenderMeshWithCT(
 	);
 
 
-
-
 	DirectX::XMMATRIX rotation = XMMatrixRotationX(XM_PI);
-	DirectX::XMMATRIX fullWorld = scale * rotation * w;
+
+
+
+	//XMMATRIX centerTranslate =
+	//	XMMatrixTranslation(
+	//		-centerX * volToMesh,
+	//		-centerY * volToMesh,
+	//		-centerZ * volToMesh
+	//	);
+
+
+	XMMATRIX centerTranslate =
+		XMMatrixTranslation(
+				-centerX ,
+			-centerY ,
+		-centerZ 
+		);
+
+
+	//s r t v p
+	//DirectX::XMMATRIX fullWorld = scale * rotation *centerTranslate* w;
+
+	DirectX::XMMATRIX fullWorld = /*centerTranslate**/ scale *rotation  *  w;
 
 	// ========== Constant Buffer 업데이트 ==========
 	// ⭐ MeshConstantBuffer에 ctBlendStrength 추가 필요

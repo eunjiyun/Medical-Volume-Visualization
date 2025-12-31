@@ -698,7 +698,7 @@ bool QDirect3D11Widget::init()
 		-volCenterMM.y,
 		-volCenterMM.z
 	);
-	meshRenderer->centerTranslate = centerTranslate;
+	//meshRenderer->centerTranslate = centerTranslate;
 
 	// 최대 크기
 	maxPhysicalVol = Max3(physicalWidth, physicalHeight, physicalDepth);
@@ -1319,8 +1319,8 @@ bool QDirect3D11Widget::LoadMeshFromPLY(const std::string& filename, ID3D11Devic
 	const auto& vertices = plyLoader.GetRenderVertices();
 	m_meshVertexCount = static_cast<int>(vertices.size());
 
-	std::vector<PLY::VertexWithTexture> centeredVertices;
-	centeredVertices.reserve(vertices.size());
+	//std::vector<PLY::VertexWithTexture> centeredVertices;
+	//centeredVertices.reserve(vertices.size());
 
 
 	// ✅ 메쉬 범위 계산
@@ -1342,19 +1342,19 @@ bool QDirect3D11Widget::LoadMeshFromPLY(const std::string& filename, ID3D11Devic
 		meshRenderer->meshHeight = maxY - minY;
 		meshRenderer->meshDepth = maxZ - minZ;
 
-		float centerX = (minX + maxX) * 0.5f;
-		float centerY = (minY + maxY) * 0.5f;
-		float centerZ = (minZ + maxZ) * 0.5f;
+		meshRenderer->centerX = (minX + maxX) * 0.5f;
+		meshRenderer->centerY = (minY + maxY) * 0.5f;
+		meshRenderer->centerZ = (minZ + maxZ) * 0.5f;
 
 
 
-		for (auto& v : vertices) {
-			PLY::VertexWithTexture cv = v;
-			cv.x -= centerX* 0.006755915f;
-			cv.y -= centerY * 0.006755915f;
-			cv.z -= centerZ * 0.006755915f;
-			centeredVertices.push_back(cv);
-		}
+		//for (auto& v : vertices) {
+		//	PLY::VertexWithTexture cv = v;
+		//	cv.x -= meshRenderer->centerX* 0.006755915f;
+		//	cv.y -= meshRenderer->centerY * 0.006755915f;
+		//	cv.z -= meshRenderer->centerZ * 0.006755915f;
+		//	centeredVertices.push_back(cv);
+		//}
 
 	/*	for (auto& v : vertices) {
 			PLY::VertexWithTexture cv = v;
@@ -1381,7 +1381,7 @@ bool QDirect3D11Widget::LoadMeshFromPLY(const std::string& filename, ID3D11Devic
 		qDebug() << "Y range:" << minY << "to" << maxY << "=" << (maxY - minY);
 		qDebug() << "Z range:" << minZ << "to" << maxZ << "=" << (maxZ - minZ);
 		//qDebug() << "maxMesh:" << maxMesh;
-		qDebug() << "Center:" << centerX << centerY << centerZ;
+		qDebug() << "Center:" << meshRenderer->centerX << meshRenderer->centerY << meshRenderer->centerZ;
 
 		qDebug() << "=== DICOM for comparison ===";
 		qDebug() << "Physical size (mm):" << physicalWidth << physicalHeight << physicalDepth;
@@ -1390,13 +1390,13 @@ bool QDirect3D11Widget::LoadMeshFromPLY(const std::string& filename, ID3D11Devic
 	// 버텍스 버퍼 생성
 	D3D11_BUFFER_DESC bd = {};
 	bd.Usage = D3D11_USAGE_DEFAULT;
-	bd.ByteWidth = sizeof(PLY::VertexWithTexture) * centeredVertices.size();
-	//bd.ByteWidth = sizeof(PLY::VertexWithTexture) * vertices.size();
+	//bd.ByteWidth = sizeof(PLY::VertexWithTexture) * centeredVertices.size();
+	bd.ByteWidth = sizeof(PLY::VertexWithTexture) * vertices.size();
 	//bd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
 
 	D3D11_SUBRESOURCE_DATA initData = {};
-		initData.pSysMem = centeredVertices.data();
-	//initData.pSysMem = vertices.data();
+	//	initData.pSysMem = centeredVertices.data();
+	initData.pSysMem = vertices.data();
 
 	HRESULT hr = device->CreateBuffer(&bd, &initData, &m_meshVertexBuffer);
 	if (FAILED(hr)) {
