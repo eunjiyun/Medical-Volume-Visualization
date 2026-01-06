@@ -31,7 +31,7 @@ class MeshRenderer
 {
 public:
 	MeshRenderer() {};
-	~MeshRenderer(){};
+	~MeshRenderer() {};
 	// ========== Two-Pass States ==========
 	ID3D11DepthStencilState* m_depthWriteState;   // Pass 1: Depth Write
 	ID3D11DepthStencilState* m_depthReadState;    // Pass 2: Depth Read Only
@@ -58,16 +58,16 @@ public:
 		1,
 		1
 	);
-	float centerX ;
-	float centerY ;
-	float centerZ ;
+	float centerX;
+	float centerY;
+	float centerZ;
 	// ⭐ 메쉬 셰이더는 여기서 관리
 	ID3D11VertexShader* m_meshVS;  // FaceMesh_WithCT_VS
 	ID3D11PixelShader* m_meshPS;   // FaceMesh_WithCT_PS
 
 	float meshWidth, meshHeight, meshDepth;
 	//float meshScale{ /*0.006755915f*/ };
-	float meshScale{ 1};
+	float meshScale{ 1 };
 
 public:
 	void CreateTwoPassStates(ID3D11Device* device);
@@ -77,7 +77,7 @@ public:
 		ID3D11VertexShader* m_meshVS, ID3D11PixelShader* m_meshPS, ID3D11InputLayout* m_meshInputLayout,
 		ID3D11Buffer* m_clipSettingsBuffer, ID3D11Buffer* m_meshConstantBuffer, ID3D11ShaderResourceView* m_meshTexture,
 		ID3D11SamplerState* m_MeshSamplerState, ID3D11Device* m_pDevice, int m_meshVertexCount,
-		float maxMesh, float maxPhysicalVol,float volWidth,float volheight, float volDepth, float overallSize,
+		float maxMesh, float maxPhysicalVol, float volWidth, float volheight, float volDepth, float overallSize,
 		XMMATRIX w, XMMATRIX v, XMMATRIX p, float width, float height);
 
 	DirectX::XMMATRIX initialMeshWorld;
@@ -85,7 +85,7 @@ public:
 		ID3D11VertexShader* m_meshVS, ID3D11PixelShader* m_meshPS, ID3D11InputLayout* m_meshInputLayout,
 		ID3D11Buffer* m_clipSettingsBuffer, ID3D11Buffer* m_meshConstantBuffer, ID3D11ShaderResourceView* m_meshTexture,
 		ID3D11SamplerState* m_MeshSamplerState, ID3D11Device* m_pDevice, int m_meshVertexCount,
-		float maxMesh, float maxPhysicalVol,float volWidth, float volHeight, float volDepth, float overallSize,
+		float maxMesh, float maxPhysicalVol, float volWidth, float volHeight, float volDepth, float overallSize,
 		XMMATRIX w, XMMATRIX v, XMMATRIX p);
 	MeshConstantBufferWithCT cbM;
 	float faceBlend{ 0.5f };

@@ -72,7 +72,7 @@ bool VolumeToTexture::Initialize(ID3D11Device* device, int width, int height)
 	if (!CreateSamplers(device))
 		return false;
 
-	
+
 	m_initialized = true;
 	return true;
 }
@@ -798,17 +798,17 @@ void VolumeToTexture::RenderVolumeToTexture(
 	context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
 	context->Draw(4, 0);
 
-//	// DrawTextureToScreen() 시작에 추가
-//	std::cout << "✅ RenderVolumeToTexture called" << std::endl;
-////	std::cout << "   SRV: " << srv << std::endl;
-//
-//	if(nullptr== m_quadVertexBuffer.Get())
-//		std::cout << "   QuadVB: " << m_quadVertexBuffer.Get() << std::endl;
-//	//std::cout << "   VS: " << m_vertexShader.Get() << std::endl;
-//	//std::cout << "   PS: " << m_pixelShader.Get() << std::endl;
+	//	// DrawTextureToScreen() 시작에 추가
+	//	std::cout << "✅ RenderVolumeToTexture called" << std::endl;
+	////	std::cout << "   SRV: " << srv << std::endl;
+	//
+	//	if(nullptr== m_quadVertexBuffer.Get())
+	//		std::cout << "   QuadVB: " << m_quadVertexBuffer.Get() << std::endl;
+	//	//std::cout << "   VS: " << m_vertexShader.Get() << std::endl;
+	//	//std::cout << "   PS: " << m_pixelShader.Get() << std::endl;
 
 
-	// 상태 복원
+		// 상태 복원
 	context->OMSetRenderTargets(1, oldRTV.GetAddressOf(), oldDSV.Get());
 	context->RSSetViewports(1, &oldViewport);
 
@@ -822,12 +822,12 @@ void VolumeToTexture::RenderVolumeToTexture(
 	//std::cout << "✅ VolumeToTexture completed" << std::endl;
 	//std::cout << "   Result SRV: " <<GetResultSRV() << std::endl;
 
-	
+
 }
 
 
 void VolumeToTexture::DrawTextureToScreen(ID3D11Device* device, ID3D11ShaderResourceView* srv, ID3D11DeviceContext* context
-	,ID3D11VertexShader* vs, ID3D11PixelShader* ps )
+	, ID3D11VertexShader* vs, ID3D11PixelShader* ps)
 {
 	//if (!m_quadVertexBuffer.Get()) {
 	//	std::cout << "✅ DrawTextureToScreen called" << std::endl;

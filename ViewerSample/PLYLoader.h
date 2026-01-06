@@ -34,7 +34,7 @@ public:
 	bool Load(const std::string& filename);
 
 	// 렌더링용 정점 데이터 가져오기
-	const std::vector < PLY:: VertexWithTexture > & GetRenderVertices() const;
+	const std::vector < PLY::VertexWithTexture > & GetRenderVertices() const;
 
 	// 통계 정보
 	int GetVertexCount() const { return m_vertexCount; }

@@ -101,11 +101,11 @@ struct VolumeConstants {
 	DirectX::XMFLOAT4X4 World;
 	DirectX::XMFLOAT4X4 View;
 	DirectX::XMFLOAT4X4 Projection;
-//	DirectX::XMFLOAT4 colors;
+	//	DirectX::XMFLOAT4 colors;
 
 	DirectX::XMFLOAT4 Voxel;  // 선택사항: 와이어프레임 색상 등
 	DirectX::XMFLOAT4 HuParams;
-//	float alphaScale;
+	//	float alphaScale;
 };
 
 
@@ -514,16 +514,16 @@ public:
 	VolumeConstants constantsPrev{};
 	ComPtr<ID3D11Buffer> cbRay;
 
-//	XMMATRIX view, proj;
+	//	XMMATRIX view, proj;
 	CB cb{};
 
 	XMVECTOR eye /*= XMVectorSet(0.0f, 0.0f, -3.0f, 1.0f)*/;  // 조금 더 뒤로
 	XMVECTOR at /*= XMVectorSet(0.0f, 0.0f, 0.0f, 1.0f)*/;
 	XMVECTOR up /*= XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f)*/;
 	XMMATRIX viewMat, invViewMat, projMat, invProjMat, rotx, roty, centerTranslate, /*scale,*/ worldMat, invWorldMat, scale;
-	
+
 	XMMATRIX initialWorld;
-	
+
 	float maxPhysicalVol, maxMesh, overallSize{ 1.f };
 	float physicalWidth, physicalHeight, physicalDepth;
 	float scaleX, scaleY, scaleZ;
@@ -591,7 +591,7 @@ public:
 	ID3D11SamplerState* m_MeshSamplerState{ nullptr };
 
 	ID3D11Buffer* m_meshConstantBuffer{ nullptr };
-//	ID3D11DepthStencilState* m_meshDepthState{ nullptr };
+	//	ID3D11DepthStencilState* m_meshDepthState{ nullptr };
 	ID3D11PixelShader* m_composePS{ nullptr };  // ✅ 추가
 	ID3D11VertexShader* m_fullscreenVS{ nullptr };
 	ID3D11Buffer* m_clipSettingsBuffer{ nullptr };  // ✅ 추가!    m_cameraBuffer

@@ -132,11 +132,11 @@ void PLYLoader::CreateRenderVertices() {
 			int idx = face.indices[i];
 
 
-		/*	v.x = m_vertices[idx].x;
-			v.y = m_vertices[idx].y;
-			v.z = m_vertices[idx].z;*/
+			/*	v.x = m_vertices[idx].x;
+				v.y = m_vertices[idx].y;
+				v.z = m_vertices[idx].z;*/
 
-			// === 좌표축 변환 (PLY → CT/DX) ===
+				// === 좌표축 변환 (PLY → CT/DX) ===
 			float px = m_vertices[idx].x;
 			float py = m_vertices[idx].y;
 			float pz = m_vertices[idx].z;

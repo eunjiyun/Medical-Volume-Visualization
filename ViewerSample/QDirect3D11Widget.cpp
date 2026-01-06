@@ -659,16 +659,16 @@ bool QDirect3D11Widget::init()
 	meshRenderer = new MeshRenderer();
 
 
-	
+
 	// ⭐ 한 번만 생성 + 초기화
 	if (!m_volumeToTexture) {
 		m_volumeToTexture = std::make_unique<VolumeToTexture>();
 		m_volumeToTexture->Initialize(m_pDevice, width() / 2, height() / 2);
 
 		std::cout << "VolumeToTexture object created at: " << m_volumeToTexture->m_quadVertexBuffer << std::endl;
-	
 
-	
+
+
 	}
 
 	rotx = XMMatrixRotationX(-XM_PIDIV2);  // 90도 회전
@@ -739,7 +739,7 @@ bool QDirect3D11Widget::init()
 
 	//	worldMat = scale * roty*rotx;
 
-	initialWorld= /*centerTranslate *  */ // ① 볼륨 물리 중심(mm)을 원점으로 이동
+	initialWorld = /*centerTranslate *  */ // ① 볼륨 물리 중심(mm)을 원점으로 이동
 /*		roty *    */          // ② Y축 회전
 	/*	rotx *    */          // ③ X축 회전
 		scale;              // ④ mm → 정규화 world
@@ -1299,11 +1299,7 @@ void QDirect3D11Widget::UpdateVolumeMatrix()
 	//// 4. 최종 행렬
 	//XMMATRIX volumeWorld = s * rotY * rotX * translation;
 
-	XMMATRIX volumeWorld = userRotation*initialWorld/**rotx*/;
-	//XMMATRIX volumeWorld = scale * userRotation/**rotx*/;
-	//XMMATRIX volumeWorld = userRotation/**rotx*/;
-
-
+	XMMATRIX volumeWorld = userRotation * initialWorld;
 
 	//CB cb{};
 	worldMat = XMMatrixTranspose(volumeWorld);
@@ -1360,7 +1356,7 @@ bool QDirect3D11Widget::LoadMeshFromPLY(const std::string& filename, ID3D11Devic
 			if (v.z > maxZ) maxZ = v.z;
 		}
 		meshRenderer->meshWidth = maxX - minX;
-		
+
 		meshRenderer->meshHeight = maxY - minY;
 		meshRenderer->meshDepth = maxZ - minZ;
 
@@ -2974,7 +2970,7 @@ void QDirect3D11Widget::RenderVolumeView()
 
 		FullScreenPassSet();
 
-					// ⭐ VolumeToTexture 사용
+		// ⭐ VolumeToTexture 사용
 		XMFLOAT3 voxelDim(fileReader->m_width, fileReader->m_height, fileReader->m_depth);
 
 
@@ -3017,25 +3013,25 @@ void QDirect3D11Widget::RenderVolumeView()
 			, UINT stride, UINT offset, ID3D11Buffer* m_quadVertexBuffer)*/
 
 
-	//	//m_pDeviceContext->VSSetShader(vsFullscreen, nullptr, 0);
-	//	//m_pDeviceContext->PSSetShader(psRaymarch, nullptr, 0);
+			//	//m_pDeviceContext->VSSetShader(vsFullscreen, nullptr, 0);
+			//	//m_pDeviceContext->PSSetShader(psRaymarch, nullptr, 0);
 
 
-	//		// ✅ 7️⃣ 파이프라인 세팅
-	//	UINT stride = sizeof(Vtx);
-	//	UINT offset = 0;
-	//	ID3D11Buffer* vb[] = { m_quadVB.Get() };
+			//		// ✅ 7️⃣ 파이프라인 세팅
+			//	UINT stride = sizeof(Vtx);
+			//	UINT offset = 0;
+			//	ID3D11Buffer* vb[] = { m_quadVB.Get() };
 
-	//	m_pDeviceContext->IASetVertexBuffers(0, 1, vb, &stride, &offset);
-	//	m_pDeviceContext->IASetInputLayout(layoutQuad);
-	//	m_pDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
+			//	m_pDeviceContext->IASetVertexBuffers(0, 1, vb, &stride, &offset);
+			//	m_pDeviceContext->IASetInputLayout(layoutQuad);
+			//	m_pDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
 
-	//	m_pDeviceContext->VSSetShader(vsFullscreen, nullptr, 0);
-	//	m_pDeviceContext->PSSetShader(psRaymarch, nullptr, 0);
+			//	m_pDeviceContext->VSSetShader(vsFullscreen, nullptr, 0);
+			//	m_pDeviceContext->PSSetShader(psRaymarch, nullptr, 0);
 
-	//	ID3D11Buffer* cbs[] = { cbRay.Get() };
-	//	m_pDeviceContext->VSSetConstantBuffers(0, 1, cbs);
-	//	m_pDeviceContext->PSSetConstantBuffers(0, 1, cbs);
+			//	ID3D11Buffer* cbs[] = { cbRay.Get() };
+			//	m_pDeviceContext->VSSetConstantBuffers(0, 1, cbs);
+			//	m_pDeviceContext->PSSetConstantBuffers(0, 1, cbs);
 
 
 		size_t s = sizeof(Vtx);
@@ -3855,18 +3851,18 @@ void QDirect3D11Widget::mousePressEvent(QMouseEvent* event)
 
 		//m_debugPoint.valid = true;
 
-	
+
 
 
 		qDebug() << "Mouse Pressed at:" << event->pos();
 
-	
+
 		if (m_debugPointValid) {
 			DebugPoint dp;
 			dp.pos = event->pos();
 
 
-		//	m_debugPoint.pos = event->pos();
+			//	m_debugPoint.pos = event->pos();
 
 			ScreenPoint sp{ float(event->pos().x()), float(event->pos().y()) };
 
@@ -3876,7 +3872,7 @@ void QDirect3D11Widget::mousePressEvent(QMouseEvent* event)
 
 			switch (m_landmarkStep)
 			{
-				
+
 			case LandmarkStep::CT_LeftEye:
 
 				dp.color = IM_COL32(255, 0, 0, 255);   // 빨강
@@ -3937,7 +3933,7 @@ void QDirect3D11Widget::mousePressEvent(QMouseEvent* event)
 			m_debugPoints.push_back(dp);
 			update();
 		}
-		
+
 	}
 
 	if (event->button() == Qt::RightButton) {}
@@ -4510,12 +4506,12 @@ void QDirect3D11Widget::RenderAllQuads()
 					m_pDeviceContext, m_meshVertexBuffer, m_meshVS, m_meshPS, m_meshInputLayout,
 					m_clipSettingsBuffer, m_meshConstantBuffer, m_meshTexture,
 					m_MeshSamplerState, m_pDevice, m_meshVertexCount,
-					maxMesh, maxPhysicalVol, 
+					maxMesh, maxPhysicalVol,
 					physicalWidth,
 					physicalHeight,
 					physicalDepth,
 					overallSize,
-					
+
 					userRotation, viewMat, projMat, width(), height()
 				);
 
@@ -4523,7 +4519,7 @@ void QDirect3D11Widget::RenderAllQuads()
 				// ⭐ DSV unbind (SRV로 읽기 위해)
 				m_pDeviceContext->OMSetRenderTargets(1, &m_pSwapChainRTV, nullptr);
 
-	
+
 				//volumeToTexture->RenderVolumeToTexture(
 				//	m_pDeviceContext,
 				//	m_volumeSRV,              // 볼륨 텍스처
@@ -4571,7 +4567,7 @@ void QDirect3D11Widget::RenderAllQuads()
 					m_MeshSamplerState,
 
 
-		/*			m_pointClampSampler,*/
+					/*			m_pointClampSampler,*/
 
 					m_pDevice,
 					m_meshVertexCount,
@@ -4589,15 +4585,15 @@ void QDirect3D11Widget::RenderAllQuads()
 
 
 
-			/*	meshRenderer->RenderMesh(
-					m_pDeviceContext, m_meshVertexBuffer, m_meshVS, m_meshPS, m_meshInputLayout,
-					m_clipSettingsBuffer, m_meshConstantBuffer, m_meshTexture,
-					m_MeshSamplerState, m_pDevice, m_meshVertexCount,
-					maxMesh, maxPhysicalVol, overallSize,
-					worldMat, viewMat, projMat
-				);*/
+				/*	meshRenderer->RenderMesh(
+						m_pDeviceContext, m_meshVertexBuffer, m_meshVS, m_meshPS, m_meshInputLayout,
+						m_clipSettingsBuffer, m_meshConstantBuffer, m_meshTexture,
+						m_MeshSamplerState, m_pDevice, m_meshVertexCount,
+						maxMesh, maxPhysicalVol, overallSize,
+						worldMat, viewMat, projMat
+					);*/
 
-				// ⭐ SRV unbind
+					// ⭐ SRV unbind
 				ID3D11ShaderResourceView* nullSRV = nullptr;
 				m_pDeviceContext->PSSetShaderResources(1, 1, &nullSRV);
 			}

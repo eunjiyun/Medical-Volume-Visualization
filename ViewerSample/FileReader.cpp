@@ -122,7 +122,7 @@ bool FileReader::LoadDICOMSeries(std::string folderPath, ID3D11Device* g_pd3dDev
 					std::cout << "Pixel Spacing: " << views.spacing.x << " x " << views.spacing.y << std::endl;
 				}
 
-				 // Slice Thickness (0018,0050)
+				// Slice Thickness (0018,0050)
 				if (dataset->findAndGetOFString(DCM_SliceThickness, sliceThicknessStr).good()) {
 					views.spacing.z = std::stof(sliceThicknessStr.c_str());
 					std::cout << "Slice Thickness: " << views.spacing.z << std::endl;
@@ -145,7 +145,7 @@ bool FileReader::LoadDICOMSeries(std::string folderPath, ID3D11Device* g_pd3dDev
 					}
 
 					try {
-		
+
 
 						views.origin.x = std::stof(ox);
 						views.origin.y = std::stof(oy);
@@ -228,14 +228,14 @@ bool FileReader::LoadDICOMSeries(std::string folderPath, ID3D11Device* g_pd3dDev
 					m_rescaleSlope = std::stof(slopeStr.c_str());
 				}
 				else {*/
-					m_rescaleSlope = 1.0f; // 기본값
-				//}
+				m_rescaleSlope = 1.0f; // 기본값
+			//}
 
-				//// ⚙️ Rescale Intercept (0028,1052)
-				//if (dataset->findAndGetOFString(DCM_RescaleIntercept, interceptStr).good()) {
-				//	m_rescaleIntercept = std::stof(interceptStr.c_str());
-				//}
-				//else {
+			//// ⚙️ Rescale Intercept (0028,1052)
+			//if (dataset->findAndGetOFString(DCM_RescaleIntercept, interceptStr).good()) {
+			//	m_rescaleIntercept = std::stof(interceptStr.c_str());
+			//}
+			//else {
 				m_rescaleIntercept = -1024.0f; // 기본값
 			//}
 
@@ -575,7 +575,7 @@ bool FileReader::NormalizeVolumeU16(
 		//// HU 변환
 		float hu = static_cast<float>(rawVolume[i]) * rescaleSlope + rescaleIntercept;
 
-		floatData[i] = hu ;
+		floatData[i] = hu;
 
 	}
 
@@ -609,7 +609,7 @@ void FileReader::AnalyzeHUDistribution()
 		// ⭐ 패딩 체크
 		if (raw > 60000 || raw < -30000) {
 			paddingCount++;
-		//	continue;
+			//	continue;
 		}
 
 		// ⭐⭐⭐ Outlier 체크 (정상 HU 범위 밖)

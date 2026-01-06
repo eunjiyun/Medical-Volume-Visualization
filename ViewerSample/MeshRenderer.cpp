@@ -19,7 +19,7 @@ void MeshRenderer::CreateTwoPassStates(ID3D11Device* device)
 	rastDesc.DepthBias = 0;
 	rastDesc.DepthBiasClamp = 0.0f;
 	rastDesc.SlopeScaledDepthBias = 0.0f;
-	hr=device->CreateRasterizerState(&rastDesc, &rastState);
+	hr = device->CreateRasterizerState(&rastDesc, &rastState);
 
 
 	// ✅ 디버그 추가!
@@ -105,13 +105,13 @@ void MeshRenderer::CreateTwoPassStates(ID3D11Device* device)
 
 	// Depth State: Write OFF, Test ON
 	D3D11_DEPTH_STENCIL_DESC pass3DepthDesc = {};
-//	pass3DepthDesc.DepthEnable = FALSE;                         // ✅ Test OFF!
+	//	pass3DepthDesc.DepthEnable = FALSE;                         // ✅ Test OFF!
 	pass3DepthDesc.DepthEnable = TRUE;                      // 🔥 ON
 	pass3DepthDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ZERO; // ✅ Write OFF
 	pass3DepthDesc.DepthFunc = D3D11_COMPARISON_LESS_EQUAL; // 🔥 핵심
 	pass3DepthDesc.StencilEnable = FALSE;
 	hr = device->CreateDepthStencilState(&pass3DepthDesc, &depthReadState);
-	
+
 	//depthDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ZERO;  // ZWrite Off
 	//depthDesc.DepthFunc = D3D11_COMPARISON_LESS_EQUAL;  // ✅ LESS_EQUAL!
 	//hr=device->CreateDepthStencilState(&depthDesc, &depthReadState);
@@ -203,7 +203,7 @@ void MeshRenderer::RenderMeshDepth(ID3D11DeviceContext* context, ID3D11Buffer* m
 	ID3D11Buffer* m_clipSettingsBuffer, ID3D11Buffer* m_meshConstantBuffer, ID3D11ShaderResourceView* m_meshTexture,
 	ID3D11SamplerState* m_MeshSamplerState, ID3D11Device* m_pDevice, int m_meshVertexCount,
 	float maxMesh, float maxPhysicalVol, float volWidth, float volHeight, float volDepth, float overallSize,
-	XMMATRIX userRotMat, XMMATRIX v, XMMATRIX p, float width,float height)
+	XMMATRIX userRotMat, XMMATRIX v, XMMATRIX p, float width, float height)
 {
 	ID3D11RenderTargetView* curRTV = nullptr;
 	ID3D11DepthStencilView* curDSV = nullptr;
@@ -252,7 +252,7 @@ void MeshRenderer::RenderMeshDepth(ID3D11DeviceContext* context, ID3D11Buffer* m
 	//float meshScale = correctionFactor * overallSize;
 
 	 // ✅ mm 좌표 → 정규화 좌표
-	
+
 	//float meshScale = 1.5f / maxPhysicalVol;
 	//float meshScale = 1.f;
 
@@ -327,15 +327,15 @@ void MeshRenderer::RenderMeshDepth(ID3D11DeviceContext* context, ID3D11Buffer* m
 	//meshScale = maxPhysicalVol / maxMesh / 300;
 
 	DirectX::XMMATRIX scale = XMMatrixScaling(
-	
+
 
 		volToMesh, volToMesh, volToMesh
-	
+
 
 	);
 
 
-	
+
 
 	//XMMATRIX centerTranslate =
 	//	XMMatrixTranslation(
@@ -358,7 +358,7 @@ void MeshRenderer::RenderMeshDepth(ID3D11DeviceContext* context, ID3D11Buffer* m
 			-centerX,
 			-centerY,
 			-centerZ
-	);
+		);
 
 
 
@@ -381,42 +381,47 @@ void MeshRenderer::RenderMeshDepth(ID3D11DeviceContext* context, ID3D11Buffer* m
 
 
 	//initialMeshWorld = /*XMMatrixRotationY(-XM_PIDIV2)**/centerTranslate *    /*XMMatrixRotationX(XM_PIDIV2)  * */ scale/** XMMatrixRotationX(XM_PI)*/
-		/** XMMatrixRotationY(XM_PI)*/  /** w*/;
-	
+	/** XMMatrixRotationY(XM_PI)*/  /** w*/;
+
 	//DirectX::XMMATRIX fullWorld = /*centerTranslate * *//*scale **/ rotation  * w;
 
 
 		//initialMeshWorld = centerTranslate * scale;// *XMMatrixRotationY(XM_PI)/** centerTranslate*/;
 
 			// 1. 좌표계 변환: Y-Z 축 교환 (PLY -> DICOM 좌표계)
-		XMMATRIX coordinateSystemTransform = XMMatrixSet(
-			1.0f, 0.0f, 0.0f, 0.0f,  // X축 그대로
-			0.0f, 0.0f, 1.0f, 0.0f,  // Y축 -> Z축
-			0.0f, 1.0f, 0.0f, 0.0f,  // Z축 -> Y축
-			0.0f, 0.0f, 0.0f, 1.0f
-		);
+	XMMATRIX coordinateSystemTransform = XMMatrixSet(
+		1.0f, 0.0f, 0.0f, 0.0f,  // X축 그대로
+		0.0f, 0.0f, 1.0f, 0.0f,  // Y축 -> Z축
+		0.0f, 1.0f, 0.0f, 0.0f,  // Z축 -> Y축
+		0.0f, 0.0f, 0.0f, 1.0f
+	);
 
-		//initialMeshWorld = XMMatrixRotationY(XM_PI)*scale*userRotMat*centerTranslate;// *XMMatrixRotationY(XM_PI)/** centerTranslate*/;
-		////initialMeshWorld = /*XMMatrixRotationY(XM_PI)**/scale*userRotMat;// *XMMatrixRotationY(XM_PI)/** centerTranslate*/;
+	//initialMeshWorld = XMMatrixRotationY(XM_PI)*scale*userRotMat*centerTranslate;// *XMMatrixRotationY(XM_PI)/** centerTranslate*/;
+	////initialMeshWorld = /*XMMatrixRotationY(XM_PI)**/scale*userRotMat;// *XMMatrixRotationY(XM_PI)/** centerTranslate*/;
 
-		//initialMeshWorld = coordinateSystemTransform * XMMatrixRotationX(-XM_PIDIV2)*scale*userRotMat/**centerTranslate*/;
+	//initialMeshWorld = coordinateSystemTransform * XMMatrixRotationX(-XM_PIDIV2)*scale*userRotMat/**centerTranslate*/;
 
-		//initialMeshWorld = coordinateSystemTransform * XMMatrixRotationX(-XM_PIDIV2)*scale*userRotMat/**centerTranslate*/;
-		//initialMeshWorld =  XMMatrixRotationX(-XM_PIDIV2)* scale * userRotMat * coordinateSystemTransform;
+	//initialMeshWorld = coordinateSystemTransform * XMMatrixRotationX(-XM_PIDIV2)*scale*userRotMat/**centerTranslate*/;
+	//initialMeshWorld =  XMMatrixRotationX(-XM_PIDIV2)* scale * userRotMat * coordinateSystemTransform;
 
-	//	initialMeshWorld = centerTranslate*XMMatrixRotationX(XM_PIDIV2)* scale * userRotMat * coordinateSystemTransform;
+//	initialMeshWorld = centerTranslate*XMMatrixRotationX(XM_PIDIV2)* scale * userRotMat * coordinateSystemTransform;
 
-		//initialMeshWorld = centerTranslate
-		//	* XMMatrixRotationX(XM_PIDIV2)
-		//	* scale
-		//	* coordinateSystemTransform  // 먼저 좌표계 변환
-		//	* userRotMat;                // 그 다음 회전
+	//initialMeshWorld = centerTranslate
+	//	* XMMatrixRotationX(XM_PIDIV2)
+	//	* scale
+	//	* coordinateSystemTransform  // 먼저 좌표계 변환
+	//	* userRotMat;                // 그 다음 회전
 
-		initialMeshWorld = 
-		/*	centerTranslate **/ scale*rotation/*roty*rotx* *//*XMMatrixTranspose(userRotMat)*/;                // 그 다음 회전
+	initialMeshWorld =
+		/*	centerTranslate **/ scale * rotation/*roty*rotx* *//*XMMatrixTranspose(userRotMat)*/;                // 그 다음 회전
 
 		//스케일을 볼륨걸 적용한 유저 로테이션을 곱해야지 회전 싱크가 맞음
 		//전치 행렬을 안 쓰고 전치 안 한 사용자 회전 행렬을 메쉬에 적용해서 그런걸지도? 
+
+		//Transpose를 뒤에 곱했을 때 축이 안 틀어진 이유는
+		//	그게 “로컬 기준 역회전”처럼 동작했기 때문이고,
+		//	userRotation을 앞에 곱했을 때 축이 틀어진 이유는
+		//	initialMeshWorld가 아직 월드 기준 좌표계가 아니기 때문이다.
 
 
 
@@ -425,37 +430,48 @@ void MeshRenderer::RenderMeshDepth(ID3D11DeviceContext* context, ID3D11Buffer* m
 
 
 
-		//XMMATRIX coordinateSystemTransform = XMMatrixSet(
-		//	1.0f, 0.0f, 0.0f, 0.0f,
-		//	0.0f, 0.0f, 1.0f, 0.0f,
-		//	0.0f, 1.0f, 0.0f, 0.0f,
-		//	0.0f, 0.0f, 0.0f, 1.0f
-		//);
+	//XMMATRIX coordinateSystemTransform = XMMatrixSet(
+	//	1.0f, 0.0f, 0.0f, 0.0f,
+	//	0.0f, 0.0f, 1.0f, 0.0f,
+	//	0.0f, 1.0f, 0.0f, 0.0f,
+	//	0.0f, 0.0f, 0.0f, 1.0f
+	//);
 
-		//initialMeshWorld = coordinateSystemTransform
-		//	* XMMatrixRotationX(XM_PIDIV2)
-		//	* scale
-		//	/** centerTranslate*/
-		//	* userRotMat;  // DICOM 회전 그대로 사용
-
-
+	//initialMeshWorld = coordinateSystemTransform
+	//	* XMMatrixRotationX(XM_PIDIV2)
+	//	* scale
+	//	/** centerTranslate*/
+	//	* userRotMat;  // DICOM 회전 그대로 사용
 
 
-	/*std::cout << "===== World Half Extent Check =====" << std::endl;
-	std::cout << "Volume half extent (world):" << volHalfWorld << std::endl;
-	std::cout << "Mesh half extent   (world):" << meshHalfWorld << std::endl;
-	std::cout << "Mesh / Volume ratio:"
-		<< (meshHalfWorld / volHalfWorld) << std::endl;
-	std::cout << "Expected ratio (maxMesh / maxPhysicalVol):"
-		<< (maxMesh / maxPhysicalVol) << std::endl;
-	std::cout << "===================================" << std::endl;*/
 
 
-	// HLSL에서는 mul(vector, matrix) 사용
-   // 실제 적용 순서: S -> R -> T (의도한 대로)
-	cb.WVP = XMMatrixTranspose(initialMeshWorld*XMMatrixTranspose(userRotMat) /** XMMatrixRotationX(-XM_PI)*/ * v * p);
-	cb.World = XMMatrixTranspose(initialMeshWorld*XMMatrixTranspose(userRotMat));
-	cb.WorldView = XMMatrixTranspose(initialMeshWorld*XMMatrixTranspose(userRotMat) *v);
+/*std::cout << "===== World Half Extent Check =====" << std::endl;
+std::cout << "Volume half extent (world):" << volHalfWorld << std::endl;
+std::cout << "Mesh half extent   (world):" << meshHalfWorld << std::endl;
+std::cout << "Mesh / Volume ratio:"
+	<< (meshHalfWorld / volHalfWorld) << std::endl;
+std::cout << "Expected ratio (maxMesh / maxPhysicalVol):"
+	<< (maxMesh / maxPhysicalVol) << std::endl;
+std::cout << "===================================" << std::endl;*/
+
+
+// HLSL에서는 mul(vector, matrix) 사용
+  // 실제 적용 순서: S -> R -> T (의도한 대로)
+   cb.WVP = XMMatrixTranspose(initialMeshWorld*XMMatrixTranspose(userRotMat) /** XMMatrixRotationX(-XM_PI)*/ * v * p);
+   cb.World = XMMatrixTranspose(initialMeshWorld*XMMatrixTranspose(userRotMat));
+   cb.WorldView = XMMatrixTranspose(initialMeshWorld*XMMatrixTranspose(userRotMat) *v);
+
+
+	//   // HLSL에서는 mul(vector, matrix) 사용
+ // // 실제 적용 순서: S -> R -> T (의도한 대로)
+	//cb.WVP = XMMatrixTranspose(userRotMat*initialMeshWorld/** XMMatrixRotationX(-XM_PI)*/ * v * p);
+	//cb.World = XMMatrixTranspose(userRotMat*initialMeshWorld);
+	//cb.WorldView = XMMatrixTranspose(userRotMat*initialMeshWorld *v);
+
+
+
+
 
 	////rotx = XMMatrixRotationX(-XM_PIDIV2);  // 90도 회전
 	////roty = XMMatrixRotationY(XM_PI);  // 90도 회전
@@ -579,7 +595,7 @@ void MeshRenderer::RenderMeshDepth(ID3D11DeviceContext* context, ID3D11Buffer* m
 	// ========== PASS 1: Depth Write ===========
 	// ==========================================
 
-	
+
 
 	// 바인딩
 	context->OMSetDepthStencilState(depthWriteState, 0);
@@ -643,7 +659,7 @@ void MeshRenderer::RenderMesh(ID3D11DeviceContext* context, ID3D11Buffer* m_mesh
 
 	//DirectX::XMMATRIX scale = XMMatrixScaling(meshScale, meshScale, meshScale);
 
-	
+
 
 	//DirectX::XMMATRIX scale = XMMatrixScaling(
 	//	/*	meshToVolume,
@@ -688,7 +704,7 @@ void MeshRenderer::RenderMesh(ID3D11DeviceContext* context, ID3D11Buffer* m_mesh
 
 
 		volToMesh, volToMesh, volToMesh
-	
+
 
 	);
 
@@ -753,7 +769,7 @@ void MeshRenderer::RenderMesh(ID3D11DeviceContext* context, ID3D11Buffer* m_mesh
 	ClipSettings cs;
 	cs.clipPlane = DirectX::XMFLOAT4(0, 0, 1, -0.15f);
 	cs.enableClip = 1;
-	
+
 	context->UpdateSubresource(m_clipSettingsBuffer, 0, nullptr, &cs, 0, 0);
 	context->PSSetConstantBuffers(1, 1, &m_clipSettingsBuffer);
 
@@ -813,7 +829,7 @@ void MeshRenderer::RenderMeshWithCT(
 	// ========== Transform 계산 ==========
 	//float meshScale = 1.5f / maxPhysicalVol;  // ⭐ XMFLOAT3 대응
 	//float meshScale =1.f;  // ⭐ XMFLOAT3 대응
-	
+
 	//DirectX::XMMATRIX scale = XMMatrixScaling(meshScale, meshScale, meshScale);
 
 
@@ -844,7 +860,7 @@ void MeshRenderer::RenderMeshWithCT(
 
 
 		volToMesh, volToMesh, volToMesh
-		
+
 
 	);
 
@@ -866,9 +882,9 @@ void MeshRenderer::RenderMeshWithCT(
 
 	XMMATRIX centerTranslate =
 		XMMatrixTranslation(
-				-centerX ,
-			-centerY ,
-		-centerZ 
+			-centerX,
+			-centerY,
+			-centerZ
 		);
 
 
@@ -876,12 +892,23 @@ void MeshRenderer::RenderMeshWithCT(
 
 
 	initialMeshWorld =
-	/*	centerTranslate **/ scale * rotation;                // 그 다음 회전
+		/*	centerTranslate **/ scale * rotation;                // 그 다음 회전
 
 
-	cbM.WVP = XMMatrixTranspose(initialMeshWorld*XMMatrixTranspose(userRotMat) *v * p);
+
+
+	//	// HLSL에서는 mul(vector, matrix) 사용
+	//// 실제 적용 순서: S -> R -> T (의도한 대로)
+	//cbM.WVP = XMMatrixTranspose(userRotMat*initialMeshWorld/** XMMatrixRotationX(-XM_PI)*/ * v * p);
+	//cbM.World = XMMatrixTranspose(userRotMat*initialMeshWorld);
+	//cbM.WorldView = XMMatrixTranspose(userRotMat*initialMeshWorld *v);
+
+	// HLSL에서는 mul(vector, matrix) 사용
+  // 실제 적용 순서: S -> R -> T (의도한 대로)
+	cbM.WVP = XMMatrixTranspose(initialMeshWorld*XMMatrixTranspose(userRotMat) /** XMMatrixRotationX(-XM_PI)*/ * v * p);
 	cbM.World = XMMatrixTranspose(initialMeshWorld*XMMatrixTranspose(userRotMat));
-	cbM.WorldView = XMMatrixTranspose(initialMeshWorld*XMMatrixTranspose(userRotMat)*v);
+	cbM.WorldView = XMMatrixTranspose(initialMeshWorld*XMMatrixTranspose(userRotMat) *v);
+
 
 
 

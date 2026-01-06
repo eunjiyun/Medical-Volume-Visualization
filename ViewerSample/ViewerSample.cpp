@@ -89,9 +89,9 @@ void ViewerSample::volumeShowHide()
 
 	if (0.0f != m_pScene->cb.CameraPosAndAlpha.w)
 		m_pScene->cb.CameraPosAndAlpha.w = 0.0f;
-	else if(0.0f==m_pScene->cb.CameraPosAndAlpha.w && !m_pScene->isMesh)
+	else if (0.0f == m_pScene->cb.CameraPosAndAlpha.w && !m_pScene->isMesh)
 		m_pScene->cb.CameraPosAndAlpha.w = 1.0f;
-	else if(0.0f == m_pScene->cb.CameraPosAndAlpha.w && m_pScene->isMesh)
+	else if (0.0f == m_pScene->cb.CameraPosAndAlpha.w && m_pScene->isMesh)
 		m_pScene->cb.CameraPosAndAlpha.w = 2.0f;
 
 	cout << "volume type : " << m_pScene->cb.CameraPosAndAlpha.w << endl;
@@ -106,14 +106,14 @@ void ViewerSample::meshShowHide()
 		m_pScene->isMesh = false;
 	else
 		m_pScene->isMesh = true;
-///*
-//	if (0.0f != m_pScene->cb.CameraPosAndAlpha.w)
-//		m_pScene->cb.CameraPosAndAlpha.w = 0.0f;
-//	else*/ if (1.0f == m_pScene->cb.CameraPosAndAlpha.w && !m_pScene->isMesh)
-//		m_pScene->cb.CameraPosAndAlpha.w = 1.0f;
-//	else if (0.0f == m_pScene->cb.CameraPosAndAlpha.w && m_pScene->isMesh)
-//		m_pScene->cb.CameraPosAndAlpha.w = 2.0f;
-//
+	///*
+	//	if (0.0f != m_pScene->cb.CameraPosAndAlpha.w)
+	//		m_pScene->cb.CameraPosAndAlpha.w = 0.0f;
+	//	else*/ if (1.0f == m_pScene->cb.CameraPosAndAlpha.w && !m_pScene->isMesh)
+	//		m_pScene->cb.CameraPosAndAlpha.w = 1.0f;
+	//	else if (0.0f == m_pScene->cb.CameraPosAndAlpha.w && m_pScene->isMesh)
+	//		m_pScene->cb.CameraPosAndAlpha.w = 2.0f;
+	//
 
 
 	if (1.0f == m_pScene->cb.CameraPosAndAlpha.w && m_pScene->isMesh)
@@ -128,7 +128,7 @@ void ViewerSample::meshShowHide()
 void ViewerSample::meshScaleSet()
 {
 	if (m_pScene->m_debugPointValid) {
-	
+
 		if (m_pScene->m_landmarkStep == LandmarkStep::Done) {
 			m_pScene->meshRenderer->meshScale =
 
@@ -142,19 +142,19 @@ void ViewerSample::meshScaleSet()
 
 			std::cout << "meshscale : " << m_pScene->meshRenderer->meshScale << std::endl;
 		}
-		
 
-	
+
+
 		m_pScene->m_debugPointValid = false;
-	/*	m_pScene->update();
-		m_pScene->RenderAllQuads();*/
-		
+		/*	m_pScene->update();
+			m_pScene->RenderAllQuads();*/
+
 	}
 	else {
-	
+
 		m_pScene->m_debugPointValid = true;
 
-	
+
 	}
 
 	m_pScene->update();
@@ -205,7 +205,7 @@ void ViewerSample::transparencyValueChanged(int value)
 
 	if (!m_pScene || !m_pScene->fileReader) return;
 
-	m_pScene->meshRenderer->faceBlend = trans/1000.f;
+	m_pScene->meshRenderer->faceBlend = trans / 1000.f;
 
 	//// ⭐ Width를 늘림
 	//m_pScene->fileReader->volWC = huCenter;
