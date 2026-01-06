@@ -413,7 +413,7 @@ void MeshRenderer::RenderMeshDepth(ID3D11DeviceContext* context, ID3D11Buffer* m
 		//	* userRotMat;                // 그 다음 회전
 
 		initialMeshWorld = 
-			scale*rotation/*roty*rotx* *//*XMMatrixTranspose(userRotMat)*/;                // 그 다음 회전
+		/*	centerTranslate **/ scale*rotation/*roty*rotx* *//*XMMatrixTranspose(userRotMat)*/;                // 그 다음 회전
 
 		//스케일을 볼륨걸 적용한 유저 로테이션을 곱해야지 회전 싱크가 맞음
 		//전치 행렬을 안 쓰고 전치 안 한 사용자 회전 행렬을 메쉬에 적용해서 그런걸지도? 
@@ -873,31 +873,10 @@ void MeshRenderer::RenderMeshWithCT(
 
 
 	//s r t v p
-	//DirectX::XMMATRIX fullWorld = scale * rotation *centerTranslate* w;
 
-	//DirectX::XMMATRIX fullWorld = /*centerTranslate**/ scale *rotation  *  w;
-	//DirectX::XMMATRIX fullWorld = centerTranslate * scale   * rotation  /** w*/;
-
-	//rotx = XMMatrixRotationX(-XM_PIDIV2);  // 90도 회전
-//roty = XMMatrixRotationY(XM_PI);  // 90도 회전
-
-	////initialMeshWorld = centerTranslate * scale
-	////	* XMMatrixRotationY(-XM_PI)/**XMMatrixRotationX(XM_PIDIV2)*/  /** w*/;
-	//initialMeshWorld = centerTranslate * scale
-	//	/** XMMatrixRotationY(XM_PI)*/*XMMatrixRotationX(XM_PI)  /** w*/;
-
-	// ========== Constant Buffer 업데이트 ==========
-	// ⭐ MeshConstantBuffer에 ctBlendStrength 추가 필요
-	
-	//initialMeshWorld = centerTranslate* XMMatrixRotationX(XM_PI)*scale;
-
-
-	//cbM.WVP = XMMatrixTranspose(userRotMat*initialMeshWorld * v * p);
-	//cbM.World = XMMatrixTranspose(userRotMat*initialMeshWorld);
-	//cbM.WorldView = XMMatrixTranspose(userRotMat*initialMeshWorld * v);
 
 	initialMeshWorld =
-		scale * rotation/*roty*rotx* *//*XMMatrixTranspose(userRotMat)*/;                // 그 다음 회전
+	/*	centerTranslate **/ scale * rotation;                // 그 다음 회전
 
 
 	cbM.WVP = XMMatrixTranspose(initialMeshWorld*XMMatrixTranspose(userRotMat) *v * p);

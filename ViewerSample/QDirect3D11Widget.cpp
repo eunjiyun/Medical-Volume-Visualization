@@ -739,7 +739,7 @@ bool QDirect3D11Widget::init()
 
 	//	worldMat = scale * roty*rotx;
 
-	initialWorld= centerTranslate *   // ① 볼륨 물리 중심(mm)을 원점으로 이동
+	initialWorld= /*centerTranslate *  */ // ① 볼륨 물리 중심(mm)을 원점으로 이동
 /*		roty *    */          // ② Y축 회전
 	/*	rotx *    */          // ③ X축 회전
 		scale;              // ④ mm → 정규화 world
