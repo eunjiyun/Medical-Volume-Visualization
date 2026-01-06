@@ -320,17 +320,17 @@ void MeshRenderer::RenderMeshDepth(ID3D11DeviceContext* context, ID3D11Buffer* m
 
 
 
-	//float volToMesh{ volWidth / meshWidth / maxPhysicalVol * meshScale };
-	float volToMesh{ maxPhysicalVol / maxMesh/300 };
+	float volToMesh{ volWidth / meshWidth / maxPhysicalVol * meshScale };
+	//float volToMesh{ maxPhysicalVol / maxMesh/300 };
 
 
-	meshScale = maxPhysicalVol / maxMesh / 300;
+	//meshScale = maxPhysicalVol / maxMesh / 300;
 
 	DirectX::XMMATRIX scale = XMMatrixScaling(
 	
 
-		//volToMesh, volToMesh, volToMesh
-		meshScale, meshScale, meshScale
+		volToMesh, volToMesh, volToMesh
+	
 
 	);
 
@@ -675,20 +675,20 @@ void MeshRenderer::RenderMesh(ID3D11DeviceContext* context, ID3D11Buffer* m_mesh
 	//);
 
 
-	//float volToMesh{ volWidth / meshWidth / maxPhysicalVol * meshScale };
+	float volToMesh{ volWidth / meshWidth / maxPhysicalVol * meshScale };
 	//float volToMesh{ maxPhysicalVol / maxMesh };
-	float volToMesh{ maxPhysicalVol / maxMesh / 300 };
+//	float volToMesh{ maxPhysicalVol / maxMesh / 300 };
 
 
 
 
-	meshScale = maxPhysicalVol / maxMesh / 300;
+	//meshScale = maxPhysicalVol / maxMesh / 300;
 
 	DirectX::XMMATRIX scale = XMMatrixScaling(
 
 
-		//volToMesh, volToMesh, volToMesh
-		meshScale, meshScale, meshScale
+		volToMesh, volToMesh, volToMesh
+	
 
 	);
 
@@ -832,19 +832,19 @@ void MeshRenderer::RenderMeshWithCT(
 	//);
 
 
-	//float volToMesh{ volWidth / meshWidth / maxPhysicalVol * meshScale };
+	float volToMesh{ volWidth / meshWidth / maxPhysicalVol * meshScale };
 	//float volToMesh{  maxPhysicalVol /maxMesh };
-	float volToMesh{ maxPhysicalVol / maxMesh / 300 };
+	//float volToMesh{ maxPhysicalVol / maxMesh / 300 };
 
 
 
-	meshScale = maxPhysicalVol / maxMesh / 300;
+	//meshScale = maxPhysicalVol / maxMesh / 300;
 
 	DirectX::XMMATRIX scale = XMMatrixScaling(
 
 
-		//volToMesh, volToMesh, volToMesh
-		meshScale, meshScale, meshScale
+		volToMesh, volToMesh, volToMesh
+		
 
 	);
 
