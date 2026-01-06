@@ -33,6 +33,9 @@ VS_OUTPUT main(VS_INPUT input)
 
 
 	VS_OUTPUT output;
+
+	//벡터를 왼쪽에 곱함
+	//순서는 S>R>T
 	output.Pos = mul(float4(input.Pos, 1), WVP);
 	output.Tex = input.Tex;
 

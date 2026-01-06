@@ -130,19 +130,70 @@ void PLYLoader::CreateRenderVertices() {
 			PLY::VertexWithTexture v;
 
 			int idx = face.indices[i];
-			v.x = m_vertices[idx].x;
+
+
+		/*	v.x = m_vertices[idx].x;
 			v.y = m_vertices[idx].y;
-			v.z = m_vertices[idx].z;
+			v.z = m_vertices[idx].z;*/
+
+			// === 좌표축 변환 (PLY → CT/DX) ===
+			float px = m_vertices[idx].x;
+			float py = m_vertices[idx].y;
+			float pz = m_vertices[idx].z;
+
+			////v.x = px;
+			////v.y = py;
+			////v.z = pz;   // ← 여기 부호가 중요
+
+
+			//// Case A
+			//v.x = px;  v.y = pz;  v.z = -py;
+
+			//////// Case B
+			////v.x = px;  v.y = -pz;  v.z = py;
+
+			////// Case C
+			////v.x = px;  v.y = py;  v.z = pz; // (원본)
+
+			////// Case D
+			////v.x = px;  v.y = -py;  v.z = -pz;
+
+
+			//// Case A (좌표계 정렬)
+			//float x = px;
+			//float y = pz;
+			//float z = -py;
+
+			// Forward 보정 (X축 -90°)
+			v.x = px;
+			v.y = py;
+			v.z = pz;
 
 
 
-			/*v.nx = m_vertices[idx].nx;
-			v.ny = m_vertices[idx].ny;
-			v.nz = m_vertices[idx].nz;*/
-			// 노멀 (반전)
-			v.nx = -m_vertices[idx].nx;
-			v.ny = -m_vertices[idx].ny;
-			v.nz = -m_vertices[idx].nz;
+
+			///*v.nx = m_vertices[idx].nx;
+			//v.ny = m_vertices[idx].ny;
+			//v.nz = m_vertices[idx].nz;*/
+			//// 노멀 (반전)
+			//v.nx = -m_vertices[idx].nx;
+			//v.ny = -m_vertices[idx].ny;
+			//v.nz = -m_vertices[idx].nz;
+
+
+
+
+			float nx = m_vertices[idx].nx;
+			float ny = m_vertices[idx].ny;
+			float nz = m_vertices[idx].nz;
+
+			// PLY → CT 축 변환
+		/*	v.nx = nx;
+			v.ny = nz;
+			v.nz = -ny;*/
+			v.nx = nx;
+			v.ny = ny;
+			v.nz = nz;
 
 			v.u = face.texCoords[i * 2];
 			v.v = face.texCoords[i * 2 + 1];
@@ -152,60 +203,6 @@ void PLYLoader::CreateRenderVertices() {
 	}
 }
 
-//void PLYLoader::CreateRenderVertices() {
-//	m_renderVertices.clear();
-//	m_renderVertices.reserve(m_faceCount * 3);
-//
-//	for (const auto& face : m_faces) {
-//		// ✅ 역순으로 추가 (2, 1, 0)
-//		for (int i = 2; i >= 0; i--) {
-//			PLY::VertexWithTexture v;
-//
-//			int idx = face.indices[i];
-//
-//			// 위치
-//			v.x = m_vertices[idx].x;
-//			v.y = m_vertices[idx].y;
-//			v.z = m_vertices[idx].z;
-//
-//			// 노멀 (반전)
-//			v.nx = -m_vertices[idx].nx;
-//			v.ny = -m_vertices[idx].ny;
-//			v.nz = -m_vertices[idx].nz;
-//
-//			// 텍스처 좌표
-//			v.u = face.texCoords[i * 2];
-//			v.v = face.texCoords[i * 2 + 1];
-//
-//			m_renderVertices.push_back(v);
-//		}
-//	}
-//}
-
-//void PLYLoader::CreateRenderVertices() {
-//	m_renderVertices.clear();
-//	m_renderVertices.reserve(m_faceCount * 3);
-//
-//	for (const auto& face : m_faces) {
-//		// ✅ 정점 순서 반대로 (0,1,2 → 2,1,0)
-//		for (int i = 2; i >= 0; i--) {  // 역순
-//			PLY::VertexWithTexture v;
-//
-//			int idx = face.indices[i];
-//			v.x = m_vertices[idx].x;
-//			v.y = m_vertices[idx].y;
-//			v.z = m_vertices[idx].z;
-//			v.nx = m_vertices[idx].nx;
-//			v.ny = m_vertices[idx].ny;
-//			v.nz = m_vertices[idx].nz;
-//
-//			v.u = face.texCoords[i * 2];
-//			v.v = face.texCoords[i * 2 + 1];
-//
-//			m_renderVertices.push_back(v);
-//		}
-//	}
-//}
 
 const std::vector<PLY::VertexWithTexture>& PLYLoader::GetRenderVertices() const {
 	return m_renderVertices;

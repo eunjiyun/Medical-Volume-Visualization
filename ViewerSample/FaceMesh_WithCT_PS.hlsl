@@ -28,6 +28,13 @@ float4 main(PSInput input) : SV_Target
 
 	float3 faceColor = faceColorTex.Sample(linearSamp, input.uv).rgb;
 	float4 ct = ctTex.Sample(linearSamp, input.screenUV); // rgb + a
+
+
+	//float3 debug = abs(normalize(mul(float4(0, 0, 1, 0), World).xyz));
+	//return float4(debug, 1);
+
+
+
 	float meshDepth = SceneDepth.Sample(pointClamp, input.uv).r;
 	float hasFace = step(meshDepth, 0.999); // 메쉬가 있는 픽셀만
 	//return float4(hasFace, hasFace, hasFace, 1);

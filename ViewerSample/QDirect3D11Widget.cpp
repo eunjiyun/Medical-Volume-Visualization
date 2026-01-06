@@ -69,6 +69,8 @@ QDirect3D11Widget::QDirect3D11Widget(QWidget* parent)
 
 	m_initialRotation = XMQuaternionMultiply(rotX, rotY);
 
+	//m_initialRotation = XMQuaternionMultiply(rotY, rotX);
+	//m_initialRotation = XMQuaternionIdentity();
 
 	// 현재 회전도 초기값으로 설정
 	m_rotation = m_initialRotation;
@@ -673,8 +675,8 @@ bool QDirect3D11Widget::init()
 	roty = XMMatrixRotationY(XM_PI);  // 90도 회전
 
 
-	// ✅ center 변환 제거
-	transMat = XMMatrixTranslation(0.0f, 0.0f, 0.0f);
+	//// ✅ center 변환 제거
+	//transMat = XMMatrixTranslation(0.0f, 0.0f, 0.0f);
 
 	// DICOM에서 읽어온 값
 	float voxelSpacingX = fileReader->views.spacing.x;  // mm
@@ -693,11 +695,12 @@ bool QDirect3D11Widget::init()
 	physicalDepth  * 0.5f
 	};
 
-	XMMATRIX centerTranslate = XMMatrixTranslation(
+	centerTranslate = XMMatrixTranslation(
 		-volCenterMM.x,
 		-volCenterMM.y,
 		-volCenterMM.z
 	);
+
 	//meshRenderer->centerTranslate = centerTranslate;
 
 	// 최대 크기
@@ -736,17 +739,15 @@ bool QDirect3D11Widget::init()
 
 	//	worldMat = scale * roty*rotx;
 
-	worldMat =
-		centerTranslate *   // ① 볼륨 물리 중심(mm)을 원점으로 이동
-		roty *              // ② Y축 회전
-		rotx *              // ③ X축 회전
+	initialWorld= centerTranslate *   // ① 볼륨 물리 중심(mm)을 원점으로 이동
+/*		roty *    */          // ② Y축 회전
+	/*	rotx *    */          // ③ X축 회전
 		scale;              // ④ mm → 정규화 world
 
 
+
+	worldMat = initialWorld;
 	invWorldMat = XMMatrixInverse(nullptr, worldMat);
-
-
-
 
 
 
@@ -1289,8 +1290,8 @@ void QDirect3D11Widget::FullScreenPassSet()
 
 void QDirect3D11Widget::UpdateVolumeMatrix()
 {
-	// 1. 볼륨을 원점 중심으로
-	XMMATRIX translation = XMMatrixTranslation(0, 0, 0);
+	//// 1. 볼륨을 원점 중심으로
+	//XMMATRIX translation = XMMatrixTranslation(0, 0, 0);
 
 	// ✅ 쿼터니언 → 행렬
 	userRotation = XMMatrixRotationQuaternion(m_rotation);
@@ -1298,11 +1299,32 @@ void QDirect3D11Widget::UpdateVolumeMatrix()
 	//// 4. 최종 행렬
 	//XMMATRIX volumeWorld = s * rotY * rotX * translation;
 
-	XMMATRIX volumeWorld = scale * userRotation/**rotx*/;
+	XMMATRIX volumeWorld = userRotation*initialWorld/**rotx*/;
+	//XMMATRIX volumeWorld = scale * userRotation/**rotx*/;
+	//XMMATRIX volumeWorld = userRotation/**rotx*/;
+
+
 
 	//CB cb{};
 	worldMat = XMMatrixTranspose(volumeWorld);
 	invWorldMat = XMMatrixTranspose(XMMatrixInverse(nullptr, volumeWorld));
+
+
+
+
+
+
+
+	//XMMATRIX meshWorld = userRotation * meshRenderer->initialMeshWorld/**rotx*/;
+	////XMMATRIX volumeWorld = scale * userRotation/**rotx*/;
+	////XMMATRIX volumeWorld = userRotation/**rotx*/;
+
+
+	//
+	//meshRenderer->cbM.WVP = XMMatrixTranspose(meshWorld * viewMat * projMat);
+	//meshRenderer->cbM.World = XMMatrixTranspose(meshWorld);
+	//meshRenderer->cbM.WorldView = XMMatrixTranspose(meshWorld * viewMat);
+
 
 }
 //======================================================================================
@@ -3850,14 +3872,19 @@ void QDirect3D11Widget::mousePressEvent(QMouseEvent* event)
 
 			//qDebug() << "Mouse Pressed at:" << p;
 
+
+
 			switch (m_landmarkStep)
 			{
+				
 			case LandmarkStep::CT_LeftEye:
 
 				dp.color = IM_COL32(255, 0, 0, 255);   // 빨강
 				ctLeftEye = sp;
 				qDebug() << "[Landmark] CT Left Eye set";
 				m_landmarkStep = LandmarkStep::CT_RightEye;
+
+
 				break;
 
 			case LandmarkStep::CT_RightEye:
@@ -4489,7 +4516,7 @@ void QDirect3D11Widget::RenderAllQuads()
 					physicalDepth,
 					overallSize,
 					
-					worldMat, viewMat, projMat, width(), height()
+					userRotation, viewMat, projMat, width(), height()
 				);
 
 				// ========== 2단계: Volume → Texture (CT 렌더링) ==========
@@ -4554,7 +4581,7 @@ void QDirect3D11Widget::RenderAllQuads()
 					physicalHeight,
 					physicalDepth,
 					overallSize,
-					worldMat,
+					userRotation,
 					viewMat,
 					projMat,
 					m_volumeToTexture->ctBlendStrength     // 0.15 ~ 0.3

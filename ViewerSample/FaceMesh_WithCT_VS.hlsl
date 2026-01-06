@@ -22,6 +22,9 @@ struct VSOutput
 VSOutput main(VSInput input)
 {
 	VSOutput output;
+
+	//벡터를 왼쪽에 곱함
+	//순서는 S>R>T
 	output.pos = mul(float4(input.position, 1), WorldViewProj);
 	output.uv = input.uv;
 

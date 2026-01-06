@@ -80,6 +80,7 @@ public:
 		float maxMesh, float maxPhysicalVol,float volWidth,float volheight, float volDepth, float overallSize,
 		XMMATRIX w, XMMATRIX v, XMMATRIX p, float width, float height);
 
+	DirectX::XMMATRIX initialMeshWorld;
 	void RenderMesh(ID3D11DeviceContext* context, ID3D11Buffer* m_meshVertexBuffer,
 		ID3D11VertexShader* m_meshVS, ID3D11PixelShader* m_meshPS, ID3D11InputLayout* m_meshInputLayout,
 		ID3D11Buffer* m_clipSettingsBuffer, ID3D11Buffer* m_meshConstantBuffer, ID3D11ShaderResourceView* m_meshTexture,
@@ -107,7 +108,7 @@ public:
 		float maxPhysicalVol,
 		float volWidth, float volHeight, float volDepth,
 		float overallSize,
-		XMMATRIX w,
+		XMMATRIX userRotMat,
 		XMMATRIX v,
 		XMMATRIX p,
 		float ctBlendStrength);

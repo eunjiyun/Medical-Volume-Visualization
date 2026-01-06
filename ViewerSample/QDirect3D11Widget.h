@@ -520,8 +520,11 @@ public:
 	XMVECTOR eye /*= XMVectorSet(0.0f, 0.0f, -3.0f, 1.0f)*/;  // 조금 더 뒤로
 	XMVECTOR at /*= XMVectorSet(0.0f, 0.0f, 0.0f, 1.0f)*/;
 	XMVECTOR up /*= XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f)*/;
-	XMMATRIX viewMat, invViewMat, projMat, invProjMat, rotx, roty, transMat, /*scale,*/ worldMat, invWorldMat, scale;
-	float maxPhysicalVol, maxMesh, overallSize{ 1.5f };
+	XMMATRIX viewMat, invViewMat, projMat, invProjMat, rotx, roty, centerTranslate, /*scale,*/ worldMat, invWorldMat, scale;
+	
+	XMMATRIX initialWorld;
+	
+	float maxPhysicalVol, maxMesh, overallSize{ 1.f };
 	float physicalWidth, physicalHeight, physicalDepth;
 	float scaleX, scaleY, scaleZ;
 

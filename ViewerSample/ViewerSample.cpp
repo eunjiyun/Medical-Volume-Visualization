@@ -138,8 +138,11 @@ void ViewerSample::meshScaleSet()
 					m_pScene->ctLeftEye,
 					m_pScene->ctRightEye
 				);
-		}
 
+
+			std::cout << "meshscale : " << m_pScene->meshRenderer->meshScale << std::endl;
+		}
+		
 
 	
 		m_pScene->m_debugPointValid = false;

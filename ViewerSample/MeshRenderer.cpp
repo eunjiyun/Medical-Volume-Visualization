@@ -203,7 +203,7 @@ void MeshRenderer::RenderMeshDepth(ID3D11DeviceContext* context, ID3D11Buffer* m
 	ID3D11Buffer* m_clipSettingsBuffer, ID3D11Buffer* m_meshConstantBuffer, ID3D11ShaderResourceView* m_meshTexture,
 	ID3D11SamplerState* m_MeshSamplerState, ID3D11Device* m_pDevice, int m_meshVertexCount,
 	float maxMesh, float maxPhysicalVol, float volWidth, float volHeight, float volDepth, float overallSize,
-	XMMATRIX w, XMMATRIX v, XMMATRIX p, float width,float height)
+	XMMATRIX userRotMat, XMMATRIX v, XMMATRIX p, float width,float height)
 {
 	ID3D11RenderTargetView* curRTV = nullptr;
 	ID3D11DepthStencilView* curDSV = nullptr;
@@ -320,17 +320,17 @@ void MeshRenderer::RenderMeshDepth(ID3D11DeviceContext* context, ID3D11Buffer* m
 
 
 
-	float volToMesh{ volWidth / meshWidth / maxPhysicalVol * meshScale };
+	//float volToMesh{ volWidth / meshWidth / maxPhysicalVol * meshScale };
+	float volToMesh{ maxPhysicalVol / maxMesh/300 };
+
+
+	meshScale = maxPhysicalVol / maxMesh / 300;
 
 	DirectX::XMMATRIX scale = XMMatrixScaling(
-		/*	meshToVolume,
-			meshToVolume,
-			meshToVolume*/
+	
 
-		volToMesh, volToMesh, volToMesh
-		//volWidth / meshWidth / maxPhysicalVol * 1.42f,
-		//volHeight / meshHeight / maxPhysicalVol * 1.42f*1.09f,
-		//volDepth / meshDepth / maxPhysicalVol * 1.42f
+		//volToMesh, volToMesh, volToMesh
+		meshScale, meshScale, meshScale
 
 	);
 
@@ -358,23 +358,88 @@ void MeshRenderer::RenderMeshDepth(ID3D11DeviceContext* context, ID3D11Buffer* m
 			-centerX,
 			-centerY,
 			-centerZ
-		);
+	);
 
 
 
 	MeshConstantBuffer cb;
 	DirectX::XMMATRIX rotation = XMMatrixRotationX(XM_PI);
-//	DirectX::XMMATRIX fullWorld = /*centerTranslate **/scale * rotation * w;
+	//DirectX::XMMATRIX fullWorld = /*centerTranslate **/scale * rotation * w;
 
 	//s r t v p
 	//DirectX::XMMATRIX fullWorld = scale * rotation *centerTranslate* w;
 	//DirectX::XMMATRIX fullWorld = centerTranslate  * rotation *scale* w;
 
-	DirectX::XMMATRIX fullWorld = /*centerTranslate * */scale   * rotation  * w;
+//	DirectX::XMMATRIX fullWorld = centerTranslate * scale   * rotation  /** w*/;
+
+
+	XMMATRIX rotx = XMMatrixRotationX(-XM_PIDIV2);  // 90도 회전
+	XMMATRIX roty = XMMatrixRotationY(XM_PI);  // 90도 회전
+
+	//initialMeshWorld = centerTranslate * scale
+	//	/** XMMatrixRotationY(XM_PI)*/*XMMatrixRotationX(XM_PI)  /** w*/;
+
+
+	//initialMeshWorld = /*XMMatrixRotationY(-XM_PIDIV2)**/centerTranslate *    /*XMMatrixRotationX(XM_PIDIV2)  * */ scale/** XMMatrixRotationX(XM_PI)*/
+		/** XMMatrixRotationY(XM_PI)*/  /** w*/;
+	
+	//DirectX::XMMATRIX fullWorld = /*centerTranslate * *//*scale **/ rotation  * w;
+
+
+		//initialMeshWorld = centerTranslate * scale;// *XMMatrixRotationY(XM_PI)/** centerTranslate*/;
+
+			// 1. 좌표계 변환: Y-Z 축 교환 (PLY -> DICOM 좌표계)
+		XMMATRIX coordinateSystemTransform = XMMatrixSet(
+			1.0f, 0.0f, 0.0f, 0.0f,  // X축 그대로
+			0.0f, 0.0f, 1.0f, 0.0f,  // Y축 -> Z축
+			0.0f, 1.0f, 0.0f, 0.0f,  // Z축 -> Y축
+			0.0f, 0.0f, 0.0f, 1.0f
+		);
+
+		//initialMeshWorld = XMMatrixRotationY(XM_PI)*scale*userRotMat*centerTranslate;// *XMMatrixRotationY(XM_PI)/** centerTranslate*/;
+		////initialMeshWorld = /*XMMatrixRotationY(XM_PI)**/scale*userRotMat;// *XMMatrixRotationY(XM_PI)/** centerTranslate*/;
+
+		//initialMeshWorld = coordinateSystemTransform * XMMatrixRotationX(-XM_PIDIV2)*scale*userRotMat/**centerTranslate*/;
+
+		//initialMeshWorld = coordinateSystemTransform * XMMatrixRotationX(-XM_PIDIV2)*scale*userRotMat/**centerTranslate*/;
+		//initialMeshWorld =  XMMatrixRotationX(-XM_PIDIV2)* scale * userRotMat * coordinateSystemTransform;
+
+	//	initialMeshWorld = centerTranslate*XMMatrixRotationX(XM_PIDIV2)* scale * userRotMat * coordinateSystemTransform;
+
+		//initialMeshWorld = centerTranslate
+		//	* XMMatrixRotationX(XM_PIDIV2)
+		//	* scale
+		//	* coordinateSystemTransform  // 먼저 좌표계 변환
+		//	* userRotMat;                // 그 다음 회전
+
+		initialMeshWorld = 
+			scale*rotation/*roty*rotx* *//*XMMatrixTranspose(userRotMat)*/;                // 그 다음 회전
+
+		//스케일을 볼륨걸 적용한 유저 로테이션을 곱해야지 회전 싱크가 맞음
+		//전치 행렬을 안 쓰고 전치 안 한 사용자 회전 행렬을 메쉬에 적용해서 그런걸지도? 
+
 
 
 	float volHalfWorld = overallSize * 0.5f;
 	float meshHalfWorld = (maxMesh * meshScale) * 0.5f;
+
+
+
+		//XMMATRIX coordinateSystemTransform = XMMatrixSet(
+		//	1.0f, 0.0f, 0.0f, 0.0f,
+		//	0.0f, 0.0f, 1.0f, 0.0f,
+		//	0.0f, 1.0f, 0.0f, 0.0f,
+		//	0.0f, 0.0f, 0.0f, 1.0f
+		//);
+
+		//initialMeshWorld = coordinateSystemTransform
+		//	* XMMatrixRotationX(XM_PIDIV2)
+		//	* scale
+		//	/** centerTranslate*/
+		//	* userRotMat;  // DICOM 회전 그대로 사용
+
+
+
 
 	/*std::cout << "===== World Half Extent Check =====" << std::endl;
 	std::cout << "Volume half extent (world):" << volHalfWorld << std::endl;
@@ -385,9 +450,12 @@ void MeshRenderer::RenderMeshDepth(ID3D11DeviceContext* context, ID3D11Buffer* m
 		<< (maxMesh / maxPhysicalVol) << std::endl;
 	std::cout << "===================================" << std::endl;*/
 
-	cb.WVP = XMMatrixTranspose(fullWorld * v * p);
-	cb.World = XMMatrixTranspose(fullWorld);
-	cb.WorldView = XMMatrixTranspose(fullWorld * v);
+
+	// HLSL에서는 mul(vector, matrix) 사용
+   // 실제 적용 순서: S -> R -> T (의도한 대로)
+	cb.WVP = XMMatrixTranspose(initialMeshWorld*XMMatrixTranspose(userRotMat) /** XMMatrixRotationX(-XM_PI)*/ * v * p);
+	cb.World = XMMatrixTranspose(initialMeshWorld*XMMatrixTranspose(userRotMat));
+	cb.WorldView = XMMatrixTranspose(initialMeshWorld*XMMatrixTranspose(userRotMat) *v);
 
 	////rotx = XMMatrixRotationX(-XM_PIDIV2);  // 90도 회전
 	////roty = XMMatrixRotationY(XM_PI);  // 90도 회전
@@ -607,19 +675,23 @@ void MeshRenderer::RenderMesh(ID3D11DeviceContext* context, ID3D11Buffer* m_mesh
 	//);
 
 
-	float volToMesh{ volWidth / meshWidth / maxPhysicalVol * meshScale };
+	//float volToMesh{ volWidth / meshWidth / maxPhysicalVol * meshScale };
+	//float volToMesh{ maxPhysicalVol / maxMesh };
+	float volToMesh{ maxPhysicalVol / maxMesh / 300 };
+
+
+
+
+	meshScale = maxPhysicalVol / maxMesh / 300;
 
 	DirectX::XMMATRIX scale = XMMatrixScaling(
-		/*	meshToVolume,
-			meshToVolume,
-			meshToVolume*/
 
-		volToMesh, volToMesh, volToMesh
-		//volWidth / meshWidth / maxPhysicalVol * 1.42f,
-		//volHeight / meshHeight / maxPhysicalVol * 1.42f*1.09f,
-		//volDepth / meshDepth / maxPhysicalVol * 1.42f
+
+		//volToMesh, volToMesh, volToMesh
+		meshScale, meshScale, meshScale
 
 	);
+
 
 
 	//DirectX::XMMATRIX rotation = XMMatrixRotationX(XM_PI);
@@ -628,16 +700,11 @@ void MeshRenderer::RenderMesh(ID3D11DeviceContext* context, ID3D11Buffer* m_mesh
 
 	XMMATRIX centerTranslate =
 		XMMatrixTranslation(
-			/*-centerX * volToMesh,
-			-centerY * volToMesh,
-			-centerZ * volToMesh*/
-
-
-
-			 volToMesh,
-			volToMesh,
-			 volToMesh
+			-centerX,
+			-centerY,
+			-centerZ
 		);
+
 
 
 
@@ -647,25 +714,40 @@ void MeshRenderer::RenderMesh(ID3D11DeviceContext* context, ID3D11Buffer* m_mesh
 	//	DirectX::XMMATRIX fullWorld = /*centerTranslate **/scale * rotation * w;
 	//DirectX::XMMATRIX fullWorld = scale * rotation * w;
 
-		//s r t v p
-    DirectX::XMMATRIX fullWorld = scale * rotation /**centerTranslate*/* w;
-	//DirectX::XMMATRIX fullWorld = centerTranslate * rotation *scale* w;
-
-
-	/*std::cout << "meshScale : " << meshScale << std::endl;
-	std::cout << "scale x : " << volWidth / meshWidth / maxPhysicalVol << std::endl;
-	std::cout << "scale y : " << volHeight / meshHeight / maxPhysicalVol << std::endl;
-	std::cout << "scale z : " << volDepth / meshDepth / maxPhysicalVol << std::endl << std::endl << std::endl;*/
+	//	//s r t v p
+ // //  DirectX::XMMATRIX fullWorld = scale * rotation /**centerTranslate*/* w;
+	//DirectX::XMMATRIX fullWorld = centerTranslate * scale   * rotation  /** w*/;
+	////DirectX::XMMATRIX fullWorld = centerTranslate * rotation *scale* w;
+	////DirectX::XMMATRIX fullWorld = /*scale * */rotation /**centerTranslate*/* w;
 
 
 
-	MeshConstantBuffer cb;
-	cb.WVP = XMMatrixTranspose(fullWorld * v * p);
-	cb.World = XMMatrixTranspose(fullWorld);
-	cb.WorldView = XMMatrixTranspose(fullWorld * v);
+		//rotx = XMMatrixRotationX(-XM_PIDIV2);  // 90도 회전
+	//roty = XMMatrixRotationY(XM_PI);  // 90도 회전
 
-	context->UpdateSubresource(m_meshConstantBuffer, 0, nullptr, &cb, 0, 0);
-	context->VSSetConstantBuffers(0, 1, &m_meshConstantBuffer);
+	//initialMeshWorld = centerTranslate * scale
+	//	* XMMatrixRotationY(XM_PI)*XMMatrixRotationX(XM_PIDIV2)  /** w*/;
+
+
+	//initialMeshWorld = centerTranslate /** XMMatrixRotationX(XM_PI)*/ * scale
+	//	/** XMMatrixRotationY(XM_PI)*/ /** w*/;
+
+	////initialMeshWorld = scale * XMMatrixRotationX(XM_PI)*centerTranslate;
+
+	///*std::cout << "meshScale : " << meshScale << std::endl;
+	//std::cout << "scale x : " << volWidth / meshWidth / maxPhysicalVol << std::endl;
+	//std::cout << "scale y : " << volHeight / meshHeight / maxPhysicalVol << std::endl;
+	//std::cout << "scale z : " << volDepth / meshDepth / maxPhysicalVol << std::endl << std::endl << std::endl;*/
+
+
+
+	//MeshConstantBuffer cb;
+	//cb.WVP = XMMatrixTranspose(initialMeshWorld * v * p);
+	//cb.World = XMMatrixTranspose(initialMeshWorld);
+	//cb.WorldView = XMMatrixTranspose(initialMeshWorld * v);
+
+	//context->UpdateSubresource(m_meshConstantBuffer, 0, nullptr, &cb, 0, 0);
+	//context->VSSetConstantBuffers(0, 1, &m_meshConstantBuffer);
 
 	// ========== Clipping Settings ==========
 	ClipSettings cs;
@@ -716,7 +798,7 @@ void MeshRenderer::RenderMeshWithCT(
 	float maxPhysicalVol,
 	float volWidth, float volHeight, float volDepth,
 	float overallSize,
-	XMMATRIX w,
+	XMMATRIX userRotMat,
 	XMMATRIX v,
 	XMMATRIX p,
 	float ctBlendStrength)                        // ⭐ CT 합성 강도
@@ -748,19 +830,26 @@ void MeshRenderer::RenderMeshWithCT(
 	//	//volDepth / meshDepth / maxPhysicalVol * 1.42f
 
 	//);
-	float volToMesh{ volWidth / meshWidth / maxPhysicalVol * meshScale };
+
+
+	//float volToMesh{ volWidth / meshWidth / maxPhysicalVol * meshScale };
+	//float volToMesh{  maxPhysicalVol /maxMesh };
+	float volToMesh{ maxPhysicalVol / maxMesh / 300 };
+
+
+
+	meshScale = maxPhysicalVol / maxMesh / 300;
 
 	DirectX::XMMATRIX scale = XMMatrixScaling(
-		/*	meshToVolume,
-			meshToVolume,
-			meshToVolume*/
 
-		volToMesh, volToMesh, volToMesh
-		//volWidth / meshWidth / maxPhysicalVol * 1.42f,
-		//volHeight / meshHeight / maxPhysicalVol * 1.42f*1.09f,
-		//volDepth / meshDepth / maxPhysicalVol * 1.42f
+
+		//volToMesh, volToMesh, volToMesh
+		meshScale, meshScale, meshScale
 
 	);
+
+
+
 
 
 	DirectX::XMMATRIX rotation = XMMatrixRotationX(XM_PI);
@@ -786,16 +875,37 @@ void MeshRenderer::RenderMeshWithCT(
 	//s r t v p
 	//DirectX::XMMATRIX fullWorld = scale * rotation *centerTranslate* w;
 
-	DirectX::XMMATRIX fullWorld = /*centerTranslate**/ scale *rotation  *  w;
+	//DirectX::XMMATRIX fullWorld = /*centerTranslate**/ scale *rotation  *  w;
+	//DirectX::XMMATRIX fullWorld = centerTranslate * scale   * rotation  /** w*/;
+
+	//rotx = XMMatrixRotationX(-XM_PIDIV2);  // 90도 회전
+//roty = XMMatrixRotationY(XM_PI);  // 90도 회전
+
+	////initialMeshWorld = centerTranslate * scale
+	////	* XMMatrixRotationY(-XM_PI)/**XMMatrixRotationX(XM_PIDIV2)*/  /** w*/;
+	//initialMeshWorld = centerTranslate * scale
+	//	/** XMMatrixRotationY(XM_PI)*/*XMMatrixRotationX(XM_PI)  /** w*/;
 
 	// ========== Constant Buffer 업데이트 ==========
 	// ⭐ MeshConstantBuffer에 ctBlendStrength 추가 필요
 	
+	//initialMeshWorld = centerTranslate* XMMatrixRotationX(XM_PI)*scale;
 
-	
-	cbM.WVP = XMMatrixTranspose(fullWorld * v * p);
-	cbM.World = XMMatrixTranspose(fullWorld);
-	cbM.WorldView = XMMatrixTranspose(fullWorld * v);
+
+	//cbM.WVP = XMMatrixTranspose(userRotMat*initialMeshWorld * v * p);
+	//cbM.World = XMMatrixTranspose(userRotMat*initialMeshWorld);
+	//cbM.WorldView = XMMatrixTranspose(userRotMat*initialMeshWorld * v);
+
+	initialMeshWorld =
+		scale * rotation/*roty*rotx* *//*XMMatrixTranspose(userRotMat)*/;                // 그 다음 회전
+
+
+	cbM.WVP = XMMatrixTranspose(initialMeshWorld*XMMatrixTranspose(userRotMat) *v * p);
+	cbM.World = XMMatrixTranspose(initialMeshWorld*XMMatrixTranspose(userRotMat));
+	cbM.WorldView = XMMatrixTranspose(initialMeshWorld*XMMatrixTranspose(userRotMat)*v);
+
+
+
 	cbM.CTBlendParams = XMFLOAT4(ctBlendStrength, 0.0f, 0.0f, faceBlend);  // ⭐ CT 강도
 
 	context->UpdateSubresource(m_meshConstantBuffer, 0, nullptr, &cbM, 0, 0);
