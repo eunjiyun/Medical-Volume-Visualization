@@ -739,10 +739,9 @@ bool QDirect3D11Widget::init()
 
 	//	worldMat = scale * roty*rotx;
 
-	initialWorld = /*centerTranslate *  */ // ① 볼륨 물리 중심(mm)을 원점으로 이동
-/*		roty *    */          // ② Y축 회전
-	/*	rotx *    */          // ③ X축 회전
-		scale;              // ④ mm → 정규화 world
+	initialWorld = centerTranslate    // ① 볼륨 물리 중심(mm)을 원점으로 이동
+
+		/*scale*/;              // ④ mm → 정규화 world
 
 
 
@@ -3158,11 +3157,17 @@ void QDirect3D11Widget::InitializeVolumeCamera()
 	// 화면 aspect
 	float aspect = (float)width() / (float)height();
 
-	// 볼륨 기준 크기 (-0.75 ~ +0.75)
-	/*float viewWidth = 1.5f;
-	float viewHeight = 1.5f;*/
-	float viewWidth = 2.2f;
-	float viewHeight = 2.2f;
+
+	float baseViewSize = 1.4f;
+
+	float viewWidth = baseViewSize * m_orthoScale;
+	float viewHeight = baseViewSize * m_orthoScale;
+
+	//// 볼륨 기준 크기 (-0.75 ~ +0.75)
+	///*float viewWidth = 1.5f;
+	//float viewHeight = 1.5f;*/
+	//float viewWidth = 2.2f;
+	//float viewHeight = 2.2f;
 
 	// aspect 보정 (안 잘리게)
 	if (viewWidth / viewHeight > aspect)
@@ -5865,6 +5870,11 @@ void QDirect3D11Widget::mouseDoubleClickEvent(QMouseEvent* event)
 		qDebug() << "Rotation Reset!";
 
 		UpdateVolumeMatrix();
+
+		m_orthoScale = 1;
+	
+		InitializeVolumeCamera();  // 👈 여기
+
 		//w *= rotx;
 		FullScreenPassSet();
 		update();
@@ -6043,17 +6053,32 @@ void QDirect3D11Widget::resetEnvironment()
 void QDirect3D11Widget::wheelEvent(QWheelEvent* event)
 {
 
+	//int delta = event->angleDelta().y();
+
+	//// 줌
+	//float zoomFactor = delta / 1200.0f;
+	//m_cameraDistance *= (1.0f - zoomFactor);
+	//m_cameraDistance = std::clamp(m_cameraDistance, 1.0f, 10.0f);
+
+	//qDebug() << "Zoom:" << m_cameraDistance;
+
+	//update();
+	//event->accept();
+	//QWidget::wheelEvent(event);
+
 	int delta = event->angleDelta().y();
-
-	// 줌
 	float zoomFactor = delta / 1200.0f;
-	m_cameraDistance *= (1.0f - zoomFactor);
-	m_cameraDistance = std::clamp(m_cameraDistance, 1.0f, 10.0f);
 
-	qDebug() << "Zoom:" << m_cameraDistance;
+	m_orthoScale *= (1.0f - zoomFactor);
+	m_orthoScale = std::clamp(m_orthoScale, 0.5f, 4.0f);
+
+	qDebug() << "Zoom:" << m_orthoScale;
+
+	InitializeVolumeCamera();  // 👈 여기
 
 	update();
 	event->accept();
+
 	QWidget::wheelEvent(event);
 }
 

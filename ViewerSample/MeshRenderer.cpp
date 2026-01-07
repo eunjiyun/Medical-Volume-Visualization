@@ -335,24 +335,6 @@ void MeshRenderer::RenderMeshDepth(ID3D11DeviceContext* context, ID3D11Buffer* m
 	);
 
 
-
-
-	//XMMATRIX centerTranslate =
-	//	XMMatrixTranslation(
-	//		-centerX * volToMesh,
-	//		-centerY * volToMesh,
-	//		-centerZ * volToMesh
-	//	);
-
-
-	//XMMATRIX centerTranslate =
-	//	XMMatrixTranslation(
-	//		volToMesh,
-	//		volToMesh,
-	//		volToMesh
-	//	);
-
-
 	XMMATRIX centerTranslate =
 		XMMatrixTranslation(
 			-centerX,
@@ -360,60 +342,11 @@ void MeshRenderer::RenderMeshDepth(ID3D11DeviceContext* context, ID3D11Buffer* m
 			-centerZ
 		);
 
-
-
 	MeshConstantBuffer cb;
 	DirectX::XMMATRIX rotation = XMMatrixRotationX(XM_PI);
-	//DirectX::XMMATRIX fullWorld = /*centerTranslate **/scale * rotation * w;
 
 	//s r t v p
-	//DirectX::XMMATRIX fullWorld = scale * rotation *centerTranslate* w;
-	//DirectX::XMMATRIX fullWorld = centerTranslate  * rotation *scale* w;
-
-//	DirectX::XMMATRIX fullWorld = centerTranslate * scale   * rotation  /** w*/;
-
-
-	XMMATRIX rotx = XMMatrixRotationX(-XM_PIDIV2);  // 90도 회전
-	XMMATRIX roty = XMMatrixRotationY(XM_PI);  // 90도 회전
-
-	//initialMeshWorld = centerTranslate * scale
-	//	/** XMMatrixRotationY(XM_PI)*/*XMMatrixRotationX(XM_PI)  /** w*/;
-
-
-	//initialMeshWorld = /*XMMatrixRotationY(-XM_PIDIV2)**/centerTranslate *    /*XMMatrixRotationX(XM_PIDIV2)  * */ scale/** XMMatrixRotationX(XM_PI)*/
-	/** XMMatrixRotationY(XM_PI)*/  /** w*/;
-
-	//DirectX::XMMATRIX fullWorld = /*centerTranslate * *//*scale **/ rotation  * w;
-
-
-		//initialMeshWorld = centerTranslate * scale;// *XMMatrixRotationY(XM_PI)/** centerTranslate*/;
-
-			// 1. 좌표계 변환: Y-Z 축 교환 (PLY -> DICOM 좌표계)
-	XMMATRIX coordinateSystemTransform = XMMatrixSet(
-		1.0f, 0.0f, 0.0f, 0.0f,  // X축 그대로
-		0.0f, 0.0f, 1.0f, 0.0f,  // Y축 -> Z축
-		0.0f, 1.0f, 0.0f, 0.0f,  // Z축 -> Y축
-		0.0f, 0.0f, 0.0f, 1.0f
-	);
-
-	//initialMeshWorld = XMMatrixRotationY(XM_PI)*scale*userRotMat*centerTranslate;// *XMMatrixRotationY(XM_PI)/** centerTranslate*/;
-	////initialMeshWorld = /*XMMatrixRotationY(XM_PI)**/scale*userRotMat;// *XMMatrixRotationY(XM_PI)/** centerTranslate*/;
-
-	//initialMeshWorld = coordinateSystemTransform * XMMatrixRotationX(-XM_PIDIV2)*scale*userRotMat/**centerTranslate*/;
-
-	//initialMeshWorld = coordinateSystemTransform * XMMatrixRotationX(-XM_PIDIV2)*scale*userRotMat/**centerTranslate*/;
-	//initialMeshWorld =  XMMatrixRotationX(-XM_PIDIV2)* scale * userRotMat * coordinateSystemTransform;
-
-//	initialMeshWorld = centerTranslate*XMMatrixRotationX(XM_PIDIV2)* scale * userRotMat * coordinateSystemTransform;
-
-	//initialMeshWorld = centerTranslate
-	//	* XMMatrixRotationX(XM_PIDIV2)
-	//	* scale
-	//	* coordinateSystemTransform  // 먼저 좌표계 변환
-	//	* userRotMat;                // 그 다음 회전
-
-	initialMeshWorld =
-		/*	centerTranslate **/ scale * rotation/*roty*rotx* *//*XMMatrixTranspose(userRotMat)*/;                // 그 다음 회전
+	initialMeshWorld =/*scale **/ rotation;                // 그 다음 회전
 
 		//스케일을 볼륨걸 적용한 유저 로테이션을 곱해야지 회전 싱크가 맞음
 		//전치 행렬을 안 쓰고 전치 안 한 사용자 회전 행렬을 메쉬에 적용해서 그런걸지도? 
@@ -892,7 +825,7 @@ void MeshRenderer::RenderMeshWithCT(
 
 
 	initialMeshWorld =
-		/*	centerTranslate **/ scale * rotation;                // 그 다음 회전
+		/*	centerTranslate **/ /*scale **/ rotation;                // 그 다음 회전
 
 
 

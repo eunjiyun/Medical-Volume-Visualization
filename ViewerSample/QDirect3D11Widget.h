@@ -527,6 +527,7 @@ public:
 	float maxPhysicalVol, maxMesh, overallSize{ 1.f };
 	float physicalWidth, physicalHeight, physicalDepth;
 	float scaleX, scaleY, scaleZ;
+	float m_orthoScale{1};
 
 	//DebugScreenPoint m_debugPoint;
 
