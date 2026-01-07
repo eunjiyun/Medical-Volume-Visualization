@@ -43,6 +43,7 @@ using namespace DirectX;
 
 struct CB
 {
+	DirectX::XMFLOAT4X4  VolumeWorld;
 
 	DirectX::XMFLOAT4X4  InvView;
 	DirectX::XMFLOAT4X4  InvProj;
@@ -55,8 +56,13 @@ struct CB
 	XMFLOAT4 CameraPosAndAlpha;  // xyz=pos, w=alpha
 	XMFLOAT4 VoxelAndMaxSteps;   // xyz=voxel, w=maxSteps
 	XMFLOAT4 HuParams;
+	XMFLOAT4 volSize;
 
 };
+//struct VolSizeBuffer
+//{
+//	DirectX::XMFLOAT4 volSize;
+//};
 
 
 class FileReader;
@@ -516,6 +522,7 @@ public:
 
 	//	XMMATRIX view, proj;
 	CB cb{};
+
 
 	XMVECTOR eye /*= XMVectorSet(0.0f, 0.0f, -3.0f, 1.0f)*/;  // 조금 더 뒤로
 	XMVECTOR at /*= XMVectorSet(0.0f, 0.0f, 0.0f, 1.0f)*/;

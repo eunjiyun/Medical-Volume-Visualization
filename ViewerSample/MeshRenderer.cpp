@@ -323,16 +323,32 @@ void MeshRenderer::RenderMeshDepth(ID3D11DeviceContext* context, ID3D11Buffer* m
 	float volToMesh{ volWidth / meshWidth / maxPhysicalVol * meshScale };
 	//float volToMesh{ maxPhysicalVol / maxMesh/300 };
 
+	//float meshNormSize = maxMesh / maxPhysicalVol;
+
+	float scaleToVol{ 1.f / maxPhysicalVol * meshScale };
+
+	//float scaleToVol{ meshScale };
+
+	//float scaleToVol{ meshNormSize * 0.5f * meshScale };
+
+	//float scaleToVol{ 1.f/maxMesh * meshScale };
+	//std::cout << "==============mesh scale to vol : " << scaleToVol << std::endl;
+
+
+
+
+	//float scaleToVol = meshExtentMM / ctNormExtentMM;
 
 	//meshScale = maxPhysicalVol / maxMesh / 300;
 
-	DirectX::XMMATRIX scale = XMMatrixScaling(
+	//DirectX::XMMATRIX scale = XMMatrixScaling(
+	//	/*	volToMesh, volToMesh, volToMesh*/
+	//	scaleToVol, scaleToVol, scaleToVol
+
+	//);
+	XMMATRIX scale = XMMatrixIdentity();
 
 
-		volToMesh, volToMesh, volToMesh
-
-
-	);
 
 
 	XMMATRIX centerTranslate =
@@ -343,10 +359,13 @@ void MeshRenderer::RenderMeshDepth(ID3D11DeviceContext* context, ID3D11Buffer* m
 		);
 
 	MeshConstantBuffer cb;
+
 	DirectX::XMMATRIX rotation = XMMatrixRotationX(XM_PI);
 
 	//s r t v p
-	initialMeshWorld =/*scale **/ rotation;                // 그 다음 회전
+	//initialMeshWorld =scale * rotation;                // 그 다음 회전
+	//initialMeshWorld = centerTranslate * rotation;  // ✅ 스케일 없음
+	initialMeshWorld = rotation;  // ✅ 스케일 없음
 
 		//스케일을 볼륨걸 적용한 유저 로테이션을 곱해야지 회전 싱크가 맞음
 		//전치 행렬을 안 쓰고 전치 안 한 사용자 회전 행렬을 메쉬에 적용해서 그런걸지도? 
@@ -355,6 +374,22 @@ void MeshRenderer::RenderMeshDepth(ID3D11DeviceContext* context, ID3D11Buffer* m
 		//	그게 “로컬 기준 역회전”처럼 동작했기 때문이고,
 		//	userRotation을 앞에 곱했을 때 축이 틀어진 이유는
 		//	initialMeshWorld가 아직 월드 기준 좌표계가 아니기 때문이다.
+
+
+
+	XMVECTOR s, r, t;
+	XMMatrixDecompose(&s, &r, &t, initialMeshWorld);
+
+	//std::cout<< "World scale mesh:"
+	//	<<" "<< XMVectorGetX(s)
+	//	<< " " << XMVectorGetY(s)
+	//	<< " " << XMVectorGetZ(s);
+
+	//std::cout << "World translation mesh:"
+	//	<< " " << XMVectorGetX(t)
+	//	<< " " << XMVectorGetY(t)
+	//	<< " " << XMVectorGetZ(t);
+
 
 
 
@@ -396,94 +431,12 @@ std::cout << "===================================" << std::endl;*/
    cb.WorldView = XMMatrixTranspose(initialMeshWorld*XMMatrixTranspose(userRotMat) *v);
 
 
-	//   // HLSL에서는 mul(vector, matrix) 사용
- // // 실제 적용 순서: S -> R -> T (의도한 대로)
-	//cb.WVP = XMMatrixTranspose(userRotMat*initialMeshWorld/** XMMatrixRotationX(-XM_PI)*/ * v * p);
-	//cb.World = XMMatrixTranspose(userRotMat*initialMeshWorld);
-	//cb.WorldView = XMMatrixTranspose(userRotMat*initialMeshWorld *v);
+
+	context->UpdateSubresource(m_meshConstantBuffer, 0, nullptr, &cb, 0, 0);
+	context->VSSetConstantBuffers(0, 1, &m_meshConstantBuffer);
 
 
 
-
-
-	////rotx = XMMatrixRotationX(-XM_PIDIV2);  // 90도 회전
-	////roty = XMMatrixRotationY(XM_PI);  // 90도 회전
-
-
-	//XMMATRIX meshWorld =
-	//	w *                      // 사용자 입력
-	//	XMMatrixRotationY(XM_PI) *
-	//	XMMatrixRotationX(-XM_PIDIV2)*
-	//	XMMatrixScaling(meshScale, meshScale, meshScale);
-
-	//cb.WVP = XMMatrixTranspose(meshWorld * v * p);
-	//cb.World = XMMatrixTranspose(meshWorld);
-	//cb.WorldView = XMMatrixTranspose(meshWorld * v);
-
-
-
-
-
-
-
-	//// ✅ 디버그: WVP 출력
-	//XMFLOAT4X4 wvpFloat;
-	//XMStoreFloat4x4(&wvpFloat, cb.WVP);
-	//std::cout << "WVP matrix:" << std::endl;
-	//std::cout  << "wvpFloat._11 : "<<wvpFloat._11 << 
-	//	"wvpFloat._12 : " << wvpFloat._12 << 
-	//	"wvpFloat._13 : " << wvpFloat._13 << 
-	//	"wvpFloat._14 : " << wvpFloat._14<< std::endl;
-
-	//std::cout  << "wvpFloat._21 : " << wvpFloat._21 << 
-	//	"wvpFloat._22 : " << wvpFloat._22 << 
-	//	"wvpFloat._23 : " << wvpFloat._23 << 
-	//	"wvpFloat._24 : " << wvpFloat._24<< std::endl;
-
-	//std::cout  << "wvpFloat._31 : " << wvpFloat._31 << 
-	//	"wvpFloat._32 : " << wvpFloat._32 << 
-	//	"wvpFloat._33 : " << wvpFloat._33 << 
-	//	"wvpFloat._34 : " << wvpFloat._34<< std::endl;
-
-	//std::cout  << "wvpFloat._41 : " << wvpFloat._41 << 
-	//	"wvpFloat._42 : " << wvpFloat._42 << 
-	//	"wvpFloat._43 : " << wvpFloat._43 << 
-	//	"wvpFloat._44 : " << wvpFloat._44<< std::endl;
-
-
-
-	// // World
-	//XMFLOAT4X4 worldFloat;
-	//XMStoreFloat4x4(&worldFloat, fullWorld);
-	//std::cout << "World Matrix _44:" << worldFloat._44 << std::endl;
-
-	//// View
-	//XMFLOAT4X4 viewFloat;
-	//XMStoreFloat4x4(&viewFloat, v);
-	//std::cout << "View Matrix:";
-	//std::cout << "_43 (z translation):" << viewFloat._43 << std::endl;
-
-	//// Projection
-	//XMFLOAT4X4 projFloat;
-	//XMStoreFloat4x4(&projFloat, p);
-	//std::cout <<"Projection Matrix:";
-	//std::cout <<"_33:" << projFloat._33<< std::endl; // Far / (Far - Near)
-	//std::cout <<"_34:" << projFloat._34<< std::endl; // -Far * Near / (Far - Near)
-	//std::cout <<"_43:" << projFloat._43<< std::endl; // -1
-	//std::cout <<"_44:" << projFloat._44<< std::endl; // 0
-
-	//// Near/Far 역산
-	//if (projFloat._43 == -1.0f) {
-	//	float c = projFloat._33;
-	//	float d = projFloat._34;
-	//	// c = f / (f - n)
-	//	// d = -f * n / (f - n)
-	//	// 해결: n = d / (c - 1), f = d / c
-	//	float nearPlane = d / (c - 1.0f);
-	//	float farPlane = d / c;
-	//	std::cout << "✅ Estimated Near: " << nearPlane << std::endl;
-	//	std::cout << "✅ Estimated Far: " << farPlane << std::endl;
-	//}
 
 	context->UpdateSubresource(m_meshConstantBuffer, 0, nullptr, &cb, 0, 0);
 	context->VSSetConstantBuffers(0, 1, &m_meshConstantBuffer);
@@ -781,22 +734,30 @@ void MeshRenderer::RenderMeshWithCT(
 	//);
 
 
+
+
+
 	float volToMesh{ volWidth / meshWidth / maxPhysicalVol * meshScale };
-	//float volToMesh{  maxPhysicalVol /maxMesh };
-	//float volToMesh{ maxPhysicalVol / maxMesh / 300 };
+	//float volToMesh{ maxPhysicalVol / maxMesh/300 };
+	
+	//float meshNormSize = maxMesh / maxPhysicalVol;
+
+	float scaleToVol{ 1.f / maxPhysicalVol * meshScale };
+	//float scaleToVol{  meshScale };
+
+	//float scaleToVol{ meshNormSize * 0.5f * meshScale };
+
+	////float scaleToVol{ 1.f / maxMesh * meshScale };
+	//std::cout << "222==============mesh scale to vol : " << scaleToVol << std::endl;
+	//std::cout << "222==============maxPhysicalVol : " << maxPhysicalVol << std::endl;
 
 
-
-	//meshScale = maxPhysicalVol / maxMesh / 300;
 
 	DirectX::XMMATRIX scale = XMMatrixScaling(
-
-
-		volToMesh, volToMesh, volToMesh
-
+		/*	volToMesh, volToMesh, volToMesh*/
+		scaleToVol, scaleToVol, scaleToVol
 
 	);
-
 
 
 
@@ -824,10 +785,24 @@ void MeshRenderer::RenderMeshWithCT(
 	//s r t v p
 
 
-	initialMeshWorld =
-		/*	centerTranslate **/ /*scale **/ rotation;                // 그 다음 회전
+	//initialMeshWorld =
+	//	/*	centerTranslate **/ scale * rotation;                // 그 다음 회전
+
+	//initialMeshWorld = centerTranslate * rotation;  // ✅ 스케일 없음
 
 
+
+	XMMATRIX testScale = XMMatrixScaling(0.01f, 0.01f, 0.01f);
+	initialMeshWorld = /*testScale **/ /*centerTranslate * */rotation;
+
+	//XMVECTOR s, r, t;
+	//XMMatrixDecompose(&s, &r, &t, initialMeshWorld);
+
+	//std::cout
+	//	<< "Mesh world scale: "
+	//	<< XMVectorGetX(s) << ", "
+	//	<< XMVectorGetY(s) << ", "
+	//	<< XMVectorGetZ(s) << std::endl;
 
 
 	//	// HLSL에서는 mul(vector, matrix) 사용
@@ -841,11 +816,22 @@ void MeshRenderer::RenderMeshWithCT(
 	cbM.WVP = XMMatrixTranspose(initialMeshWorld*XMMatrixTranspose(userRotMat) /** XMMatrixRotationX(-XM_PI)*/ * v * p);
 	cbM.World = XMMatrixTranspose(initialMeshWorld*XMMatrixTranspose(userRotMat));
 	cbM.WorldView = XMMatrixTranspose(initialMeshWorld*XMMatrixTranspose(userRotMat) *v);
-
-
-
-
 	cbM.CTBlendParams = XMFLOAT4(ctBlendStrength, 0.0f, 0.0f, faceBlend);  // ⭐ CT 강도
+
+
+	//XMMATRIX vp = v*p;
+
+	//XMVECTOR s, r, t;
+	//XMMatrixDecompose(&s, &r, &t, initialMeshWorld*XMMatrixTranspose(userRotMat));
+
+	//
+
+	//std::cout
+	//<< "Mesh world scale: "
+	//<< XMVectorGetX(s) << ", "
+	//<< XMVectorGetY(s) << ", "
+	//<< XMVectorGetZ(s) << std::endl;
+
 
 	context->UpdateSubresource(m_meshConstantBuffer, 0, nullptr, &cbM, 0, 0);
 	context->VSSetConstantBuffers(0, 1, &m_meshConstantBuffer);

@@ -556,7 +556,7 @@ bool FileReader::NormalizeSlice(const std::vector<int16_t>& rawSlice,
 }
 
 
-bool FileReader::NormalizeVolumeU16(
+bool FileReader::NormalizeVolumeFloat(
 	const std::vector<int16_t>& rawVolume,
 	std::vector<uint16_t>& outVolume,
 	float rescaleSlope,
@@ -568,6 +568,13 @@ bool FileReader::NormalizeVolumeU16(
 
 	floatData.resize(rawVolume.size());
 
+	//std::cout << rawVolume[0] << " "
+	//	<< rawVolume[100] << " "
+	//	<< rawVolume[1000] << " "
+	//	<< rawVolume[10000] << std::endl;
+
+	float invRange = 1.0f / (windowMaxHU - windowMinHU);
+
 	for (size_t i = 0; i < rawVolume.size(); ++i)
 	{
 		//// ⭐ 패딩 체크
@@ -576,6 +583,14 @@ bool FileReader::NormalizeVolumeU16(
 		float hu = static_cast<float>(rawVolume[i]) * rescaleSlope + rescaleIntercept;
 
 		floatData[i] = hu;
+
+
+
+		/*float norm = (hu - windowMinHU) * invRange;
+		floatData[i] = std::clamp(norm, 0.0f, 1.0f);*/
+
+		//std::cout << "floatData size:" << floatData.size() << std::endl;
+		//std::cout << "floatData sample:" << floatData[1000] << std::endl;
 
 	}
 

@@ -749,6 +749,21 @@ bool QDirect3D11Widget::init()
 	invWorldMat = XMMatrixInverse(nullptr, worldMat);
 
 
+	XMVECTOR s, r, t;
+	XMMatrixDecompose(&s, &r, &t, worldMat);
+
+	qDebug() << "World scale:"
+		<< XMVectorGetX(s)
+		<< XMVectorGetY(s)
+		<< XMVectorGetZ(s);
+
+	qDebug() << "World translation:"
+		<< XMVectorGetX(t)
+		<< XMVectorGetY(t)
+		<< XMVectorGetZ(t);
+
+
+
 
 	initializeRenderTargets();
 	createSwapChainRTV();
@@ -1011,7 +1026,7 @@ void QDirect3D11Widget::CreateTexture3D()
 	//   C2572 오류(기본 인수 재정의)는 선언부(.h)에만 default 인수 두고
 	//   정의부(.cpp)에서는 default 제거하세요.
 	fileReader->normalizedU16Data.resize(size_t(w) * h * d);
-	const bool ok = fileReader->NormalizeVolumeU16(
+	const bool ok = fileReader->NormalizeVolumeFloat(
 		fileReader->m_volumeData,
 		fileReader->normalizedU16Data,
 		fileReader->m_rescaleSlope,
@@ -1191,6 +1206,7 @@ void QDirect3D11Widget::FullScreenPassSet()
 	m_pDeviceContext->OMSetDepthStencilState(m_VolumeDepthState.Get(), 0);
 	//m_pDeviceContext->OMSetDepthStencilState(meshRenderer->depthReadState, 0);
 
+	XMStoreFloat4x4(&cb.VolumeWorld, XMMatrixTranspose(worldMat));
 	XMStoreFloat4x4(&cb.InvView, XMMatrixTranspose(invViewMat));
 	XMStoreFloat4x4(&cb.InvProj, XMMatrixTranspose(invProjMat));
 	XMStoreFloat4x4(&cb.InvVolumeWorld, XMMatrixTranspose(invWorldMat));
@@ -1240,6 +1256,13 @@ void QDirect3D11Widget::FullScreenPassSet()
 	cb.HuParams.y = fileReader->m_rescaleIntercept;
 	cb.HuParams.z = fileReader->volWC - fileReader->volWW / 2.0;
 	cb.HuParams.w = fileReader->volWC + fileReader->volWW / 2.0;
+
+
+	cb.volSize.x = physicalWidth;
+	cb.volSize.y = physicalHeight;
+	cb.volSize.z = physicalDepth;
+	cb.volSize.w = maxPhysicalVol;
+	//qDebug() << "volSize:" << cb.volSize.x << cb.volSize.y << cb.volSize.z << cb.volSize.w;
 
 
 	D3D11_MAPPED_SUBRESOURCE mapped{};
@@ -3144,11 +3167,18 @@ void QDirect3D11Widget::InitializeVolumeCamera()
 
 
 
-	eye = XMVectorSet(0.0f, 0.0f, -3.0f, 1.0f);
+	//eye = XMVectorSet(0.0f, 0.0f, -3.0f, 1.0f);
 
-	//eye = XMVectorSet(0.0f, 0.0f, -300.0f, 1.0f);
-	at = XMVectorSet(0.0f, 0.0f, 0.0f, 1.0f);
-	up = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
+	////eye = XMVectorSet(0.0f, 0.0f, -300.0f, 1.0f);
+	//at = XMVectorSet(0.0f, 0.0f, 0.0f, 1.0f);
+	//up = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
+
+
+
+
+	eye = XMVectorSet(0, 0, -500.0f, 1);
+	at = XMVectorZero();
+	up = XMVectorSet(0, 1, 0, 0);
 
 	viewMat = XMMatrixLookAtLH(eye, at, up);
 
@@ -3200,12 +3230,25 @@ void QDirect3D11Widget::InitializeVolumeCamera()
 	//);
 
 
+	//projMat = XMMatrixOrthographicLH(
+	//	viewWidth,
+	//	viewHeight,
+	//	nearZ,
+	//	farZ
+	//	//1,2000
+	//);
+
+
+	float halfSize = 300.0f; // 여유 포함
+
 	projMat = XMMatrixOrthographicLH(
-		viewWidth,
-		viewHeight,
-		nearZ,
-		farZ
+		halfSize * 2.0f,   // width  = 600mm
+		halfSize * 2.0f,   // height = 600mm
+		-1000.0f,          // near
+		1000.0f            // far
 	);
+
+
 
 	invViewMat = XMMatrixInverse(nullptr, viewMat);
 	invProjMat = XMMatrixInverse(nullptr, projMat);

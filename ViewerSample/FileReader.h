@@ -97,7 +97,7 @@ public:
 	std::vector<uint16_t> normalizedU16Data;
 	std::vector<float> floatData;
 
-	bool NormalizeVolumeU16(
+	bool NormalizeVolumeFloat(
 		const std::vector<int16_t>& rawVolume,
 		std::vector<uint16_t>& outVolume,
 		float rescaleSlope,

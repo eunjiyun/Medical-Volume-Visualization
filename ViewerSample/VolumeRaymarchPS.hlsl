@@ -1,5 +1,6 @@
 cbuffer CB : register(b0)
 {
+	matrix VolumeWorld;
 	matrix InvView;
 	matrix InvProj;
 	matrix InvVolumeWorld;
@@ -10,7 +11,10 @@ cbuffer CB : register(b0)
 	float4 CameraPosAndAlpha;   // xyz = camera pos, w = mode
 	float4 VoxelAndMaxSteps;    // xyz = voxel dim, w = maxSteps
 	float4 HuParams;            // x,y unused / z = HU min / w = HU max
+
+	float4 volSize;
 };
+
 
 Texture3D<float> volumeTex        : register(t0);
 SamplerState     samp             : register(s0);
@@ -272,167 +276,446 @@ float ReconstructViewZ_InvProj(float2 uv,float depth01, matrix proj)
 //}
 
 
+//float4 main(PSInput input) : SV_Target
+//{
+//	//return float4(1,0,0,1);
+//	float2 uv = input.uv;
+//
+//	/* ---------------------------
+//	   Ray setup (view / world)
+//	--------------------------- */
+//
+//	float2 ndc = uv * 2.0 - 1.0;
+//	ndc.y = -ndc.y;
+//
+//	float4 farClip = float4(ndc, 1, 1);
+//	float4 farVS = mul(farClip, InvProj);
+//	farVS /= max(farVS.w, 1e-6);
+//
+//	float3 rayDirVS = normalize(farVS.xyz);
+//	float3 rayDirWS = normalize(mul(float4(rayDirVS, 0), InvView).xyz);
+//	float3 rayPosWS = CameraPosAndAlpha.xyz;
+//
+//	float3 rayPos = mul(float4(rayPosWS, 1), InvVolumeWorld).xyz;
+//	//	float3 rayPos = mul(float4(rayPosWS, 1), InvVolumeWorld).xyz;
+//	float3 rayDir = normalize(mul(float4(rayDirWS, 0), InvVolumeWorld).xyz);
+//	//	float3 rayDir = normalize(mul(float4(rayDirWS, 0), InvVolumeWorld).xyz);
+//
+//	/* ---------------------------
+//	   Volume bounds
+//	--------------------------- */
+//
+//	//float3 boxMin = float3(-1, -0.75, -0.75);
+//	//float3 boxMax = float3(1,  0.75,  0.75);
+//
+//	//	float3 boxMin = float3(-0.5, -0.5, -0.5);
+//	//float3 boxMax = float3(0.5, 0.5, 0.5);
+//
+//
+//
+//
+//	// CT 물리 비율 반영한 박스
+//	float3 boxMin = float3(
+//		-volSize.x/ volSize.w * 0.5,
+//		-volSize.y / volSize.w * 0.5,
+//		-volSize.z / volSize.w * 0.5);
+//
+//	float3 boxMax = -boxMin;
+//
+//
+//
+//	//float3 boxMin = float3(-0.75, -0.75, -0.75);
+//	//float3 boxMax = float3(0.75, 0.75, 0.75);
+//
+//
+//	//float margin = 0.01;
+//
+//	//float3 boxMin = float3(-0.5 - margin, -0.5 - margin, -0.5 - margin);
+//	//float3 boxMax = float3(0.5 + margin, 0.5 + margin, 0.5 + margin);
+//
+//
+////	float3 volBoxMin = float3(-0.5, -0.5, -0.5);
+////float3 volBoxMax = float3( 0.5,  0.5,  0.5);
+//
+//
+//
+//
+//	float3 invDir = 1.0 / (rayDir + 1e-6);
+//	float3 t0 = (boxMin - rayPos) * invDir;
+//	float3 t1 = (boxMax - rayPos) * invDir;
+//
+//	float3 tmin = min(t0, t1);
+//	float3 tmax = max(t0, t1);
+//
+//	float tNear = max(max(tmin.x, tmin.y), tmin.z);
+//	float tFar = min(min(tmax.x, tmax.y), tmax.z);
+//
+//	if (tFar < max(tNear, 0.0))
+//		return float4(0,0,0,1);
+//
+//	tNear = max(tNear, 0.0);
+//
+//
+//
+//	
+//
+//	float stepSize = (tFar - tNear) / VoxelAndMaxSteps.w;
+//
+//
+//	//// 교차 후
+//	//tNear += stepSize * 2.0;
+//	//tFar -= stepSize * 2.0;
+//
+//
+//
+//	//// ⭐ 여기서 한 번만!
+//	//float entryBias = stepSize * 2.0;   // 또는 0.002
+//	//tNear += entryBias;
+//
+//
+//	/* ---------------------------
+//	   Mesh depth (once!)
+//	--------------------------- */
+//
+//	float meshDepth01 = SceneDepth.SampleLevel(pointClamp, uv, 0);
+//	bool hasMesh = (meshDepth01 < 0.9999);
+//
+//	float meshViewZ = hasMesh
+//		? ReconstructViewZ_InvProj(uv, meshDepth01, InvProj)
+//		: -1e9;
+//
+//	float3 rayPosVS = mul(float4(rayPosWS, 1), View).xyz;
+//
+//	/* ---------------------------
+//	   Accumulation
+//	--------------------------- */
+//
+//	float4 acc = float4(0,0,0,0);
+//
+//
+//	float entryBias = stepSize * 2.0;
+//	tNear += entryBias;
+//
+//	[loop]
+//	for (int i = 0; i < VoxelAndMaxSteps.w; ++i)
+//	{
+//		float t = tNear + i * stepSize;
+//
+//		float3 posVS = rayPosVS + rayDirVS * t;
+//		float rayViewZ = posVS.z;
+//
+////		//// ⭐ HARD DEPTH BLOCK
+////		if (hasMesh && rayViewZ < meshViewZ)
+////			continue;
+////
+////		//		//if (hasMesh && rayViewZ < meshViewZ)
+//////		//	continue; // mesh 앞이면 차단
+//
+//		float depthDiff = rayViewZ - meshViewZ;
+//
+//		// 메쉬보다 앞이면 차단
+//		if (hasMesh && depthDiff < -stepSize * 2.0)
+//			continue;
+//
+//
+//
+//
+//		float3 pos = rayPos + rayDir * t;
+//		//float3 uvw = (pos - boxMin) / (boxMax - boxMin);
+//		//uvw.y = 1.0 - uvw.y;
+//
+//		//if (any(uvw < 0.0) || any(uvw > 1.0))
+//		//	break;
+//
+//				float tCurrent = tNear + i * stepSize;
+//					float jitter = frac(sin(dot(input.uv * 1000.0, float2(12.9898,78.233))) * 43758.5453);
+//
+//					//jitter = 0;
+//
+//	float3 startPos = rayPos + rayDir * (tNear + jitter * stepSize);
+//		float3 currentPos = startPos + rayDir * (i * stepSize);
+//				float3 uvw = (currentPos - boxMin) / (boxMax - boxMin);
+//		uvw.y = 1.0 - uvw.y;
+//
+//		if (any(uvw < 0.02) || any(uvw > 0.99))
+//			continue;
+//		if (any(uvw < 0.0) || any(uvw > 1.0))
+//			continue;
+//
+//
+//		float hu = volumeTex.SampleLevel(samp, uvw, 0).r;
+//		float huNorm = saturate((hu - HuParams.z) / (HuParams.w - HuParams.z));
+//		float4 col = transferFunction.SampleLevel(tfSampler, huNorm, 0);
+//
+//		if (col.a < 0.001)
+//			continue;
+//
+//		float alpha = col.a * stepSize * 10.0;
+//		acc.rgb += (1.0 - acc.a) * alpha * col.rgb;
+//		acc.a += (1.0 - acc.a) * alpha;
+//
+//		if (acc.a > 0.98)
+//			break;
+//	}
+//
+//	acc.rgb = pow(saturate(acc.rgb), 1.0 / 2.2);
+//
+//
+//		if (CameraPosAndAlpha.w == 1.0) return float4(acc.rgb, 1.0);
+//	if (CameraPosAndAlpha.w == 0.0) return float4(acc.rgb, 0.0);
+//
+//
+//	//return float4(acc.rgb, acc.a);
+////	return float4(acc.rgb, 1.0);
+//	return float4(acc.rgb, 0.6);
+//}
+
 float4 main(PSInput input) : SV_Target
 {
+	//float2 uv = input.uv;
+
+	///* ---------------------------
+	//   Ray setup (view -> world)
+	//--------------------------- */
+	//float2 ndc = uv * 2.0 - 1.0;
+	//ndc.y = -ndc.y;
+
+
+
+	//// ndc -> view space 위치
+	//float4 rayOriginVS4 = mul(float4(ndc, 0, 1), InvProj);
+	//float3 rayOriginVS = rayOriginVS4.xyz;
+
+
+	//float4 farClip = float4(ndc, 1, 1);
+	//float4 farVS = mul(farClip, InvProj);
+	//farVS /= max(farVS.w, 1e-6);
+
+	////float3 rayDirVS = normalize(farVS.xyz);
+	//float3 rayDirVS = float3(0, 0, 1);
+	////float3 rayDirWS = normalize(mul(float4(rayDirVS, 0), InvView).xyz);
+	////float3 rayPosWS = CameraPosAndAlpha.xyz;
+	//float3 rayPosWS = mul(float4(rayOriginVS, 1), InvView).xyz;
+	//float3 rayDirWS = normalize(mul(float4(rayDirVS, 0), InvView).xyz);
+
+	//// view-space origin for depth compare
+	//float3 rayPosVS = mul(float4(rayPosWS, 1), View).xyz;
+
+
+
 	float2 uv = input.uv;
+float2 ndc = uv * 2.0 - 1.0;
+ndc.y = -ndc.y;
+
+// 1. ray origin (view space)
+float4 rayOriginVS4 = mul(float4(ndc, 0.0, 1.0), InvProj);
+float3 rayOriginVS = rayOriginVS4.xyz;
+
+// 2. ray direction (view space, fixed)
+float3 rayDirVS = float3(0, 0, 1);
+
+// 3. view -> world
+float3 rayPosWS = mul(float4(rayOriginVS, 1), InvView).xyz;
+float3 rayDirWS = normalize(mul(float4(rayDirVS, 0), InvView).xyz);
+
+// (옵션) view-space origin (mesh depth 비교용)
+float3 rayPosVS = rayOriginVS;
+
+//return float4(abs(rayDirWS), 1);   // 화면 전체가 같은 색이어야 정상
 
 	/* ---------------------------
-	   Ray setup (view / world)
+	   Volume bounds (LOCAL space)
+	   - still define the box in volume-local normalized space
+	   - using physical aspect ratio (volSize.xyz / volSize.w)
 	--------------------------- */
+	float3 boxMinL = float3(
+		-volSize.x * 0.5,
+		-volSize.y  * 0.5,
+		-volSize.z* 0.5);
 
-	float2 ndc = uv * 2.0 - 1.0;
-	ndc.y = -ndc.y;
-
-	float4 farClip = float4(ndc, 1, 1);
-	float4 farVS = mul(farClip, InvProj);
-	farVS /= max(farVS.w, 1e-6);
-
-	float3 rayDirVS = normalize(farVS.xyz);
-	float3 rayDirWS = normalize(mul(float4(rayDirVS, 0), InvView).xyz);
-	float3 rayPosWS = CameraPosAndAlpha.xyz;
-
-	float3 rayPos = mul(float4(rayPosWS, 1), InvVolumeWorld).xyz;
-	//	float3 rayPos = mul(float4(rayPosWS, 1), InvVolumeWorld).xyz;
-	float3 rayDir = normalize(mul(float4(rayDirWS, 0), InvVolumeWorld).xyz);
-	//	float3 rayDir = normalize(mul(float4(rayDirWS, 0), InvVolumeWorld).xyz);
+	float3 boxMaxL = -boxMinL;
 
 	/* ---------------------------
-	   Volume bounds
+	   Intersect in LOCAL space (stable),
+	   but convert entry/exit to WORLD t
 	--------------------------- */
 
-	//float3 boxMin = float3(-1, -0.75, -0.75);
-	//float3 boxMax = float3(1,  0.75,  0.75);
+	// Transform ray into volume-local space for intersection ONLY
+	float3 rayPosL = mul(float4(rayPosWS, 1), InvVolumeWorld).xyz;
+	float3 rayDirL = mul(float4(rayDirWS, 0), InvVolumeWorld).xyz;   // NOTE: no normalize here
+	float3 invDirL = 1.0 / (rayDirL + 1e-6);
 
-		float3 boxMin = float3(-0.5, -0.5, -0.5);
-	float3 boxMax = float3(0.5, 0.5, 0.5);
+	float3 t0L = (boxMinL - rayPosL) * invDirL;
+	float3 t1L = (boxMaxL - rayPosL) * invDirL;
 
-	//float3 boxMin = float3(-0.75, -0.75, -0.75);
-	//float3 boxMax = float3(0.75, 0.75, 0.75);
+	float3 tminL = min(t0L, t1L);
+	float3 tmaxL = max(t0L, t1L);
 
+	float tNearL = max(max(tminL.x, tminL.y), tminL.z);
+	float tFarL = min(min(tmaxL.x, tmaxL.y), tmaxL.z);
 
-	//float margin = 0.01;
+	if (tFarL < max(tNearL, 0.0))
+		return float4(0, 0, 0, 1);
 
-	//float3 boxMin = float3(-0.5 - margin, -0.5 - margin, -0.5 - margin);
-	//float3 boxMax = float3(0.5 + margin, 0.5 + margin, 0.5 + margin);
+	tNearL = max(tNearL, 0.0);
 
+	// Compute entry/exit points in LOCAL
+	float3 entryL = rayPosL + rayDirL * tNearL;
+	float3 exitL = rayPosL + rayDirL * tFarL;
 
-//	float3 volBoxMin = float3(-0.5, -0.5, -0.5);
-//float3 volBoxMax = float3( 0.5,  0.5,  0.5);
+	// Transform entry/exit to WORLD
+	// (requires VolumeWorld in your CB)
+	float3 entryWS = mul(float4(entryL, 1), VolumeWorld).xyz;
+	float3 exitWS = mul(float4(exitL,  1), VolumeWorld).xyz;
 
-
-
-
-	float3 invDir = 1.0 / (rayDir + 1e-6);
-	float3 t0 = (boxMin - rayPos) * invDir;
-	float3 t1 = (boxMax - rayPos) * invDir;
-
-	float3 tmin = min(t0, t1);
-	float3 tmax = max(t0, t1);
-
-	float tNear = max(max(tmin.x, tmin.y), tmin.z);
-	float tFar = min(min(tmax.x, tmax.y), tmax.z);
-
-	if (tFar < max(tNear, 0.0))
-		return float4(0,0,0,1);
-
-	tNear = max(tNear, 0.0);
+	// Convert to WORLD t (distance along world ray)
+	float tNearW = dot(entryWS - rayPosWS, rayDirWS);
+	float tFarW = dot(exitWS - rayPosWS, rayDirWS);
 
 
 
-	
+	// Safety
+	if (tFarW < max(tNearW, 0.0))
+		return float4(0, 0, 0, 1);
 
-	float stepSize = (tFar - tNear) / VoxelAndMaxSteps.w;
+	tNearW = max(tNearW, 0.0);
 
+	//return float4(1, 0, 0, 1);
 
-	//// 교차 후
-	//tNear += stepSize * 2.0;
-	//tFar -= stepSize * 2.0;
-
-
-
-	//// ⭐ 여기서 한 번만!
-	//float entryBias = stepSize * 2.0;   // 또는 0.002
-	//tNear += entryBias;
-
+	// World step size (THIS is the big fix: marching distance is in world units)
+	float maxSteps = VoxelAndMaxSteps.w;
+	float stepW = (tFarW - tNearW) / maxSteps;
 
 	/* ---------------------------
-	   Mesh depth (once!)
+	   Mesh depth (screen-space) -> view Z
 	--------------------------- */
-
 	float meshDepth01 = SceneDepth.SampleLevel(pointClamp, uv, 0);
 	bool hasMesh = (meshDepth01 < 0.9999);
+	hasMesh = false;
 
-	float meshViewZ = hasMesh
-		? ReconstructViewZ_InvProj(uv, meshDepth01, InvProj)
-		: -1e9;
+	//float meshViewZ = hasMesh
+	//	? ReconstructViewZ_InvProj(uv, meshDepth01, InvProj)
+	//	: -1e9;
 
-	float3 rayPosVS = mul(float4(rayPosWS, 1), View).xyz;
+
+
+	float meshViewZ = -1e9;
 
 	/* ---------------------------
 	   Accumulation
 	--------------------------- */
-
 	float4 acc = float4(0,0,0,0);
 
+	// entry bias in WORLD units
+	//float entryBiasW = stepW * 2.0;
+	float entryBiasW = min(stepW * 0.5, 0.5);
 
-	float entryBias = stepSize * 2.0;
-	tNear += entryBias;
+
+
+
+	float tStartW = tNearW + entryBiasW;
+
+	//// jitter in WORLD step
+	//float jitter = frac(sin(dot(input.uv * 1000.0, float2(12.9898,78.233))) * 43758.5453);
 
 	[loop]
-	for (int i = 0; i < VoxelAndMaxSteps.w; ++i)
+	for (int i = 0; i < (int)maxSteps; ++i)
 	{
-		float t = tNear + i * stepSize;
+		//return float4(0, 1, 0, 1);
+		float tW = tStartW + (i /*+ jitter*/) * stepW;
 
-		float3 posVS = rayPosVS + rayDirVS * t;
-		float rayViewZ = posVS.z;
+		// World position along ray
+		float3 posWS = rayPosWS + rayDirWS * tW;
 
-//		//// ⭐ HARD DEPTH BLOCK
-//		if (hasMesh && rayViewZ < meshViewZ)
-//			continue;
-//
-//		//		//if (hasMesh && rayViewZ < meshViewZ)
-////		//	continue; // mesh 앞이면 차단
+		// View Z for mesh-occlusion compare (now consistent!)
+		float rayViewZ = mul(float4(posWS, 1), View).z;
 
+		// depth block (tolerance in VIEW units; use a small constant or scale by step)
+		// stepW is world units; convert rough tolerance to view by multiplying by |rayDirVS.z|
+		float stepV = abs(stepW * rayDirVS.z);
 		float depthDiff = rayViewZ - meshViewZ;
 
-		// 메쉬보다 앞이면 차단
-		if (hasMesh && depthDiff < -stepSize * 2.0)
-			continue;
+		//if (hasMesh && depthDiff < -stepV * 2.0)
+		//	continue;
+
+		// Transform sample position to volume-local for texture lookup
+		float3 posL = mul(float4(posWS, 1), InvVolumeWorld).xyz;
 
 
+		//return float4(abs(posL) * 0.01, 1);
 
-
-		float3 pos = rayPos + rayDir * t;
-		//float3 uvw = (pos - boxMin) / (boxMax - boxMin);
-		//uvw.y = 1.0 - uvw.y;
-
-		//if (any(uvw < 0.0) || any(uvw > 1.0))
-		//	break;
-
-				float tCurrent = tNear + i * stepSize;
-					float jitter = frac(sin(dot(input.uv * 1000.0, float2(12.9898,78.233))) * 43758.5453);
-
-					//jitter = 0;
-
-	float3 startPos = rayPos + rayDir * (tNear + jitter * stepSize);
-		float3 currentPos = startPos + rayDir * (i * stepSize);
-				float3 uvw = (currentPos - boxMin) / (boxMax - boxMin);
+		// Local -> UVW
+		float3 uvw = (posL - boxMinL) / (boxMaxL - boxMinL);
 		uvw.y = 1.0 - uvw.y;
 
-		if (any(uvw < 0.02) || any(uvw > 0.99))
-			continue;
-		if (any(uvw < 0.0) || any(uvw > 1.0))
-			continue;
+		//return float4(uvw, 1);
+
+	/*	if (any(uvw < 0.0) || any(uvw > 1.0))
+			continue;*/
+
+		//// (optional) keep your margin/edge skip
+		//if (any(uvw < 0.02) || any(uvw > 0.99))
+		//	continue;
+
+
+
+
+		uint dimX, dimY, dimZ;
+		volumeTex.GetDimensions(dimX, dimY, dimZ);
+
+		// voxel index
+		float3 voxelIdx = uvw * float3(dimX,dimY, dimZ);
+		voxelIdx = floor(voxelIdx) + 0.5;
+
+		// back to uvw
+		float3 uvwVoxel = voxelIdx / float3(dimX, dimY, dimZ);
+
+		//float hu = volumeTex.SampleLevel(samp, uvw, 0).r;
+		//return float4(hu* 2000.0, hu* 2000.0, hu* 2000.0, 1);
 
 
 		float hu = volumeTex.SampleLevel(samp, uvw, 0).r;
+		//return float4(hu, hu, hu, 1);
+
+		//float hu = volumeTex.SampleLevel(samp, uvwVoxel, 0).r;
+		////return float4(hu, hu, hu, 1);
+
+
+
+
 		float huNorm = saturate((hu - HuParams.z) / (HuParams.w - HuParams.z));
 		float4 col = transferFunction.SampleLevel(tfSampler, huNorm, 0);
+
+
+	/*	float density = volumeTex.SampleLevel(samp, uvw, 0).r;
+		return float4(density, density, density, 1);
+
+		float4 col = transferFunction.SampleLevel(tfSampler, density, 0);*/
+
+
+
+		//return float4(huNorm, huNorm, huNorm, 1);
+
+		//return float4(col.rgb, 1);
 
 		if (col.a < 0.001)
 			continue;
 
-		float alpha = col.a * stepSize * 10.0;
+		//// alpha integrate (step in WORLD units now)
+		////float alpha = col.a * stepW * 10.0;
+
+		//// voxelSizeMM: 평균 voxel spacing (CB로 전달)
+		////float alpha = col.a * (stepW / voxelSizeMM) * densityScale;
+		////densityScale ≈ 0.05 ~ 0.2
+		//float alpha = col.a * (stepW / 0.2f) * 0.1;
+
+
+		float densityScale = 0.02;
+
+		float sigma = col.a * densityScale; // densityScale ≈ 0.02 ~ 0.05
+		float alpha = 1.0 - exp(-sigma * stepW);
+
+
 		acc.rgb += (1.0 - acc.a) * alpha * col.rgb;
 		acc.a += (1.0 - acc.a) * alpha;
 
@@ -442,15 +725,12 @@ float4 main(PSInput input) : SV_Target
 
 	acc.rgb = pow(saturate(acc.rgb), 1.0 / 2.2);
 
-
-		if (CameraPosAndAlpha.w == 1.0) return float4(acc.rgb, 1.0);
+	if (CameraPosAndAlpha.w == 1.0) return float4(acc.rgb, 1.0);
 	if (CameraPosAndAlpha.w == 0.0) return float4(acc.rgb, 0.0);
 
-
-	//return float4(acc.rgb, acc.a);
-//	return float4(acc.rgb, 1.0);
 	return float4(acc.rgb, 0.6);
 }
+
 
 
 
