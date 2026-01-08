@@ -3240,10 +3240,16 @@ void QDirect3D11Widget::InitializeVolumeCamera()
 
 
 	float halfSize = 300.0f; // 여유 포함
+	float initFactor{ 0.6f };
+
+	qDebug() << "viewWidth : " << viewWidth;
+	qDebug() << "viewHeight : " << viewHeight;
+	qDebug() << "aspect : " << aspect;
+	qDebug() << " (float)width() : " << (float)width();
 
 	projMat = XMMatrixOrthographicLH(
-		halfSize * 2.0f,   // width  = 600mm
-		halfSize * 2.0f,   // height = 600mm
+		(float)width()/2.f*initFactor *m_orthoScale,   // width  = 600mm
+		(float)width() / 2.f /aspect * initFactor *m_orthoScale,   // height = 600mm
 		-1000.0f,          // near
 		1000.0f            // far
 	);
@@ -6113,7 +6119,7 @@ void QDirect3D11Widget::wheelEvent(QWheelEvent* event)
 	float zoomFactor = delta / 1200.0f;
 
 	m_orthoScale *= (1.0f - zoomFactor);
-	m_orthoScale = std::clamp(m_orthoScale, 0.5f, 4.0f);
+	m_orthoScale = std::clamp(m_orthoScale, 0.1f, 4.0f);
 
 	qDebug() << "Zoom:" << m_orthoScale;
 
