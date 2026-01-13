@@ -239,141 +239,40 @@ void MeshRenderer::RenderMeshDepth(ID3D11DeviceContext* context, ID3D11Buffer* m
 	context->PSSetShader(nullptr, nullptr, 0); // 🔥
 	context->IASetInputLayout(m_meshInputLayout);
 
-	// ========== Transform 계산 ==========
-	//float meshToVolume = (maxMesh / maxPhysicalVol) * overallSize / maxMesh /** (float)(1.5f / overallSize)*/;
-
-	//float meshScale = 1.5f / maxPhysicalVol;  // 이게 전부!
-
-
-	//float meshScale = maxMesh / maxPhysicalVol;  // 이게 전부!
-	//float meshScale = 1.5f / maxMesh;  // 이게 전부!
-
-	//float correctionFactor = maxPhysicalVol / maxMesh; // 0.796
-	//float meshScale = correctionFactor * overallSize;
-
-	 // ✅ mm 좌표 → 정규화 좌표
-
-	//float meshScale = 1.5f / maxPhysicalVol;
-	//float meshScale = 1.f;
-
-
-
-	//std::cout << "meshScale:" << meshScale << std::endl; // 0.00521
-	//std::cout << "Sample vertex -109mm * scale =" << (-109 * meshScale);  // -0.568
-	////qDebug() << "Volume range:" << -scaleX * overallSize * 0.5f << "to"
-	////	<< scaleX * overallSize * 0.5f;  // -0.65 ~ 0.65
-
-
-
-	//DirectX::XMMATRIX scale = XMMatrixScaling(
-	//	/*	meshToVolume,
-	//		meshToVolume,
-	//		meshToVolume*/
-
-	//		meshScale*overallSize,
-	//		meshScale*overallSize,
-	//		meshScale*overallSize
-	//	//volWidth / meshWidth / maxPhysicalVol * 1.42f,
-	//	//volHeight / meshHeight / maxPhysicalVol * 1.42f*1.09f,
-	//	//volDepth / meshDepth / maxPhysicalVol * 1.42f
-	//	
-	//);
-
-
-
-	//DirectX::XMMATRIX scale = XMMatrixScaling(
-	//	/*	meshToVolume,
-	//		meshToVolume,
-	//		meshToVolume*/
-
-	//	volWidth / meshWidth / maxPhysicalVol * meshScale*1.f,
-	//	volWidth / meshWidth / maxPhysicalVol * meshScale*1.f,
-	//	volWidth / meshWidth / maxPhysicalVol * meshScale*1.f
-	//	//volWidth / meshWidth / maxPhysicalVol * 1.42f,
-	//	//volHeight / meshHeight / maxPhysicalVol * 1.42f*1.09f,
-	//	//volDepth / meshDepth / maxPhysicalVol * 1.42f
-
-	//);
-
-
-	/*std::cout << "=================mesh and volume scale======" << std::endl;
-	std::cout << "width : " << volWidth / meshWidth / maxPhysicalVol * 1.42f << std::endl;
-	std::cout << "height : " << volHeight / meshHeight / maxPhysicalVol * 1.42f*1.09f << std::endl << std::endl << std::endl;*/
 
 
 
 
-	//std::cout << "meshWidth  : " << meshWidth << std::endl;
-	//std::cout << "meshHeight : " << meshHeight << std::endl;
-	//std::cout << "meshDepth  : " << meshDepth << std::endl;
-
-	//std::cout << "volWidth   : " << volWidth << std::endl;
-	//std::cout << "volHeight  : " << volHeight << std::endl;
-	//std::cout << "volDepth   : " << volDepth << std::endl;
-
-	//std::cout << "maxPhysicalVol : " << maxPhysicalVol << std::endl;
-
-	//std::cout << "meshScale : " << meshScale << std::endl;
-	//std::cout << "scale x : " << volWidth / meshWidth / maxPhysicalVol << std::endl;
-	//std::cout << "scale y : " << volHeight / meshHeight / maxPhysicalVol << std::endl;
-	//std::cout << "scale z : " << volDepth / meshDepth / maxPhysicalVol << std::endl << std::endl << std::endl;
-
-
-
-	float volToMesh{ volWidth / meshWidth / maxPhysicalVol * meshScale };
-	//float volToMesh{ maxPhysicalVol / maxMesh/300 };
-
-	//float meshNormSize = maxMesh / maxPhysicalVol;
-
-	float scaleToVol{ 1.f / maxPhysicalVol * meshScale };
-
-	//float scaleToVol{ meshScale };
-
-	//float scaleToVol{ meshNormSize * 0.5f * meshScale };
-
-	//float scaleToVol{ 1.f/maxMesh * meshScale };
-	//std::cout << "==============mesh scale to vol : " << scaleToVol << std::endl;
-
-
-
-
-	//float scaleToVol = meshExtentMM / ctNormExtentMM;
-
-	//meshScale = maxPhysicalVol / maxMesh / 300;
-
-	//DirectX::XMMATRIX scale = XMMatrixScaling(
-	//	/*	volToMesh, volToMesh, volToMesh*/
-	//	scaleToVol, scaleToVol, scaleToVol
-
-	//);
-	XMMATRIX scale = XMMatrixIdentity();
-
-
-
-
-	XMMATRIX centerTranslate =
-		XMMatrixTranslation(
-			-centerX,
-			-centerY,
-			-centerZ
-		);
-
-	MeshConstantBuffer cb;
-
-	DirectX::XMMATRIX rotation = XMMatrixRotationX(XM_PI);
+	rotation = XMMatrixRotationX(XM_PI);
 
 	//s r t v p
-	//initialMeshWorld =scale * rotation;                // 그 다음 회전
-	//initialMeshWorld = centerTranslate * rotation;  // ✅ 스케일 없음
-	initialMeshWorld = rotation;  // ✅ 스케일 없음
 
-		//스케일을 볼륨걸 적용한 유저 로테이션을 곱해야지 회전 싱크가 맞음
-		//전치 행렬을 안 쓰고 전치 안 한 사용자 회전 행렬을 메쉬에 적용해서 그런걸지도? 
 
-		//Transpose를 뒤에 곱했을 때 축이 안 틀어진 이유는
-		//	그게 “로컬 기준 역회전”처럼 동작했기 때문이고,
-		//	userRotation을 앞에 곱했을 때 축이 틀어진 이유는
-		//	initialMeshWorld가 아직 월드 기준 좌표계가 아니기 때문이다.
+
+	rotX = XMQuaternionRotationAxis(
+		XMVectorSet(1, 0, 0, 0),  // X축
+		-XM_PIDIV2                  // 90도
+	);
+
+	rotY = XMQuaternionRotationAxis(
+		XMVectorSet(0, 0, 1, 0),
+		XM_PI  // Y축 180도
+	);
+
+	//볼륨 - 메쉬 기본은 rotx, roty 인데 rotation은 메쉬에만 추가로 곱해줌.
+	initialMeshWorld = XMMatrixRotationQuaternion(XMQuaternionMultiply(rotX, rotY))*rotation;
+
+
+
+
+
+	//스케일을 볼륨걸 적용한 유저 로테이션을 곱해야지 회전 싱크가 맞음
+	//전치 행렬을 안 쓰고 전치 안 한 사용자 회전 행렬을 메쉬에 적용해서 그런걸지도? 
+
+	//Transpose를 뒤에 곱했을 때 축이 안 틀어진 이유는
+	//	그게 “로컬 기준 역회전”처럼 동작했기 때문이고,
+	//	userRotation을 앞에 곱했을 때 축이 틀어진 이유는
+	//	initialMeshWorld가 아직 월드 기준 좌표계가 아니기 때문이다.
 
 
 
@@ -393,10 +292,6 @@ void MeshRenderer::RenderMeshDepth(ID3D11DeviceContext* context, ID3D11Buffer* m
 
 
 
-	float volHalfWorld = overallSize * 0.5f;
-	float meshHalfWorld = (maxMesh * meshScale) * 0.5f;
-
-
 
 	//XMMATRIX coordinateSystemTransform = XMMatrixSet(
 	//	1.0f, 0.0f, 0.0f, 0.0f,
@@ -414,29 +309,23 @@ void MeshRenderer::RenderMeshDepth(ID3D11DeviceContext* context, ID3D11Buffer* m
 
 
 
-/*std::cout << "===== World Half Extent Check =====" << std::endl;
-std::cout << "Volume half extent (world):" << volHalfWorld << std::endl;
-std::cout << "Mesh half extent   (world):" << meshHalfWorld << std::endl;
-std::cout << "Mesh / Volume ratio:"
-	<< (meshHalfWorld / volHalfWorld) << std::endl;
-std::cout << "Expected ratio (maxMesh / maxPhysicalVol):"
-	<< (maxMesh / maxPhysicalVol) << std::endl;
-std::cout << "===================================" << std::endl;*/
 
 
-// HLSL에서는 mul(vector, matrix) 사용
-  // 실제 적용 순서: S -> R -> T (의도한 대로)
-   cb.WVP = XMMatrixTranspose(initialMeshWorld*XMMatrixTranspose(userRotMat) /** XMMatrixRotationX(-XM_PI)*/ * v * p);
-   cb.World = XMMatrixTranspose(initialMeshWorld*XMMatrixTranspose(userRotMat));
-   cb.WorldView = XMMatrixTranspose(initialMeshWorld*XMMatrixTranspose(userRotMat) *v);
 
+	meshWorldMat = initialMeshWorld * XMMatrixTranspose(userRotMat);
 
+	ExtractAxes(&volWorldMat, &meshWorldMat);
+
+	// HLSL에서는 mul(vector, matrix) 사용
+	  // 실제 적용 순서: S -> R -> T (의도한 대로)
+
+	MeshConstantBuffer cb;
+	cb.WVP = XMMatrixTranspose(meshWorldMat * v * p);
+	cb.World = XMMatrixTranspose(meshWorldMat);
+	cb.WorldView = XMMatrixTranspose(meshWorldMat *v);
 
 	context->UpdateSubresource(m_meshConstantBuffer, 0, nullptr, &cb, 0, 0);
 	context->VSSetConstantBuffers(0, 1, &m_meshConstantBuffer);
-
-
-
 
 	context->UpdateSubresource(m_meshConstantBuffer, 0, nullptr, &cb, 0, 0);
 	context->VSSetConstantBuffers(0, 1, &m_meshConstantBuffer);
@@ -523,6 +412,316 @@ std::cout << "===================================" << std::endl;*/
 
 }
 
+float MeshRenderer::ComputeHandedness(XMVECTOR X, XMVECTOR Y, XMVECTOR Z)
+{
+	XMVECTOR crossXY = XMVector3Cross(X, Y);
+	return XMVectorGetX(XMVector3Dot(crossXY, Z));
+}
+
+
+
+//bool MeshRenderer::ExtractAxes(XMMATRIX* volWorld, XMMATRIX* meshWorld)
+//{
+//	Axes volAx, meshAx;
+//
+//	// Row-major 기준
+//	volAx.X = XMVectorSet((*volWorld).r[0].m128_f32[0],
+//		(*volWorld).r[0].m128_f32[1],
+//		(*volWorld).r[0].m128_f32[2],
+//		0.0f);
+//
+//	volAx.Y = XMVectorSet((*volWorld).r[1].m128_f32[0],
+//		(*volWorld).r[1].m128_f32[1],
+//		(*volWorld).r[1].m128_f32[2],
+//		0.0f);
+//
+//	volAx.Z = XMVectorSet((*volWorld).r[2].m128_f32[0],
+//		(*volWorld).r[2].m128_f32[1],
+//		(*volWorld).r[2].m128_f32[2],
+//		0.0f);
+//
+//	// 방향 비교용이므로 정규화
+//	volAx.X = XMVector3Normalize(volAx.X);
+//	volAx.Y = XMVector3Normalize(volAx.Y);
+//	volAx.Z = XMVector3Normalize(volAx.Z);
+//
+//
+//
+//	// Row-major 기준
+//	meshAx.X = XMVectorSet((*meshWorld).r[0].m128_f32[0],
+//		(*meshWorld).r[0].m128_f32[1],
+//		(*meshWorld).r[0].m128_f32[2],
+//		0.0f);
+//
+//	meshAx.Y = XMVectorSet((*meshWorld).r[1].m128_f32[0],
+//		(*meshWorld).r[1].m128_f32[1],
+//		(*meshWorld).r[1].m128_f32[2],
+//		0.0f);
+//
+//	meshAx.Z = XMVectorSet((*meshWorld).r[2].m128_f32[0],
+//		(*meshWorld).r[2].m128_f32[1],
+//		(*meshWorld).r[2].m128_f32[2],
+//		0.0f);
+//	 
+//	// 방향 비교용이므로 정규화
+//	meshAx.X = XMVector3Normalize(meshAx.X);
+//	meshAx.Y = XMVector3Normalize(meshAx.Y);
+//	meshAx.Z = XMVector3Normalize(meshAx.Z);
+//
+//
+//	float dotX = XMVectorGetX(XMVector3Dot(volAx.X, meshAx.X));
+//	float dotY = XMVectorGetX(XMVector3Dot(volAx.Y, meshAx.Y));
+//	float dotZ = XMVectorGetX(XMVector3Dot(volAx.Z, meshAx.Z));
+//
+//	bool axisMatched =
+//		fabs(dotX) > 0.99f &&
+//		fabs(dotY) > 0.99f &&
+//		fabs(dotZ) > 0.99f;
+//
+//
+//	/*std::cout << "[Axis Dot Product]" << std::endl;
+//	std::cout << "X axis dot:" << dotX << std::endl;
+//	std::cout << "Y axis dot:" << dotY << std::endl;
+//	std::cout << "Z axis dot:" << dotZ << std::endl << std::endl;
+//
+//
+//	if (dotX < 0) std::cout << "⚠ X axis flipped" << std::endl;
+//	if (dotY < 0)std::cout << "⚠ Y axis flipped" << std::endl;
+//	if (dotZ < 0) std::cout << "⚠ Z axis flipped" << std::endl << std::endl;
+//
+//	if (axisMatched)
+//		std::cout << "==============volume and mesh axes are match" << std::endl;
+//	else
+//		std::cout << "@@@@@@@@@@@@volume and mesh axes are not match" << std::endl;*/
+//
+//
+//
+//		// X축 이동
+//	{
+//		XMVECTOR delta = XMVectorSet(50, 0, 0, 0); // +X 이동
+//		XMVECTOR volPos0 = XMVector3TransformCoord(XMVectorZero(), (*volWorld));
+//		XMVECTOR meshPos0 = XMVector3TransformCoord(XMVectorZero(), (*meshWorld));
+//
+//		XMVECTOR volPos1 = XMVector3TransformCoord(delta, (*volWorld));
+//		XMVECTOR meshPos1 = XMVector3TransformCoord(delta, (*meshWorld));
+//
+//		XMVECTOR volMove = XMVector3Normalize(XMVectorSubtract(volPos1, volPos0));
+//		XMVECTOR meshMove = XMVector3Normalize(XMVectorSubtract(meshPos1, meshPos0));
+//
+//		float moveDot = XMVectorGetX(XMVector3Dot(volMove, meshMove));
+//
+//		std::cout << "[X축] ";
+//		if (moveDot > 0.99f)       std::cout << "두 벡터는 거의 같은 방향입니다.\n";
+//		else if (moveDot > 0.0f)   std::cout << "두 벡터는 유사한 방향(θ < 90°)입니다.\n";
+//		else if (moveDot == 0.0f)  std::cout << "두 벡터는 직교합니다.\n";
+//		else {
+//			std::cout << "두 벡터는 반대 방향입니다. → X축 반전 적용\n";
+//			(*meshWorld) = XMMatrixMultiply(XMMatrixScaling(-1, 1, 1), (*meshWorld));
+//
+//			// ✅ 반전 후 다시 검사
+//			meshPos1 = XMVector3TransformCoord(delta, (*meshWorld));
+//			meshMove = XMVector3Normalize(XMVectorSubtract(meshPos1, meshPos0));
+//			moveDot = XMVectorGetX(XMVector3Dot(volMove, meshMove));
+//
+//			if (moveDot > 0.99f)
+//				std::cout << "반전 적용 후: 방향 일치 확인 완료!\n";
+//			else
+//				std::cout << "반전 적용 후에도 방향 불일치!\n";
+//		}
+//
+//		//// ✅ 실제 이동 적용
+//		//XMMATRIX moveMatrix = XMMatrixTranslationFromVector(delta);
+//		//(*volWorld) = XMMatrixMultiply(moveMatrix, (*volWorld));
+//		//(*meshWorld) = XMMatrixMultiply(moveMatrix, (*meshWorld));
+//
+//		//std::cout << "볼륨과 메쉬를 X축으로 +50 이동 완료!\n";
+//
+//	}
+//
+//	// Y축 이동
+//	{
+//		XMVECTOR delta = XMVectorSet(0, 50, 0, 0); // +Y 이동
+//		XMVECTOR volPos0 = XMVector3TransformCoord(XMVectorZero(), (*volWorld));
+//		XMVECTOR meshPos0 = XMVector3TransformCoord(XMVectorZero(), (*meshWorld));
+//
+//		XMVECTOR volPos1 = XMVector3TransformCoord(delta, (*volWorld));
+//		XMVECTOR meshPos1 = XMVector3TransformCoord(delta, (*meshWorld));
+//
+//		XMVECTOR volMove = XMVector3Normalize(XMVectorSubtract(volPos1, volPos0));
+//		XMVECTOR meshMove = XMVector3Normalize(XMVectorSubtract(meshPos1, meshPos0));
+//
+//		float moveDot = XMVectorGetX(XMVector3Dot(volMove, meshMove));
+//
+//		std::cout << "[Y축] ";
+//		if (moveDot > 0.99f)       std::cout << "두 벡터는 거의 같은 방향입니다.\n";
+//		else if (moveDot > 0.0f)   std::cout << "두 벡터는 유사한 방향(θ < 90°)입니다.\n";
+//		else if (moveDot == 0.0f)  std::cout << "두 벡터는 직교합니다.\n";
+//		else {
+//			std::cout << "두 벡터는 반대 방향입니다. → Y축 반전 적용\n";
+//			(*meshWorld) = XMMatrixMultiply(XMMatrixScaling(1, -1, 1), (*meshWorld));
+//
+//			// ✅ 반전 후 다시 검사
+//			meshPos1 = XMVector3TransformCoord(delta, (*meshWorld));
+//			meshMove = XMVector3Normalize(XMVectorSubtract(meshPos1, meshPos0));
+//			moveDot = XMVectorGetX(XMVector3Dot(volMove, meshMove));
+//
+//			if (moveDot > 0.99f)
+//				std::cout << "반전 적용 후: 방향 일치 확인 완료!\n";
+//			else
+//				std::cout << "반전 적용 후에도 방향 불일치!\n";
+//		}
+//
+//		//// ✅ 실제 이동 적용
+//		//XMMATRIX moveMatrix = XMMatrixTranslationFromVector(delta);
+//		//(*volWorld) = XMMatrixMultiply(moveMatrix, (*volWorld));
+//		//(*meshWorld) = XMMatrixMultiply(moveMatrix, (*meshWorld));
+//
+//		//std::cout << "볼륨과 메쉬를 Y축으로 +50 이동 완료!\n";
+//
+//	}
+//
+//	// Z축 이동
+//	{
+//		XMVECTOR delta = XMVectorSet(0, 0, 50, 0); // +Z 이동
+//		XMVECTOR volPos0 = XMVector3TransformCoord(XMVectorZero(), (*volWorld));
+//		XMVECTOR meshPos0 = XMVector3TransformCoord(XMVectorZero(), (*meshWorld));
+//
+//		XMVECTOR volPos1 = XMVector3TransformCoord(delta, (*volWorld));
+//		XMVECTOR meshPos1 = XMVector3TransformCoord(delta, (*meshWorld));
+//
+//		XMVECTOR volMove = XMVector3Normalize(XMVectorSubtract(volPos1, volPos0));
+//		XMVECTOR meshMove = XMVector3Normalize(XMVectorSubtract(meshPos1, meshPos0));
+//
+//		float moveDot = XMVectorGetX(XMVector3Dot(volMove, meshMove));
+//
+//		std::cout << "[Z축] ";
+//		if (moveDot > 0.99f)       std::cout << "두 벡터는 거의 같은 방향입니다.\n";
+//		else if (moveDot > 0.0f)   std::cout << "두 벡터는 유사한 방향(θ < 90°)입니다.\n";
+//		else if (moveDot == 0.0f)  std::cout << "두 벡터는 직교합니다.\n";
+//		else {
+//			std::cout << "두 벡터는 반대 방향입니다. → Z축 반전 적용\n";
+//
+//			(*meshWorld) = XMMatrixMultiply(XMMatrixScaling(1, 1, -1), (*meshWorld));
+//
+//			// ✅ 반전 후 다시 검사
+//			meshPos1 = XMVector3TransformCoord(delta, (*meshWorld));
+//			meshMove = XMVector3Normalize(XMVectorSubtract(meshPos1, meshPos0));
+//			moveDot = XMVectorGetX(XMVector3Dot(volMove, meshMove));
+//
+//			if (moveDot > 0.99f)
+//				std::cout << "반전 적용 후: 방향 일치 확인 완료!\n";
+//			else
+//				std::cout << "반전 적용 후에도 방향 불일치!\n";
+//		}
+//
+//		//// ✅ 실제 이동 적용
+//		//XMMATRIX moveMatrix = XMMatrixTranslationFromVector(delta);
+//		////(*volWorld) = XMMatrixMultiply(moveMatrix, (*volWorld));
+//		//(*meshWorld) = XMMatrixMultiply(moveMatrix, (*meshWorld));
+//
+//		//std::cout << "볼륨과 메쉬를 Z축으로 +50 이동 완료!\n";
+//	}
+//
+//
+//
+//	return axisMatched;
+//}
+
+int cnt{};
+
+bool MeshRenderer::ExtractAxes(const XMMATRIX* volWorld, const XMMATRIX* meshWorld)
+{
+	Axes volAx, meshAx;
+
+	// =========================
+	// 1. 축 추출 (Row-major)
+	// =========================
+	auto Extract = [](const XMMATRIX& m, int row)
+	{
+		return XMVector3Normalize(XMVectorSet(
+			m.r[row].m128_f32[0],
+			m.r[row].m128_f32[1],
+			m.r[row].m128_f32[2],
+			0.0f));
+	};
+
+	volAx.X = Extract(*volWorld, 0);
+	volAx.Y = Extract(*volWorld, 1);
+	volAx.Z = Extract(*volWorld, 2);
+
+	meshAx.X = Extract(*meshWorld, 0);
+	meshAx.Y = Extract(*meshWorld, 1);
+	meshAx.Z = Extract(*meshWorld, 2);
+
+	// =========================
+	// 2. 축 방향 내적 비교
+	// =========================
+	float dotX = XMVectorGetX(XMVector3Dot(volAx.X, meshAx.X));
+	float dotY = XMVectorGetX(XMVector3Dot(volAx.Y, meshAx.Y));
+	float dotZ = XMVectorGetX(XMVector3Dot(volAx.Z, meshAx.Z));
+
+	bool axisAligned =
+		fabs(dotX) > 0.99f &&
+		fabs(dotY) > 0.99f &&
+		fabs(dotZ) > 0.99f;
+
+	// =========================
+	// 3. handedness 비교
+	// =========================
+	float volHand = ComputeHandedness(volAx.X, volAx.Y, volAx.Z);
+	float meshHand = ComputeHandedness(meshAx.X, meshAx.Y, meshAx.Z);
+
+	bool sameHandedness = (volHand * meshHand) > 0.0f;
+
+	// =========================
+	// 4. 좌우 반전 판정 (핵심)
+	// =========================
+	bool isLeftRightFlipped = (dotX < 0.0f);
+
+
+	if (0 == cnt) {
+
+		// =========================
+		// 4. 로그 출력 (검증용)
+		// =========================
+		std::cout << "[Axis Dot]\n";
+		std::cout << "X: " << dotX << " Y: " << dotY << " Z: " << dotZ << "\n";
+
+		std::cout << "[Handedness]\n";
+		std::cout << "Volume: " << volHand
+			<< " Mesh: " << meshHand << "\n";
+
+		if (!axisAligned)
+			std::cout << "❌ Axis direction mismatch\n";
+		else
+			std::cout << "✅ Axis directions aligned\n";
+
+		if (!sameHandedness)
+			std::cout << "❌ Handedness mismatch (mirror)\n";
+		else
+			std::cout << "✅ Same handedness\n";
+
+
+		if (isLeftRightFlipped)
+			std::cout << "❌ Left/Right flipped (X axis inverted)\n";
+		else
+			std::cout << "✅ Left/Right direction consistent\n";
+
+		++cnt;
+	}
+
+	// =========================
+  // 6. 최종 판정
+  // =========================
+  // 덴탈 기준:
+  // - 축 정렬 OK
+  // - 좌우 반전 ❌
+
+
+	return axisAligned && sameHandedness;
+}
+
+
 
 void MeshRenderer::RenderMesh(ID3D11DeviceContext* context, ID3D11Buffer* m_meshVertexBuffer,
 	ID3D11VertexShader* m_meshVS, ID3D11PixelShader* m_meshPS, ID3D11InputLayout* m_meshInputLayout,
@@ -537,75 +736,6 @@ void MeshRenderer::RenderMesh(ID3D11DeviceContext* context, ID3D11Buffer* m_mesh
 	context->VSSetShader(m_meshVS, nullptr, 0);
 	context->PSSetShader(m_meshPS, nullptr, 0);
 	context->IASetInputLayout(m_meshInputLayout);
-
-	// ========== Transform 계산 ==========
-	//float meshScale = 1.5f / maxPhysicalVol;
-	//float meshScale = 1.f;
-	//float meshScale = overallSize / maxPhysicalVol;
-
-	//DirectX::XMMATRIX scale = XMMatrixScaling(meshScale, meshScale, meshScale);
-
-
-
-	//DirectX::XMMATRIX scale = XMMatrixScaling(
-	//	/*	meshToVolume,
-	//		meshToVolume,
-	//		meshToVolume*/
-
-	//		meshScale*overallSize,
-	//		meshScale*overallSize,
-	//		meshScale*overallSize
-	//	//volWidth / meshWidth / maxPhysicalVol*1.42f,
-	//	//volHeight / meshHeight / maxPhysicalVol * 1.42f*1.09f,
-	//	//volDepth / meshDepth / maxPhysicalVol * 1.42f
-
-	//);
-
-
-	//DirectX::XMMATRIX scale = XMMatrixScaling(
-	//	/*	meshToVolume,
-	//		meshToVolume,
-	//		meshToVolume*/
-
-	//	volWidth / meshWidth / maxPhysicalVol * meshScale*1.f,
-	//	volWidth / meshWidth / maxPhysicalVol * meshScale*1.f,
-	//	volWidth / meshWidth / maxPhysicalVol * meshScale*1.f
-	//	//volWidth / meshWidth / maxPhysicalVol * 1.42f,
-	//	//volHeight / meshHeight / maxPhysicalVol * 1.42f*1.09f,
-	//	//volDepth / meshDepth / maxPhysicalVol * 1.42f
-
-	//);
-
-
-	float volToMesh{ volWidth / meshWidth / maxPhysicalVol * meshScale };
-	//float volToMesh{ maxPhysicalVol / maxMesh };
-//	float volToMesh{ maxPhysicalVol / maxMesh / 300 };
-
-
-
-
-	//meshScale = maxPhysicalVol / maxMesh / 300;
-
-	DirectX::XMMATRIX scale = XMMatrixScaling(
-
-
-		volToMesh, volToMesh, volToMesh
-
-
-	);
-
-
-
-	//DirectX::XMMATRIX rotation = XMMatrixRotationX(XM_PI);
-
-
-
-	XMMATRIX centerTranslate =
-		XMMatrixTranslation(
-			-centerX,
-			-centerY,
-			-centerZ
-		);
 
 
 
@@ -680,6 +810,60 @@ void MeshRenderer::RenderMesh(ID3D11DeviceContext* context, ID3D11Buffer* m_mesh
 	context->Draw(m_meshVertexCount, 0);
 }
 
+int print{};
+int printRotate{};
+
+
+
+
+//
+//static int warnCooldown = 0;   // 스팸 방지
+//if (warnCooldown > 0) warnCooldown--;
+//
+//auto Len3 = [](XMVECTOR v) {
+//	return XMVectorGetX(XMVector3Length(v));
+//};
+//
+//auto ShouldWarn = [](XMVECTOR s, XMVECTOR t) {
+//	const float SCALE_EPS = 1e-3f;   // 0.1% (충분히 여유)
+//	const float TRANS_EPS = 1e-2f;   // 0.01 (월드 단위가 mm면 0.01mm)
+//
+//	float sx = XMVectorGetX(s), sy = XMVectorGetY(s), sz = XMVectorGetZ(s);
+//	float tx = XMVectorGetX(t), ty = XMVectorGetY(t), tz = XMVectorGetZ(t);
+//
+//	bool scaleBad =
+//		(fabsf(sx - 1.0f) > SCALE_EPS) ||
+//		(fabsf(sy - 1.0f) > SCALE_EPS) ||
+//		(fabsf(sz - 1.0f) > SCALE_EPS);
+//
+//	bool transBad =
+//		(fabsf(tx) > TRANS_EPS) ||
+//		(fabsf(ty) > TRANS_EPS) ||
+//		(fabsf(tz) > TRANS_EPS);
+//
+//	return scaleBad || transBad;
+//};
+//
+//// --- after rotate ---
+//XMVECTOR s2, r2, t2;
+//XMMatrixDecompose(&s2, &r2, &t2, meshWorldMat);
+//
+//if (warnCooldown == 0 && ShouldWarn(s2, t2))
+//{
+//	std::cout << "[WARN] Pivot/Scale drift detected\n";
+//	std::cout << "scale: "
+//		<< XMVectorGetX(s2) << " "
+//		<< XMVectorGetY(s2) << " "
+//		<< XMVectorGetZ(s2) << "\n";
+//	std::cout << "translation: "
+//		<< XMVectorGetX(t2) << " "
+//		<< XMVectorGetY(t2) << " "
+//		<< XMVectorGetZ(t2) << "\n\n";
+//
+//	warnCooldown = 60; // 60프레임(대략 1초) 동안 재출력 막기
+//}
+
+
 void MeshRenderer::RenderMeshWithCT(
 	ID3D11DeviceContext* context,
 	ID3D11Buffer* m_meshVertexBuffer,
@@ -736,87 +920,78 @@ void MeshRenderer::RenderMeshWithCT(
 
 
 
-
-	float volToMesh{ volWidth / meshWidth / maxPhysicalVol * meshScale };
-	//float volToMesh{ maxPhysicalVol / maxMesh/300 };
-	
-	//float meshNormSize = maxMesh / maxPhysicalVol;
-
-	float scaleToVol{ 1.f / maxPhysicalVol * meshScale };
-	//float scaleToVol{  meshScale };
-
-	//float scaleToVol{ meshNormSize * 0.5f * meshScale };
-
-	////float scaleToVol{ 1.f / maxMesh * meshScale };
-	//std::cout << "222==============mesh scale to vol : " << scaleToVol << std::endl;
-	//std::cout << "222==============maxPhysicalVol : " << maxPhysicalVol << std::endl;
-
-
-
-	DirectX::XMMATRIX scale = XMMatrixScaling(
-		/*	volToMesh, volToMesh, volToMesh*/
-		scaleToVol, scaleToVol, scaleToVol
-
-	);
-
-
-
-
-	DirectX::XMMATRIX rotation = XMMatrixRotationX(XM_PI);
-
-
-
-	//XMMATRIX centerTranslate =
-	//	XMMatrixTranslation(
-	//		-centerX * volToMesh,
-	//		-centerY * volToMesh,
-	//		-centerZ * volToMesh
-	//	);
-
-
-	XMMATRIX centerTranslate =
-		XMMatrixTranslation(
-			-centerX,
-			-centerY,
-			-centerZ
-		);
-
-
 	//s r t v p
 
 
-	//initialMeshWorld =
-	//	/*	centerTranslate **/ scale * rotation;                // 그 다음 회전
 
-	//initialMeshWorld = centerTranslate * rotation;  // ✅ 스케일 없음
+	rotX = XMQuaternionRotationAxis(
+		XMVectorSet(1, 0, 0, 0),  // X축
+		-XM_PIDIV2                  // 90도
+	);
 
-
-
-	XMMATRIX testScale = XMMatrixScaling(0.01f, 0.01f, 0.01f);
-	initialMeshWorld = /*testScale **/ /*centerTranslate * */rotation;
-
-	//XMVECTOR s, r, t;
-	//XMMatrixDecompose(&s, &r, &t, initialMeshWorld);
-
-	//std::cout
-	//	<< "Mesh world scale: "
-	//	<< XMVectorGetX(s) << ", "
-	//	<< XMVectorGetY(s) << ", "
-	//	<< XMVectorGetZ(s) << std::endl;
+	rotY = XMQuaternionRotationAxis(
+		XMVectorSet(0, 0, 1, 0),
+		XM_PI  // Y축 180도
+	);
 
 
-	//	// HLSL에서는 mul(vector, matrix) 사용
-	//// 실제 적용 순서: S -> R -> T (의도한 대로)
-	//cbM.WVP = XMMatrixTranspose(userRotMat*initialMeshWorld/** XMMatrixRotationX(-XM_PI)*/ * v * p);
-	//cbM.World = XMMatrixTranspose(userRotMat*initialMeshWorld);
-	//cbM.WorldView = XMMatrixTranspose(userRotMat*initialMeshWorld *v);
+	//initialMeshWorld = XMMatrixRotationX(XM_PI)*XMMatrixTranslation(50.0f, 0.0f, 0.0f)
+	//	*XMMatrixRotationQuaternion(XMQuaternionMultiply(rotX, rotY));
+
+	rotation = XMMatrixRotationX(XM_PI);
+
+	//s r t v p
+	//initialMeshWorld =scale * rotation;                // 그 다음 회전
+	//initialMeshWorld =rotation* centerTranslate;  // ✅ 스케일 없음
+	//initialMeshWorld = rotation/**XMMatrixTranslation(0.0f, 0.0f, 0.0f)*/; // ✅ 스케일 없음
+
+
+
+	initialMeshWorld = XMMatrixRotationQuaternion(XMQuaternionMultiply(rotX, rotY))*rotation;
+	meshWorldMat = initialMeshWorld * XMMatrixTranspose(userRotMat);
+	ExtractAxes(&volWorldMat, &meshWorldMat);
+
+	XMVECTOR s, r, t;
+	XMMatrixDecompose(&s, &r, &t, initialMeshWorld);
+
+	XMVECTOR s2, r2, t2;
+	XMMatrixDecompose(&s2, &r2, &t2, meshWorldMat);
+
+	if (XMMatrixIsIdentity(userRotMat)){
+		std::cout << "before rotate mesh World scale: "
+			<< XMVectorGetX(s) << "  "
+			<< XMVectorGetY(s) << "  "
+			<< XMVectorGetZ(s) << std::endl << std::endl;
+
+		std::cout << "before rotate mesh World translation: "
+			<< XMVectorGetX(t) << "  "
+			<< XMVectorGetY(t) << "  "
+			<< XMVectorGetZ(t) << std::endl << std::endl;
+	}
+	else {
+		std::cout << "after rotate mesh World scale: "
+			<< XMVectorGetX(s2) << "  "
+			<< XMVectorGetY(s2) << "  "
+			<< XMVectorGetZ(s2) << std::endl << std::endl;
+
+		std::cout << "after rotate mesh World translation: "
+			<< XMVectorGetX(t2) << "  "
+			<< XMVectorGetY(t2) << "  "
+			<< XMVectorGetZ(t2) << std::endl << std::endl;
+	}
+
 
 	// HLSL에서는 mul(vector, matrix) 사용
   // 실제 적용 순서: S -> R -> T (의도한 대로)
-	cbM.WVP = XMMatrixTranspose(initialMeshWorld*XMMatrixTranspose(userRotMat) /** XMMatrixRotationX(-XM_PI)*/ * v * p);
-	cbM.World = XMMatrixTranspose(initialMeshWorld*XMMatrixTranspose(userRotMat));
-	cbM.WorldView = XMMatrixTranspose(initialMeshWorld*XMMatrixTranspose(userRotMat) *v);
+	cbM.WVP = XMMatrixTranspose(meshWorldMat * v * p);
+	cbM.World = XMMatrixTranspose(meshWorldMat);
+	cbM.WorldView = XMMatrixTranspose(meshWorldMat *v);
 	cbM.CTBlendParams = XMFLOAT4(ctBlendStrength, 0.0f, 0.0f, faceBlend);  // ⭐ CT 강도
+
+
+
+
+
 
 
 	//XMMATRIX vp = v*p;

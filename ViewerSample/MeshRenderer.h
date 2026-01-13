@@ -27,6 +27,15 @@ struct ClipSettings {
 };
 
 
+struct Axes
+{
+	XMVECTOR X;
+	XMVECTOR Y;
+	XMVECTOR Z;
+};
+
+
+
 class MeshRenderer
 {
 public:
@@ -69,10 +78,15 @@ public:
 	//float meshScale{ /*0.006755915f*/ };
 	float meshScale{ 1 };
 
+	XMVECTOR rotY, rotX;
+	DirectX::XMMATRIX rotation;
+	XMMATRIX volWorldMat;
 public:
 	void CreateTwoPassStates(ID3D11Device* device);
 	//void RenderMeshTwoPass(ID3D11DeviceContext* context);
-
+	float ComputeHandedness(XMVECTOR X, XMVECTOR Y, XMVECTOR Z);
+	//bool ExtractAxes(XMMATRIX* volWorld, XMMATRIX* meshWorld);
+	bool ExtractAxes(const XMMATRIX* volWorld, const XMMATRIX* meshWorld);
 	void RenderMeshDepth(ID3D11DeviceContext* context, ID3D11Buffer* m_meshVertexBuffer,
 		ID3D11VertexShader* m_meshVS, ID3D11PixelShader* m_meshPS, ID3D11InputLayout* m_meshInputLayout,
 		ID3D11Buffer* m_clipSettingsBuffer, ID3D11Buffer* m_meshConstantBuffer, ID3D11ShaderResourceView* m_meshTexture,
@@ -80,7 +94,7 @@ public:
 		float maxMesh, float maxPhysicalVol, float volWidth, float volheight, float volDepth, float overallSize,
 		XMMATRIX w, XMMATRIX v, XMMATRIX p, float width, float height);
 
-	DirectX::XMMATRIX initialMeshWorld;
+	DirectX::XMMATRIX initialMeshWorld, meshWorldMat;
 	void RenderMesh(ID3D11DeviceContext* context, ID3D11Buffer* m_meshVertexBuffer,
 		ID3D11VertexShader* m_meshVS, ID3D11PixelShader* m_meshPS, ID3D11InputLayout* m_meshInputLayout,
 		ID3D11Buffer* m_clipSettingsBuffer, ID3D11Buffer* m_meshConstantBuffer, ID3D11ShaderResourceView* m_meshTexture,

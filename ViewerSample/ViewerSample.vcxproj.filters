@@ -151,6 +151,8 @@
     <FxCompile Include="FaceMesh_WithCT_PS.hlsl" />
     <FxCompile Include="SimpleQuad_PS.hlsl" />
     <FxCompile Include="SimpleQuad_VS.hlsl" />
+    <FxCompile Include="lineVS.hlsl" />
+    <FxCompile Include="linePS.hlsl" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="icon.ico">

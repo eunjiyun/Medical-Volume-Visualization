@@ -382,7 +382,10 @@ bool FileReader::ParseSlice(const std::string path, int sliceIndex) {
 		m_volumeData[offset + i] = pixelData[i];
 	}
 
+	//m_volumeData[offset + sliceIndex] = pixelData[sliceIndex];
+
 	std::cout << "✅ Slice " << sliceIndex << " loaded" << std::endl;
+	std::cout << "✅ volume data " << m_volumeData[sliceIndex] << " loaded" << std::endl;
 	return true;
 }
 
@@ -558,7 +561,7 @@ bool FileReader::NormalizeSlice(const std::vector<int16_t>& rawSlice,
 
 bool FileReader::NormalizeVolumeFloat(
 	const std::vector<int16_t>& rawVolume,
-	std::vector<uint16_t>& outVolume,
+
 	float rescaleSlope,
 	float rescaleIntercept,
 	float windowMinHU,
@@ -573,7 +576,7 @@ bool FileReader::NormalizeVolumeFloat(
 	//	<< rawVolume[1000] << " "
 	//	<< rawVolume[10000] << std::endl;
 
-	float invRange = 1.0f / (windowMaxHU - windowMinHU);
+	//float invRange = 1.0f / (windowMaxHU - windowMinHU);
 
 	for (size_t i = 0; i < rawVolume.size(); ++i)
 	{
@@ -582,8 +585,17 @@ bool FileReader::NormalizeVolumeFloat(
 		//// HU 변환
 		float hu = static_cast<float>(rawVolume[i]) * rescaleSlope + rescaleIntercept;
 
-		floatData[i] = hu;
+		//std::cout << "rescaleSlope : " << rescaleSlope << std::endl;
+		//std::cout << "rescaleIntercept : " << rescaleIntercept << std::endl;
 
+		//// 예시: CT 표준 범위
+		//float density = (hu + windowCenter) / windowWidth;
+		//density = std::clamp(density, 0.0f, 1.0f);
+
+
+		////floatData[i] = density;
+		floatData[i] = hu;
+		//std::cout << "hu : " << hu << std::endl;
 
 
 		/*float norm = (hu - windowMinHU) * invRange;
@@ -593,6 +605,15 @@ bool FileReader::NormalizeVolumeFloat(
 		//std::cout << "floatData sample:" << floatData[1000] << std::endl;
 
 	}
+
+
+	//float minV = 1e9f, maxV = -1e9f;
+	//for (size_t i = 0; i < rawVolume.size(); ++i)
+	//{
+	//	minV = min(minV, floatData[i]);
+	//	maxV = max(maxV, floatData[i]);
+	//}
+	//std::cout << "floatData min/max = " << minV << " " << maxV << std::endl;
 
 
 	return true;

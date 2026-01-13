@@ -470,64 +470,103 @@ float ReconstructViewZ_InvProj(float2 uv,float depth01, matrix proj)
 //	return float4(acc.rgb, 0.6);
 //}
 
+
+
+
+
+
+
+
+
+
+// 샘플 위치 흐름 (좌표계 흐름 요약)
+
+//Screen UV
+//화면 픽셀 좌표를 졍규화한 값(0~1 범위)
+
+//→ NDC
+//Normalized Device Coordinates
+//Screen UV를 -1, 1로 변환한 좌표
+//GPU 렌더링 파이프라인에서 표준화된 공간.
+
+//→ View Space(ray origin)
+//카메라 기준 좌표계
+//레이마칭에서는 카메라 위치가 레이의 시작점, 
+//NDC를 역투영해 레이 방향을 얻음.
+
+//→ World Space(rayPosWS)
+//View Space에서 월드 좌표계로 변환
+//실제 씬의 오브젝트와 동일한 좌표계에서 레이가 어디로 향하는지 계산.
+
+//→ Local Volume Space(posL)
+//특정 볼륨의 로컬 좌표계
+//월드 공간의 레이을 해당 오브젝트의 로컬 공간으로 변환.
+
+//→ UVW(0~1)
+//로컬 좌표를 텍스처 좌표로 정규화.
+//볼륨 텍스처는 3D 이미지이므로 (u, v, w) 형태
+
+//→ volumeTex.Sample
+//최종적으로 3D 텍스처에서 샘플링.
+//레이마칭은 이 샘플링을 레이 경로를 따라 여러 번 반복해서 누적(적분)하는 과정.
+//결과적으로 픽셀 색상은 레이 경로상의 밀도/색상 값들의 합성으로 결정됨.
+
+
+
+
+//화면 픽셀(Screen UV)
+//→ GPU 표준 좌표(NDC)
+//→ 카메라 기준(View Space)
+//→ 씬 좌표(World Space)
+//→ 오브젝트 기준(Local Volume Space)
+//→ 텍스처 좌표(UVW)
+//→ 3D 텍스처 샘플링(volumeTex.Sample)
+
+//즉, 픽셀 → 레이 → 월드 → 오브젝트 → 텍스처로 좌표계를 계속 변환하면서, 
+//최종적으로 레이 경로를 따라 3D 텍스처를 샘플링하는 게 볼륨 레이마칭
+
+//std::cout << "floatData check: "
+//<< floatData[0] << " "
+//<< floatData[100] << " "
+//<< floatData[10000] << std::endl;
+
 float4 main(PSInput input) : SV_Target
 {
-	//float2 uv = input.uv;
-
-	///* ---------------------------
-	//   Ray setup (view -> world)
-	//--------------------------- */
-	//float2 ndc = uv * 2.0 - 1.0;
-	//ndc.y = -ndc.y;
-
-
-
-	//// ndc -> view space 위치
-	//float4 rayOriginVS4 = mul(float4(ndc, 0, 1), InvProj);
-	//float3 rayOriginVS = rayOriginVS4.xyz;
-
-
-	//float4 farClip = float4(ndc, 1, 1);
-	//float4 farVS = mul(farClip, InvProj);
-	//farVS /= max(farVS.w, 1e-6);
-
-	////float3 rayDirVS = normalize(farVS.xyz);
-	//float3 rayDirVS = float3(0, 0, 1);
-	////float3 rayDirWS = normalize(mul(float4(rayDirVS, 0), InvView).xyz);
-	////float3 rayPosWS = CameraPosAndAlpha.xyz;
-	//float3 rayPosWS = mul(float4(rayOriginVS, 1), InvView).xyz;
-	//float3 rayDirWS = normalize(mul(float4(rayDirVS, 0), InvView).xyz);
-
-	//// view-space origin for depth compare
-	//float3 rayPosVS = mul(float4(rayPosWS, 1), View).xyz;
-
 
 
 	float2 uv = input.uv;
-float2 ndc = uv * 2.0 - 1.0;
-ndc.y = -ndc.y;
+	float2 ndc = uv * 2.0 - 1.0;
+	ndc.y = -ndc.y;
 
-// 1. ray origin (view space)
-float4 rayOriginVS4 = mul(float4(ndc, 0.0, 1.0), InvProj);
-float3 rayOriginVS = rayOriginVS4.xyz;
+	// 1. ray origin (view space)
+	float4 rayOriginVS4 = mul(float4(ndc, 0.0, 1.0), InvProj);
 
-// 2. ray direction (view space, fixed)
-float3 rayDirVS = float3(0, 0, 1);
+	// 각 픽셀의 월드로 나가는 시작점
+	float3 rayOriginVS = rayOriginVS4.xyz;
 
-// 3. view -> world
-float3 rayPosWS = mul(float4(rayOriginVS, 1), InvView).xyz;
-float3 rayDirWS = normalize(mul(float4(rayDirVS, 0), InvView).xyz);
+	//모든 레이가 동일한 방향
+	// 2. ray direction (view space, fixed)
+	//레이 이동 방향이 z축인듯 하지만
+	float3 rayDirVS = float3(0, 0, 1);
 
-// (옵션) view-space origin (mesh depth 비교용)
-float3 rayPosVS = rayOriginVS;
+	// 3. view -> world
+	//월드 공간 레이 시작점
+	float3 rayPosWS = mul(float4(rayOriginVS, 1), InvView).xyz;
 
-//return float4(abs(rayDirWS), 1);   // 화면 전체가 같은 색이어야 정상
+	//월드 공간 레이 방향
+	float3 rayDirWS = normalize(mul(float4(rayDirVS, 0), InvView).xyz);
+
+	// (옵션) view-space origin (mesh depth 비교용)
+	float3 rayPosVS = rayOriginVS;
+
+
 
 	/* ---------------------------
 	   Volume bounds (LOCAL space)
 	   - still define the box in volume-local normalized space
 	   - using physical aspect ratio (volSize.xyz / volSize.w)
 	--------------------------- */
+	//볼륨 로컬 좌표계가 mm단위라는 전제가 있음
 	float3 boxMinL = float3(
 		-volSize.x * 0.5,
 		-volSize.y  * 0.5,
@@ -540,10 +579,29 @@ float3 rayPosVS = rayOriginVS;
 	   but convert entry/exit to WORLD t
 	--------------------------- */
 
+
+	//로컬 공간에서의 교차
 	// Transform ray into volume-local space for intersection ONLY
 	float3 rayPosL = mul(float4(rayPosWS, 1), InvVolumeWorld).xyz;
+
+	//정규화 안 한 것
 	float3 rayDirL = mul(float4(rayDirWS, 0), InvVolumeWorld).xyz;   // NOTE: no normalize here
+	//return float4(abs(normalize(rayDirL)),1);
+	//InvVolumeWorld가 월드 축을 볼륨 로컬 축으로 어떻게 매핑할지를 정함.
+
+
+	//DICOM 슬라이스 적재 순서
+
+	//	볼륨을 w × h × d로 해석한 방식
+	//	volSize.x / y / z에 어떤 물리 축을 넣었는지
+	//	boxMinL / boxMaxL를 어떤 축 기준으로 만들었는지
+	//	uvw.y = 1 - uvw.y 같은 보정이 어느 축에 적용됐는지
+
+
+
+
 	float3 invDirL = 1.0 / (rayDirL + 1e-6);
+
 
 	float3 t0L = (boxMinL - rayPosL) * invDirL;
 	float3 t1L = (boxMaxL - rayPosL) * invDirL;
@@ -551,6 +609,7 @@ float3 rayPosVS = rayOriginVS;
 	float3 tminL = min(t0L, t1L);
 	float3 tmaxL = max(t0L, t1L);
 
+	//로컬 파라미터
 	float tNearL = max(max(tminL.x, tminL.y), tminL.z);
 	float tFarL = min(min(tmaxL.x, tmaxL.y), tmaxL.z);
 
@@ -563,8 +622,11 @@ float3 rayPosVS = rayOriginVS;
 	float3 entryL = rayPosL + rayDirL * tNearL;
 	float3 exitL = rayPosL + rayDirL * tFarL;
 
+
+	//월드 기준으로 레이마칭 변경
 	// Transform entry/exit to WORLD
 	// (requires VolumeWorld in your CB)
+	//로컬 -> 월드 거리 변환
 	float3 entryWS = mul(float4(entryL, 1), VolumeWorld).xyz;
 	float3 exitWS = mul(float4(exitL,  1), VolumeWorld).xyz;
 
@@ -580,10 +642,11 @@ float3 rayPosVS = rayOriginVS;
 
 	tNearW = max(tNearW, 0.0);
 
-	//return float4(1, 0, 0, 1);
 
 	// World step size (THIS is the big fix: marching distance is in world units)
 	float maxSteps = VoxelAndMaxSteps.w;
+
+	//월드 단위 stepSize
 	float stepW = (tFarW - tNearW) / maxSteps;
 
 	/* ---------------------------
@@ -648,6 +711,24 @@ float3 rayPosVS = rayOriginVS;
 		float3 uvw = (posL - boxMinL) / (boxMaxL - boxMinL);
 		uvw.y = 1.0 - uvw.y;
 
+
+		////3D볼륨 로컬축이 
+		////u(x) : 좌우, v(y) : 앞뒤, w(z) 
+		////: 위아래(axial 적층)으로 쌓여있는걸 확인
+		//// Sagittal 단면 (X 고정)
+		//float3 uvw = float3( input.uv.x,0.5,input.uv.y);
+		//float v = volumeTex.Sample(samp, uvw, 0).r;
+		//return float4(v, v, v, 1);
+
+		////=>볼륨 3D 텍스처의 W(Z)축은 Axial 방향으로 정의되어 있으며,
+		////현재 볼륨 데이터는 Axial 기준으로 정상 적재됨을 확인함.
+
+
+
+
+
+
+
 		//return float4(uvw, 1);
 
 	/*	if (any(uvw < 0.0) || any(uvw > 1.0))
@@ -656,8 +737,6 @@ float3 rayPosVS = rayOriginVS;
 		//// (optional) keep your margin/edge skip
 		//if (any(uvw < 0.02) || any(uvw > 0.99))
 		//	continue;
-
-
 
 
 		uint dimX, dimY, dimZ;
@@ -674,15 +753,18 @@ float3 rayPosVS = rayOriginVS;
 		//return float4(hu* 2000.0, hu* 2000.0, hu* 2000.0, 1);
 
 
-		float hu = volumeTex.SampleLevel(samp, uvw, 0).r;
-		//return float4(hu, hu, hu, 1);
+		//float hu = volumeTex.SampleLevel(samp, uvw, 0).r;
+		////return float4(hu, hu, hu, 1);
+		//return float4(hu * 0.001, hu * 0.001, hu * 0.001, 1);
 
-		//float hu = volumeTex.SampleLevel(samp, uvwVoxel, 0).r;
+
+		//float hu = volumeTex.SampleLevel(samp, uvw, 0).r;
 		////return float4(hu, hu, hu, 1);
 
+		////float hu = volumeTex.SampleLevel(samp, uvwVoxel, 0).r;
+		//////return float4(hu, hu, hu, 1);
 
-
-
+		float hu = volumeTex.SampleLevel(samp, uvw, 0).r;
 		float huNorm = saturate((hu - HuParams.z) / (HuParams.w - HuParams.z));
 		float4 col = transferFunction.SampleLevel(tfSampler, huNorm, 0);
 
@@ -939,7 +1021,7 @@ float3 rayPosVS = rayOriginVS;
 //	   Screen → Ray setup
 //	=============================== */
 //
-//	//return float4(1, 0, 1, 1); // 자홍
+//	//return float4(1, 0, 1, 1); // 
 //
 //	float2 screenUV = input.uv;
 //

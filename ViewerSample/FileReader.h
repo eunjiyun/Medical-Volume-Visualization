@@ -94,12 +94,12 @@ public:
 		float windowCenter,
 		float windowWidth);
 
-	std::vector<uint16_t> normalizedU16Data;
+	//std::vector<uint16_t> normalizedU16Data;
 	std::vector<float> floatData;
 
 	bool NormalizeVolumeFloat(
 		const std::vector<int16_t>& rawVolume,
-		std::vector<uint16_t>& outVolume,
+
 		float rescaleSlope,
 		float rescaleIntercept,
 		float windowMinHU = -1000.0f,

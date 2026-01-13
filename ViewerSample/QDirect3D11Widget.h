@@ -59,14 +59,9 @@ struct CB
 	XMFLOAT4 volSize;
 
 };
-//struct VolSizeBuffer
-//{
-//	DirectX::XMFLOAT4 volSize;
-//};
 
 
 class FileReader;
-//class MeshRenderer;
 
 
 struct Vertex {
@@ -129,12 +124,6 @@ struct ScreenPoint
 };
 
 
-//struct DebugScreenPoint
-//{
-//	bool valid = false;
-//	QPoint pos;
-//};
-
 struct DebugPoint
 {
 	QPoint pos;
@@ -152,40 +141,9 @@ enum class LandmarkStep
 	Done
 };
 
-////
-////struct MeshConstantBuffer {
-////	XMMATRIX WVP;
-////	//int renderPass;
-////	//float padding[3];
-////};
-//
-////struct MeshConstantBuffer
-////{
-////	DirectX::XMMATRIX WVP;          // 64 bytes
-////	int peelLayer;                  // 4 bytes
-////	float viewportWidth;            // 4 bytes (✅ 분리!)
-////	float viewportHeight;           // 4 bytes (✅ 분리!)
-////	float padding;                  // 4 bytes
-////};  // 총 80 bytes
-//
-//struct MeshConstantBuffer
-//{
-//	DirectX::XMMATRIX WVP;
-//	DirectX::XMMATRIX World;
-//	DirectX::XMMATRIX WorldView;  // ✅ 추가
-//};
-//
-////struct MeshCamConstantBuffer
-////{
-////	DirectX::XMFLOAT3 CameraPosWS;
-////	float  pad;
-////};  
-//
-//struct ClipSettings {
-//	DirectX::XMFLOAT4 clipPlane;  // (nx, ny, nz, d)
-//	int enableClip;
-//	DirectX::XMFLOAT3 padding;
-//};
+
+
+
 class QDirect3D11Widget : public QWidget
 {
 	Q_OBJECT
@@ -302,6 +260,10 @@ public:
 
 	ComPtr<ID3D11ShaderResourceView> texArraySRV;
 	void RenderAllQuads();
+
+
+
+
 private:
 
 
@@ -604,25 +566,6 @@ public:
 	ID3D11VertexShader* m_fullscreenVS{ nullptr };
 	ID3D11Buffer* m_clipSettingsBuffer{ nullptr };  // ✅ 추가!    m_cameraBuffer
 	ID3D11Buffer* m_cameraBuffer{ nullptr };
-
-
-
-
-
-	//// 헤더에 추가
-	//ID3D11Texture2D* m_meshDepthTexture{ nullptr };
-	//ID3D11DepthStencilView* m_meshDepthView{ nullptr };
-
-
-	//// 헤더에 추가
-	//ID3D11Texture2D* m_accumulationTexture = nullptr;
-	//ID3D11RenderTargetView* m_accumulationRTV = nullptr;
-	//ID3D11ShaderResourceView* m_accumulationSRV = nullptr;
-
-	//ID3D11Texture2D* m_revealageTexture = nullptr;
-	//ID3D11RenderTargetView* m_revealageRTV = nullptr;
-	//ID3D11ShaderResourceView* m_revealageSRV = nullptr;
-
 
 
 	// Depth Peeling
