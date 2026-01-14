@@ -779,7 +779,10 @@ bool QDirect3D11Widget::init()
 		XM_PI  // Y축 180도
 	);
 
-	initialWorld= XMMatrixRotationQuaternion(XMQuaternionMultiply(rotX, rotY));
+	float scale = 1.02f; // ← 여기만 바꾸는 것
+	XMMATRIX scaleMat = XMMatrixScaling(scale, scale, scale);
+
+	initialWorld= scaleMat*XMMatrixRotationQuaternion(XMQuaternionMultiply(rotX, rotY));
 
 	worldMat = initialWorld;
 	invWorldMat = XMMatrixInverse(nullptr, worldMat);
@@ -1193,6 +1196,9 @@ void QDirect3D11Widget::FullScreenPassSet()
 	vp.TopLeftY = 0;
 	vp.Width = static_cast<float>(width() / 2);
 	vp.Height = static_cast<float>(height() / 2);
+
+	//vp.Width = static_cast<float>(width() );
+	//vp.Height = static_cast<float>(height() );
 	vp.MinDepth = 0.0f;
 	vp.MaxDepth = 1.0f;
 	m_pDeviceContext->RSSetViewports(1, &vp);
@@ -1333,11 +1339,12 @@ void QDirect3D11Widget::FullScreenPassSet()
 
 
 	// ⭐ 텍스처 바인딩
-	ID3D11ShaderResourceView* srvs[2] = {
+	ID3D11ShaderResourceView* srvs[3] = {
 		 m_volumeSRV.Get(),                          // t0
-		m_transferFunction->GetSRV()          // t1
+		m_transferFunction->GetSRV()   ,       // t1
+		m_depthSRV
 	};
-	m_pDeviceContext->PSSetShaderResources(0, 2, srvs);
+	m_pDeviceContext->PSSetShaderResources(0, 3, srvs);
 
 
 	// ⭐ Sampler 바인딩
@@ -1378,19 +1385,19 @@ void QDirect3D11Widget::UpdateVolumeMatrix()
 	invWorldMat = XMMatrixTranspose(XMMatrixInverse(nullptr, volumeWorld));
 
 
-	XMVECTOR s, r, t;
-	XMMatrixDecompose(&s, &r, &t, worldMat);
-	if (!XMMatrixIsIdentity(userRotation)) {
-		qDebug() << "after rotate World scale:"
-			<< XMVectorGetX(s)
-			<< XMVectorGetY(s)
-			<< XMVectorGetZ(s);
+	//XMVECTOR s, r, t;
+	//XMMatrixDecompose(&s, &r, &t, worldMat);
+	//if (!XMMatrixIsIdentity(userRotation)) {
+	//	qDebug() << "after rotate World scale:"
+	//		<< XMVectorGetX(s)
+	//		<< XMVectorGetY(s)
+	//		<< XMVectorGetZ(s);
 
-		qDebug() << "after rotate World translation:"
-			<< XMVectorGetX(t)
-			<< XMVectorGetY(t)
-			<< XMVectorGetZ(t);
-	}
+	//	qDebug() << "after rotate World translation:"
+	//		<< XMVectorGetX(t)
+	//		<< XMVectorGetY(t)
+	//		<< XMVectorGetZ(t);
+	//}
 
 
 	//XMMATRIX W = userRotation; // VolumeWorld
@@ -3038,7 +3045,7 @@ void QDirect3D11Widget::RenderVolumeView()
 		UINT prevSampleMask = 0xffffffff;
 		m_pDeviceContext->OMGetBlendState(&prevBS, prevBlendFactor, &prevSampleMask);
 
-		//// ✅ (2) 볼륨 렌더링용 상태 설정
+		////// ✅ (2) 볼륨 렌더링용 상태 설정
 		m_pDeviceContext->OMSetDepthStencilState(nullptr, 0);
 
 		// ✅ Depth Test 활성화
@@ -4300,7 +4307,9 @@ void QDirect3D11Widget::RenderAllQuads()
 	for (int i{}; i < 4; ++i)
 	{
 		D3D11_VIEWPORT vp = CreateViewport(i);
-		m_pDeviceContext->RSSetViewports(1, &vp);
+
+		//if(0!=i)
+			m_pDeviceContext->RSSetViewports(1, &vp);
 
 		if (0 == i) {  // 3D View
 

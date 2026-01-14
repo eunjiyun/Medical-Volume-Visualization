@@ -23,7 +23,7 @@ Texture1D<float4> transferFunction : register(t1);
 SamplerState      tfSampler        : register(s1);
 
 // mesh depth (0~1)
-Texture2D<float> SceneDepth : register(t5);
+Texture2D<float> SceneDepth : register(t2);
 Texture2D<float> faceColor : register(t6);
 
 
@@ -38,6 +38,13 @@ struct PSInput
 	float4 pos : SV_POSITION;
 	float2 uv  : TEXCOORD0;
 };
+
+struct PSOut
+{
+	float4 color  : SV_Target0;   // 디버그용 (ΔZ 맵)
+	float  hitZ : SV_Target1;   // (옵션) 볼륨 hit viewZ 저장용 (R32_FLOAT RT 필요)
+};
+
 
 
 // depth01 : 0~1 depth buffer value
@@ -530,13 +537,16 @@ float ReconstructViewZ_InvProj(float2 uv,float depth01, matrix proj)
 //<< floatData[100] << " "
 //<< floatData[10000] << std::endl;
 
+
+
+
 float4 main(PSInput input) : SV_Target
 {
-
-
 	float2 uv = input.uv;
 	float2 ndc = uv * 2.0 - 1.0;
 	ndc.y = -ndc.y;
+
+
 
 	// 1. ray origin (view space)
 	float4 rayOriginVS4 = mul(float4(ndc, 0.0, 1.0), InvProj);
@@ -649,20 +659,61 @@ float4 main(PSInput input) : SV_Target
 	//월드 단위 stepSize
 	float stepW = (tFarW - tNearW) / maxSteps;
 
+
+
+	//float2 uvDepth = (uv - float2(0.0, 0.0)) * 0.5;
+
+	// TL viewport 기준 uv → 전체 화면 depth uv
+	float2 uvFull;
+	uvFull.x = input.uv.x * 0.5;
+	uvFull.y = input.uv.y * 0.5;
+
 	/* ---------------------------
 	   Mesh depth (screen-space) -> view Z
 	--------------------------- */
-	float meshDepth01 = SceneDepth.SampleLevel(pointClamp, uv, 0);
-	bool hasMesh = (meshDepth01 < 0.9999);
-	hasMesh = false;
+	float meshDepth01 = SceneDepth.SampleLevel(pointClamp, uvFull, 0);
+	//bool hasMesh = (meshDepth01 < 0.9999);
+	//hasMesh = false;
 
-	//float meshViewZ = hasMesh
-	//	? ReconstructViewZ_InvProj(uv, meshDepth01, InvProj)
-	//	: -1e9;
+	////float meshViewZ = hasMesh
+	////	? ReconstructViewZ_InvProj(uv, meshDepth01, InvProj)
+	////	: -1e9;
 
 
 
-	float meshViewZ = -1e9;
+	//float meshViewZ = -1e9;
+
+
+	
+
+
+
+	//////바인딩 패스 문제
+	////검은 화면
+	//float d = SceneDepth.SampleLevel(pointClamp, uvFull, 0);
+	////float d = SceneDepth.SampleLevel(faceColorSamp, uv, 0);
+	//return float4(d, d, d, 1);
+
+
+	////빨간색 정사각형
+	//float d01 = SceneDepth.SampleLevel(pointClamp, uv, 0);
+	//float z = ReconstructViewZ_InvProj(uv, d01, InvProj);
+	////return float4(abs(z) / 500.0, 0, 0, 1);
+
+
+	//float meshViewZ = SceneDepth.SampleLevel(pointClamp, uvFull, 0);
+
+	float d01 = SceneDepth.SampleLevel(pointClamp, uvFull, 0);
+	float meshViewZ = ReconstructViewZ_InvProj(uvFull, d01, InvProj);
+
+	//return float4(abs(meshViewZ) / 700, 0, 0, 1);
+
+
+
+
+
+	bool hasMesh = (meshViewZ < 1e8); // background 제외
+
 
 	/* ---------------------------
 	   Accumulation
@@ -674,12 +725,14 @@ float4 main(PSInput input) : SV_Target
 	float entryBiasW = min(stepW * 0.5, 0.5);
 
 
-
-
 	float tStartW = tNearW + entryBiasW;
 
 	//// jitter in WORLD step
 	//float jitter = frac(sin(dot(input.uv * 1000.0, float2(12.9898,78.233))) * 43758.5453);
+
+	float hitViewZ = 0.0;
+	bool  hasHit = false;
+	float deltaZ = 0.0f;
 
 	[loop]
 	for (int i = 0; i < (int)maxSteps; ++i)
@@ -783,6 +836,21 @@ float4 main(PSInput input) : SV_Target
 		if (col.a < 0.001)
 			continue;
 
+
+		if (!hasHit)
+		{
+			hitViewZ = mul(float4(posWS, 1), View).z;
+
+
+			//hitViewZ = tW;   // ray parameter (world distance)
+			hasHit = true;
+
+
+			if (hasMesh)
+				deltaZ = abs(meshViewZ - hitViewZ);
+		}
+
+
 		//// alpha integrate (step in WORLD units now)
 		////float alpha = col.a * stepW * 10.0;
 
@@ -807,12 +875,158 @@ float4 main(PSInput input) : SV_Target
 
 	acc.rgb = pow(saturate(acc.rgb), 1.0 / 2.2);
 
+
+
+	//if (hasHit)
+	//{
+	//	//// 보기 좋게 스케일 (예: 100mm 기준)
+	//	////float viz = saturate(abs(hitViewZ) / 500.0);
+
+	//	////float viz = saturate(hitViewZ / 500.0); // 200mm 기준
+	//	////return float4(viz, viz, viz, 1);
+
+	//	////float viz = saturate((abs(hitViewZ) - 150.0) / 300.0);
+
+	//	////float viz = saturate((abs(hitViewZ) - 250.0) / 250.0);
+
+
+	//	////return float4(viz, viz, viz, 1);
+
+
+	//	////return float4(deltaZ, 0, 0, 1);
+
+	//	//return float4(abs(meshViewZ) / 500.0, 0, 0, 1);
+
+	//	////return float4(abs(hitViewZ) / 500.0, 0, 0, 1);
+
+
+	//	float deltaZ = abs(meshViewZ - hitViewZ);
+	//	return float4(deltaZ / 10.0, 0, 0, 1); // 시각화용
+	//}
+
+	//return float4(0, 0, 0, 1);
+
+
 	if (CameraPosAndAlpha.w == 1.0) return float4(acc.rgb, 1.0);
 	if (CameraPosAndAlpha.w == 0.0) return float4(acc.rgb, 0.0);
 
 	return float4(acc.rgb, 0.6);
 }
 
+
+
+
+// 네 코드의 boxMinL/boxMaxL, intersect 로직은 그대로 쓴다고 가정
+// 여기서는 "tNearW~tFarW"가 이미 구해졌다고 가정하고 최소만 보여줌.
+
+//PSOut main(PSInput input)
+//{
+//	PSOut o;
+//	o.color = float4(0, 0, 0, 1);
+//	o.hitZ = -1e9;
+//
+//	float2 uv = input.uv;
+//
+//	// ---- mesh depth -> viewZ
+//	float meshDepth01 = SceneDepth.SampleLevel(pointClamp, uv, 0);
+//	bool hasMesh = (meshDepth01 < 0.9999);
+//	float meshViewZ = hasMesh ? ReconstructViewZ_InvProj(uv, meshDepth01, InvProj) : -1e9;
+//
+//	// ---- (1) Ray setup (Ortho 가정: rayDirVS 고정, rayOriginVS 픽셀별)
+//	float2 ndc = uv * 2.0 - 1.0;
+//	ndc.y = -ndc.y;
+//
+//	float4 rayOriginVS4 = mul(float4(ndc, 0.0, 1.0), InvProj);
+//	float3 rayPosWS = mul(float4(rayOriginVS4.xyz, 1), InvView).xyz;
+//
+//	float3 rayDirVS = float3(0, 0, 1);
+//	float3 rayDirWS = normalize(mul(float4(rayDirVS, 0), InvView).xyz);
+//
+//	// ---- (2) Intersect volume -> get tNearW, tFarW (네 기존 코드 그대로)
+//	float tNearW, tFarW;
+//	// ... (네가 이미 구현한 local intersect + world t 변환 부분) ...
+//
+//	// 교차 없으면
+//	// if (!hitBox) return black
+//	// 여기서는 hitBox true라고 가정하고 진행
+//
+//	float maxSteps = VoxelAndMaxSteps.w;
+//	float stepW = (tFarW - tNearW) / maxSteps;
+//
+//	float hitAlpha = 0.2;   // “첫 hit” 기준 (0.1~0.3 정도 스윕 가능)
+//	float accA = 0.0;
+//
+//	float tStartW = tNearW + stepW * 0.5;
+//
+//	[loop]
+//	for (int i = 0; i < (int)maxSteps; ++i)
+//	{
+//		float tW = tStartW + i * stepW;
+//		float3 posWS = rayPosWS + rayDirWS * tW;
+//
+//		// world -> volume local
+//		float3 posL = mul(float4(posWS, 1), InvVolumeWorld).xyz;
+//
+//		// local -> uvw
+//		float3 boxMinL = float3(-volSize.x*0.5, -volSize.y*0.5, -volSize.z*0.5);
+//		float3 boxMaxL = -boxMinL;
+//
+//		float3 uvw = (posL - boxMinL) / (boxMaxL - boxMinL);
+//		uvw.y = 1.0 - uvw.y;
+//
+//		// 경계 밖 skip (필수)
+//		if (any(uvw < 0.0) || any(uvw > 1.0))
+//			continue;
+//
+//		float hu = volumeTex.SampleLevel(samp, uvw, 0).r;
+//		float huNorm = saturate((hu - HuParams.z) / (HuParams.w - HuParams.z));
+//		float4 col = transferFunction.SampleLevel(tfSampler, huNorm, 0);
+//
+//		// “hit” 판단은 col.a 기반 (너 볼륨 잘 나오면 이게 가장 쉬움)
+//		float sigma = col.a * 0.02;             // 너 쓰던 densityScale
+//		float alpha = 1.0 - exp(-sigma * stepW);
+//
+//		accA += (1.0 - accA) * alpha;
+//
+//		if (accA >= hitAlpha)
+//		{
+//			// ✅ 첫 hit 지점 viewZ
+//			float volViewZ = mul(float4(posWS, 1), View).z;
+//			o.hitZ = volViewZ;
+//
+//			// ΔZ 맵 출력 (디버그)
+//			float dz = hasMesh ? abs(volViewZ - meshViewZ) : 0.0;
+//
+//			// 보기 좋게 스케일링 (적당히 조절)
+//			float viz = saturate(dz / 20.0); // 20mm 기준으로 흰색
+//			o.color = float4(viz, viz, viz, 1);
+//
+//			return o;
+//		}
+//	}
+//
+//	// hit 못 찾음
+//	o.color = float4(0, 0, 0, 1);
+//	o.hitZ = -1e9;
+//
+//
+//
+//
+//	if (hasHit)
+//	{
+//		// 보기 좋게 스케일 (예: 100mm 기준)
+//		float viz = saturate(abs(hitViewZ) / 100.0);
+//		return float4(viz, viz, viz, 1);
+//	}
+//
+//	return float4(0, 0, 0, 1);
+//
+//
+//
+//
+//
+//	return o;
+//}
 
 
 

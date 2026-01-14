@@ -36,6 +36,13 @@ float4 main(PSInput input) : SV_Target
 
 
 	float meshDepth = SceneDepth.Sample(pointClamp, input.uv).r;
+
+
+	////float d = SceneDepth.SampleLevel(faceColorSamp, uv, 0);
+	//return float4(meshDepth, meshDepth, meshDepth, 1);
+
+
+
 	float hasFace = step(meshDepth, 0.999); // 메쉬가 있는 픽셀만
 	//return float4(hasFace, hasFace, hasFace, 1);
 

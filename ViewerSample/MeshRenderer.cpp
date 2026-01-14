@@ -218,15 +218,15 @@ void MeshRenderer::RenderMeshDepth(ID3D11DeviceContext* context, ID3D11Buffer* m
 
 
 	//// 🔥 Depth pass는 반드시 full-res viewport
-	//D3D11_VIEWPORT fullVP = {};
-	//fullVP.TopLeftX = 0.0f;
-	//fullVP.TopLeftY = 0.0f;
-	//fullVP.Width = static_cast<float>(width/2);   // 전체 화면 width
-	//fullVP.Height = static_cast<float>(height/2);  // 전체 화면 height
-	//fullVP.MinDepth = 0.0f;
-	//fullVP.MaxDepth = 1.0f;
+	D3D11_VIEWPORT fullVP = {};
+	fullVP.TopLeftX = 0.0f;
+	fullVP.TopLeftY = 0.0f;
+	fullVP.Width = static_cast<float>(width);   // 전체 화면 width
+	fullVP.Height = static_cast<float>(height);  // 전체 화면 height
+	fullVP.MinDepth = 0.0f;
+	fullVP.MaxDepth = 1.0f;
 
-	//context->RSSetViewports(1, &vp);
+	
 
 	//context->RSSetViewports(1, &fullVP);
 
@@ -951,34 +951,34 @@ void MeshRenderer::RenderMeshWithCT(
 	meshWorldMat = initialMeshWorld * XMMatrixTranspose(userRotMat);
 	ExtractAxes(&volWorldMat, &meshWorldMat);
 
-	XMVECTOR s, r, t;
-	XMMatrixDecompose(&s, &r, &t, initialMeshWorld);
+	//XMVECTOR s, r, t;
+	//XMMatrixDecompose(&s, &r, &t, initialMeshWorld);
 
-	XMVECTOR s2, r2, t2;
-	XMMatrixDecompose(&s2, &r2, &t2, meshWorldMat);
+	//XMVECTOR s2, r2, t2;
+	//XMMatrixDecompose(&s2, &r2, &t2, meshWorldMat);
 
-	if (XMMatrixIsIdentity(userRotMat)){
-		std::cout << "before rotate mesh World scale: "
-			<< XMVectorGetX(s) << "  "
-			<< XMVectorGetY(s) << "  "
-			<< XMVectorGetZ(s) << std::endl << std::endl;
+	//if (XMMatrixIsIdentity(userRotMat)){
+	//	std::cout << "before rotate mesh World scale: "
+	//		<< XMVectorGetX(s) << "  "
+	//		<< XMVectorGetY(s) << "  "
+	//		<< XMVectorGetZ(s) << std::endl << std::endl;
 
-		std::cout << "before rotate mesh World translation: "
-			<< XMVectorGetX(t) << "  "
-			<< XMVectorGetY(t) << "  "
-			<< XMVectorGetZ(t) << std::endl << std::endl;
-	}
-	else {
-		std::cout << "after rotate mesh World scale: "
-			<< XMVectorGetX(s2) << "  "
-			<< XMVectorGetY(s2) << "  "
-			<< XMVectorGetZ(s2) << std::endl << std::endl;
+	//	std::cout << "before rotate mesh World translation: "
+	//		<< XMVectorGetX(t) << "  "
+	//		<< XMVectorGetY(t) << "  "
+	//		<< XMVectorGetZ(t) << std::endl << std::endl;
+	//}
+	//else {
+	//	std::cout << "after rotate mesh World scale: "
+	//		<< XMVectorGetX(s2) << "  "
+	//		<< XMVectorGetY(s2) << "  "
+	//		<< XMVectorGetZ(s2) << std::endl << std::endl;
 
-		std::cout << "after rotate mesh World translation: "
-			<< XMVectorGetX(t2) << "  "
-			<< XMVectorGetY(t2) << "  "
-			<< XMVectorGetZ(t2) << std::endl << std::endl;
-	}
+	//	std::cout << "after rotate mesh World translation: "
+	//		<< XMVectorGetX(t2) << "  "
+	//		<< XMVectorGetY(t2) << "  "
+	//		<< XMVectorGetZ(t2) << std::endl << std::endl;
+	//}
 
 
 	// HLSL에서는 mul(vector, matrix) 사용
