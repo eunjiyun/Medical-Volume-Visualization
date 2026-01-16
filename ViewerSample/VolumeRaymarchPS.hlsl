@@ -4,7 +4,7 @@ cbuffer CB : register(b0)
 	matrix InvView;
 	matrix InvProj;
 	matrix InvVolumeWorld;
-
+	matrix InvVolumeWorldCorrected;
 	matrix View;
 	matrix Projection;
 
@@ -590,9 +590,23 @@ float4 main(PSInput input) : SV_Target
 	--------------------------- */
 
 
+
+	//float4x4 flipYZ = {
+	//	1.0, 0.0, 0.0, 0.0,
+	//	0.0, -1.0, 0.0, 0.0,
+	//	0.0, 0.0, -1.0, 0.0,
+	//	0.0, 0.0, 0.0, 1.0
+	//};
+
+	////float4 worldPos = mul(float4(input.position, 1.0f), mul(flipYZ, InVolumeWorld));
+	//float 4x4 InvVolumeWorld=
+
+
+
 	//로컬 공간에서의 교차
 	// Transform ray into volume-local space for intersection ONLY
 	float3 rayPosL = mul(float4(rayPosWS, 1), InvVolumeWorld).xyz;
+	//float3 rayPosL = mul(float4(rayPosWS, 1), mul(flipYZ, InVolumeWorld)).xyz;
 
 	//정규화 안 한 것
 	float3 rayDirL = mul(float4(rayDirWS, 0), InvVolumeWorld).xyz;   // NOTE: no normalize here
@@ -755,14 +769,16 @@ float4 main(PSInput input) : SV_Target
 		//	continue;
 
 		// Transform sample position to volume-local for texture lookup
-		float3 posL = mul(float4(posWS, 1), InvVolumeWorld).xyz;
-
+		float3 posL = mul(float4(posWS, 1), InvVolumeWorldCorrected).xyz;
+		//float3 posL = mul(float4(posWS, 1), InvVolumeWorld).xyz;
 
 		//return float4(abs(posL) * 0.01, 1);
 
 		// Local -> UVW
 		float3 uvw = (posL - boxMinL) / (boxMaxL - boxMinL);
-		uvw.y = 1.0 - uvw.y;
+		//uvw.y = 1.0 - uvw.y;
+		uvw.x = 1.0 - uvw.x;
+		uvw.z = 1.0 - uvw.z;
 
 
 		////3D볼륨 로컬축이 

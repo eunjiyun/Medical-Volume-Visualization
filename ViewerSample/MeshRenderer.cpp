@@ -242,11 +242,11 @@ void MeshRenderer::RenderMeshDepth(ID3D11DeviceContext* context, ID3D11Buffer* m
 
 
 
-
 	rotation = XMMatrixRotationX(XM_PI);
 
 	//s r t v p
 
+	XMMATRIX flipYZ = XMMatrixScaling(1.0f, -1.0f, -1.0f);
 
 
 	rotX = XMQuaternionRotationAxis(
@@ -259,11 +259,32 @@ void MeshRenderer::RenderMeshDepth(ID3D11DeviceContext* context, ID3D11Buffer* m
 		XM_PI  // Y축 180도
 	);
 
-	//볼륨 - 메쉬 기본은 rotx, roty 인데 rotation은 메쉬에만 추가로 곱해줌.
-	initialMeshWorld = XMMatrixRotationQuaternion(XMQuaternionMultiply(rotX, rotY))*rotation;
+
+	// 개선 (Y-Z 교환 + X축 반전으로 handedness 맞추기)
+	XMMATRIX coordinateSystemTransform = XMMatrixSet(
+		1.0f, 0.0f, 0.0f, 0.0f,  // X축 반전 (handedness 변경)
+		0.0f, -1.0f, 0.0f, 0.0f,  // Y축 -> Z축
+		0.0f, 0.0f, -1.0f, 0.0f,  // Z축 -> Y축
+		0.0f, 0.0f, 0.0f, 1.0f
+	);
 
 
 
+	//// 테스트할 회전들
+	//XMMATRIX test1 = XMMatrixRotationX(XM_PIDIV2);        // 90도
+	//XMMATRIX test2 = XMMatrixRotationX(-XM_PIDIV2);       // -90도
+	//XMMATRIX test3 = XMMatrixRotationX(XM_PI);            // 180도
+
+	//XMMATRIX test4 = XMMatrixRotationY(XM_PI);            // Y축 180도
+
+	//XMMATRIX test5 = XMMatrixRotationX(-XM_PIDIV2) * XMMatrixRotationY(XM_PI);
+	//XMMATRIX test6 = XMMatrixRotationX(XM_PIDIV2) * XMMatrixRotationZ(XM_PI);
+
+
+	////볼륨 - 메쉬 기본은 rotx, roty 인데 rotation은 메쉬에만 추가로 곱해줌.
+	//initialMeshWorld =coordinateSystemTransform/**flipYZ*rotation*/;
+	//initialMeshWorld = coordinateSystemTransform*XMMatrixRotationQuaternion(XMQuaternionMultiply(rotX, rotY))*rotation*test3;
+	initialMeshWorld = /*coordinateSystemTransform * */XMMatrixRotationQuaternion(XMQuaternionMultiply(rotX, rotY))*rotation;
 
 
 	//스케일을 볼륨걸 적용한 유저 로테이션을 곱해야지 회전 싱크가 맞음
@@ -309,10 +330,7 @@ void MeshRenderer::RenderMeshDepth(ID3D11DeviceContext* context, ID3D11Buffer* m
 
 
 
-
-
-
-	meshWorldMat = initialMeshWorld * XMMatrixTranspose(userRotMat);
+	meshWorldMat = initialMeshWorld * XMMatrixTranspose(userRotMat)/**coordinateSystemTransform*/;
 
 	ExtractAxes(&volWorldMat, &meshWorldMat);
 
@@ -816,52 +834,6 @@ int printRotate{};
 
 
 
-//
-//static int warnCooldown = 0;   // 스팸 방지
-//if (warnCooldown > 0) warnCooldown--;
-//
-//auto Len3 = [](XMVECTOR v) {
-//	return XMVectorGetX(XMVector3Length(v));
-//};
-//
-//auto ShouldWarn = [](XMVECTOR s, XMVECTOR t) {
-//	const float SCALE_EPS = 1e-3f;   // 0.1% (충분히 여유)
-//	const float TRANS_EPS = 1e-2f;   // 0.01 (월드 단위가 mm면 0.01mm)
-//
-//	float sx = XMVectorGetX(s), sy = XMVectorGetY(s), sz = XMVectorGetZ(s);
-//	float tx = XMVectorGetX(t), ty = XMVectorGetY(t), tz = XMVectorGetZ(t);
-//
-//	bool scaleBad =
-//		(fabsf(sx - 1.0f) > SCALE_EPS) ||
-//		(fabsf(sy - 1.0f) > SCALE_EPS) ||
-//		(fabsf(sz - 1.0f) > SCALE_EPS);
-//
-//	bool transBad =
-//		(fabsf(tx) > TRANS_EPS) ||
-//		(fabsf(ty) > TRANS_EPS) ||
-//		(fabsf(tz) > TRANS_EPS);
-//
-//	return scaleBad || transBad;
-//};
-//
-//// --- after rotate ---
-//XMVECTOR s2, r2, t2;
-//XMMatrixDecompose(&s2, &r2, &t2, meshWorldMat);
-//
-//if (warnCooldown == 0 && ShouldWarn(s2, t2))
-//{
-//	std::cout << "[WARN] Pivot/Scale drift detected\n";
-//	std::cout << "scale: "
-//		<< XMVectorGetX(s2) << " "
-//		<< XMVectorGetY(s2) << " "
-//		<< XMVectorGetZ(s2) << "\n";
-//	std::cout << "translation: "
-//		<< XMVectorGetX(t2) << " "
-//		<< XMVectorGetY(t2) << " "
-//		<< XMVectorGetZ(t2) << "\n\n";
-//
-//	warnCooldown = 60; // 60프레임(대략 1초) 동안 재출력 막기
-//}
 
 
 void MeshRenderer::RenderMeshWithCT(
@@ -938,7 +910,7 @@ void MeshRenderer::RenderMeshWithCT(
 	//initialMeshWorld = XMMatrixRotationX(XM_PI)*XMMatrixTranslation(50.0f, 0.0f, 0.0f)
 	//	*XMMatrixRotationQuaternion(XMQuaternionMultiply(rotX, rotY));
 
-	rotation = XMMatrixRotationX(XM_PI);
+	//rotation = XMMatrixRotationX(XM_PI);
 
 	//s r t v p
 	//initialMeshWorld =scale * rotation;                // 그 다음 회전
@@ -946,9 +918,32 @@ void MeshRenderer::RenderMeshWithCT(
 	//initialMeshWorld = rotation/**XMMatrixTranslation(0.0f, 0.0f, 0.0f)*/; // ✅ 스케일 없음
 
 
+	//// 테스트할 회전들
+	//XMMATRIX test1 = XMMatrixRotationX(XM_PIDIV2);        // 90도
+	//XMMATRIX test2 = XMMatrixRotationX(-XM_PIDIV2);       // -90도
+	//XMMATRIX test3 = XMMatrixRotationX(XM_PI);            // 180도
 
-	initialMeshWorld = XMMatrixRotationQuaternion(XMQuaternionMultiply(rotX, rotY))*rotation;
-	meshWorldMat = initialMeshWorld * XMMatrixTranspose(userRotMat);
+	//XMMATRIX test4 = XMMatrixRotationY(XM_PI);            // Y축 180도
+
+	//XMMATRIX test5 = XMMatrixRotationX(-XM_PIDIV2) * XMMatrixRotationY(XM_PI);
+	//XMMATRIX test6 = XMMatrixRotationX(XM_PIDIV2) * XMMatrixRotationZ(XM_PI);
+
+// 개선 (Y-Z 교환 + X축 반전으로 handedness 맞추기)
+	XMMATRIX coordinateSystemTransform = XMMatrixSet(
+		1.0f, 0.0f, 0.0f, 0.0f,  // X축 반전 (handedness 변경)
+		0.0f, -1.0f, 0.0f, 0.0f,  // Y축 -> Z축
+		0.0f, 0.0f, -1.0f, 0.0f,  // Z축 -> Y축
+		0.0f, 0.0f, 0.0f, 1.0f
+	);
+
+
+	//initialMeshWorld = coordinateSystemTransform/**test4*//**rotation*/;
+	
+
+	//initialMeshWorld = coordinateSystemTransform*
+	//	XMMatrixRotationQuaternion(XMQuaternionMultiply(rotX, rotY))*rotation;
+	
+	//meshWorldMat = initialMeshWorld * XMMatrixTranspose(userRotMat);
 	ExtractAxes(&volWorldMat, &meshWorldMat);
 
 	//XMVECTOR s, r, t;

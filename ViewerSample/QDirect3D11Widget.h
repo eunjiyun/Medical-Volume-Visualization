@@ -48,7 +48,7 @@ struct CB
 	DirectX::XMFLOAT4X4  InvView;
 	DirectX::XMFLOAT4X4  InvProj;
 	DirectX::XMFLOAT4X4  InvVolumeWorld;
-
+	DirectX::XMFLOAT4X4 InvVolumeWorldCorrected;
 
 	DirectX::XMFLOAT4X4 View;           // ✅ 추가
 	DirectX::XMFLOAT4X4 Projection;     // ✅ 추가

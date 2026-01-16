@@ -779,10 +779,25 @@ bool QDirect3D11Widget::init()
 		XM_PI  // Y축 180도
 	);
 
-	float scale = 1.02f; // ← 여기만 바꾸는 것
-	XMMATRIX scaleMat = XMMatrixScaling(scale, scale, scale);
+	//float scale = 1.02f; // ← 여기만 바꾸는 것
+	//XMMATRIX scaleMat = XMMatrixScaling(scale, scale, scale);
 
-	initialWorld= scaleMat*XMMatrixRotationQuaternion(XMQuaternionMultiply(rotX, rotY));
+
+		// 테스트할 회전들
+	XMMATRIX test1 = XMMatrixRotationX(XM_PIDIV2);        // 90도
+	XMMATRIX test2 = XMMatrixRotationX(-XM_PIDIV2);       // -90도
+	XMMATRIX test3 = XMMatrixRotationX(XM_PI);            // 180도
+
+	XMMATRIX test4 = XMMatrixRotationY(XM_PI);            // Y축 180도
+
+	XMMATRIX test5 = XMMatrixRotationX(-XM_PIDIV2) * XMMatrixRotationY(XM_PI);
+	//XMMATRIX test6 = XMMatrixRotationX(XM_PIDIV2) * XMMatrixRotationZ(XM_PI);
+	XMMATRIX test6 = XMMatrixRotationX(XM_PI);
+
+
+
+
+	initialWorld= /*scaleMat**/test6*XMMatrixRotationQuaternion(XMQuaternionMultiply(rotX, rotY));
 
 	worldMat = initialWorld;
 	invWorldMat = XMMatrixInverse(nullptr, worldMat);
@@ -1251,6 +1266,8 @@ void QDirect3D11Widget::FullScreenPassSet()
 	//cb.InvVolumeWorld = XMMatrixTranspose(iw);
 
 
+
+
 	m_pDeviceContext->OMSetDepthStencilState(m_VolumeDepthState.Get(), 0);
 	//m_pDeviceContext->OMSetDepthStencilState(meshRenderer->depthReadState, 0);
 
@@ -1258,7 +1275,30 @@ void QDirect3D11Widget::FullScreenPassSet()
 	XMStoreFloat4x4(&cb.InvView, XMMatrixTranspose(invViewMat));
 	XMStoreFloat4x4(&cb.InvProj, XMMatrixTranspose(invProjMat));
 	XMStoreFloat4x4(&cb.InvVolumeWorld, XMMatrixTranspose(invWorldMat));
+	//0116
 
+	XMMATRIX AxisFix = XMMatrixSet(
+		1.0f, 0.0f, 0.0f, 0.0f,  // X축 반전 (handedness 변경)
+		0.0f, -1.0f, 0.0f, 0.0f,  // Y축 -> Z축
+		0.0f, 0.0f, -1.0f, 0.0f,  // Z축 -> Y축
+		0.0f, 0.0f, 0.0f, 1.0f
+	);
+
+	// 테스트할 회전들
+XMMATRIX test1 = XMMatrixRotationX(XM_PIDIV2);        // 90도
+XMMATRIX test2 = XMMatrixRotationX(-XM_PIDIV2);       // -90도
+XMMATRIX test3 = XMMatrixRotationX(XM_PI);            // 180도
+
+XMMATRIX test4 = XMMatrixRotationY(XM_PI);            // Y축 180도
+
+XMMATRIX test5 = XMMatrixRotationX(-XM_PIDIV2) * XMMatrixRotationY(XM_PI);
+//XMMATRIX test6 = XMMatrixRotationX(XM_PIDIV2) * XMMatrixRotationZ(XM_PI);
+XMMATRIX test6 = XMMatrixRotationZ(XM_PIDIV2);
+
+	XMMATRIX VolumeWorldCorrected = /*AxisFix **/ worldMat;
+	XMMATRIX InvVolumeWorldCorrected = XMMatrixInverse(nullptr, VolumeWorldCorrected);
+
+	XMStoreFloat4x4(&cb.InvVolumeWorldCorrected, XMMatrixTranspose(InvVolumeWorldCorrected));
 
 
 
