@@ -15,8 +15,8 @@ struct MeshConstantBuffer
 struct MeshConstantBufferWithCT
 {
 	XMMATRIX WVP;
-	XMMATRIX World;
-	XMMATRIX WorldView;
+	XMMATRIX View;
+	XMMATRIX World;  // ✅ 추가: View 행렬
 	XMFLOAT4 CTBlendParams;  // ⭐ x = strength, yzw = unused
 };
 
@@ -78,6 +78,8 @@ public:
 	//float meshScale{ /*0.006755915f*/ };
 	float meshScale{ 1 };
 
+	ID3D11Texture2D*	sceneDepthTexture=nullptr;
+
 	XMVECTOR rotY, rotX;
 	DirectX::XMMATRIX rotation;
 	XMMATRIX volWorldMat;
@@ -88,8 +90,8 @@ public:
 	//bool ExtractAxes(XMMATRIX* volWorld, XMMATRIX* meshWorld);
 	bool ExtractAxes(const XMMATRIX* volWorld, const XMMATRIX* meshWorld);
 	void RenderMeshDepth(ID3D11DeviceContext* context, ID3D11Buffer* m_meshVertexBuffer,
-		ID3D11VertexShader* m_meshVS, ID3D11PixelShader* m_meshPS, ID3D11InputLayout* m_meshInputLayout,
-		ID3D11Buffer* m_clipSettingsBuffer, ID3D11Buffer* m_meshConstantBuffer, ID3D11ShaderResourceView* m_meshTexture,
+		ID3D11VertexShader* m_meshVS, ID3D11PixelShader* m_meshPS, ID3D11RenderTargetView* sceneDepthRTV ,ID3D11InputLayout* m_meshInputLayout,
+		ID3D11Buffer* m_clipSettingsBuffer, ID3D11Buffer* m_meshConstantBuffer, ID3D11Texture2D* m_meshTexture,
 		ID3D11SamplerState* m_MeshSamplerState, ID3D11Device* m_pDevice, int m_meshVertexCount,
 		float maxMesh, float maxPhysicalVol, float volWidth, float volheight, float volDepth, float overallSize,
 		XMMATRIX w, XMMATRIX v, XMMATRIX p, float width, float height);
@@ -113,7 +115,8 @@ public:
 		ID3D11Buffer* m_meshConstantBuffer,
 		ID3D11ShaderResourceView* m_meshTexture,      // 얼굴 텍스처
 		ID3D11ShaderResourceView* ctTexture,          // ⭐ CT 텍스처
-		ID3D11ShaderResourceView* depthTexture,
+		ID3D11ShaderResourceView* 
+		,
 		ID3D11SamplerState* m_MeshSamplerState,
 		//ID3D11SamplerState* depthSamplerState,
 		ID3D11Device* m_pDevice,

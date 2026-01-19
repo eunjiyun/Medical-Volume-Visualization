@@ -130,6 +130,27 @@ struct DebugPoint
 	ImU32 color;
 };
 
+struct ScaleConstants
+{
+	float optimalScale;
+	float padding[3]; // 16바이트 단위 맞추기 위해 패딩
+};
+
+struct ScaleFitResources
+{
+	ID3D11Texture2D*            deltaZTex = nullptr;
+	ID3D11UnorderedAccessView*  deltaZUAV = nullptr;
+	ID3D11ShaderResourceView*   deltaZSRV = nullptr;
+	ID3D11Texture2D*            stagingTex = nullptr;
+	ID3D11Buffer*               constantBuffer = nullptr;
+
+	UINT width = 0;
+	UINT height = 0;
+
+};
+
+
+
 
 enum class LandmarkStep
 {
@@ -298,6 +319,43 @@ private:
 
 	UINT BytesPerPixel(DXGI_FORMAT format);
 	ID3D11Texture2D* CreateTexture2D(ID3D11Device* device, UINT width, UINT height, DXGI_FORMAT format, const void* initData);
+	ID3D11Texture2D* CreateTexture2DUAV(
+		ID3D11Device* device,
+		UINT width,
+		UINT height,
+		DXGI_FORMAT format,
+		ID3D11UnorderedAccessView** outUAV
+	);
+
+	ID3D11Texture2D* CreateSrvScaleFit(
+		ID3D11Device* device,
+		DXGI_FORMAT format,
+		ID3D11ShaderResourceView** outSRV
+	);
+
+	//ID3D11Texture2D* CreateStagingTexScaleFit(
+	//	ID3D11Device* device,
+	//	DXGI_FORMAT format,
+	//	ID3D11ShaderResourceView** outSRV
+	//);
+
+	ScaleFitResources scaleRes;
+	bool CreateScaleFitResources(
+		ID3D11Device* device,
+		UINT width,
+		UINT height,
+		DXGI_FORMAT format,
+		ScaleFitResources& outRes
+	);
+
+	float ComputeOptimalScale(double mean, double rms);
+	// UAV → CPU → 통계 → 상수 버퍼 업데이트 함수
+	void ProcessDeltaZAndUpdateConstantBuffer(
+		ID3D11DeviceContext* context,
+		ScaleFitResources& resources
+	);
+	
+	
 	ID3D11ShaderResourceView* CreateTextureSRV(ID3D11Device* device, ID3D11Texture2D* texture);
 	void InitTextures(UINT, UINT);
 
@@ -364,8 +422,6 @@ signals:
 	void mouseMoved(QMouseEvent *);
 	void mouseClicked(QMouseEvent *);
 	void mouseReleased(QMouseEvent *);
-
-
 
 private slots:
 	void onFrame();
@@ -475,6 +531,7 @@ public:
 
 	ID3D11DepthStencilView* m_pDepthStencilView;  // ← 이게 있는지 확인
 	ID3D11Texture2D* m_depthTexture = nullptr;
+	ID3D11RenderTargetView* m_sceneDepthRTV = nullptr;
 
 	// // ✅ 각 평면의 World Matrix를 저장
 
@@ -536,6 +593,7 @@ public:
 	FileReader* fileReader = nullptr;
 	MeshRenderer* meshRenderer{ nullptr };
 	std::unique_ptr<VolumeToTexture> m_volumeToTexture;  // ⭐ 추가
+	std::unique_ptr<VolumeToTexture> meshSceneDepth;  // ⭐ 추가
 
 	ID3D11ShaderResourceView* axialTextureSRV = nullptr;
 
@@ -545,6 +603,10 @@ public:
 	float viewHeight;
 	DirectX::XMFLOAT3 patientCoord;
 
+	ID3D11UnorderedAccessView* m_deltaZUAV; // 멤버로 보관
+	ID3D11ShaderResourceView* m_deltaZSRV;
+
+	ID3D11RenderTargetView *m_volumeRTV;
 	// PLY 데이터
 	ID3D11Buffer*             m_vertexBuffer = nullptr;
 	int m_vertexCount;
@@ -556,6 +618,11 @@ public:
 	ID3D11PixelShader* m_meshPS{ nullptr };
 	ID3D11InputLayout* m_meshInputLayout{ nullptr };
 	ID3D11ShaderResourceView* m_meshTexture{ nullptr };
+
+
+	ID3D11PixelShader* m_meshDepthPS{ nullptr };
+
+
 
 	//m_pointClampSampler
 	ID3D11SamplerState* m_MeshSamplerState{ nullptr };
@@ -577,6 +644,14 @@ public:
 
 	ID3D11Texture2D* m_colorPeelTextures[MAX_DEPTH_PEELS] = {};
 	ID3D11RenderTargetView* m_colorPeelRTVs[MAX_DEPTH_PEELS] = {};
+
+
+public:
+	//ID3D11RenderTargetView* m_volumeRTV;
+	ID3D11Texture2D* deltaZTex, *stagingTex;
+	ID3D11Buffer*               constantBuffer = nullptr;
+
+
 	ID3D11ShaderResourceView* m_colorPeelSRVs[MAX_DEPTH_PEELS] = {};
 
 	ID3D11ShaderResourceView* m_depthSRV = {};

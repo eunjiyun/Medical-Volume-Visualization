@@ -153,6 +153,7 @@
     <FxCompile Include="SimpleQuad_VS.hlsl" />
     <FxCompile Include="lineVS.hlsl" />
     <FxCompile Include="linePS.hlsl" />
+    <FxCompile Include="MeshDepthPS.hlsl" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="icon.ico">

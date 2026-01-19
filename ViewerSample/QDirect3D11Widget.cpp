@@ -6,6 +6,7 @@
 #include <wrl/client.h>
 #include <vector>
 #include <algorithm>
+#include <comdef.h>
 #include "FileReader.h"
 #include "PLYLoader.h"
 //#include "MeshRenderer.h"
@@ -544,7 +545,7 @@ QDirect3D11Widget::~QDirect3D11Widget()
 
 	meshRenderer->Cleanup();
 	m_volumeToTexture->Shutdown();
-
+	meshSceneDepth->Shutdown();
 }
 
 void QDirect3D11Widget::release()
@@ -669,9 +670,14 @@ bool QDirect3D11Widget::init()
 		m_volumeToTexture->Initialize(m_pDevice, width() / 2, height() / 2);
 
 		std::cout << "VolumeToTexture object created at: " << m_volumeToTexture->m_quadVertexBuffer << std::endl;
+	}
 
+	// ⭐ 한 번만 생성 + 초기화
+	if (!meshSceneDepth) {
+		meshSceneDepth = std::make_unique<VolumeToTexture>();
+		meshSceneDepth->Initialize(m_pDevice, width() / 2, height() / 2);
 
-
+		std::cout << "VolumeToTexture object created at: " << meshSceneDepth->m_quadVertexBuffer << std::endl;
 	}
 
 	rotx = XMMatrixRotationX(-XM_PIDIV2);  // 90도 회전
@@ -839,6 +845,42 @@ bool QDirect3D11Widget::init()
 
 	//"D:\\Data\\faceData\\Mouse_close\\c_facescan_Face.ply"
 	//"D:\\Data\\faceData\\Mouse_close\\c_facescan_Face_texture0.png"
+
+	//deltaZTex = nullptr;
+	////ID3D11UnorderedAccessView* deltaZUAV = nullptr;
+
+	//deltaZTex = CreateTexture2DUAV(
+	//	m_pDevice,
+	//	width(),
+	//	height(),
+	//	DXGI_FORMAT_R32_FLOAT,
+	//	&m_deltaZUAV
+	//);
+
+	//CreateSrvScaleFit(
+	//	m_pDevice,
+	//	DXGI_FORMAT_R32_FLOAT,
+	//	&m_deltaZSRV
+	//);
+
+	/*deltaZTexRtv = CreateTexture2D(
+		m_pDevice,
+		width(),
+		height(),
+		DXGI_FORMAT_R8G8B8A8_UNORM,
+		&m_volumeRTV
+	);
+
+
+	DXCall(m_pDevice->CreateRenderTargetView(deltaZTexRtv, nullptr, &m_volumeRTV));*/
+
+	CreateScaleFitResources(m_pDevice,
+		width(),
+		height(),
+		DXGI_FORMAT_R32_FLOAT,
+		scaleRes);
+
+
 
 	// ✅ PLY 메쉬 로드 추가
 	if (!LoadMeshFromPLY("D:\\Data\\faceData\\Mouse_open\\c_facescan_Face.ply", m_pDevice)) {
@@ -1386,6 +1428,17 @@ XMMATRIX test6 = XMMatrixRotationZ(XM_PIDIV2);
 	};
 	m_pDeviceContext->PSSetShaderResources(0, 3, srvs);
 
+	//// ✅ 바인딩 직후 확인
+	//qDebug() << "SceneDepth SRV:" << (m_depthSRV ? "OK" : "NULL");
+
+	//// SceneDepth 텍스처가 실제로 데이터를 가지고 있는지 확인
+	//D3D11_TEXTURE2D_DESC desc;
+
+
+	//m_depthTexture->GetDesc(&desc);
+	//qDebug() << "SceneDepth format:" << desc.Format;
+	//qDebug() << "SceneDepth size:" << desc.Width << "x" << desc.Height;
+
 
 	// ⭐ Sampler 바인딩
 	ID3D11SamplerState* samplers[2] = {
@@ -1775,6 +1828,61 @@ bool QDirect3D11Widget::InitializeMeshShaders() {
 		psBlob->GetBufferSize(),
 		nullptr,
 		&m_meshPS
+	);
+
+	psBlob->Release();
+
+	if (FAILED(hr)) {
+		return false;
+	}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	// Pixel Shader 컴파일
+	//ID3DBlob* psBlob = nullptr;
+	hr = D3DCompileFromFile(
+		L"MeshDepthPS.hlsl",
+		nullptr,
+		nullptr,
+		"main",
+		"ps_5_0",
+		D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION,
+		0,
+		&psBlob,
+		&errorBlob
+	);
+
+	if (FAILED(hr)) {
+		if (errorBlob) {
+			qDebug() << "PS compile error:" << (char*)errorBlob->GetBufferPointer();
+			errorBlob->Release();
+		}
+		return false;
+	}
+
+	// Pixel Shader 생성
+	hr = m_pDevice->CreatePixelShader(
+		psBlob->GetBufferPointer(),
+		psBlob->GetBufferSize(),
+		nullptr,
+		&m_meshDepthPS
 	);
 
 	psBlob->Release();
@@ -2944,6 +3052,454 @@ ID3D11Texture2D* QDirect3D11Widget::CreateTexture2D(ID3D11Device* device, UINT w
 	return texture;
 }
 
+ID3D11Texture2D* QDirect3D11Widget::CreateTexture2DUAV(
+	ID3D11Device* device,
+	UINT width,
+	UINT height,
+	DXGI_FORMAT format,
+	ID3D11UnorderedAccessView** outUAV
+)
+{
+	if (!device || !outUAV)
+		return nullptr;
+
+	*outUAV = nullptr;
+
+	// UAV용 텍스처 (ΔZ 저장용)
+	D3D11_TEXTURE2D_DESC desc = {};
+	desc.Width = width;
+	desc.Height = height;
+	desc.MipLevels = 1;
+	desc.ArraySize = 1;
+	desc.Format = format; // DXGI_FORMAT_R32_FLOAT 권장
+	desc.SampleDesc.Count = 1;
+	desc.Usage = D3D11_USAGE_DEFAULT;
+	desc.BindFlags = D3D11_BIND_UNORDERED_ACCESS | D3D11_BIND_SHADER_RESOURCE;
+	desc.CPUAccessFlags = 0;
+	desc.MiscFlags = 0;
+
+	ID3D11Texture2D* texture = nullptr;
+	HRESULT hr = device->CreateTexture2D(&desc, nullptr, &texture);
+	if (FAILED(hr))
+	{
+		return nullptr;
+	}
+
+	// UAV 생성
+	D3D11_UNORDERED_ACCESS_VIEW_DESC uavDesc = {};
+	uavDesc.Format = format;
+	uavDesc.ViewDimension = D3D11_UAV_DIMENSION_TEXTURE2D;
+	uavDesc.Texture2D.MipSlice = 0;
+
+	hr = device->CreateUnorderedAccessView(texture, &uavDesc, outUAV);
+	if (FAILED(hr))
+	{
+		texture->Release();
+		return nullptr;
+	}
+
+	return texture;
+}
+
+ID3D11Texture2D* QDirect3D11Widget::CreateSrvScaleFit(
+	ID3D11Device* device,
+	DXGI_FORMAT format,
+	ID3D11ShaderResourceView** outSRV
+)
+{
+	//ID3D11ShaderResourceView* pSRV = nullptr;
+
+	D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+	srvDesc.Format = format; // UAV와 동일한 포맷
+	srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+	srvDesc.Texture2D.MostDetailedMip = 0;
+	srvDesc.Texture2D.MipLevels = 1;
+
+	HRESULT hr = device->CreateShaderResourceView(deltaZTex, &srvDesc, outSRV);
+	if (FAILED(hr))
+	{
+		if (*outSRV)
+			(*outSRV)->Release(); // 실패 시 SRV만 정리
+
+		return nullptr;
+
+	}
+}
+
+//ID3D11Texture2D* CreateStagingTexScaleFit(
+//	ID3D11Device* device,
+//	DXGI_FORMAT format,
+//	ID3D11ShaderResourceView** outSRV
+//)
+//{
+//
+//	// 4. Staging 텍스처 생성 (CPU 읽기용)
+//	D3D11_TEXTURE2D_DESC stagingDesc = texDesc;
+//	stagingDesc.Usage = D3D11_USAGE_STAGING;
+//	stagingDesc.BindFlags = 0;
+//	stagingDesc.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
+//
+//	hr = device->CreateTexture2D(&stagingDesc, nullptr, &outRes.stagingTex);
+//	if (FAILED(hr)) return false;
+//
+//}
+
+bool QDirect3D11Widget::CreateScaleFitResources(
+	ID3D11Device* device,
+	UINT width,
+	UINT height,
+	DXGI_FORMAT format,
+	ScaleFitResources& outRes
+)
+{
+	std::cout << "0번 CreateScaleFitResources" << std::endl;
+
+	if (!device) return false;
+
+	// 1. UAV/SRV용 텍스처 생성
+	D3D11_TEXTURE2D_DESC texDesc = {};
+	texDesc.Width = width;
+	texDesc.Height = height;
+	texDesc.MipLevels = 1;
+	texDesc.ArraySize = 1;
+	texDesc.Format = format; // DXGI_FORMAT_R32_FLOAT 권장
+	texDesc.SampleDesc.Count = 1;
+	texDesc.Usage = D3D11_USAGE_DEFAULT;
+	texDesc.BindFlags = D3D11_BIND_UNORDERED_ACCESS | D3D11_BIND_SHADER_RESOURCE;
+	texDesc.CPUAccessFlags = 0;
+	texDesc.MiscFlags = 0;
+
+	// 마지막에 크기 저장
+	outRes.width = width;
+	outRes.height = height;
+
+
+
+	HRESULT hr = device->CreateTexture2D(&texDesc, nullptr, &outRes.deltaZTex);
+	if (FAILED(hr))
+	{
+		_com_error err(hr);
+		LPCTSTR errMsg = err.ErrorMessage();
+
+		std::cout << "1번 CreateTexture2D" << std::endl;
+		OutputDebugString(errMsg); // 디버그 출력창에 메시지 표시
+
+		return false;
+	}
+
+
+	// 2. UAV 생성
+	D3D11_UNORDERED_ACCESS_VIEW_DESC uavDesc = {};
+	uavDesc.Format = format;
+	uavDesc.ViewDimension = D3D11_UAV_DIMENSION_TEXTURE2D;
+	uavDesc.Texture2D.MipSlice = 0;
+
+	hr = device->CreateUnorderedAccessView(outRes.deltaZTex, &uavDesc, &outRes.deltaZUAV);
+	if (FAILED(hr))
+	{
+		_com_error err(hr);
+		LPCTSTR errMsg = err.ErrorMessage();
+
+		std::cout << "2번 CreateUnorderedAccessView" << std::endl;
+		OutputDebugString(errMsg); // 디버그 출력창에 메시지 표시
+
+		return false;
+	}
+
+	// 3. SRV 생성
+	D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+	srvDesc.Format = format;
+	srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+	srvDesc.Texture2D.MostDetailedMip = 0;
+	srvDesc.Texture2D.MipLevels = 1;
+
+	hr = device->CreateShaderResourceView(outRes.deltaZTex, &srvDesc, &outRes.deltaZSRV);
+	if (FAILED(hr))
+	{
+		_com_error err(hr);
+		LPCTSTR errMsg = err.ErrorMessage();
+
+		std::cout << "3번 CreateShaderResourceView" << std::endl;
+		OutputDebugString(errMsg); // 디버그 출력창에 메시지 표시
+
+		return false;
+	}
+
+	// 4. Staging 텍스처 생성 (CPU 읽기용)
+	D3D11_TEXTURE2D_DESC stagingDesc = texDesc;
+	outRes.deltaZTex->GetDesc(&stagingDesc);
+	stagingDesc.Usage = D3D11_USAGE_STAGING;
+	stagingDesc.BindFlags = 0;
+	stagingDesc.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
+	stagingDesc.MiscFlags = 0;
+
+	hr = device->CreateTexture2D(&stagingDesc, nullptr, &outRes.stagingTex);
+	if (FAILED(hr))
+	{
+		_com_error err(hr);
+		LPCTSTR errMsg = err.ErrorMessage();
+
+		std::cout << "4번 CreateTexture2D" << std::endl;
+		OutputDebugString(errMsg); // 디버그 출력창에 메시지 표시
+
+		return false;
+	}
+
+	// 5. 상수 버퍼 생성 (GPU에 다시 넘길 값 저장용)
+	D3D11_BUFFER_DESC cbDesc = {};
+	cbDesc.ByteWidth = sizeof(ScaleConstants);
+	cbDesc.Usage = D3D11_USAGE_DEFAULT;
+	cbDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+	cbDesc.CPUAccessFlags = 0;
+	cbDesc.MiscFlags = 0;
+
+	hr = device->CreateBuffer(&cbDesc, nullptr, &outRes.constantBuffer);
+	if (FAILED(hr))
+	{
+		_com_error err(hr);
+		LPCTSTR errMsg = err.ErrorMessage();
+
+
+		std::cout << "5번 CreateBuffer" << std::endl;
+		OutputDebugString(errMsg); // 디버그 출력창에 메시지 표시
+
+		return false;
+	}
+
+	return true;
+}
+
+
+// 최적 스케일 계산 함수 (예시)
+float QDirect3D11Widget::ComputeOptimalScale(double mean, double rms)
+{
+	// 실제 로직은 구현 필요
+	// 여기서는 단순히 평균과 RMS를 조합한 예시
+	return static_cast<float>(mean / (rms + 1e-6));
+}
+
+// UAV → CPU → 통계 → 상수 버퍼 업데이트 함수
+void QDirect3D11Widget::ProcessDeltaZAndUpdateConstantBuffer(
+	ID3D11DeviceContext* context,
+	ScaleFitResources& resources
+)
+{
+	//// 1. GPU → CPU 복사
+	//context->CopyResource(resources.stagingTex, resources.deltaZTex);
+
+	//// 2. CPU에서 읽기
+	//D3D11_MAPPED_SUBRESOURCE mapped = {};
+	//HRESULT hr = context->Map(resources.stagingTex, 0, D3D11_MAP_READ, 0, &mapped);
+	//if (FAILED(hr))
+	//{
+	//	std::cout << "Map 실패, deltaZTex 읽기 불가" << std::endl;
+	//	return;
+	//}
+
+	////std::cout << "resources.width :" << resources.width << std::endl;
+	////std::cout << "resources.height :" << resources.height << std::endl;
+
+	//float* data = reinterpret_cast<float*>(mapped.pData);
+	//UINT pitch = mapped.RowPitch / sizeof(float);
+
+	//// 3. CPU 통계 처리
+	//double sum = 0.0;
+	//double sumSq = 0.0;
+	//int count = resources.width * resources.height;
+
+	////for (int y = 0; y < resources.height; ++y)
+	////{
+	////	for (int x = 0; x < resources.width; ++x)
+	////	{
+	////		float delta = data[y * pitch + x];
+	////		sum += delta;
+	////		sumSq += delta * delta;
+	////	}
+	////}
+
+
+	//for (int y{}; y < resources.height; ++y)
+	//{
+	//	for (int x{}; x < resources.width; ++x)
+	//	{
+	//		float delta = data[y * pitch + x];
+	//		std::cout << delta << " ";
+
+	//		sum += delta;
+	//		sumSq += delta * delta;
+	//	}
+	//	std::cout << std::endl;
+	//}
+
+
+	//double mean = sum / count;
+	//double rms = sqrt(sumSq / count);
+
+	//context->Unmap(resources.stagingTex, 0);
+
+	//// 4. 최적 스케일 결정
+	//float optimalScale = ComputeOptimalScale(mean, rms);
+
+	//// 5. 상수 버퍼 업데이트 → GPU 전달
+	//ScaleConstants cbData = {};
+	//cbData.optimalScale = optimalScale;
+
+	//context->UpdateSubresource(resources.constantBuffer, 0, nullptr, &cbData, 0, 0);
+
+
+
+
+
+
+
+
+
+
+	////m_depthTexture
+
+	//// UAV 읽기
+	//context->CopyResource(resources.stagingTex, resources.deltaZTex);
+
+	//D3D11_MAPPED_SUBRESOURCE mapped;
+	//context->Map(resources.stagingTex, 0, D3D11_MAP_READ, 0, &mapped);
+
+	//float* data = (float*)mapped.pData;
+	//UINT pitch = mapped.RowPitch / sizeof(float);
+
+	float sum = 0.0f;
+	float sumSq = 0.0f;
+	int validCount = 0;      // 유효한 픽셀 개수
+	int meshOnlyCount = 0;   // 메시만 있는 픽셀
+	int volumeOnlyCount = 0; // 볼륨만 있는 픽셀
+	int overlapCount = 0;    // 교차 영역
+
+	float minDelta = FLT_MAX;
+	float maxDelta = 0.0f;
+
+	//for (int y = 0; y < resources.height; ++y)
+	//{
+	//	for (int x = 0; x < resources.width; ++x)
+	//	{
+	//		float delta = data[y * pitch + x];
+
+	//		if (delta == -1.0f)
+	//		{
+	//			volumeOnlyCount++;  // 볼륨만 있음
+	//		}
+	//		else if (delta == 0.0f)
+	//		{
+	//			// 초기값 0 → 아무것도 없음 (배경)
+	//		}
+	//		else if (delta > 0.0f)
+	//		{
+	//			overlapCount++;     // 메시+볼륨 교차
+	//			sum += delta;
+	//			sumSq += delta * delta;
+	//			validCount++;
+
+	//			minDelta = min(minDelta, delta);
+	//			maxDelta = max(maxDelta, delta);
+	//		}
+	//	}
+	//}
+	
+
+	//sceneDepthTexture
+D3D11_TEXTURE2D_DESC desc;
+meshRenderer->sceneDepthTexture->GetDesc(&desc);
+
+// Staging 텍스처 생성
+D3D11_TEXTURE2D_DESC stagingDesc = desc;
+stagingDesc.Usage = D3D11_USAGE_STAGING;
+stagingDesc.BindFlags = 0;
+stagingDesc.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
+stagingDesc.MiscFlags = 0;
+
+
+//context->CopyResource(resources.stagingTex, resources.deltaZTex);
+
+ID3D11Texture2D* staging = nullptr;
+m_pDevice->CreateTexture2D(&stagingDesc, nullptr, &staging);
+
+// 복사
+context->CopyResource(resources.stagingTex, meshRenderer->sceneDepthTexture);
+
+// 읽기
+D3D11_MAPPED_SUBRESOURCE mapped;
+context->Map(staging, 0, D3D11_MAP_READ, 0, &mapped);
+
+float* data = (float*)mapped.pData;
+UINT pitch = mapped.RowPitch / sizeof(float);
+
+qDebug() << "=== SceneDepth Content ===";
+qDebug() << "Sampling center 10x10 region:";
+
+int centerX = desc.Width / 2;
+int centerY = desc.Height / 2;
+
+for (int y = -5; y < 5; ++y)
+{
+	QString row;
+	for (int x = -5; x < 5; ++x)
+	{
+		float val = data[(centerY + y) * pitch + (centerX + x)];
+		row += QString::number(val, 'f', 2) + " ";
+	}
+	qDebug() << row;
+}
+
+context->Unmap(staging, 0);
+staging->Release();
+
+	//// 중앙 픽셀들 확인
+	//qDebug() << "SceneDepth samples:";
+	//for (int i = 0; i < 10; ++i)
+	//{
+	//	int x = desc.Width / 2 + i;
+	//	int y = desc.Height / 2;
+	//	float d = depthData[y * pitch + x];
+	//	qDebug() << "  [" << x << "," << y << "]:" << d;
+	//}s
+
+
+	context->Unmap(resources.stagingTex, 0);
+
+	// 통계 출력
+	if (validCount > 0)
+	{
+		float avgDelta = sum / validCount;
+		float variance = (sumSq / validCount) - (avgDelta * avgDelta);
+		float stdDev = sqrt(variance);
+
+		qDebug() << "=== Depth Difference Statistics ===";
+		qDebug() << "Valid pixels (overlap):" << overlapCount;
+		qDebug() << "Volume only:" << volumeOnlyCount;
+		qDebug() << "Background:" << (resources.width * resources.height - overlapCount - volumeOnlyCount);
+		qDebug() << "---";
+		qDebug() << "Average ΔZ:" << avgDelta << "mm";
+		qDebug() << "Min ΔZ:" << minDelta << "mm";
+		qDebug() << "Max ΔZ:" << maxDelta << "mm";
+		qDebug() << "Std Dev:" << stdDev << "mm";
+		qDebug() << "---";
+
+		// 정렬 품질 판단
+		if (avgDelta < 5.0f)
+			qDebug() << "Alignment: EXCELLENT";
+		else if (avgDelta < 20.0f)
+			qDebug() << "Alignment: GOOD";
+		else if (avgDelta < 50.0f)
+			qDebug() << "Alignment: MODERATE";
+		else
+			qDebug() << "Alignment: POOR - Consider adjusting scale";
+	}
+	else
+	{
+		//qDebug() << "No overlap detected between mesh and volume!";
+	}
+}
+
+
+
 ID3D11ShaderResourceView* QDirect3D11Widget::CreateTextureSRV(ID3D11Device* device, ID3D11Texture2D* texture)
 {
 	ID3D11ShaderResourceView* srv = nullptr;
@@ -3113,6 +3669,27 @@ void QDirect3D11Widget::RenderVolumeView()
 
 		// ✅ (3) 볼륨 렌더링 수행
 
+		// 1. RTV 설정
+		ID3D11RenderTargetView* rtvs[1] = { m_pSwapChainRTV };
+
+		// 2. UAV 설정
+		ID3D11UnorderedAccessView* uavs[1] = { scaleRes.deltaZUAV };
+
+		
+		// UAV 카운터 없음 → 전부 -1
+		UINT initialCounts[1] = { UINT(-1) };
+
+		// 3. 바인딩
+		m_pDeviceContext->OMSetRenderTargetsAndUnorderedAccessViews(
+			1,          // Num RTVs
+			rtvs,       // RTV array
+			//m_pDepthStencilView, // DSV (있으면 전달, 없으면 nullptr)
+			nullptr,
+			1,          // UAV start slot (⚠ 중요)
+			1,          // Num UAVs
+			uavs,       // UAV array
+			initialCounts
+		);
 
 		FullScreenPassSet();
 
@@ -4365,8 +4942,8 @@ void QDirect3D11Widget::RenderAllQuads()
 				
 
 				meshRenderer->RenderMeshDepth(
-					m_pDeviceContext, m_meshVertexBuffer, m_meshVS, m_meshPS, m_meshInputLayout,
-					m_clipSettingsBuffer, m_meshConstantBuffer, m_meshTexture,
+					m_pDeviceContext, m_meshVertexBuffer, m_meshVS, m_meshPS, meshSceneDepth->m_resultRTV, m_meshInputLayout,
+					m_clipSettingsBuffer, m_meshConstantBuffer, m_depthTexture,
 					m_MeshSamplerState, m_pDevice, m_meshVertexCount,
 					maxMesh, maxPhysicalVol,
 					physicalWidth,
@@ -4549,6 +5126,12 @@ void QDirect3D11Widget::RenderAllQuads()
 
 	ImGui::Render();
 	ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
+
+
+
+
+
+	ProcessDeltaZAndUpdateConstantBuffer(m_pDeviceContext, scaleRes);
 
 	m_pSwapChain->Present(1, 0);
 

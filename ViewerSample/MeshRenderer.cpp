@@ -199,22 +199,54 @@ void MeshRenderer::CreateTwoPassStates(ID3D11Device* device)
 }
 
 void MeshRenderer::RenderMeshDepth(ID3D11DeviceContext* context, ID3D11Buffer* m_meshVertexBuffer,
-	ID3D11VertexShader* m_meshVS, ID3D11PixelShader* m_meshPS, ID3D11InputLayout* m_meshInputLayout,
-	ID3D11Buffer* m_clipSettingsBuffer, ID3D11Buffer* m_meshConstantBuffer, ID3D11ShaderResourceView* m_meshTexture,
+	ID3D11VertexShader* m_meshVS, ID3D11PixelShader* m_meshPS, ID3D11RenderTargetView* sceneDepthRTV , ID3D11InputLayout* m_meshInputLayout,
+	ID3D11Buffer* m_clipSettingsBuffer, ID3D11Buffer* m_meshConstantBuffer,  ID3D11Texture2D* m_meshTexture,
 	ID3D11SamplerState* m_MeshSamplerState, ID3D11Device* m_pDevice, int m_meshVertexCount,
 	float maxMesh, float maxPhysicalVol, float volWidth, float volHeight, float volDepth, float overallSize,
 	XMMATRIX userRotMat, XMMATRIX v, XMMATRIX p, float width, float height)
 {
+	if (!m_meshVertexBuffer || m_meshVertexCount == 0) {
+		std::cout << "[RenderMeshDepth] ❌ VertexBuffer 없음 또는 VertexCount=0" << std::endl;
+		return;
+	}
+
+	std::cout << "[RenderMeshDepth] 시작" << std::endl;
+
+
 	ID3D11RenderTargetView* curRTV = nullptr;
 	ID3D11DepthStencilView* curDSV = nullptr;
 	context->OMGetRenderTargets(1, &curRTV, &curDSV);
-	//std::cout << "Bound DSV: " << curDSV << " expected: " << m_pDepthStencilView << std::endl;
+	std::cout << "[RenderMeshDepth] OMGetRenderTargets: curRTV=" << curRTV << " curDSV=" << curDSV << std::endl;
+
+
 	if (curRTV) curRTV->Release();
+	if (!curDSV) {
+		std::cout << "[RenderMeshDepth] ❌ curDSV가 nullptr" << std::endl;
+		return;
+	}
+
+
+
+
+	// ✅ SceneDepth를 RenderTarget으로 설정
+	ID3D11RenderTargetView* rtvs[] = { sceneDepthRTV };
+	context->OMSetRenderTargets(1, rtvs, curDSV);
+	std::cout << "[RenderMeshDepth] OMSetRenderTargets 완료" << std::endl;
+
+
+	// ✅ SceneDepth 클리어
+	float clearColor[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
+	HRESULT hr = S_OK;
+	//hr = context->ClearRenderTargetView(sceneDepthRTV, clearColor);
+
+	context->ClearDepthStencilView(curDSV,
+		D3D11_CLEAR_DEPTH, 1.0f, 0);
+
 	if (curDSV) curDSV->Release();
 
 
 
-	if (!m_meshVertexBuffer || m_meshVertexCount == 0) return;
+
 
 
 	//// 🔥 Depth pass는 반드시 full-res viewport
@@ -226,6 +258,17 @@ void MeshRenderer::RenderMeshDepth(ID3D11DeviceContext* context, ID3D11Buffer* m
 	fullVP.MinDepth = 0.0f;
 	fullVP.MaxDepth = 1.0f;
 
+
+
+
+	//// ✅ SceneDepth를 RenderTarget으로 설정
+	//ID3D11RenderTargetView* rtvs[] = { rtv };  // ← 추가 필요
+	//context->OMSetRenderTargets(1, rtvs, depthStencilView);
+
+	//// SceneDepth 클리어
+	//float clearColor[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
+	//context->ClearRenderTargetView(m_sceneDepthRTV, clearColor);
+
 	
 
 	//context->RSSetViewports(1, &fullVP);
@@ -236,7 +279,7 @@ void MeshRenderer::RenderMeshDepth(ID3D11DeviceContext* context, ID3D11Buffer* m
 	// ========== Shader 바인딩 ==========
 	context->VSSetShader(m_meshVS, nullptr, 0);
 	//context->PSSetShader(m_meshPS, nullptr, 0); // 🔥
-	context->PSSetShader(nullptr, nullptr, 0); // 🔥
+	context->PSSetShader(m_meshPS, nullptr, 0); // 🔥
 	context->IASetInputLayout(m_meshInputLayout);
 
 
@@ -337,16 +380,21 @@ void MeshRenderer::RenderMeshDepth(ID3D11DeviceContext* context, ID3D11Buffer* m
 	// HLSL에서는 mul(vector, matrix) 사용
 	  // 실제 적용 순서: S -> R -> T (의도한 대로)
 
-	MeshConstantBuffer cb;
-	cb.WVP = XMMatrixTranspose(meshWorldMat * v * p);
-	cb.World = XMMatrixTranspose(meshWorldMat);
-	cb.WorldView = XMMatrixTranspose(meshWorldMat *v);
+	MeshConstantBufferWithCT cbM;
+	cbM.WVP = XMMatrixTranspose(meshWorldMat * v * p);
+	cbM.View = XMMatrixTranspose(v);
+	cbM.World = XMMatrixTranspose(meshWorldMat);
+	//cbM.CTBlendParams = XMFLOAT4(ctBlendStrength, 0.0f, 0.0f, faceBlend);  // ⭐ CT 강도
 
-	context->UpdateSubresource(m_meshConstantBuffer, 0, nullptr, &cb, 0, 0);
+
+
+	context->UpdateSubresource(m_meshConstantBuffer, 0, nullptr, &cbM, 0, 0);
 	context->VSSetConstantBuffers(0, 1, &m_meshConstantBuffer);
 
-	context->UpdateSubresource(m_meshConstantBuffer, 0, nullptr, &cb, 0, 0);
-	context->VSSetConstantBuffers(0, 1, &m_meshConstantBuffer);
+	//// 깊이 스테이트
+	//context->OMSetDepthStencilState(depthWriteState, 0);
+	//context->OMSetBlendState(nullptr, nullptr, 0xffffffff);
+	//context->RSSetState(rastState);
 
 	// ========== Clipping Settings ==========
 	ClipSettings cs;
@@ -356,9 +404,9 @@ void MeshRenderer::RenderMeshDepth(ID3D11DeviceContext* context, ID3D11Buffer* m
 	context->UpdateSubresource(m_clipSettingsBuffer, 0, nullptr, &cs, 0, 0);
 	context->PSSetConstantBuffers(1, 1, &m_clipSettingsBuffer);
 
-	// ========== Texture/Sampler ==========
-	context->PSSetShaderResources(0, 1, &m_meshTexture);
-	context->PSSetSamplers(0, 1, &m_MeshSamplerState);
+	//// ========== Texture/Sampler ==========
+	//context->PSSetShaderResources(0, 1, &m_meshTexture);
+	//context->PSSetSamplers(0, 1, &m_MeshSamplerState);
 
 	//// ========== Rasterizer ==========
 	//D3D11_RASTERIZER_DESC rastDesc = {};
@@ -427,6 +475,21 @@ void MeshRenderer::RenderMeshDepth(ID3D11DeviceContext* context, ID3D11Buffer* m
 	// 렌더링 (Depth만 기록)
 	context->Draw(m_meshVertexCount, 0);
 
+
+
+	//// ✅ 깊이 버퍼를 SceneDepth 텍스처로 복사
+	////ID3D11Texture2D* depthTexture = nullptr;
+	//curDSV->GetResource((ID3D11Resource**)&m_meshTexture);
+
+	//if (curDSV) curDSV->Release();
+
+	//if (m_meshTexture && sceneDepthTexture)
+	//{
+	//	// Depth Stencil Buffer → SceneDepth 복사
+	//	context->CopyResource(sceneDepthTexture, m_meshTexture);
+	//}
+
+	//if (m_meshTexture) m_meshTexture->Release();
 
 }
 
@@ -979,8 +1042,10 @@ void MeshRenderer::RenderMeshWithCT(
 	// HLSL에서는 mul(vector, matrix) 사용
   // 실제 적용 순서: S -> R -> T (의도한 대로)
 	cbM.WVP = XMMatrixTranspose(meshWorldMat * v * p);
+
+	cbM.View = XMMatrixTranspose(v);
 	cbM.World = XMMatrixTranspose(meshWorldMat);
-	cbM.WorldView = XMMatrixTranspose(meshWorldMat *v);
+
 	cbM.CTBlendParams = XMFLOAT4(ctBlendStrength, 0.0f, 0.0f, faceBlend);  // ⭐ CT 강도
 
 
