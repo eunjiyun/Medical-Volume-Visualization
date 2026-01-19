@@ -266,6 +266,9 @@ void MeshRenderer::RenderMeshDepth(ID3D11DeviceContext* context, ID3D11Buffer* m
 
 
 
+
+
+
 	//스케일을 볼륨걸 적용한 유저 로테이션을 곱해야지 회전 싱크가 맞음
 	//전치 행렬을 안 쓰고 전치 안 한 사용자 회전 행렬을 메쉬에 적용해서 그런걸지도? 
 
@@ -327,8 +330,6 @@ void MeshRenderer::RenderMeshDepth(ID3D11DeviceContext* context, ID3D11Buffer* m
 	context->UpdateSubresource(m_meshConstantBuffer, 0, nullptr, &cb, 0, 0);
 	context->VSSetConstantBuffers(0, 1, &m_meshConstantBuffer);
 
-	context->UpdateSubresource(m_meshConstantBuffer, 0, nullptr, &cb, 0, 0);
-	context->VSSetConstantBuffers(0, 1, &m_meshConstantBuffer);
 
 	// ========== Clipping Settings ==========
 	ClipSettings cs;
@@ -419,215 +420,18 @@ float MeshRenderer::ComputeHandedness(XMVECTOR X, XMVECTOR Y, XMVECTOR Z)
 }
 
 
-
-//bool MeshRenderer::ExtractAxes(XMMATRIX* volWorld, XMMATRIX* meshWorld)
-//{
-//	Axes volAx, meshAx;
-//
-//	// Row-major 기준
-//	volAx.X = XMVectorSet((*volWorld).r[0].m128_f32[0],
-//		(*volWorld).r[0].m128_f32[1],
-//		(*volWorld).r[0].m128_f32[2],
-//		0.0f);
-//
-//	volAx.Y = XMVectorSet((*volWorld).r[1].m128_f32[0],
-//		(*volWorld).r[1].m128_f32[1],
-//		(*volWorld).r[1].m128_f32[2],
-//		0.0f);
-//
-//	volAx.Z = XMVectorSet((*volWorld).r[2].m128_f32[0],
-//		(*volWorld).r[2].m128_f32[1],
-//		(*volWorld).r[2].m128_f32[2],
-//		0.0f);
-//
-//	// 방향 비교용이므로 정규화
-//	volAx.X = XMVector3Normalize(volAx.X);
-//	volAx.Y = XMVector3Normalize(volAx.Y);
-//	volAx.Z = XMVector3Normalize(volAx.Z);
-//
-//
-//
-//	// Row-major 기준
-//	meshAx.X = XMVectorSet((*meshWorld).r[0].m128_f32[0],
-//		(*meshWorld).r[0].m128_f32[1],
-//		(*meshWorld).r[0].m128_f32[2],
-//		0.0f);
-//
-//	meshAx.Y = XMVectorSet((*meshWorld).r[1].m128_f32[0],
-//		(*meshWorld).r[1].m128_f32[1],
-//		(*meshWorld).r[1].m128_f32[2],
-//		0.0f);
-//
-//	meshAx.Z = XMVectorSet((*meshWorld).r[2].m128_f32[0],
-//		(*meshWorld).r[2].m128_f32[1],
-//		(*meshWorld).r[2].m128_f32[2],
-//		0.0f);
-//	 
-//	// 방향 비교용이므로 정규화
-//	meshAx.X = XMVector3Normalize(meshAx.X);
-//	meshAx.Y = XMVector3Normalize(meshAx.Y);
-//	meshAx.Z = XMVector3Normalize(meshAx.Z);
-//
-//
-//	float dotX = XMVectorGetX(XMVector3Dot(volAx.X, meshAx.X));
-//	float dotY = XMVectorGetX(XMVector3Dot(volAx.Y, meshAx.Y));
-//	float dotZ = XMVectorGetX(XMVector3Dot(volAx.Z, meshAx.Z));
-//
-//	bool axisMatched =
-//		fabs(dotX) > 0.99f &&
-//		fabs(dotY) > 0.99f &&
-//		fabs(dotZ) > 0.99f;
-//
-//
-//	/*std::cout << "[Axis Dot Product]" << std::endl;
-//	std::cout << "X axis dot:" << dotX << std::endl;
-//	std::cout << "Y axis dot:" << dotY << std::endl;
-//	std::cout << "Z axis dot:" << dotZ << std::endl << std::endl;
-//
-//
-//	if (dotX < 0) std::cout << "⚠ X axis flipped" << std::endl;
-//	if (dotY < 0)std::cout << "⚠ Y axis flipped" << std::endl;
-//	if (dotZ < 0) std::cout << "⚠ Z axis flipped" << std::endl << std::endl;
-//
-//	if (axisMatched)
-//		std::cout << "==============volume and mesh axes are match" << std::endl;
-//	else
-//		std::cout << "@@@@@@@@@@@@volume and mesh axes are not match" << std::endl;*/
-//
-//
-//
-//		// X축 이동
-//	{
-//		XMVECTOR delta = XMVectorSet(50, 0, 0, 0); // +X 이동
-//		XMVECTOR volPos0 = XMVector3TransformCoord(XMVectorZero(), (*volWorld));
-//		XMVECTOR meshPos0 = XMVector3TransformCoord(XMVectorZero(), (*meshWorld));
-//
-//		XMVECTOR volPos1 = XMVector3TransformCoord(delta, (*volWorld));
-//		XMVECTOR meshPos1 = XMVector3TransformCoord(delta, (*meshWorld));
-//
-//		XMVECTOR volMove = XMVector3Normalize(XMVectorSubtract(volPos1, volPos0));
-//		XMVECTOR meshMove = XMVector3Normalize(XMVectorSubtract(meshPos1, meshPos0));
-//
-//		float moveDot = XMVectorGetX(XMVector3Dot(volMove, meshMove));
-//
-//		std::cout << "[X축] ";
-//		if (moveDot > 0.99f)       std::cout << "두 벡터는 거의 같은 방향입니다.\n";
-//		else if (moveDot > 0.0f)   std::cout << "두 벡터는 유사한 방향(θ < 90°)입니다.\n";
-//		else if (moveDot == 0.0f)  std::cout << "두 벡터는 직교합니다.\n";
-//		else {
-//			std::cout << "두 벡터는 반대 방향입니다. → X축 반전 적용\n";
-//			(*meshWorld) = XMMatrixMultiply(XMMatrixScaling(-1, 1, 1), (*meshWorld));
-//
-//			// ✅ 반전 후 다시 검사
-//			meshPos1 = XMVector3TransformCoord(delta, (*meshWorld));
-//			meshMove = XMVector3Normalize(XMVectorSubtract(meshPos1, meshPos0));
-//			moveDot = XMVectorGetX(XMVector3Dot(volMove, meshMove));
-//
-//			if (moveDot > 0.99f)
-//				std::cout << "반전 적용 후: 방향 일치 확인 완료!\n";
-//			else
-//				std::cout << "반전 적용 후에도 방향 불일치!\n";
-//		}
-//
-//		//// ✅ 실제 이동 적용
-//		//XMMATRIX moveMatrix = XMMatrixTranslationFromVector(delta);
-//		//(*volWorld) = XMMatrixMultiply(moveMatrix, (*volWorld));
-//		//(*meshWorld) = XMMatrixMultiply(moveMatrix, (*meshWorld));
-//
-//		//std::cout << "볼륨과 메쉬를 X축으로 +50 이동 완료!\n";
-//
-//	}
-//
-//	// Y축 이동
-//	{
-//		XMVECTOR delta = XMVectorSet(0, 50, 0, 0); // +Y 이동
-//		XMVECTOR volPos0 = XMVector3TransformCoord(XMVectorZero(), (*volWorld));
-//		XMVECTOR meshPos0 = XMVector3TransformCoord(XMVectorZero(), (*meshWorld));
-//
-//		XMVECTOR volPos1 = XMVector3TransformCoord(delta, (*volWorld));
-//		XMVECTOR meshPos1 = XMVector3TransformCoord(delta, (*meshWorld));
-//
-//		XMVECTOR volMove = XMVector3Normalize(XMVectorSubtract(volPos1, volPos0));
-//		XMVECTOR meshMove = XMVector3Normalize(XMVectorSubtract(meshPos1, meshPos0));
-//
-//		float moveDot = XMVectorGetX(XMVector3Dot(volMove, meshMove));
-//
-//		std::cout << "[Y축] ";
-//		if (moveDot > 0.99f)       std::cout << "두 벡터는 거의 같은 방향입니다.\n";
-//		else if (moveDot > 0.0f)   std::cout << "두 벡터는 유사한 방향(θ < 90°)입니다.\n";
-//		else if (moveDot == 0.0f)  std::cout << "두 벡터는 직교합니다.\n";
-//		else {
-//			std::cout << "두 벡터는 반대 방향입니다. → Y축 반전 적용\n";
-//			(*meshWorld) = XMMatrixMultiply(XMMatrixScaling(1, -1, 1), (*meshWorld));
-//
-//			// ✅ 반전 후 다시 검사
-//			meshPos1 = XMVector3TransformCoord(delta, (*meshWorld));
-//			meshMove = XMVector3Normalize(XMVectorSubtract(meshPos1, meshPos0));
-//			moveDot = XMVectorGetX(XMVector3Dot(volMove, meshMove));
-//
-//			if (moveDot > 0.99f)
-//				std::cout << "반전 적용 후: 방향 일치 확인 완료!\n";
-//			else
-//				std::cout << "반전 적용 후에도 방향 불일치!\n";
-//		}
-//
-//		//// ✅ 실제 이동 적용
-//		//XMMATRIX moveMatrix = XMMatrixTranslationFromVector(delta);
-//		//(*volWorld) = XMMatrixMultiply(moveMatrix, (*volWorld));
-//		//(*meshWorld) = XMMatrixMultiply(moveMatrix, (*meshWorld));
-//
-//		//std::cout << "볼륨과 메쉬를 Y축으로 +50 이동 완료!\n";
-//
-//	}
-//
-//	// Z축 이동
-//	{
-//		XMVECTOR delta = XMVectorSet(0, 0, 50, 0); // +Z 이동
-//		XMVECTOR volPos0 = XMVector3TransformCoord(XMVectorZero(), (*volWorld));
-//		XMVECTOR meshPos0 = XMVector3TransformCoord(XMVectorZero(), (*meshWorld));
-//
-//		XMVECTOR volPos1 = XMVector3TransformCoord(delta, (*volWorld));
-//		XMVECTOR meshPos1 = XMVector3TransformCoord(delta, (*meshWorld));
-//
-//		XMVECTOR volMove = XMVector3Normalize(XMVectorSubtract(volPos1, volPos0));
-//		XMVECTOR meshMove = XMVector3Normalize(XMVectorSubtract(meshPos1, meshPos0));
-//
-//		float moveDot = XMVectorGetX(XMVector3Dot(volMove, meshMove));
-//
-//		std::cout << "[Z축] ";
-//		if (moveDot > 0.99f)       std::cout << "두 벡터는 거의 같은 방향입니다.\n";
-//		else if (moveDot > 0.0f)   std::cout << "두 벡터는 유사한 방향(θ < 90°)입니다.\n";
-//		else if (moveDot == 0.0f)  std::cout << "두 벡터는 직교합니다.\n";
-//		else {
-//			std::cout << "두 벡터는 반대 방향입니다. → Z축 반전 적용\n";
-//
-//			(*meshWorld) = XMMatrixMultiply(XMMatrixScaling(1, 1, -1), (*meshWorld));
-//
-//			// ✅ 반전 후 다시 검사
-//			meshPos1 = XMVector3TransformCoord(delta, (*meshWorld));
-//			meshMove = XMVector3Normalize(XMVectorSubtract(meshPos1, meshPos0));
-//			moveDot = XMVectorGetX(XMVector3Dot(volMove, meshMove));
-//
-//			if (moveDot > 0.99f)
-//				std::cout << "반전 적용 후: 방향 일치 확인 완료!\n";
-//			else
-//				std::cout << "반전 적용 후에도 방향 불일치!\n";
-//		}
-//
-//		//// ✅ 실제 이동 적용
-//		//XMMATRIX moveMatrix = XMMatrixTranslationFromVector(delta);
-//		////(*volWorld) = XMMatrixMultiply(moveMatrix, (*volWorld));
-//		//(*meshWorld) = XMMatrixMultiply(moveMatrix, (*meshWorld));
-//
-//		//std::cout << "볼륨과 메쉬를 Z축으로 +50 이동 완료!\n";
-//	}
-//
-//
-//
-//	return axisMatched;
-//}
-
 int cnt{};
+
+void PrintMatrix(const char* name, const XMMATRIX& m) {
+	std::cout << "\n=== " << name << " ===" << std::endl;
+	for (int row = 0; row < 4; row++) {
+		std::cout << "[ ";
+		for (int col = 0; col < 4; col++) {
+			printf("%7.3f ", m.r[row].m128_f32[col]);
+		}
+		std::cout << "]" << std::endl;
+	}
+}
 
 bool MeshRenderer::ExtractAxes(const XMMATRIX* volWorld, const XMMATRIX* meshWorld)
 {
@@ -636,18 +440,18 @@ bool MeshRenderer::ExtractAxes(const XMMATRIX* volWorld, const XMMATRIX* meshWor
 	// =========================
 	// 1. 축 추출 (Row-major)
 	// =========================
-	auto Extract = [](const XMMATRIX& m, int row)
+	auto Extract = [](const XMMATRIX& m, int col)
 	{
 		return XMVector3Normalize(XMVectorSet(
-			m.r[row].m128_f32[0],
-			m.r[row].m128_f32[1],
-			m.r[row].m128_f32[2],
+			m.r[0].m128_f32[col],  // 첫 번째 행의 col 열
+			m.r[1].m128_f32[col],  // 두 번째 행의 col 열
+			m.r[2].m128_f32[col],  // 세 번째 행의 col 열
 			0.0f));
 	};
 
-	volAx.X = Extract(*volWorld, 0);
-	volAx.Y = Extract(*volWorld, 1);
-	volAx.Z = Extract(*volWorld, 2);
+	volAx.X = Extract(*volWorld, 0);// 0번째 열 = X축
+	volAx.Y = Extract(*volWorld, 1);// 1번째 열 = Y축
+	volAx.Z = Extract(*volWorld, 2);// 2번째 열 = Z축
 
 	meshAx.X = Extract(*meshWorld, 0);
 	meshAx.Y = Extract(*meshWorld, 1);
@@ -679,36 +483,78 @@ bool MeshRenderer::ExtractAxes(const XMMATRIX* volWorld, const XMMATRIX* meshWor
 	bool isLeftRightFlipped = (dotX < 0.0f);
 
 
-	if (0 == cnt) {
+	//if (0 == cnt) {
 
-		// =========================
-		// 4. 로그 출력 (검증용)
-		// =========================
-		std::cout << "[Axis Dot]\n";
-		std::cout << "X: " << dotX << " Y: " << dotY << " Z: " << dotZ << "\n";
+	//	// =========================
+	//	// 4. 로그 출력 (검증용)
+	//	// =========================
+	//	std::cout << "[Axis Dot]\n";
+	//	std::cout << "X: " << dotX << " Y: " << dotY << " Z: " << dotZ << "\n";
 
-		std::cout << "[Handedness]\n";
-		std::cout << "Volume: " << volHand
-			<< " Mesh: " << meshHand << "\n";
+	//	std::cout << "[Handedness]\n";
+	//	std::cout << "Volume: " << volHand
+	//		<< " Mesh: " << meshHand << "\n";
 
-		if (!axisAligned)
-			std::cout << "❌ Axis direction mismatch\n";
-		else
-			std::cout << "✅ Axis directions aligned\n";
+	//	if (!axisAligned)
+	//		std::cout << "❌ Axis direction mismatch\n";
+	//	else
+	//		std::cout << "✅ Axis directions aligned\n";
 
-		if (!sameHandedness)
-			std::cout << "❌ Handedness mismatch (mirror)\n";
-		else
-			std::cout << "✅ Same handedness\n";
+	//	if (!sameHandedness)
+	//		std::cout << "❌ Handedness mismatch (mirror)\n";
+	//	else
+	//		std::cout << "✅ Same handedness\n";
 
 
-		if (isLeftRightFlipped)
-			std::cout << "❌ Left/Right flipped (X axis inverted)\n";
-		else
-			std::cout << "✅ Left/Right direction consistent\n";
+	//	if (isLeftRightFlipped)
+	//		std::cout << "❌ Left/Right flipped (X axis inverted)\n";
+	//	else
+	//		std::cout << "✅ Left/Right direction consistent\n";
 
-		++cnt;
+	//	++cnt;
+	//}
+
+
+
+	
+
+	// 사용
+	if (cnt == 0) {
+		PrintMatrix("Volume World", *volWorld);
+		PrintMatrix("Mesh World", *meshWorld);
+
+		std::cout << "\n=== Volume Axes ===" << std::endl;
+		std::cout << "X: (" << XMVectorGetX(volAx.X) << ", "
+			<< XMVectorGetY(volAx.X) << ", "
+			<< XMVectorGetZ(volAx.X) << ")" << std::endl;
+		std::cout << "Y: (" << XMVectorGetX(volAx.Y) << ", "
+			<< XMVectorGetY(volAx.Y) << ", "
+			<< XMVectorGetZ(volAx.Y) << ")" << std::endl;
+		std::cout << "Z: (" << XMVectorGetX(volAx.Z) << ", "
+			<< XMVectorGetY(volAx.Z) << ", "
+			<< XMVectorGetZ(volAx.Z) << ")" << std::endl;
+
+		std::cout << "\n=== Mesh Axes ===" << std::endl;
+		std::cout << "X: (" << XMVectorGetX(meshAx.X) << ", "
+			<< XMVectorGetY(meshAx.X) << ", "
+			<< XMVectorGetZ(meshAx.X) << ")" << std::endl;
+		std::cout << "Y: (" << XMVectorGetX(meshAx.Y) << ", "
+			<< XMVectorGetY(meshAx.Y) << ", "
+			<< XMVectorGetZ(meshAx.Y) << ")" << std::endl;
+		std::cout << "Z: (" << XMVectorGetX(meshAx.Z) << ", "
+			<< XMVectorGetY(meshAx.Z) << ", "
+			<< XMVectorGetZ(meshAx.Z) << ")" << std::endl;
+
+		std::cout << "\n[Axis Dot]" << std::endl;
+		std::cout << "X: " << dotX << " Y: " << dotY << " Z: " << dotZ << std::endl;
+
+		cnt++;
 	}
+
+
+
+
+
 
 	// =========================
   // 6. 최종 판정
@@ -897,58 +743,13 @@ void MeshRenderer::RenderMeshWithCT(
 	context->IASetInputLayout(m_meshInputLayout);
 
 	// ========== Transform 계산 ==========
-	//float meshScale = 1.5f / maxPhysicalVol;  // ⭐ XMFLOAT3 대응
-	//float meshScale =1.f;  // ⭐ XMFLOAT3 대응
-
-	//DirectX::XMMATRIX scale = XMMatrixScaling(meshScale, meshScale, meshScale);
-
-
-	//DirectX::XMMATRIX scale = XMMatrixScaling(
-	//	/*	meshToVolume,
-	//		meshToVolume,
-	//		meshToVolume*/
-
-	//		meshScale*overallSize,
-	//		meshScale*overallSize,
-	//		meshScale*overallSize
-	//	//volWidth / meshWidth / maxPhysicalVol * 1.42f,
-	//	//volHeight / meshHeight / maxPhysicalVol * 1.42f*1.09f,
-	//	//volDepth / meshDepth / maxPhysicalVol * 1.42f
-
-	//);
-
-
 
 
 	//s r t v p
-
-
-
-	rotX = XMQuaternionRotationAxis(
-		XMVectorSet(1, 0, 0, 0),  // X축
-		-XM_PIDIV2                  // 90도
-	);
-
-	rotY = XMQuaternionRotationAxis(
-		XMVectorSet(0, 0, 1, 0),
-		XM_PI  // Y축 180도
-	);
-
 
 	//initialMeshWorld = XMMatrixRotationX(XM_PI)*XMMatrixTranslation(50.0f, 0.0f, 0.0f)
 	//	*XMMatrixRotationQuaternion(XMQuaternionMultiply(rotX, rotY));
 
-	rotation = XMMatrixRotationX(XM_PI);
-
-	//s r t v p
-	//initialMeshWorld =scale * rotation;                // 그 다음 회전
-	//initialMeshWorld =rotation* centerTranslate;  // ✅ 스케일 없음
-	//initialMeshWorld = rotation/**XMMatrixTranslation(0.0f, 0.0f, 0.0f)*/; // ✅ 스케일 없음
-
-
-
-	initialMeshWorld = XMMatrixRotationQuaternion(XMQuaternionMultiply(rotX, rotY))*rotation;
-	meshWorldMat = initialMeshWorld * XMMatrixTranspose(userRotMat);
 	ExtractAxes(&volWorldMat, &meshWorldMat);
 
 	//XMVECTOR s, r, t;

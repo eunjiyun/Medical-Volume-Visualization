@@ -760,9 +760,12 @@ float4 main(PSInput input) : SV_Target
 
 		//return float4(abs(posL) * 0.01, 1);
 
+
+
 		// Local -> UVW
 		float3 uvw = (posL - boxMinL) / (boxMaxL - boxMinL);
 		uvw.y = 1.0 - uvw.y;
+
 
 
 		////3D볼륨 로컬축이 
@@ -871,6 +874,36 @@ float4 main(PSInput input) : SV_Target
 
 		if (acc.a > 0.98)
 			break;
+
+
+
+		//float3 p = posL;
+
+	
+
+		//col = float4(0, 0, 0,1);
+
+		//if (posL.x >= 0)
+		//	col = float4(1, 0, 0,1);           // 빨간색
+		//else
+		//	col = float4(0, 1, 1,1);           // 빨간색의 보수 (시안색)
+
+		//if (posL.y >= 0)
+		//	col = float4(0, 1, 0,1);           // 초록색
+		//else
+		//	col = float4(1, 0, 1,1);           // 초록색의 보수 (마젠타)
+
+
+		//if (posL.z >= 0)
+		//	col = float4(0, 0, 1,1);           // 파란색
+		//else
+		//	col = float4(1, 1, 0,1);           // 파란색의 보수 (노란색)
+
+
+
+	
+		//return float4(col);
+
 	}
 
 	acc.rgb = pow(saturate(acc.rgb), 1.0 / 2.2);
@@ -905,6 +938,9 @@ float4 main(PSInput input) : SV_Target
 	//}
 
 	//return float4(0, 0, 0, 1);
+
+
+
 
 
 	if (CameraPosAndAlpha.w == 1.0) return float4(acc.rgb, 1.0);

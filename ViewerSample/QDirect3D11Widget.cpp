@@ -78,7 +78,7 @@ QDirect3D11Widget::QDirect3D11Widget(QWidget* parent)
 	m_rotation = m_initialRotation;
 
 
-	
+
 	cb.CameraPosAndAlpha.w = 1.f;
 
 	QPalette pal = palette();
@@ -669,9 +669,6 @@ bool QDirect3D11Widget::init()
 		m_volumeToTexture->Initialize(m_pDevice, width() / 2, height() / 2);
 
 		std::cout << "VolumeToTexture object created at: " << m_volumeToTexture->m_quadVertexBuffer << std::endl;
-
-
-
 	}
 
 	rotx = XMMatrixRotationX(-XM_PIDIV2);  // 90도 회전
@@ -725,48 +722,14 @@ bool QDirect3D11Widget::init()
 	qDebug() << "Volume physical size:" << physicalWidth << physicalHeight << physicalDepth;
 	qDebug() << "Volume maxPhysical:" << maxPhysicalVol;
 
-	// 정규화된 스케일
-	scaleX = physicalWidth / maxPhysicalVol;
-	scaleY = physicalDepth / maxPhysicalVol;
-	scaleZ = physicalHeight / maxPhysicalVol;
-
-	// 스케일 행렬
-	//overallSize = 1.3f;
-	//overallSize = 1.f;
-	scale = XMMatrixScaling(
-		scaleX*overallSize,
-		scaleY*overallSize,
-		scaleZ*overallSize
-	);
-
-
-	////	worldMat = scale * roty*rotx;
 
 	//initialWorld = centerTranslate    // ① 볼륨 물리 중심(mm)을 원점으로 이동
 
-	//	/*scale*/;              // ④ mm → 정규화 world
 
 
 
-
-
-	//initialWorld = XMMatrixIdentity();
-
-
-
-	//XMMATRIX W = worldMat; // VolumeWorld
-	//XMVECTOR xAxis = XMVector3TransformNormal(XMVectorSet(1, 0, 0, 0), W);
-	//XMVECTOR yAxis = XMVector3TransformNormal(XMVectorSet(0, 1, 0, 0), W);
-	//XMVECTOR zAxis = XMVector3TransformNormal(XMVectorSet(0, 0, 1, 0), W);
-
-	//qDebug() << "Vol X axis in world:"
-	//	<< XMVectorGetX(xAxis) << XMVectorGetY(xAxis) << XMVectorGetZ(xAxis);
-
-	//qDebug() << "Vol Y axis in world:"
-	//	<< XMVectorGetX(yAxis) << XMVectorGetY(yAxis) << XMVectorGetZ(yAxis);
-
-	//qDebug() << "Vol Z axis in world:"
-	//	<< XMVectorGetX(zAxis) << XMVectorGetY(zAxis) << XMVectorGetZ(zAxis);
+	float scale = 1.0f; // ← 여기만 바꾸는 것
+	XMMATRIX scaleMat = XMMatrixScaling(scale, scale, scale);
 
 
 	XMVECTOR rotX = XMQuaternionRotationAxis(
@@ -776,13 +739,14 @@ bool QDirect3D11Widget::init()
 
 	XMVECTOR rotY = XMQuaternionRotationAxis(
 		XMVectorSet(0, 0, 1, 0),
-		XM_PI  // Y축 180도
+		-XM_PI  // Y축 180도
 	);
 
-	float scale = 1.02f; // ← 여기만 바꾸는 것
-	XMMATRIX scaleMat = XMMatrixScaling(scale, scale, scale);
+
+
 
 	initialWorld= scaleMat*XMMatrixRotationQuaternion(XMQuaternionMultiply(rotX, rotY));
+
 
 	worldMat = initialWorld;
 	invWorldMat = XMMatrixInverse(nullptr, worldMat);
@@ -1259,29 +1223,21 @@ void QDirect3D11Widget::FullScreenPassSet()
 	XMStoreFloat4x4(&cb.InvProj, XMMatrixTranspose(invProjMat));
 	XMStoreFloat4x4(&cb.InvVolumeWorld, XMMatrixTranspose(invWorldMat));
 
+	
+
+	//// 4. 최종 행렬
+	XMMATRIX volumeWorld = userRotation * initialWorld;
 
 
 
-	//// 디버깅용
-	//XMMATRIX i= XMMatrixMultiply(projMat, invProjMat);
+	XMMATRIX VolumeWorldCorrected = XMMatrixTranspose(volumeWorld);
 
-	//XMFLOAT4X4 I;
-	//XMStoreFloat4x4(&I, i);
-	//std::cout <<
-	//	 I._11 << " " << I._12 << " " << I._13 << " " << I._14 << "\n" <<
-	//	I._21 << " " << I._22 << " " << I._23 << " " << I._24 << "\n" <<
-	//	I._31 << " " << I._32 << " " << I._33 << " " << I._34 << "\n" <<
-	//	I._41 << " " << I._42 << " " << I._43 << " " << I._44 << "\n\n";
+	//meshRenderer->ExtractAxes(&worldMat, &meshRenderer->meshWorldMat);
+
+	XMMATRIX InvVolumeWorldCorrected = XMMatrixTranspose(XMMatrixInverse(nullptr, VolumeWorldCorrected));
 
 
-
-
-	//// ✅ 실제 카메라 위치 사용
-	//cb.CameraPosWS = XMFLOAT3(
-	//	XMVectorGetX(eye),
-	//	XMVectorGetY(up),
-	//	XMVectorGetZ(at)
-	//);
+	//XMStoreFloat4x4(&cb.InvVolumeWorldCorrected, InvVolumeWorldCorrected);
 
 	XMStoreFloat4x4(&cb.View, XMMatrixTranspose(viewMat));
 	XMStoreFloat4x4(&cb.Projection, XMMatrixTranspose(projMat));
@@ -1365,22 +1321,16 @@ void QDirect3D11Widget::FullScreenPassSet()
 void QDirect3D11Widget::UpdateVolumeMatrix()
 {
 	//// 1. 볼륨을 원점 중심으로
-	//XMMATRIX translation = XMMatrixTranslation(0, 0, 0);
+
 
 	// ✅ 쿼터니언 → 행렬
 	userRotation = XMMatrixRotationQuaternion(m_rotation);
 
 	//// 4. 최종 행렬
-	//XMMATRIX volumeWorld = s * rotY * rotX * translation;
 
 	XMMATRIX volumeWorld = userRotation * initialWorld;
 
-	//volumeWorld *= XMMatrixRotationX(-XM_PIDIV2);
-
-	//CB cb{};
 	worldMat = XMMatrixTranspose(volumeWorld);
-	
-	//meshRenderer->ExtractAxes(&worldMat, &meshRenderer->meshWorldMat);
 
 	invWorldMat = XMMatrixTranspose(XMMatrixInverse(nullptr, volumeWorld));
 
@@ -1413,20 +1363,6 @@ void QDirect3D11Widget::UpdateVolumeMatrix()
 
 	//qDebug() << "Vol Z axis in world:"
 	//	<< XMVectorGetX(zAxis) << XMVectorGetY(zAxis) << XMVectorGetZ(zAxis);
-
-
-
-
-	//XMMATRIX meshWorld = userRotation * meshRenderer->initialMeshWorld/**rotx*/;
-	////XMMATRIX volumeWorld = scale * userRotation/**rotx*/;
-	////XMMATRIX volumeWorld = userRotation/**rotx*/;
-
-
-	//
-	//meshRenderer->cbM.WVP = XMMatrixTranspose(meshWorld * viewMat * projMat);
-	//meshRenderer->cbM.World = XMMatrixTranspose(meshWorld);
-	//meshRenderer->cbM.WorldView = XMMatrixTranspose(meshWorld * viewMat);
-
 
 }
 //======================================================================================
@@ -3214,7 +3150,7 @@ void QDirect3D11Widget::RenderVolumeView()
 	//}
 
 
-	
+
 
 	//// 풀스크린 삼각형 그리기
 	//m_pDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
@@ -3339,8 +3275,8 @@ void QDirect3D11Widget::InitializeVolumeCamera()
 	qDebug() << " (float)width() : " << (float)width();
 
 	projMat = XMMatrixOrthographicLH(
-		(float)width()/2.f*initFactor *m_orthoScale,   // width  = 600mm
-		(float)width() / 2.f /aspect * initFactor *m_orthoScale,   // height = 600mm
+		(float)width() / 2.f*initFactor *m_orthoScale,   // width  = 600mm
+		(float)width() / 2.f / aspect * initFactor *m_orthoScale,   // height = 600mm
 		-1000.0f,          // near
 		1000.0f            // far
 	);
@@ -4309,7 +4245,7 @@ void QDirect3D11Widget::RenderAllQuads()
 		D3D11_VIEWPORT vp = CreateViewport(i);
 
 		//if(0!=i)
-			m_pDeviceContext->RSSetViewports(1, &vp);
+		m_pDeviceContext->RSSetViewports(1, &vp);
 
 		if (0 == i) {  // 3D View
 
@@ -4322,7 +4258,7 @@ void QDirect3D11Widget::RenderAllQuads()
 				meshRenderer->volWorldMat = worldMat;
 
 				//meshRenderer->ExtractAxes(&worldMat, &meshRenderer->meshWorldMat);
-				
+
 
 				meshRenderer->RenderMeshDepth(
 					m_pDeviceContext, m_meshVertexBuffer, m_meshVS, m_meshPS, m_meshInputLayout,
@@ -4453,9 +4389,17 @@ void QDirect3D11Widget::RenderAllQuads()
 
 
 	ImGui::Begin("Volume Axis");
-	ImGui::TextColored(ImVec4(255.f / 255.f, 215.f / 255.f, 0, 1), "X+ : Sagittal");
-	ImGui::TextColored(ImVec4(0, 206.f / 255.f, 209.f / 255.f, 1), "Y+ : Coronal");
-	ImGui::TextColored(ImVec4(216.f /255.f, 127.f /255.f, 216.f /255.f, 1), "Z+ : Axial");
+
+
+	//ImGui::TextColored(ImVec4(255.f / 255.f, 215.f / 255.f, 0, 1), "X+ : Sagittal");
+	//ImGui::TextColored(ImVec4(0, 206.f / 255.f, 209.f / 255.f, 1), "Y+ : Coronal");
+	//ImGui::TextColored(ImVec4(216.f /255.f, 127.f /255.f, 216.f /255.f, 1), "Z+ : Axial");
+
+
+	ImGui::TextColored(ImVec4(255.f / 255.f, 0, 0, 1), "X+ : Sagittal");
+	ImGui::TextColored(ImVec4(0, 255.f / 255.f, 0, 1), "Y+ : Coronal");
+	ImGui::TextColored(ImVec4(0, 0, 255.f / 255.f, 1), "Z+ : Axial");
+
 	ImGui::End();
 
 
@@ -5712,7 +5656,7 @@ void QDirect3D11Widget::mouseDoubleClickEvent(QMouseEvent* event)
 		UpdateVolumeMatrix();
 
 		m_orthoScale = 1;
-	
+
 		InitializeVolumeCamera();  // 👈 여기
 
 		//w *= rotx;
