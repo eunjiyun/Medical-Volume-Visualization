@@ -79,7 +79,7 @@ QDirect3D11Widget::QDirect3D11Widget(QWidget* parent)
 	m_rotation = m_initialRotation;
 
 
-	
+
 	cb.CameraPosAndAlpha.w = 1.f;
 
 	QPalette pal = palette();
@@ -785,25 +785,16 @@ bool QDirect3D11Widget::init()
 		XM_PI  // Y축 180도
 	);
 
-	//float scale = 1.02f; // ← 여기만 바꾸는 것
-	//XMMATRIX scaleMat = XMMatrixScaling(scale, scale, scale);
-
-
-		// 테스트할 회전들
-	XMMATRIX test1 = XMMatrixRotationX(XM_PIDIV2);        // 90도
-	XMMATRIX test2 = XMMatrixRotationX(-XM_PIDIV2);       // -90도
-	XMMATRIX test3 = XMMatrixRotationX(XM_PI);            // 180도
-
-	XMMATRIX test4 = XMMatrixRotationY(XM_PI);            // Y축 180도
-
-	XMMATRIX test5 = XMMatrixRotationX(-XM_PIDIV2) * XMMatrixRotationY(XM_PI);
-	//XMMATRIX test6 = XMMatrixRotationX(XM_PIDIV2) * XMMatrixRotationZ(XM_PI);
-	XMMATRIX test6 = XMMatrixRotationX(XM_PI);
+	float scale = 1.0f; // ← 여기만 바꾸는 것
+	XMMATRIX scaleMat = XMMatrixScaling(scale, scale, scale);
 
 
 
 
-	initialWorld= /*scaleMat**/test6*XMMatrixRotationQuaternion(XMQuaternionMultiply(rotX, rotY));
+
+
+
+	initialWorld = scaleMat * XMMatrixRotationQuaternion(XMQuaternionMultiply(rotX, rotY));
 
 	worldMat = initialWorld;
 	invWorldMat = XMMatrixInverse(nullptr, worldMat);
@@ -1319,23 +1310,8 @@ void QDirect3D11Widget::FullScreenPassSet()
 	XMStoreFloat4x4(&cb.InvVolumeWorld, XMMatrixTranspose(invWorldMat));
 	//0116
 
-	XMMATRIX AxisFix = XMMatrixSet(
-		1.0f, 0.0f, 0.0f, 0.0f,  // X축 반전 (handedness 변경)
-		0.0f, -1.0f, 0.0f, 0.0f,  // Y축 -> Z축
-		0.0f, 0.0f, -1.0f, 0.0f,  // Z축 -> Y축
-		0.0f, 0.0f, 0.0f, 1.0f
-	);
 
-	// 테스트할 회전들
-XMMATRIX test1 = XMMatrixRotationX(XM_PIDIV2);        // 90도
-XMMATRIX test2 = XMMatrixRotationX(-XM_PIDIV2);       // -90도
-XMMATRIX test3 = XMMatrixRotationX(XM_PI);            // 180도
 
-XMMATRIX test4 = XMMatrixRotationY(XM_PI);            // Y축 180도
-
-XMMATRIX test5 = XMMatrixRotationX(-XM_PIDIV2) * XMMatrixRotationY(XM_PI);
-//XMMATRIX test6 = XMMatrixRotationX(XM_PIDIV2) * XMMatrixRotationZ(XM_PI);
-XMMATRIX test6 = XMMatrixRotationZ(XM_PIDIV2);
 
 	XMMATRIX VolumeWorldCorrected = /*AxisFix **/ worldMat;
 	XMMATRIX InvVolumeWorldCorrected = XMMatrixInverse(nullptr, VolumeWorldCorrected);
@@ -1472,7 +1448,7 @@ void QDirect3D11Widget::UpdateVolumeMatrix()
 
 	//CB cb{};
 	worldMat = XMMatrixTranspose(volumeWorld);
-	
+
 	//meshRenderer->ExtractAxes(&worldMat, &meshRenderer->meshWorldMat);
 
 	invWorldMat = XMMatrixTranspose(XMMatrixInverse(nullptr, volumeWorld));
@@ -3278,211 +3254,538 @@ float QDirect3D11Widget::ComputeOptimalScale(double mean, double rms)
 	return static_cast<float>(mean / (rms + 1e-6));
 }
 
-// UAV → CPU → 통계 → 상수 버퍼 업데이트 함수
-void QDirect3D11Widget::ProcessDeltaZAndUpdateConstantBuffer(
-	ID3D11DeviceContext* context,
-	ScaleFitResources& resources
-)
+//// UAV → CPU → 통계 → 상수 버퍼 업데이트 함수
+//void QDirect3D11Widget::ProcessDeltaZAndUpdateConstantBuffer(
+//	ID3D11DeviceContext* context,
+//	ScaleFitResources& resources
+//)
+//{
+//	//// 1. GPU → CPU 복사
+//	//context->CopyResource(resources.stagingTex, resources.deltaZTex);
+//
+//	//// 2. CPU에서 읽기
+//	//D3D11_MAPPED_SUBRESOURCE mapped = {};
+//	//HRESULT hr = context->Map(resources.stagingTex, 0, D3D11_MAP_READ, 0, &mapped);
+//	//if (FAILED(hr))
+//	//{
+//	//	std::cout << "Map 실패, deltaZTex 읽기 불가" << std::endl;
+//	//	return;
+//	//}
+//
+//	////std::cout << "resources.width :" << resources.width << std::endl;
+//	////std::cout << "resources.height :" << resources.height << std::endl;
+//
+//	//float* data = reinterpret_cast<float*>(mapped.pData);
+//	//UINT pitch = mapped.RowPitch / sizeof(float);
+//
+//	//// 3. CPU 통계 처리
+//	//double sum = 0.0;
+//	//double sumSq = 0.0;
+//	//int count = resources.width * resources.height;
+//
+//	////for (int y = 0; y < resources.height; ++y)
+//	////{
+//	////	for (int x = 0; x < resources.width; ++x)
+//	////	{
+//	////		float delta = data[y * pitch + x];
+//	////		sum += delta;
+//	////		sumSq += delta * delta;
+//	////	}
+//	////}
+//
+//
+//	//for (int y{}; y < resources.height; ++y)
+//	//{
+//	//	for (int x{}; x < resources.width; ++x)
+//	//	{
+//	//		float delta = data[y * pitch + x];
+//	//		std::cout << delta << " ";
+//
+//	//		sum += delta;
+//	//		sumSq += delta * delta;
+//	//	}
+//	//	std::cout << std::endl;
+//	//}
+//
+//
+//	//double mean = sum / count;
+//	//double rms = sqrt(sumSq / count);
+//
+//	//context->Unmap(resources.stagingTex, 0);
+//
+//	//// 4. 최적 스케일 결정
+//	//float optimalScale = ComputeOptimalScale(mean, rms);
+//
+//	//// 5. 상수 버퍼 업데이트 → GPU 전달
+//	//ScaleConstants cbData = {};
+//	//cbData.optimalScale = optimalScale;
+//
+//	//context->UpdateSubresource(resources.constantBuffer, 0, nullptr, &cbData, 0, 0);
+//
+//
+//
+//
+//
+//	// ✅ 1. DeltaZTex 확인
+//	if (!resources.deltaZTex)
+//	{
+//		qDebug() << "ERROR: deltaZTex is NULL!";
+//		return;
+//	}
+//
+//
+//	D3D11_TEXTURE2D_DESC desc;
+//	resources.deltaZTex->GetDesc(&desc);
+//	qDebug() << "=== DeltaZTex Info ===";
+//	qDebug() << "Size:" << desc.Width << "x" << desc.Height;
+//	qDebug() << "Format:" << desc.Format;
+//	qDebug() << "BindFlags:" << desc.BindFlags;
+//
+//
+//	// ✅ 2. Staging 텍스처 확인
+//	if (!resources.stagingTex)
+//	{
+//		qDebug() << "ERROR: stagingTex is NULL!";
+//		return;
+//	}
+//
+//
+//	////m_depthTexture
+//
+//	// UAV 읽기
+//	context->CopyResource(resources.stagingTex, resources.deltaZTex);
+//
+//	D3D11_MAPPED_SUBRESOURCE mapped;
+//	HRESULT hr = context->Map(resources.stagingTex, 0, D3D11_MAP_READ, 0, &mapped);
+//
+//
+//	if (FAILED(hr))
+//	{
+//		qDebug() << "ERROR: Map failed!     :    "  << hr;
+//		return;
+//	}
+//
+//	float* data = (float*)mapped.pData;
+//	UINT pitch = mapped.RowPitch / sizeof(float);
+//
+//
+//	qDebug() << "Pitch:" << pitch << "Expected:" << desc.Width;
+//
+//	float sum = 0.0f;
+//	float sumSq = 0.0f;
+//	int validCount = 0;      // 유효한 픽셀 개수
+//	int meshOnlyCount = 0;   // 메시만 있는 픽셀
+//	int volumeOnlyCount = 0; // 볼륨만 있는 픽셀
+//	int overlapCount = 0;    // 교차 영역
+//
+//	float minDelta = FLT_MAX;
+//	float maxDelta = 0.0f;
+//
+//	for (int y = 0; y < resources.height; ++y)
+//	{
+//		for (int x = 0; x < resources.width; ++x)
+//		{
+//			float delta = data[y * pitch + x];
+//
+//			if (delta == -1.0f)
+//			{
+//				volumeOnlyCount++;  // 볼륨만 있음
+//			}
+//			else if (delta == 0.0f)
+//			{
+//				// 초기값 0 → 아무것도 없음 (배경)
+//			}
+//			else if (delta > 0.0f)
+//			{
+//				overlapCount++;     // 메시+볼륨 교차
+//				sum += delta;
+//				sumSq += delta * delta;
+//				validCount++;
+//
+//				minDelta = min(minDelta, delta);
+//				maxDelta = max(maxDelta, delta);
+//			}
+//		}
+//	}
+//
+//
+//	//sceneDepthTexture
+//	desc;
+//	resources.deltaZTex->GetDesc(&desc);
+//	//sceneDepthTexture null 0120
+//	// Staging 텍스처 생성
+//	D3D11_TEXTURE2D_DESC stagingDesc = desc;
+//	stagingDesc.Usage = D3D11_USAGE_STAGING;
+//	stagingDesc.BindFlags = 0;
+//	stagingDesc.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
+//	stagingDesc.MiscFlags = 0;
+//
+//
+//	//context->CopyResource(resources.stagingTex, resources.deltaZTex);
+//
+//	ID3D11Texture2D* staging = nullptr;
+//	m_pDevice->CreateTexture2D(&stagingDesc, nullptr, &staging);
+//
+//	// 복사
+//	context->CopyResource(resources.stagingTex, resources.deltaZTex);
+//
+//
+//
+//
+//
+//
+//
+//	// ✅ 4. Map
+//	 mapped;
+//	 hr = context->Map(resources.stagingTex, 0, D3D11_MAP_READ, 0, &mapped);
+//
+//	if (FAILED(hr))
+//	{
+//		qDebug() << "ERROR: Map failed!              " << hr;
+//		return;
+//	}
+//
+//	 data = (float*)mapped.pData;
+//	 pitch = mapped.RowPitch / sizeof(float);
+//
+//	qDebug() << "Pitch:" << pitch << "Expected:" << desc.Width;
+//
+//	// ✅ 5. 전체 텍스처 샘플링 (중앙뿐 아니라)
+//	qDebug() << "=== DeltaZTex Content (first 100 pixels) ===";
+//	for (int i = 0; i < 100; ++i)
+//	{
+//		float val = data[i];
+//		if (val != 0.0f)  // 0이 아닌 값만 출력
+//		{
+//			qDebug() << "Pixel" << i << ":" << val;
+//		}
+//	}
+//
+//	// 중앙 영역 확인
+//	int centerX = desc.Width / 2;
+//	int centerY = desc.Height / 2;
+//
+//	qDebug() << "=== Center Region ===";
+//	for (int y = -5; y < 5; ++y)
+//	{
+//		QString row;
+//		for (int x = -5; x < 5; ++x)
+//		{
+//			float val = data[(centerY + y) * pitch + (centerX + x)];
+//			row += QString::number(val, 'f', 2) + " ";
+//		}
+//		qDebug() << row;
+//	}
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//	//// 읽기
+//	//D3D11_MAPPED_SUBRESOURCE mapped;
+//	//context->Map(staging, 0, D3D11_MAP_READ, 0, &mapped);
+//
+//	//float* data = (float*)mapped.pData;
+//	//UINT pitch = mapped.RowPitch / sizeof(float);
+//
+//	//qDebug() << "=== SceneDepth Content ===";
+//	//qDebug() << "Sampling center 10x10 region:";
+//
+//	//int centerX = desc.Width / 2;
+//	//int centerY = desc.Height / 2;
+//
+//	//for (int y = -5; y < 5; ++y)
+//	//{
+//	//	QString row;
+//	//	for (int x = -5; x < 5; ++x)
+//	//	{
+//	//		float val = data[(centerY + y) * pitch + (centerX + x)];
+//	//		row += QString::number(val, 'f', 2) + " ";
+//	//	}
+//	//	qDebug() << row;
+//	//}
+//
+//	//context->Unmap(staging, 0);
+//	//staging->Release();
+//
+//	//// 중앙 픽셀들 확인
+//	//qDebug() << "SceneDepth samples:";
+//	//for (int i = 0; i < 10; ++i)
+//	//{
+//	//	int x = desc.Width / 2 + i;
+//	//	int y = desc.Height / 2;
+//	//	float d = depthData[y * pitch + x];
+//	//	qDebug() << "  [" << x << "," << y << "]:" << d;
+//	//}s
+//
+//
+//	context->Unmap(resources.stagingTex, 0);
+//
+//	// 통계 출력
+//	if (validCount > 0)
+//	{
+//		float avgDelta = sum / validCount;
+//		float variance = (sumSq / validCount) - (avgDelta * avgDelta);
+//		float stdDev = sqrt(variance);
+//
+//		qDebug() << "=== Depth Difference Statistics ===";
+//		qDebug() << "Valid pixels (overlap):" << overlapCount;
+//		qDebug() << "Volume only:" << volumeOnlyCount;
+//		qDebug() << "Background:" << (resources.width * resources.height - overlapCount - volumeOnlyCount);
+//		qDebug() << "---";
+//		qDebug() << "Average ΔZ:" << avgDelta << "mm";
+//		qDebug() << "Min ΔZ:" << minDelta << "mm";
+//		qDebug() << "Max ΔZ:" << maxDelta << "mm";
+//		qDebug() << "Std Dev:" << stdDev << "mm";
+//		qDebug() << "---";
+//
+//		// 정렬 품질 판단
+//		if (avgDelta < 5.0f)
+//			qDebug() << "Alignment: EXCELLENT";
+//		else if (avgDelta < 20.0f)
+//			qDebug() << "Alignment: GOOD";
+//		else if (avgDelta < 50.0f)
+//			qDebug() << "Alignment: MODERATE";
+//		else
+//			qDebug() << "Alignment: POOR - Consider adjusting scale";
+//	}
+//	else
+//	{
+//		//qDebug() << "No overlap detected between mesh and volume!";
+//	}
+//}
+
+
+
+
+
+void QDirect3D11Widget::DebugSceneDepth()
 {
-	//// 1. GPU → CPU 복사
-	//context->CopyResource(resources.stagingTex, resources.deltaZTex);
-
-	//// 2. CPU에서 읽기
-	//D3D11_MAPPED_SUBRESOURCE mapped = {};
-	//HRESULT hr = context->Map(resources.stagingTex, 0, D3D11_MAP_READ, 0, &mapped);
-	//if (FAILED(hr))
-	//{
-	//	std::cout << "Map 실패, deltaZTex 읽기 불가" << std::endl;
-	//	return;
-	//}
-
-	////std::cout << "resources.width :" << resources.width << std::endl;
-	////std::cout << "resources.height :" << resources.height << std::endl;
-
-	//float* data = reinterpret_cast<float*>(mapped.pData);
-	//UINT pitch = mapped.RowPitch / sizeof(float);
-
-	//// 3. CPU 통계 처리
-	//double sum = 0.0;
-	//double sumSq = 0.0;
-	//int count = resources.width * resources.height;
-
-	////for (int y = 0; y < resources.height; ++y)
-	////{
-	////	for (int x = 0; x < resources.width; ++x)
-	////	{
-	////		float delta = data[y * pitch + x];
-	////		sum += delta;
-	////		sumSq += delta * delta;
-	////	}
-	////}
-
-
-	//for (int y{}; y < resources.height; ++y)
-	//{
-	//	for (int x{}; x < resources.width; ++x)
-	//	{
-	//		float delta = data[y * pitch + x];
-	//		std::cout << delta << " ";
-
-	//		sum += delta;
-	//		sumSq += delta * delta;
-	//	}
-	//	std::cout << std::endl;
-	//}
-
-
-	//double mean = sum / count;
-	//double rms = sqrt(sumSq / count);
-
-	//context->Unmap(resources.stagingTex, 0);
-
-	//// 4. 최적 스케일 결정
-	//float optimalScale = ComputeOptimalScale(mean, rms);
-
-	//// 5. 상수 버퍼 업데이트 → GPU 전달
-	//ScaleConstants cbData = {};
-	//cbData.optimalScale = optimalScale;
-
-	//context->UpdateSubresource(resources.constantBuffer, 0, nullptr, &cbData, 0, 0);
+	// SceneDepth 확인
+	D3D11_TEXTURE2D_DESC desc;
+	scaleRes.deltaZTex->GetDesc(&desc);
 
 
 
+	D3D11_TEXTURE2D_DESC stagingDesc = desc;
+	stagingDesc.Usage = D3D11_USAGE_STAGING;
+	stagingDesc.BindFlags = 0;
+	stagingDesc.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
 
+	ID3D11Texture2D* staging = nullptr;
+	m_pDevice->CreateTexture2D(&stagingDesc, nullptr, &staging);
 
+	m_pDeviceContext->CopyResource(staging, scaleRes.deltaZTex);
 
+	D3D11_MAPPED_SUBRESOURCE mapped;
+	m_pDeviceContext->Map(staging, 0, D3D11_MAP_READ, 0, &mapped);
 
+	float* data = (float*)mapped.pData;
+	UINT pitch = mapped.RowPitch / sizeof(float);
 
+	// 통계
+	int nonZeroCount = 0;
+	float minVal = FLT_MAX;
+	float maxVal = -FLT_MAX;
 
-
-	////m_depthTexture
-
-	//// UAV 읽기
-	//context->CopyResource(resources.stagingTex, resources.deltaZTex);
-
-	//D3D11_MAPPED_SUBRESOURCE mapped;
-	//context->Map(resources.stagingTex, 0, D3D11_MAP_READ, 0, &mapped);
-
-	//float* data = (float*)mapped.pData;
-	//UINT pitch = mapped.RowPitch / sizeof(float);
-
-	float sum = 0.0f;
-	float sumSq = 0.0f;
-	int validCount = 0;      // 유효한 픽셀 개수
-	int meshOnlyCount = 0;   // 메시만 있는 픽셀
-	int volumeOnlyCount = 0; // 볼륨만 있는 픽셀
-	int overlapCount = 0;    // 교차 영역
-
-	float minDelta = FLT_MAX;
-	float maxDelta = 0.0f;
-
-	//for (int y = 0; y < resources.height; ++y)
-	//{
-	//	for (int x = 0; x < resources.width; ++x)
-	//	{
-	//		float delta = data[y * pitch + x];
-
-	//		if (delta == -1.0f)
-	//		{
-	//			volumeOnlyCount++;  // 볼륨만 있음
-	//		}
-	//		else if (delta == 0.0f)
-	//		{
-	//			// 초기값 0 → 아무것도 없음 (배경)
-	//		}
-	//		else if (delta > 0.0f)
-	//		{
-	//			overlapCount++;     // 메시+볼륨 교차
-	//			sum += delta;
-	//			sumSq += delta * delta;
-	//			validCount++;
-
-	//			minDelta = min(minDelta, delta);
-	//			maxDelta = max(maxDelta, delta);
-	//		}
-	//	}
-	//}
-	
-
-	//sceneDepthTexture
-D3D11_TEXTURE2D_DESC desc;
-meshRenderer->sceneDepthTexture->GetDesc(&desc);
-
-// Staging 텍스처 생성
-D3D11_TEXTURE2D_DESC stagingDesc = desc;
-stagingDesc.Usage = D3D11_USAGE_STAGING;
-stagingDesc.BindFlags = 0;
-stagingDesc.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
-stagingDesc.MiscFlags = 0;
-
-
-//context->CopyResource(resources.stagingTex, resources.deltaZTex);
-
-ID3D11Texture2D* staging = nullptr;
-m_pDevice->CreateTexture2D(&stagingDesc, nullptr, &staging);
-
-// 복사
-context->CopyResource(resources.stagingTex, meshRenderer->sceneDepthTexture);
-
-// 읽기
-D3D11_MAPPED_SUBRESOURCE mapped;
-context->Map(staging, 0, D3D11_MAP_READ, 0, &mapped);
-
-float* data = (float*)mapped.pData;
-UINT pitch = mapped.RowPitch / sizeof(float);
-
-qDebug() << "=== SceneDepth Content ===";
-qDebug() << "Sampling center 10x10 region:";
-
-int centerX = desc.Width / 2;
-int centerY = desc.Height / 2;
-
-for (int y = -5; y < 5; ++y)
-{
-	QString row;
-	for (int x = -5; x < 5; ++x)
+	for (int y = 0; y < (int)desc.Height; ++y)
 	{
-		float val = data[(centerY + y) * pitch + (centerX + x)];
-		row += QString::number(val, 'f', 2) + " ";
+		for (int x = 0; x < (int)desc.Width; ++x)
+		{
+			float val = data[y * pitch + x];
+
+			if (val != 0.0f)
+			{
+				nonZeroCount++;
+				minVal = min(minVal, val);
+				maxVal = max(maxVal, val);
+			}
+		}
 	}
-	qDebug() << row;
+
+	qDebug() << "=== SceneDepth (Mesh) ===";
+	qDebug() << "Non-zero pixels:" << nonZeroCount;
+
+	if (nonZeroCount > 0)
+	{
+		qDebug() << "Min meshViewZ:" << minVal << "mm";
+		qDebug() << "Max meshViewZ:" << maxVal << "mm";
+	}
+	else
+	{
+		qDebug() << "ERROR: SceneDepth is empty! Mesh depth not recorded!";
+	}
+
+	// 볼륨 영역 (326~367, 18~345) 샘플
+	qDebug() << "=== SceneDepth at volume region ===";
+	int sampleY = (18 + 345) / 2;  // Y=181
+
+	QString row;
+	for (int x = 326; x < min(336, (int)desc.Width); ++x)
+	{
+		float val = data[sampleY * pitch + x];
+		row += QString::number(val, 'f', 1) + " ";
+	}
+	qDebug() << "Row" << sampleY << ":" << row;
+
+	m_pDeviceContext->Unmap(staging, 0);
+	staging->Release();
 }
 
-context->Unmap(staging, 0);
-staging->Release();
+//// ✅ DeltaZTex 디버깅 함수 추가
+//void QDirect3D11Widget::DebugDeltaZTex()
+//{
+//	D3D11_TEXTURE2D_DESC desc;
+//	scaleRes.deltaZTex->GetDesc(&desc);
+//
+//	// Staging
+//	m_pDeviceContext->CopyResource(scaleRes.stagingTex, scaleRes.deltaZTex);
+//
+//	D3D11_MAPPED_SUBRESOURCE mapped;
+//	m_pDeviceContext->Map(scaleRes.stagingTex, 0, D3D11_MAP_READ, 0, &mapped);
+//
+//	float* data = (float*)mapped.pData;
+//	UINT pitch = mapped.RowPitch / sizeof(float);
+//
+//	// 통계
+//	int nonZeroCount = 0;
+//	int negativeCount = 0;
+//	float minVal = FLT_MAX;
+//	float maxVal = -FLT_MAX;
+//	float sum = 0.0f;
+//
+//	for (int y = 0; y < (int)desc.Height; ++y)
+//	{
+//		for (int x = 0; x < (int)desc.Width; ++x)
+//		{
+//			float val = data[y * pitch + x];
+//
+//			if (val != 0.0f)
+//			{
+//				nonZeroCount++;
+//				if (val < 0.0f) negativeCount++;
+//				if (val > 0.0f)
+//				{
+//					minVal = min(minVal, val);
+//					maxVal = max(maxVal, val);
+//					sum += val;
+//				}
+//			}
+//		}
+//	}
+//
+//	qDebug() << "=== DeltaZTex (Volume hitViewZ) ===";
+//	qDebug() << "Non-zero pixels:" << nonZeroCount;
+//	qDebug() << "Negative pixels (-1):" << negativeCount;
+//
+//	if (nonZeroCount - negativeCount > 0)
+//	{
+//		qDebug() << "Min hitViewZ:" << minVal << "mm";
+//		qDebug() << "Max hitViewZ:" << maxVal << "mm";
+//		qDebug() << "Avg hitViewZ:" << (sum / (nonZeroCount - negativeCount)) << "mm";
+//	}
+//
+//	// 볼륨 영역 샘플
+//	qDebug() << "=== DeltaZTex at volume region ===";
+//	int sampleY = 181;
+//
+//	QString row;
+//	for (int x = 326; x < min(336, (int)desc.Width); ++x)
+//	{
+//		float val = data[sampleY * pitch + x];
+//		row += QString::number(val, 'f', 1) + " ";
+//	}
+//	qDebug() << "Row" << sampleY << ":" << row;
+//
+//	m_pDeviceContext->Unmap(scaleRes.stagingTex, 0);
+//}
 
-	//// 중앙 픽셀들 확인
-	//qDebug() << "SceneDepth samples:";
-	//for (int i = 0; i < 10; ++i)
-	//{
-	//	int x = desc.Width / 2 + i;
-	//	int y = desc.Height / 2;
-	//	float d = depthData[y * pitch + x];
-	//	qDebug() << "  [" << x << "," << y << "]:" << d;
-	//}s
 
+void QDirect3D11Widget::DebugDeltaZTex()  // ✅ 이름 변경
+{
+	D3D11_TEXTURE2D_DESC desc;
+	scaleRes.deltaZTex->GetDesc(&desc);
 
-	context->Unmap(resources.stagingTex, 0);
+	D3D11_TEXTURE2D_DESC stagingDesc = desc;
+	stagingDesc.Usage = D3D11_USAGE_STAGING;
+	stagingDesc.BindFlags = 0;
+	stagingDesc.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
 
-	// 통계 출력
-	if (validCount > 0)
+	ID3D11Texture2D* staging = nullptr;
+	m_pDevice->CreateTexture2D(&stagingDesc, nullptr, &staging);
+
+	m_pDeviceContext->CopyResource(staging, scaleRes.deltaZTex);
+
+	D3D11_MAPPED_SUBRESOURCE mapped;
+	m_pDeviceContext->Map(staging, 0, D3D11_MAP_READ, 0, &mapped);
+
+	float* data = (float*)mapped.pData;
+	UINT pitch = mapped.RowPitch / sizeof(float);
+
+	// ✅ 통계 추가
+	int nonZeroCount = 0;
+	int negativeCount = 0;
+	int positiveCount = 0;
+	float minVal = FLT_MAX;
+	float maxVal = -FLT_MAX;
+	float sum = 0.0f;
+
+	for (int y = 0; y < (int)desc.Height; ++y)
 	{
-		float avgDelta = sum / validCount;
-		float variance = (sumSq / validCount) - (avgDelta * avgDelta);
-		float stdDev = sqrt(variance);
+		for (int x = 0; x < (int)desc.Width; ++x)
+		{
+			float val = data[y * pitch + x];
 
-		qDebug() << "=== Depth Difference Statistics ===";
-		qDebug() << "Valid pixels (overlap):" << overlapCount;
-		qDebug() << "Volume only:" << volumeOnlyCount;
-		qDebug() << "Background:" << (resources.width * resources.height - overlapCount - volumeOnlyCount);
+			if (val != 0.0f)
+			{
+				nonZeroCount++;
+
+				if (val < 0.0f)
+				{
+					negativeCount++;
+				}
+				else if (val > 0.0f)
+				{
+					positiveCount++;
+					sum += val;
+					minVal = min(minVal, val);
+					maxVal = max(maxVal, val);
+				}
+			}
+		}
+	}
+
+	qDebug() << "=== DeltaZ Texture ===";  // ✅ 메시지 변경
+	qDebug() << "Non-zero pixels:" << nonZeroCount;
+	qDebug() << "Positive (deltaZ):" << positiveCount;
+	qDebug() << "Negative (-1):" << negativeCount;
+	qDebug() << "Background (0):" << (desc.Width * desc.Height - nonZeroCount);
+
+	if (positiveCount > 0)
+	{
+		float avgDelta = sum / positiveCount;
+
 		qDebug() << "---";
-		qDebug() << "Average ΔZ:" << avgDelta << "mm";
-		qDebug() << "Min ΔZ:" << minDelta << "mm";
-		qDebug() << "Max ΔZ:" << maxDelta << "mm";
-		qDebug() << "Std Dev:" << stdDev << "mm";
+		qDebug() << "Min ΔZ:" << minVal << "mm";
+		qDebug() << "Max ΔZ:" << maxVal << "mm";
+		qDebug() << "Avg ΔZ:" << avgDelta << "mm";
 		qDebug() << "---";
 
-		// 정렬 품질 판단
 		if (avgDelta < 5.0f)
 			qDebug() << "Alignment: EXCELLENT";
 		else if (avgDelta < 20.0f)
@@ -3490,14 +3793,320 @@ staging->Release();
 		else if (avgDelta < 50.0f)
 			qDebug() << "Alignment: MODERATE";
 		else
-			qDebug() << "Alignment: POOR - Consider adjusting scale";
+			qDebug() << "Alignment: POOR";
 	}
 	else
 	{
-		//qDebug() << "No overlap detected between mesh and volume!";
+		qDebug() << "ERROR: No positive deltaZ values!";
 	}
+
+	// 샘플 출력
+	qDebug() << "=== DeltaZ at volume region ===";
+	int sampleY = (18 + 345) / 2;
+
+	QString row;
+	for (int x = 326; x < min(336, (int)desc.Width); ++x)
+	{
+		float val = data[sampleY * pitch + x];
+		row += QString::number(val, 'f', 1) + " ";
+	}
+	qDebug() << "Row" << sampleY << ":" << row;
+
+	m_pDeviceContext->Unmap(staging, 0);
+	staging->Release();
 }
 
+
+
+void QDirect3D11Widget::ProcessDeltaZAndUpdateConstantBuffer(
+	ID3D11DeviceContext* context,
+	ScaleFitResources& resources
+)
+{
+	// ✅ 1. DeltaZTex 확인
+	if (!resources.deltaZTex)
+	{
+		qDebug() << "ERROR: deltaZTex is NULL!";
+		return;
+	}
+
+	D3D11_TEXTURE2D_DESC desc;
+	resources.deltaZTex->GetDesc(&desc);
+	qDebug() << "=== DeltaZTex Info ===";
+	qDebug() << "Size:" << desc.Width << "x" << desc.Height;
+	qDebug() << "Format:" << desc.Format;
+	qDebug() << "BindFlags:" << desc.BindFlags;
+
+	// ✅ 2. Staging 텍스처 확인
+	if (!resources.stagingTex)
+	{
+		qDebug() << "ERROR: stagingTex is NULL!";
+		return;
+	}
+
+
+	// ✅ 크기 불일치 확인
+	if (desc.Width != resources.width || desc.Height != resources.height)
+	{
+		qDebug() << "ERROR: Size mismatch!";
+		qDebug() << "Texture:" << desc.Width << "x" << desc.Height;
+		qDebug() << "Resources:" << resources.width << "x" << resources.height;
+	}
+
+
+	if (!resources.stagingTex)
+	{
+		qDebug() << "ERROR: stagingTex is NULL!";
+		return;
+	}
+
+	// ✅ 3. 복사
+	context->CopyResource(resources.stagingTex, resources.deltaZTex);
+
+	// ✅ 4. Map (한 번만!)
+	D3D11_MAPPED_SUBRESOURCE mapped;
+	HRESULT hr = context->Map(resources.stagingTex, 0, D3D11_MAP_READ, 0, &mapped);
+
+	if (FAILED(hr))
+	{
+		qDebug() << "ERROR: Map failed!            "  << hr;
+		return;
+	}
+
+	float* data = (float*)mapped.pData;
+	UINT pitch = mapped.RowPitch / sizeof(float);
+
+	qDebug() << "Pitch:" << pitch << "Expected:" << desc.Width;
+
+	// ✅ 전체 텍스처 스캔
+	qDebug() << "=== Scanning entire texture ===";
+	int totalNonZero = 0;
+	int totalPositive = 0;
+	int totalNegative = 0;
+
+	for (int y = 0; y < (int)desc.Height; ++y)  // ← desc 사용!
+	{
+		for (int x = 0; x < (int)desc.Width; ++x)  // ← desc 사용!
+		{
+			float val = data[y * pitch + x];
+
+			if (val != 0.0f) totalNonZero++;
+			if (val > 0.0f) totalPositive++;
+			if (val < 0.0f) totalNegative++;
+		}
+	}
+
+	//qDebug() << "Total non-zero:" << totalNonZero;
+	//qDebug() << "Total positive:" << totalPositive;
+	//qDebug() << "Total negative:" << totalNegative;
+
+
+
+	//// ✅ 5. 먼저 디버그 출력
+	//qDebug() << "=== DeltaZTex Content (first 100 pixels) ===";
+	//int nonZeroCount = 0;
+	//for (int i = 0; i < 100; ++i)
+	//{
+	//	float val = data[i];
+	//	if (val != 0.0f)
+	//	{
+	//		qDebug() << "Pixel" << i << ":" << val;
+	//		nonZeroCount++;
+	//	}
+	//}
+	//qDebug() << "Non-zero pixels in first 100:" << nonZeroCount;
+
+	//// 중앙 영역 확인
+	//int centerX = desc.Width / 2;
+	//int centerY = desc.Height / 2;
+
+	//qDebug() << "=== Center Region ===";
+	//for (int y = -5; y < 5; ++y)
+	//{
+	//	QString row;
+	//	for (int x = -5; x < 5; ++x)
+	//	{
+	//		float val = data[(centerY + y) * pitch + (centerX + x)];
+	//		row += QString::number(val, 'f', 2) + " ";
+	//	}
+	//	qDebug() << row;
+	//}
+
+	// ✅ 6. 통계 계산 (같은 data 포인터 사용)
+	float sum = 0.0f;
+	float sumSq = 0.0f;
+	int validCount = 0;
+	int meshOnlyCount = 0;
+	int volumeOnlyCount = 0;
+	int overlapCount = 0;
+
+	float minDelta = FLT_MAX;
+	float maxDelta = 0.0f;
+
+
+	//// 디버깅 추가
+	//qDebug() << "Loop dimensions:" << resources.width << "x" << resources.height;
+	//qDebug() << "Texture dimensions:" << desc.Width << "x" << desc.Height;
+	//qDebug() << "Pitch:" << pitch;
+
+	for (int y = 0; y < resources.height; ++y)
+	{
+		for (int x = 0; x < resources.width; ++x)
+		{
+			float delta = data[y * pitch + x];
+
+			if (delta == -1.0f)
+			{
+				volumeOnlyCount++;
+			}
+			else if (delta == 0.0f)
+			{
+				// 배경
+			}
+			else if (delta > 0.0f)
+			{
+				overlapCount++;
+				sum += delta;
+				sumSq += delta * delta;
+				validCount++;
+
+				minDelta = min(minDelta, delta);
+				maxDelta = max(maxDelta, delta);
+			}
+		}
+	}
+
+	// ✅ 7. Unmap (한 번만!)
+	context->Unmap(resources.stagingTex, 0);
+
+	//// 통계 출력
+	//qDebug() << "=== Statistics ===";
+	//qDebug() << "Valid pixels:" << validCount;
+	//qDebug() << "Overlap:" << overlapCount;
+	//qDebug() << "Volume only:" << volumeOnlyCount;
+	//qDebug() << "Background:" << (desc.Width * desc.Height - overlapCount - volumeOnlyCount);
+
+	if (validCount > 0)
+	{
+		float avgDelta = sum / validCount;
+		float variance = (sumSq / validCount) - (avgDelta * avgDelta);
+		float stdDev = sqrt(variance);
+
+		/*qDebug() << "Average ΔZ:" << avgDelta << "mm";
+		qDebug() << "Min ΔZ:" << minDelta << "mm";
+		qDebug() << "Max ΔZ:" << maxDelta << "mm";
+		qDebug() << "Std Dev:" << stdDev << "mm";
+		qDebug() << "---";
+
+		if (avgDelta < 5.0f)
+			qDebug() << "Alignment: EXCELLENT";
+		else if (avgDelta < 20.0f)
+			qDebug() << "Alignment: GOOD";
+		else if (avgDelta < 50.0f)
+			qDebug() << "Alignment: MODERATE";
+		else
+			qDebug() << "Alignment: POOR - Consider adjusting scale";*/
+	}
+	else
+	{
+
+		//qDebug() << "No valid pixels!";
+	}
+
+
+
+	// 어디에 데이터가 있는지 찾기
+	qDebug() << "=== Finding non-zero regions ===";
+
+	//int firstNonZeroX = -1;
+	//int firstNonZeroY = -1;
+	//int lastNonZeroX = -1;
+	//int lastNonZeroY = -1;
+
+	//for (int y = 0; y < (int)desc.Height; ++y)
+	//{
+	//	for (int x = 0; x < (int)desc.Width; ++x)
+	//	{
+	//		float val = data[y * pitch + x];
+
+	//		if (val > 0.0f)
+	//		{
+	//			if (firstNonZeroX == -1)
+	//			{
+	//				firstNonZeroX = x;
+	//				firstNonZeroY = y;
+	//			}
+
+	//			lastNonZeroX = x;
+	//			lastNonZeroY = y;
+	//		}
+	//	}
+	//}
+
+	//qDebug() << "First non-zero pixel:" << firstNonZeroX << "," << firstNonZeroY;
+	//qDebug() << "Last non-zero pixel:" << lastNonZeroX << "," << lastNonZeroY;
+	//qDebug() << "Data region size:" << (lastNonZeroX - firstNonZeroX)
+	//	<< "x" << (lastNonZeroY - firstNonZeroY);
+
+	//// 해당 영역 출력
+	//if (firstNonZeroX >= 0)
+	//{
+	//	qDebug() << "=== Data region sample ===";
+	//	for (int y = firstNonZeroY; y < min(firstNonZeroY + 10, (int)desc.Height); ++y)
+	//	{
+	//		QString row;
+	//		for (int x = firstNonZeroX; x < min(firstNonZeroX + 10, (int)desc.Width); ++x)
+	//		{
+	//			float val = data[y * pitch + x];
+	//			row += QString::number(val, 'f', 2) + " ";
+	//		}
+	//		qDebug() << row;
+	//	}
+	//}
+
+
+
+
+	int minX = INT_MAX;
+	int maxX = -1;
+	int minY = INT_MAX;
+	int maxY = -1;
+
+	for (int y = 0; y < (int)desc.Height; ++y)
+	{
+		for (int x = 0; x < (int)desc.Width; ++x)
+		{
+			float val = data[y * pitch + x];
+
+			if (val > 0.0f)
+			{
+				minX = min(minX, x);
+				maxX = max(maxX, x);
+				minY = min(minY, y);
+				maxY = max(maxY, y);
+			}
+		}
+	}
+
+	qDebug() << "Data bounding box:";
+	qDebug() << "  X:" << minX << "to" << maxX << "(width:" << (maxX - minX + 1) << ")";
+	qDebug() << "  Y:" << minY << "to" << maxY << "(height:" << (maxY - minY + 1) << ")";
+
+	// 해당 영역 샘플
+	if (minX <= maxX)
+	{
+		qDebug() << "=== Sample from data region ===";
+		int sampleY = (minY + maxY) / 2;
+
+		QString row;
+		for (int x = minX; x < min(minX + 10, maxX + 1); ++x)
+		{
+			float val = data[sampleY * pitch + x];
+			row += QString::number(val, 'f', 1) + " ";
+		}
+		qDebug() << "Row" << sampleY << ":" << row;
+	}
+}
 
 
 ID3D11ShaderResourceView* QDirect3D11Widget::CreateTextureSRV(ID3D11Device* device, ID3D11Texture2D* texture)
@@ -3675,7 +4284,7 @@ void QDirect3D11Widget::RenderVolumeView()
 		// 2. UAV 설정
 		ID3D11UnorderedAccessView* uavs[1] = { scaleRes.deltaZUAV };
 
-		
+
 		// UAV 카운터 없음 → 전부 -1
 		UINT initialCounts[1] = { UINT(-1) };
 
@@ -3831,7 +4440,7 @@ void QDirect3D11Widget::RenderVolumeView()
 	//}
 
 
-	
+
 
 	//// 풀스크린 삼각형 그리기
 	//m_pDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
@@ -3956,8 +4565,8 @@ void QDirect3D11Widget::InitializeVolumeCamera()
 	qDebug() << " (float)width() : " << (float)width();
 
 	projMat = XMMatrixOrthographicLH(
-		(float)width()/2.f*initFactor *m_orthoScale,   // width  = 600mm
-		(float)width() / 2.f /aspect * initFactor *m_orthoScale,   // height = 600mm
+		(float)width() / 2.f*initFactor *m_orthoScale,   // width  = 600mm
+		(float)width() / 2.f / aspect * initFactor *m_orthoScale,   // height = 600mm
 		-1000.0f,          // near
 		1000.0f            // far
 	);
@@ -4926,7 +5535,7 @@ void QDirect3D11Widget::RenderAllQuads()
 		D3D11_VIEWPORT vp = CreateViewport(i);
 
 		//if(0!=i)
-			m_pDeviceContext->RSSetViewports(1, &vp);
+		m_pDeviceContext->RSSetViewports(1, &vp);
 
 		if (0 == i) {  // 3D View
 
@@ -4939,7 +5548,7 @@ void QDirect3D11Widget::RenderAllQuads()
 				meshRenderer->volWorldMat = worldMat;
 
 				//meshRenderer->ExtractAxes(&worldMat, &meshRenderer->meshWorldMat);
-				
+
 
 				meshRenderer->RenderMeshDepth(
 					m_pDeviceContext, m_meshVertexBuffer, m_meshVS, m_meshPS, meshSceneDepth->m_resultRTV, m_meshInputLayout,
@@ -4953,6 +5562,8 @@ void QDirect3D11Widget::RenderAllQuads()
 
 					userRotation, viewMat, projMat, width(), height()
 				);
+
+				//DebugSceneDepth();
 
 
 
@@ -4980,6 +5591,8 @@ void QDirect3D11Widget::RenderAllQuads()
 				//);
 
 				RenderVolumeView();
+
+				DebugDeltaZTex();
 
 				//// ========== 3단계: Mesh 최종 렌더링 (CT 합성) ==========
 				m_pDeviceContext->OMSetRenderTargets(1, &m_pSwapChainRTV, m_pDepthStencilView);
@@ -5072,7 +5685,7 @@ void QDirect3D11Widget::RenderAllQuads()
 	ImGui::Begin("Volume Axis");
 	ImGui::TextColored(ImVec4(255.f / 255.f, 215.f / 255.f, 0, 1), "X+ : Sagittal");
 	ImGui::TextColored(ImVec4(0, 206.f / 255.f, 209.f / 255.f, 1), "Y+ : Coronal");
-	ImGui::TextColored(ImVec4(216.f /255.f, 127.f /255.f, 216.f /255.f, 1), "Z+ : Axial");
+	ImGui::TextColored(ImVec4(216.f / 255.f, 127.f / 255.f, 216.f / 255.f, 1), "Z+ : Axial");
 	ImGui::End();
 
 
@@ -5131,7 +5744,7 @@ void QDirect3D11Widget::RenderAllQuads()
 
 
 
-	ProcessDeltaZAndUpdateConstantBuffer(m_pDeviceContext, scaleRes);
+	//ProcessDeltaZAndUpdateConstantBuffer(m_pDeviceContext, scaleRes);
 
 	m_pSwapChain->Present(1, 0);
 
@@ -6335,7 +6948,7 @@ void QDirect3D11Widget::mouseDoubleClickEvent(QMouseEvent* event)
 		UpdateVolumeMatrix();
 
 		m_orthoScale = 1;
-	
+
 		InitializeVolumeCamera();  // 👈 여기
 
 		//w *= rotx;

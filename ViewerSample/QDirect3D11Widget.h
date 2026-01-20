@@ -348,6 +348,9 @@ private:
 		ScaleFitResources& outRes
 	);
 
+	void DebugSceneDepth();
+	void DebugDeltaZTex();
+
 	float ComputeOptimalScale(double mean, double rms);
 	// UAV → CPU → 통계 → 상수 버퍼 업데이트 함수
 	void ProcessDeltaZAndUpdateConstantBuffer(

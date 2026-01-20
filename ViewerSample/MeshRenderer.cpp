@@ -206,22 +206,22 @@ void MeshRenderer::RenderMeshDepth(ID3D11DeviceContext* context, ID3D11Buffer* m
 	XMMATRIX userRotMat, XMMATRIX v, XMMATRIX p, float width, float height)
 {
 	if (!m_meshVertexBuffer || m_meshVertexCount == 0) {
-		std::cout << "[RenderMeshDepth] ❌ VertexBuffer 없음 또는 VertexCount=0" << std::endl;
+		//std::cout << "[RenderMeshDepth] ❌ VertexBuffer 없음 또는 VertexCount=0" << std::endl;
 		return;
 	}
 
-	std::cout << "[RenderMeshDepth] 시작" << std::endl;
+	//std::cout << "[RenderMeshDepth] 시작" << std::endl;
 
 
 	ID3D11RenderTargetView* curRTV = nullptr;
 	ID3D11DepthStencilView* curDSV = nullptr;
 	context->OMGetRenderTargets(1, &curRTV, &curDSV);
-	std::cout << "[RenderMeshDepth] OMGetRenderTargets: curRTV=" << curRTV << " curDSV=" << curDSV << std::endl;
+	//std::cout << "[RenderMeshDepth] OMGetRenderTargets: curRTV=" << curRTV << " curDSV=" << curDSV << std::endl;
 
 
 	if (curRTV) curRTV->Release();
 	if (!curDSV) {
-		std::cout << "[RenderMeshDepth] ❌ curDSV가 nullptr" << std::endl;
+		//std::cout << "[RenderMeshDepth] ❌ curDSV가 nullptr" << std::endl;
 		return;
 	}
 
@@ -231,13 +231,12 @@ void MeshRenderer::RenderMeshDepth(ID3D11DeviceContext* context, ID3D11Buffer* m
 	// ✅ SceneDepth를 RenderTarget으로 설정
 	ID3D11RenderTargetView* rtvs[] = { sceneDepthRTV };
 	context->OMSetRenderTargets(1, rtvs, curDSV);
-	std::cout << "[RenderMeshDepth] OMSetRenderTargets 완료" << std::endl;
+	//std::cout << "[RenderMeshDepth] OMSetRenderTargets 완료" << std::endl;
 
 
 	// ✅ SceneDepth 클리어
 	float clearColor[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
-	HRESULT hr = S_OK;
-	//hr = context->ClearRenderTargetView(sceneDepthRTV, clearColor);
+	context->ClearRenderTargetView(sceneDepthRTV, clearColor);
 
 	context->ClearDepthStencilView(curDSV,
 		D3D11_CLEAR_DEPTH, 1.0f, 0);
@@ -289,7 +288,6 @@ void MeshRenderer::RenderMeshDepth(ID3D11DeviceContext* context, ID3D11Buffer* m
 
 	//s r t v p
 
-	XMMATRIX flipYZ = XMMatrixScaling(1.0f, -1.0f, -1.0f);
 
 
 	rotX = XMQuaternionRotationAxis(
@@ -302,14 +300,6 @@ void MeshRenderer::RenderMeshDepth(ID3D11DeviceContext* context, ID3D11Buffer* m
 		XM_PI  // Y축 180도
 	);
 
-
-	// 개선 (Y-Z 교환 + X축 반전으로 handedness 맞추기)
-	XMMATRIX coordinateSystemTransform = XMMatrixSet(
-		1.0f, 0.0f, 0.0f, 0.0f,  // X축 반전 (handedness 변경)
-		0.0f, -1.0f, 0.0f, 0.0f,  // Y축 -> Z축
-		0.0f, 0.0f, -1.0f, 0.0f,  // Z축 -> Y축
-		0.0f, 0.0f, 0.0f, 1.0f
-	);
 
 
 
@@ -327,7 +317,7 @@ void MeshRenderer::RenderMeshDepth(ID3D11DeviceContext* context, ID3D11Buffer* m
 	////볼륨 - 메쉬 기본은 rotx, roty 인데 rotation은 메쉬에만 추가로 곱해줌.
 	//initialMeshWorld =coordinateSystemTransform/**flipYZ*rotation*/;
 	//initialMeshWorld = coordinateSystemTransform*XMMatrixRotationQuaternion(XMQuaternionMultiply(rotX, rotY))*rotation*test3;
-	initialMeshWorld = /*coordinateSystemTransform * */XMMatrixRotationQuaternion(XMQuaternionMultiply(rotX, rotY))*rotation;
+	initialMeshWorld = XMMatrixRotationQuaternion(XMQuaternionMultiply(rotX, rotY))*rotation;
 
 
 	//스케일을 볼륨걸 적용한 유저 로테이션을 곱해야지 회전 싱크가 맞음
@@ -478,7 +468,7 @@ void MeshRenderer::RenderMeshDepth(ID3D11DeviceContext* context, ID3D11Buffer* m
 
 
 	//// ✅ 깊이 버퍼를 SceneDepth 텍스처로 복사
-	////ID3D11Texture2D* depthTexture = nullptr;
+	//ID3D11Texture2D* depthTexture = nullptr;
 	//curDSV->GetResource((ID3D11Resource**)&m_meshTexture);
 
 	//if (curDSV) curDSV->Release();
