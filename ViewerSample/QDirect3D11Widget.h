@@ -61,6 +61,13 @@ struct CB
 };
 
 
+struct DebugCB
+{
+	DirectX::XMFLOAT2 ViewSize;
+	DirectX::XMFLOAT2 pad;
+};
+
+
 class FileReader;
 
 
@@ -212,7 +219,7 @@ public:
 	// ⭐ Transfer Function 추가
 	TransferFunction* m_transferFunction;
 	ID3D11SamplerState* m_tfSampler;
-
+	ComPtr<ID3D11Buffer> cbDebug;
 
 public:
 
@@ -347,9 +354,15 @@ private:
 		DXGI_FORMAT format,
 		ScaleFitResources& outRes
 	);
-
+	void AnalyzeZTex(
+		ID3D11Texture2D* srcTex,
+		const char* label,
+		ID3D11Device* device,
+		ID3D11DeviceContext* ctx
+	);
 	void DebugSceneDepth();
 	void DebugDeltaZTex();
+	void DebugSceneDepthDirect();
 
 	float ComputeOptimalScale(double mean, double rms);
 	// UAV → CPU → 통계 → 상수 버퍼 업데이트 함수
@@ -533,8 +546,9 @@ public:
 	DirectX::XMFLOAT4X4 m_volumeProjectionMatrix;
 
 	ID3D11DepthStencilView* m_pDepthStencilView;  // ← 이게 있는지 확인
-	ID3D11Texture2D* m_depthTexture = nullptr;
+	//ID3D11Texture2D* m_depthTexture = nullptr;
 	ID3D11RenderTargetView* m_sceneDepthRTV = nullptr;
+	//ID3D11ShaderResourceView* m_sceneDepthSRV = nullptr;
 
 	// // ✅ 각 평면의 World Matrix를 저장
 
@@ -544,7 +558,7 @@ public:
 
 	//	XMMATRIX view, proj;
 	CB cb{};
-
+	DebugCB debugCb{};
 
 	XMVECTOR eye /*= XMVectorSet(0.0f, 0.0f, -3.0f, 1.0f)*/;  // 조금 더 뒤로
 	XMVECTOR at /*= XMVectorSet(0.0f, 0.0f, 0.0f, 1.0f)*/;
@@ -556,7 +570,7 @@ public:
 	float maxPhysicalVol, maxMesh, overallSize{ 1.f };
 	float physicalWidth, physicalHeight, physicalDepth;
 	float scaleX, scaleY, scaleZ;
-	float m_orthoScale{1};
+	float m_orthoScale{1.f};
 
 	//DebugScreenPoint m_debugPoint;
 
@@ -585,6 +599,8 @@ public:
 	//void resizeSwapChain();
 
 	ComPtr<ID3D11Buffer> m_quadVB;
+
+	void PrintMatrix(const XMMATRIX& mat);
 	void CreateTexture3D();
 	void FullScreenPassSet();
 

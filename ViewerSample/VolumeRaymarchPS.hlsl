@@ -54,33 +54,23 @@ struct PSOut
 };
 
 
+// NOTE:
+// deltaZ is written directly from raymarching PS for quick validation.
+// This is NOT final architecture.
+// Should be refactored to MRT + post pass (or CS) later.
 
-// depth01 : 0~1 depth buffer value
-// proj    : Projection matrix (same one used for rendering)
-float ReconstructViewZ_InvProj(float2 uv,float depth01, matrix proj)
-{
-	//float2 uv = input.uv;
 
-	//uv.x *= 0.5;
-	//uv.y *= 0.5;
+//자동 스케일 계산
+//
+//릴리즈
+//
+//수치 비교 기능
 
-	float2 ndc = uv * 2.0f - 1.0f;
-	//ndc.y = -ndc.y;
-	ndc.y = 1.0f - uv.y * 2.0f; // D3D flip
 
-	float z_ndc = depth01 * 2 - 1;   // ❗ 반드시 필요
-
-	float4 clip = float4(ndc.x,ndc.y, z_ndc, 1.0f);
-	float4 view = mul(clip, InvProj);   // 너가 row-vector 스타일이면 mul(v, M) 유지
-	view /= max(view.w, 1e-6);
-
-	return view.z; // view-space z
-	//return view.w; // view-space z
-}
 
 float4 main(PSInput input) : SV_Target
 {
-	//return float4(0,1,0,0);
+
 	float2 uv = input.uv;
 	float2 ndc = uv * 2.0 - 1.0;
 	ndc.y = -ndc.y;
@@ -208,12 +198,15 @@ float4 main(PSInput input) : SV_Target
 	uvFull.x = input.uv.x * 0.5;
 	uvFull.y = input.uv.y * 0.5;
 
+	//screenUV = pixelCoord / ViewSize
+
 	/* ---------------------------
 	   Mesh depth (screen-space) -> view Z
 	--------------------------- */
 	float meshDepth01 = SceneDepth.SampleLevel(pointClamp, uvFull, 0);
-
-
+	/*float d = meshDepth01;
+	return float4(d, d, d, 1);
+	float meshViewZ = d;*/
 	//bool hasMesh = (meshDepth01 < 0.9999);
 	//hasMesh = false;
 
@@ -243,8 +236,55 @@ float4 main(PSInput input) : SV_Target
 
 	//float meshViewZ = SceneDepth.SampleLevel(pointClamp, uvFull, 0);
 
-	float d01 = SceneDepth.SampleLevel(pointClamp, uvFull, 0);
-	float meshViewZ = ReconstructViewZ_InvProj(uvFull, d01, InvProj);
+	int2 pixelCoord = int2(floor(input.pos.xy));
+
+		// ✅ 전체 화면 기준 UV 계산
+	float2 screenUV;
+	screenUV.x = pixelCoord.x / ViewSize.x;  // ViewSize는 CB로 전달 (1276)
+	screenUV.y = pixelCoord.y / ViewSize.y;  // (728)
+
+	//float d = SceneDepth.SampleLevel(pointClamp, screenUV, 0);
+	//return float4(d, d, d, 1);
+
+	float2 meshUV;
+	meshUV.x = screenUV.x * 2.0;
+	meshUV.y = screenUV.y * 2.0;
+
+
+	//return float4(SceneDepth.Load(int3(10, 10, 0)).xxx, 1);
+
+	//float d = SceneDepth.SampleLevel(pointClamp, uvFull, 0);
+	//return float4(d, d, d, 1);
+
+
+
+
+
+	////	  // ✅ SceneDepth 샘플링
+	////float depth01 = SceneDepth.SampleLevel(pointClamp, screenUV, 0);
+
+	//// clip space
+	//float z_ndc = meshDepth01 * 2.0f - 1.0f;
+	//float4 clip = float4(
+	//	screenUV.x * 2 - 1,
+	//	1 - screenUV.y * 2,
+	//	z_ndc,
+	//	1
+	//	);
+
+	//// view space
+	//float4 view = mul(clip, InvProj);
+	//view /= view.w;
+
+	//float meshViewZ = view.z;
+
+	//// 🔴 디버그 출력
+	//return float4(abs(meshViewZ) / 500.0, 0, 0, 1);
+
+
+
+
+
 
 
 
@@ -257,10 +297,10 @@ float4 main(PSInput input) : SV_Target
 	//float d01_half = SceneDepth.SampleLevel(pointClamp, input.uv * 0.5, 0);
 
 	// uvFull 없이 직접 샘플링
-	float d01_full = SceneDepth.SampleLevel(pointClamp, input.uv, 0);
+	//float d01_full = SceneDepth.SampleLevel(pointClamp, input.uv, 0);
 
 
-	bool hasMesh = (meshViewZ < 1e8); // background 제외
+	//bool hasMesh = (meshViewZ < 1e8); // background 제외
 
 
 	/* ---------------------------
@@ -297,7 +337,7 @@ float4 main(PSInput input) : SV_Target
 		// depth block (tolerance in VIEW units; use a small constant or scale by step)
 		// stepW is world units; convert rough tolerance to view by multiplying by |rayDirVS.z|
 		float stepV = abs(stepW * rayDirVS.z);
-		float depthDiff = rayViewZ - meshViewZ;
+		//float depthDiff = rayViewZ - meshViewZ;
 
 		//if (hasMesh && depthDiff < -stepV * 2.0)
 		//	continue;
@@ -385,182 +425,152 @@ float4 main(PSInput input) : SV_Target
 					continue;
 
 
-				//if (col.a > 0.001 && !hasHit)
-				//{
-				//	hitViewZ = mul(float4(posWS, 1), View).z;
-
-				//	//int2 pixelCoord = int2(input.pos.xy); // (0..RT-1)
-				//	int2 pixelCoord = int2(floor(input.pos.xy));
-
-				//	if (!hasHit && hasMesh)
-				//	{
-				//		float deltaZ = abs(meshViewZ - hitViewZ);
-				//		DeltaZTex[pixelCoord] = abs(meshViewZ - hitViewZ);
-				//	}
-				//	else
-				//	{
-				//		DeltaZTex[pixelCoord] = 0.0;
-				//	}
-
-
-				//	//hitViewZ = tW;   // ray parameter (world distance)
-				//	hasHit = true;
-				//	//break;
-
-				///*	if (hasMesh)
-				//		deltaZ = abs(meshViewZ - hitViewZ);*/
-				//}
-
-				//// 셰이더에서 디버그 출력
-				//if (!hasHit && col.a > 0.001)
-				//{
-				//	hitViewZ = mul(float4(posWS, 1), View).z;
-				//	int2 pixelCoord = int2(floor(input.pos.xy));
-
-				//	if (hasMesh)
-				//	{
-				//		// ✅ 개별 값 확인용
-				//		DeltaZTex[pixelCoord] = meshViewZ;        // R 채널
-				//		// 또는
-				//		// DeltaZTex[pixelCoord] = hitViewZ;      // 볼륨 깊이
-				//	}
-
-				//	hasHit = true;
-				//}
-
-				//if (!hasHit && col.a > 0.001)
-				//{
-				//	hitViewZ = mul(float4(posWS, 1), View).z;
-				//	int2 pixelCoord = int2(floor(input.pos.xy));
-
-				//	if (hasMesh)
-				//	{
-				//		
-				//		// ✅ 임시로 고정 meshViewZ 사용
-				//		float fakeMeshViewZ = -500.0f;  // 고정값
-
-
-				//		int2 pixelCoord = int2(floor(input.pos.xy));
-				//		//DeltaZTex[pixelCoord] = d01_full * 1000.0f;  // 0~1 → 0~1000 스케일
-
-				//		DeltaZTex[pixelCoord] = abs(fakeMeshViewZ - hitViewZ);
-				//	}
-
-				//	hasHit = true;
-				//}
-
-				//// 일단 실제 깊이 차이가 계산되는지 확인
-				//if (!hasHit && col.a > 0.001)
-				//{
-				//	hitViewZ = mul(float4(posWS, 1), View).z;
-				//	int2 pixelCoord = int2(floor(input.pos.xy));
-
-				//
-				//	//if (meshViewZ > 0.0f)  // hasMesh 체크
-				//	//{
-				//	//	// ✅ 둘 다 절대값으로 통일
-				//	//	//float deltaZ = abs(abs(meshViewZ) - abs(hitViewZ));
-				//	//	float deltaZ = abs(meshViewZ - hitViewZ);
-				//	//	DeltaZTex[pixelCoord] = deltaZ;
-				//	//}
-				//	//else
-				//	//{
-				//	//	DeltaZTex[pixelCoord] = -1.0f;  // 메시 없음
-				//	//}
-				//	//
-
-				//	//hasHit = true;
-
-
-
-
-
-
-
-				//	//hitViewZ = mul(float4(posWS, 1), View).z;
-				//	//int2 pixelCoord = int2(floor(input.pos.xy));
-
-				//	//// ✅ 테스트 A: meshViewZ 기록
-				//	// //DeltaZTex[pixelCoord] = meshViewZ;
-
-				//	//// ✅ 테스트 B: hitViewZ 기록 (절대값)
-				//	////DeltaZTex[pixelCoord] = abs(hitViewZ);
-
-				//	//// ✅ 테스트 C: hitViewZ 원본 (부호 포함)
-				//	// DeltaZTex[pixelCoord] = hitViewZ;
-
-				//	//hasHit = true;
-
-
-if (!hasHit && col.a > 0.001)
-{
-	// hitViewZ 계산
-	float4 posView = mul(float4(posWS, 1), View);
-	posView /= max(abs(posView.w), 1e-6);
-	float hitViewZ = posView.z;
-
-	// meshViewZ 읽기
-	//float meshViewZ = SceneDepth.SampleLevel(pointClamp, input.uv, 0);
-
-	int2 pixelCoord = int2(floor(input.pos.xy));
-
-	// ✅ 깊이 차이
-	if (meshDepth01 > 0.0f)
-	{
-		float deltaZ = abs(meshDepth01 - hitViewZ);
-		DeltaZTex[pixelCoord] = meshDepth01;
-	}
-	else
-	{
-		DeltaZTex[pixelCoord] = -1.0f;
-	}
-
-	hasHit = true;
-}
-
-
-
-
-				//		// ✅ 디버그: 각 컴포넌트 확인
-				//	// DeltaZTex[pixelCoord] = posView.x;  // X
-				//	// DeltaZTex[pixelCoord] = posView.y;  // Y
-				//	//DeltaZTex[pixelCoord] = posView.z;     // Z
-				//	// DeltaZTex[pixelCoord] = posView.w;  // W
-
-
-				//	DeltaZTex[pixelCoord] = ReconstructViewZ_InvProj(uv, d01, InvProj);
-
-				//	hasHit = true;
-				//}
-
-
-
-
-
-
-				//// 일단 deltaZ 계산 대신 상수 값 테스트
-				////if (!hasHit)
-				//{
-				//	int2 pixelCoord = int2(floor(input.pos.xy));
-
-				//	// 테스트: 고정 값 쓰기
-				//	DeltaZTex[pixelCoord] = 123.456f;  // 모든 픽셀에 같은 값
-
-				//	hasHit = true;
-				//}
-	
-
-
 				
 
 
-				//// alpha integrate (step in WORLD units now)
-				////float alpha = col.a * stepW * 10.0;
+//if (!hasHit && col.a > 0.001)
+//{
+//	// hitViewZ 계산
+//	float4 posView = mul(float4(posWS, 1), View);
+//	posView /= max(abs(posView.w), 1e-6);
+//	float hitViewZ = posView.z;
+//
+//	// meshViewZ 읽기
+//	//float meshViewZ = SceneDepth.SampleLevel(pointClamp, input.uv, 0);
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//	//float nearZ = 205.4f;          // 카메라 바로 앞
+//	//float farZ = 794.6f; // 볼륨 깊이 + 여유
+//
+//	//float meshViewZ = ReconstructViewZ_InvProj(depth01,-1000,1000);
+//	//float meshViewZ = ReconstructViewZ_InvProj(depth01, nearZ, farZ);
+//
+//	
+//
+//	
+//	// ✅ 깊이 차이
+//	if (meshDepth01 > 0.001f && meshDepth01 < 0.9999f)  // 메시 있음
+//	{
+//		float deltaZ = abs(meshViewZ - hitViewZ);
+//		
+//		//if (deltaZ < 500.0f)  // 50cm 이상 차이는 무시
+//		{
+//			DeltaZTex[pixelCoord] = hitViewZ;
+//		}
+//		//else
+//		//{
+//		//	DeltaZTex[pixelCoord] = -1.0f;  // 이상치
+//		//}
+//
+//	}
+//	else
+//	{
+//		DeltaZTex[pixelCoord] = -1.0f;    // 메시 없음 표시
+//
+//	}
+//
+//	hasHit = true;
+//
+//}
+//else
+//{
+//	int2 pixelCoord = int2(floor(input.pos.xy));
+//	DeltaZTex[pixelCoord] = -1.0f;  // 메시 없음
+//}
 
-				//// voxelSizeMM: 평균 voxel spacing (CB로 전달)
-				////float alpha = col.a * (stepW / voxelSizeMM) * densityScale;
-				////densityScale ≈ 0.05 ~ 0.2
-				//float alpha = col.a * (stepW / 0.2f) * 0.1;
+
+				float z_ndc = meshDepth01 * 2.0f - 1.0f;
+
+				float4 clip = float4(
+					screenUV.x * 2.0f - 1.0f,
+					1.0f - screenUV.y * 2.0f, // D3D Y flip
+					z_ndc,
+					1.0f
+					);
+
+				float4 view = mul(clip, InvProj);
+				view /= view.w;
+
+				float meshViewZ = view.z;
+
+		// meshViewZ = mul(float4(meshPosWS, 1), View).z;
+
+
+				//// meshViewZ만 보기
+				//float viz = saturate(abs(meshViewZ) / 500.0);
+				//return float4(viz, viz, viz, 1);
+
+
+			
+
+				if (!hasHit && col.a > 0.001)
+				{
+					// hitViewZ 계산
+					float4 posView = mul(float4(posWS, 1), View);
+					posView /= max(abs(posView.w), 1e-6);
+					float hitViewZ = posView.z;
+
+					// meshViewZ 읽기
+					//float meshViewZ = SceneDepth.SampleLevel(pointClamp, input.uv, 0);
+
+
+
+			/*		float viz = saturate(abs(hitViewZ) / 500.0);
+					return float4(viz, 0, 0, 1);*/
+
+
+
+
+
+
+
+					//float nearZ = 205.4f;          // 카메라 바로 앞
+					//float farZ = 794.6f; // 볼륨 깊이 + 여유
+
+					//float meshViewZ = ReconstructViewZ_InvProj(depth01,-1000,1000);
+					//float meshViewZ = ReconstructViewZ_InvProj(depth01, nearZ, farZ);
+
+
+
+
+					// ✅ 깊이 차이
+					if (meshDepth01 > 0.001f && meshDepth01 < 0.9999f)  // 메시 있음
+					{
+						float deltaZ = abs(meshViewZ - hitViewZ);
+
+						//if (deltaZ < 500.0f)  // 50cm 이상 차이는 무시
+						{
+							DeltaZTex[pixelCoord] = deltaZ;
+						}
+						//else
+						//{
+						//	DeltaZTex[pixelCoord] = -1.0f;  // 이상치
+						//}
+
+					}
+					else
+					{
+						DeltaZTex[pixelCoord] = -1.0f;    // 메시 없음 표시
+
+					}
+
+					hasHit = true;
+
+				}
+				else
+				{
+					int2 pixelCoord = int2(floor(input.pos.xy));
+					DeltaZTex[pixelCoord] = -1.0f;  // 메시 없음
+				}
+
 
 
 				float densityScale = 0.02;

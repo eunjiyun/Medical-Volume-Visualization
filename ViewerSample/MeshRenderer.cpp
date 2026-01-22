@@ -3,6 +3,9 @@
 #include "PLYLoader.h"
 //#include "QDirect3D11Widget.h"
 
+
+
+
 void MeshRenderer::CreateTwoPassStates(ID3D11Device* device)
 {
 	HRESULT hr;
@@ -139,6 +142,7 @@ void MeshRenderer::CreateTwoPassStates(ID3D11Device* device)
 
 	hr = device->CreateBlendState(&blendDesc, &alphaBlendState);
 
+
 	// ✅ 디버그 추가!
 	if (FAILED(hr)) {
 		std::cout << "❌ Failed to create alphaBlendState!" << std::endl;
@@ -146,6 +150,11 @@ void MeshRenderer::CreateTwoPassStates(ID3D11Device* device)
 	else {
 		std::cout << "✅ alphaBlendState created:" << alphaBlendState << std::endl;
 	}
+
+
+
+
+
 
 	std::cout << "========== All States Created ==========" << std::endl;
 
@@ -200,11 +209,12 @@ void MeshRenderer::CreateTwoPassStates(ID3D11Device* device)
 
 void MeshRenderer::RenderMeshDepth(ID3D11DeviceContext* context, ID3D11Buffer* m_meshVertexBuffer,
 	ID3D11VertexShader* m_meshVS, ID3D11PixelShader* m_meshPS, ID3D11RenderTargetView* sceneDepthRTV , ID3D11InputLayout* m_meshInputLayout,
-	ID3D11Buffer* m_clipSettingsBuffer, ID3D11Buffer* m_meshConstantBuffer,  ID3D11Texture2D* m_meshTexture,
+	ID3D11Buffer* m_clipSettingsBuffer, ID3D11Buffer* m_meshConstantBuffer,  ID3D11Texture2D* m_meshTexture, ID3D11ShaderResourceView* m_meshDepthSRV,
 	ID3D11SamplerState* m_MeshSamplerState, ID3D11Device* m_pDevice, int m_meshVertexCount,
 	float maxMesh, float maxPhysicalVol, float volWidth, float volHeight, float volDepth, float overallSize,
 	XMMATRIX userRotMat, XMMATRIX v, XMMATRIX p, float width, float height)
 {
+
 	if (!m_meshVertexBuffer || m_meshVertexCount == 0) {
 		//std::cout << "[RenderMeshDepth] ❌ VertexBuffer 없음 또는 VertexCount=0" << std::endl;
 		return;
@@ -224,6 +234,10 @@ void MeshRenderer::RenderMeshDepth(ID3D11DeviceContext* context, ID3D11Buffer* m
 		//std::cout << "[RenderMeshDepth] ❌ curDSV가 nullptr" << std::endl;
 		return;
 	}
+	/*std::cout << "[RenderMeshDepth] BEGIN" << std::endl;
+	std::cout << "  VertexCount = " << m_meshVertexCount << std::endl;
+	std::cout << "  sceneDepthRTV = " << sceneDepthRTV << std::endl;
+	std::cout << "  curDSV(before) = " << curDSV << std::endl;*/
 
 
 
@@ -234,6 +248,19 @@ void MeshRenderer::RenderMeshDepth(ID3D11DeviceContext* context, ID3D11Buffer* m
 	//std::cout << "[RenderMeshDepth] OMSetRenderTargets 완료" << std::endl;
 
 
+	ID3D11RenderTargetView* dbgRTV = nullptr;
+	ID3D11DepthStencilView* dbgDSV = nullptr;
+
+	context->OMGetRenderTargets(1, &dbgRTV, &dbgDSV);
+
+	//std::cout << "[OMSetRenderTargets]" << std::endl;
+	//std::cout << "  RTV = " << dbgRTV << std::endl;
+	//std::cout << "  DSV = " << dbgDSV << std::endl;
+
+	if (dbgRTV) dbgRTV->Release();
+	if (dbgDSV) dbgDSV->Release();
+
+
 	// ✅ SceneDepth 클리어
 	float clearColor[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
 	context->ClearRenderTargetView(sceneDepthRTV, clearColor);
@@ -241,7 +268,7 @@ void MeshRenderer::RenderMeshDepth(ID3D11DeviceContext* context, ID3D11Buffer* m
 	context->ClearDepthStencilView(curDSV,
 		D3D11_CLEAR_DEPTH, 1.0f, 0);
 
-	if (curDSV) curDSV->Release();
+	//if (curDSV) curDSV->Release();
 
 
 
@@ -252,12 +279,22 @@ void MeshRenderer::RenderMeshDepth(ID3D11DeviceContext* context, ID3D11Buffer* m
 	D3D11_VIEWPORT fullVP = {};
 	fullVP.TopLeftX = 0.0f;
 	fullVP.TopLeftY = 0.0f;
-	fullVP.Width = static_cast<float>(width);   // 전체 화면 width
-	fullVP.Height = static_cast<float>(height);  // 전체 화면 height
+	fullVP.Width = static_cast<float>(width)/2;   // 전체 화면 width
+	fullVP.Height = static_cast<float>(height)/2;  // 전체 화면 height
 	fullVP.MinDepth = 0.0f;
 	fullVP.MaxDepth = 1.0f;
 
+	D3D11_VIEWPORT vp;
+	UINT vpCount = 1;
+	context->RSGetViewports(&vpCount, &vp);
 
+	/*std::cout << "[Viewport]" << std::endl;
+	std::cout << "  x=" << vp.TopLeftX
+		<< " y=" << vp.TopLeftY
+		<< " w=" << vp.Width
+		<< " h=" << vp.Height << std::endl;*/
+
+	context->RSSetViewports(1, &fullVP);
 
 
 	//// ✅ SceneDepth를 RenderTarget으로 설정
@@ -268,9 +305,6 @@ void MeshRenderer::RenderMeshDepth(ID3D11DeviceContext* context, ID3D11Buffer* m
 	//float clearColor[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
 	//context->ClearRenderTargetView(m_sceneDepthRTV, clearColor);
 
-	
-
-	//context->RSSetViewports(1, &fullVP);
 
 	context->PSSetSamplers(5, 1, &m_PointClampSampler);  // s5 채우기
 
@@ -395,7 +429,7 @@ void MeshRenderer::RenderMeshDepth(ID3D11DeviceContext* context, ID3D11Buffer* m
 	context->PSSetConstantBuffers(1, 1, &m_clipSettingsBuffer);
 
 	//// ========== Texture/Sampler ==========
-	//context->PSSetShaderResources(0, 1, &m_meshTexture);
+	//context->PSSetShaderResources(0, 1, &m_meshDepthSRV);
 	//context->PSSetSamplers(0, 1, &m_MeshSamplerState);
 
 	//// ========== Rasterizer ==========
@@ -436,6 +470,18 @@ void MeshRenderer::RenderMeshDepth(ID3D11DeviceContext* context, ID3D11Buffer* m
 	context->OMSetBlendState(nullptr, nullptr, 0xffffffff);
 
 
+
+	ID3D11DepthStencilState* dbgDepthState = nullptr;
+	UINT stencilRef = 0;
+	context->OMGetDepthStencilState(&dbgDepthState, &stencilRef);
+
+	/*std::cout << "[DepthState]" << std::endl;
+	std::cout << "  Bound depth state = " << dbgDepthState << std::endl;*/
+
+	if (dbgDepthState) dbgDepthState->Release();
+
+
+
 	//// ✅ 실제로 바인딩되었는지 확인
 	//ID3D11DepthStencilState* currentDepthState = nullptr;
 	//UINT stencilRef;
@@ -466,9 +512,34 @@ void MeshRenderer::RenderMeshDepth(ID3D11DeviceContext* context, ID3D11Buffer* m
 	context->Draw(m_meshVertexCount, 0);
 
 
+	/*ID3D11Resource* depthRes = nullptr;
+	curDSV->GetResource(&depthRes);
+
+	ID3D11Texture2D* depthTex = nullptr;
+	depthRes->QueryInterface(__uuidof(ID3D11Texture2D), (void**)&depthTex);
+
+	if (depthTex)
+	{
+		D3D11_TEXTURE2D_DESC desc;
+		depthTex->GetDesc(&desc);
+
+		std::cout << "[DepthBuffer Desc]" << std::endl;
+		std::cout << "  Format = " << desc.Format << std::endl;
+		std::cout << "  Size = " << desc.Width << " x " << desc.Height << std::endl;
+	}
+	else
+	{
+		std::cout << "❌ depthTex is null" << std::endl;
+	}
+
+	if (depthTex) depthTex->Release();
+	if (depthRes) depthRes->Release();*/
+
+
+
 
 	//// ✅ 깊이 버퍼를 SceneDepth 텍스처로 복사
-	//ID3D11Texture2D* depthTexture = nullptr;
+	//
 	//curDSV->GetResource((ID3D11Resource**)&m_meshTexture);
 
 	//if (curDSV) curDSV->Release();
@@ -480,6 +551,29 @@ void MeshRenderer::RenderMeshDepth(ID3D11DeviceContext* context, ID3D11Buffer* m
 	//}
 
 	//if (m_meshTexture) m_meshTexture->Release();
+
+
+
+
+	/*ID3D11Resource* res = nullptr;
+	curDSV->GetResource(&res);
+
+	ID3D11Texture2D* depthTex = nullptr;
+	res->QueryInterface(__uuidof(ID3D11Texture2D), (void**)&depthTex);
+
+	if (depthTex && sceneDepthTexture)
+		context->CopyResource(sceneDepthTexture, depthTex);
+
+
+	std::cout << "[CopyResource]" << std::endl;
+	std::cout << "  depthTex = " << depthTex << std::endl;
+	std::cout << "  sceneDepthTexture = " << sceneDepthTexture << std::endl;
+
+
+
+
+	if (depthTex) depthTex->Release();
+	if (res) res->Release();*/
 
 }
 
