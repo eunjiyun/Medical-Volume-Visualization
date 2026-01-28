@@ -674,13 +674,26 @@ public:
 	ID3D11ShaderResourceView* m_colorPeelSRVs[MAX_DEPTH_PEELS] = {};
 
 	ID3D11ShaderResourceView* m_depthSRV = {};
+	ID3D11ShaderResourceView* m_UAVDebugSRV = {};
+	ID3D11Texture2D* m_UAVDebugTex{ nullptr };
+	//ID3D11ShaderResourceView* m_meshViewZReadSRV = {};
 
 
+	ID3D11Texture2D*	meshViewZWriteTex = nullptr;
+	ID3D11RenderTargetView* meshViewZWriteRTV = nullptr;
+	ID3D11ShaderResourceView* meshViewZWriteSRV = nullptr;
 
 
 	bool CreateDepthPeelingBuffers();
 	void RenderMeshWithDepthPeeling(ID3D11DeviceContext* context);
 	void ComposePeeledLayers(ID3D11DeviceContext* context);
+
+
+
+	void CreateSRV(ID3D11Texture2D* tex, ID3D11ShaderResourceView* srv);
+
+
+	void CreateMeshViewZResource();
 };
 
 

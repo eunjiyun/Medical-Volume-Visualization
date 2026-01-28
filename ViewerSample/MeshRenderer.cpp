@@ -243,9 +243,10 @@ void MeshRenderer::RenderMeshDepth(ID3D11DeviceContext* context, ID3D11Buffer* m
 
 
 	// ✅ SceneDepth를 RenderTarget으로 설정
-	ID3D11RenderTargetView* rtvs[] = { sceneDepthRTV };
+	ID3D11RenderTargetView* rtvs[] = { sceneDepthRTV  };
 	context->OMSetRenderTargets(1, rtvs, curDSV);
 	//std::cout << "[RenderMeshDepth] OMSetRenderTargets 완료" << std::endl;
+
 
 
 	ID3D11RenderTargetView* dbgRTV = nullptr;
@@ -311,7 +312,6 @@ void MeshRenderer::RenderMeshDepth(ID3D11DeviceContext* context, ID3D11Buffer* m
 
 	// ========== Shader 바인딩 ==========
 	context->VSSetShader(m_meshVS, nullptr, 0);
-	//context->PSSetShader(m_meshPS, nullptr, 0); // 🔥
 	context->PSSetShader(m_meshPS, nullptr, 0); // 🔥
 	context->IASetInputLayout(m_meshInputLayout);
 
@@ -574,6 +574,228 @@ void MeshRenderer::RenderMeshDepth(ID3D11DeviceContext* context, ID3D11Buffer* m
 
 	if (depthTex) depthTex->Release();
 	if (res) res->Release();*/
+
+}
+
+void MeshRenderer::RenderMeshViewZ(ID3D11DeviceContext* context, ID3D11Buffer* m_meshVertexBuffer,
+	ID3D11VertexShader* m_meshVS, ID3D11PixelShader* m_meshPS, ID3D11RenderTargetView* sceneDepthRTV, ID3D11InputLayout* m_meshInputLayout,
+	ID3D11Buffer* m_clipSettingsBuffer, ID3D11Buffer* m_meshConstantBuffer, ID3D11Texture2D* m_meshTexture, ID3D11ShaderResourceView* m_meshDepthSRV,
+	ID3D11SamplerState* m_MeshSamplerState, ID3D11Device* m_pDevice, int m_meshVertexCount,
+	float maxMesh, float maxPhysicalVol, float volWidth, float volheight, float volDepth, float overallSize,
+	XMMATRIX w, XMMATRIX v, XMMATRIX p, float width, float height)
+{
+
+	if (!m_meshVertexBuffer || m_meshVertexCount == 0) {
+		//std::cout << "[RenderMeshDepth] ❌ VertexBuffer 없음 또는 VertexCount=0" << std::endl;
+		return;
+	}
+
+	//std::cout << "[RenderMeshDepth] 시작" << std::endl;
+
+
+	ID3D11RenderTargetView* curRTV = nullptr;
+	ID3D11DepthStencilView* curDSV = nullptr;
+	context->OMGetRenderTargets(1, &curRTV, &curDSV);
+	//std::cout << "[RenderMeshDepth] OMGetRenderTargets: curRTV=" << curRTV << " curDSV=" << curDSV << std::endl;
+
+
+	//if (curRTV) curRTV->Release();
+	//if (!curDSV) {
+	//	//std::cout << "[RenderMeshDepth] ❌ curDSV가 nullptr" << std::endl;
+	//	return;
+	//}
+	///*std::cout << "[RenderMeshDepth] BEGIN" << std::endl;
+	//std::cout << "  VertexCount = " << m_meshVertexCount << std::endl;
+	//std::cout << "  sceneDepthRTV = " << sceneDepthRTV << std::endl;
+	//std::cout << "  curDSV(before) = " << curDSV << std::endl;*/
+
+
+
+
+	// ✅ SceneDepth를 RenderTarget으로 설정
+	ID3D11RenderTargetView* rtvs[] = { sceneDepthRTV };
+	context->OMSetRenderTargets(1, rtvs, nullptr);
+	//std::cout << "[RenderMeshDepth] OMSetRenderTargets 완료" << std::endl;
+
+
+
+	ID3D11RenderTargetView* dbgRTV = nullptr;
+	ID3D11DepthStencilView* dbgDSV = nullptr;
+
+	context->OMGetRenderTargets(1, &dbgRTV, &dbgDSV);
+
+	//std::cout << "[OMSetRenderTargets]" << std::endl;
+	//std::cout << "  RTV = " << dbgRTV << std::endl;
+	//std::cout << "  DSV = " << dbgDSV << std::endl;
+
+	if (dbgRTV) dbgRTV->Release();
+	if (dbgDSV) dbgDSV->Release();
+
+
+	// ✅ SceneDepth 클리어
+	float clearColor[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
+	context->ClearRenderTargetView(sceneDepthRTV, clearColor);
+
+	context->ClearDepthStencilView(curDSV,
+		D3D11_CLEAR_DEPTH, 1.0f, 0);
+
+	//if (curDSV) curDSV->Release();
+
+
+
+
+
+
+	//// 🔥 Depth pass는 반드시 full-res viewport
+	D3D11_VIEWPORT fullVP = {};
+	fullVP.TopLeftX = 0.0f;
+	fullVP.TopLeftY = 0.0f;
+	fullVP.Width = static_cast<float>(width) / 2;   // 전체 화면 width
+	fullVP.Height = static_cast<float>(height) / 2;  // 전체 화면 height
+	fullVP.MinDepth = 0.0f;
+	fullVP.MaxDepth = 1.0f;
+
+	D3D11_VIEWPORT vp;
+	UINT vpCount = 1;
+	context->RSGetViewports(&vpCount, &vp);
+
+	/*std::cout << "[Viewport]" << std::endl;
+	std::cout << "  x=" << vp.TopLeftX
+		<< " y=" << vp.TopLeftY
+		<< " w=" << vp.Width
+		<< " h=" << vp.Height << std::endl;*/
+
+	context->RSSetViewports(1, &fullVP);
+
+
+
+	context->PSSetSamplers(5, 1, &m_PointClampSampler);  // s5 채우기
+
+
+	// ========== Shader 바인딩 ==========
+	context->VSSetShader(m_meshVS, nullptr, 0);
+	context->PSSetShader(m_meshPS, nullptr, 0); // 🔥
+	context->IASetInputLayout(m_meshInputLayout);
+
+
+
+
+	rotation = XMMatrixRotationX(XM_PI);
+
+	//s r t v p
+
+
+
+	rotX = XMQuaternionRotationAxis(
+		XMVectorSet(1, 0, 0, 0),  // X축
+		-XM_PIDIV2                  // 90도
+	);
+
+	rotY = XMQuaternionRotationAxis(
+		XMVectorSet(0, 0, 1, 0),
+		XM_PI  // Y축 180도
+	);
+
+
+
+
+	//// 테스트할 회전들
+	//XMMATRIX test1 = XMMatrixRotationX(XM_PIDIV2);        // 90도
+	//XMMATRIX test2 = XMMatrixRotationX(-XM_PIDIV2);       // -90도
+	//XMMATRIX test3 = XMMatrixRotationX(XM_PI);            // 180도
+
+	//XMMATRIX test4 = XMMatrixRotationY(XM_PI);            // Y축 180도
+
+	//XMMATRIX test5 = XMMatrixRotationX(-XM_PIDIV2) * XMMatrixRotationY(XM_PI);
+	//XMMATRIX test6 = XMMatrixRotationX(XM_PIDIV2) * XMMatrixRotationZ(XM_PI);
+
+
+	////볼륨 - 메쉬 기본은 rotx, roty 인데 rotation은 메쉬에만 추가로 곱해줌.
+	//initialMeshWorld =coordinateSystemTransform/**flipYZ*rotation*/;
+	//initialMeshWorld = coordinateSystemTransform*XMMatrixRotationQuaternion(XMQuaternionMultiply(rotX, rotY))*rotation*test3;
+	initialMeshWorld = XMMatrixRotationQuaternion(XMQuaternionMultiply(rotX, rotY))*rotation;
+
+
+	//스케일을 볼륨걸 적용한 유저 로테이션을 곱해야지 회전 싱크가 맞음
+	//전치 행렬을 안 쓰고 전치 안 한 사용자 회전 행렬을 메쉬에 적용해서 그런걸지도? 
+
+	//Transpose를 뒤에 곱했을 때 축이 안 틀어진 이유는
+	//	그게 “로컬 기준 역회전”처럼 동작했기 때문이고,
+	//	userRotation을 앞에 곱했을 때 축이 틀어진 이유는
+	//	initialMeshWorld가 아직 월드 기준 좌표계가 아니기 때문이다.
+
+
+	// HLSL에서는 mul(vector, matrix) 사용
+	  // 실제 적용 순서: S -> R -> T (의도한 대로)
+
+	MeshConstantBufferWithCT cbM;
+	cbM.WVP = XMMatrixTranspose(meshWorldMat * v * p);
+	cbM.View = XMMatrixTranspose(v);
+	cbM.World = XMMatrixTranspose(meshWorldMat);
+
+
+
+
+	context->UpdateSubresource(m_meshConstantBuffer, 0, nullptr, &cbM, 0, 0);
+	context->VSSetConstantBuffers(0, 1, &m_meshConstantBuffer);
+
+
+	// ========== Clipping Settings ==========
+	ClipSettings cs;
+	cs.clipPlane = DirectX::XMFLOAT4(0, 0, 1, -0.15f);
+	cs.enableClip = 1;
+
+	context->UpdateSubresource(m_clipSettingsBuffer, 0, nullptr, &cs, 0, 0);
+	context->PSSetConstantBuffers(1, 1, &m_clipSettingsBuffer);
+
+
+
+	context->RSSetState(rastState);
+
+	// ========== Vertex Buffer ==========
+	UINT stride = sizeof(PLY::VertexWithTexture);
+	UINT offset = 0;
+	context->IASetVertexBuffers(0, 1, &m_meshVertexBuffer, &stride, &offset);
+	context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+
+	// ==========================================
+	// ========== PASS 1: Depth Write ===========
+	// ==========================================
+
+
+
+	// 바인딩
+	context->OMSetDepthStencilState(nullptr, 0);
+	context->OMSetBlendState(nullptr, nullptr, 0xffffffff);
+
+
+
+	ID3D11DepthStencilState* dbgDepthState = nullptr;
+	UINT stencilRef = 0;
+	context->OMGetDepthStencilState(&dbgDepthState, &stencilRef);
+
+
+
+	if (dbgDepthState) dbgDepthState->Release();
+
+
+
+	// 렌더링 (Depth만 기록)
+	context->Draw(m_meshVertexCount, 0);
+
+	context->OMSetRenderTargets(1, &curRTV, curDSV);
+	context->OMSetDepthStencilState(dbgDepthState, stencilRef);
+
+	if (curRTV) curRTV->Release();
+	if (!curDSV) {
+		//std::cout << "[RenderMeshDepth] ❌ curDSV가 nullptr" << std::endl;
+		return;
+	}
+	/*std::cout << "[RenderMeshDepth] BEGIN" << std::endl;
+	std::cout << "  VertexCount = " << m_meshVertexCount << std::endl;
+	std::cout << "  sceneDepthRTV = " << sceneDepthRTV << std::endl;
+	std::cout << "  curDSV(before) = " << curDSV << std::endl;*/
 
 }
 
@@ -857,20 +1079,20 @@ bool MeshRenderer::ExtractAxes(const XMMATRIX* volWorld, const XMMATRIX* meshWor
 			<< " Mesh: " << meshHand << "\n";
 
 		if (!axisAligned)
-			std::cout << "❌ Axis direction mismatch\n";
+			std::cout << " Axis direction mismatch\n";
 		else
-			std::cout << "✅ Axis directions aligned\n";
+			std::cout << " Axis directions aligned\n";
 
 		if (!sameHandedness)
-			std::cout << "❌ Handedness mismatch (mirror)\n";
+			std::cout << " Handedness mismatch (mirror)\n";
 		else
-			std::cout << "✅ Same handedness\n";
+			std::cout << " Same handedness\n";
 
 
 		if (isLeftRightFlipped)
-			std::cout << "❌ Left/Right flipped (X axis inverted)\n";
+			std::cout << " Left/Right flipped (X axis inverted)\n";
 		else
-			std::cout << "✅ Left/Right direction consistent\n";
+			std::cout << " Left/Right direction consistent\n";
 
 		++cnt;
 	}
