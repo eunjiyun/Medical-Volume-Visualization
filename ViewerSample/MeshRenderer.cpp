@@ -351,7 +351,11 @@ void MeshRenderer::RenderMeshDepth(ID3D11DeviceContext* context, ID3D11Buffer* m
 	////볼륨 - 메쉬 기본은 rotx, roty 인데 rotation은 메쉬에만 추가로 곱해줌.
 	//initialMeshWorld =coordinateSystemTransform/**flipYZ*rotation*/;
 	//initialMeshWorld = coordinateSystemTransform*XMMatrixRotationQuaternion(XMQuaternionMultiply(rotX, rotY))*rotation*test3;
-	initialMeshWorld = XMMatrixRotationQuaternion(XMQuaternionMultiply(rotX, rotY))*rotation;
+	
+	
+	
+	initialMeshWorld = /*meshScale**/XMMatrixRotationQuaternion(XMQuaternionMultiply(rotX, rotY))*rotation;
+	//initialMeshWorld = /*meshScale **/ XMMatrixRotationQuaternion(XMQuaternionMultiply(rotX, rotY))/**rotation*/;
 
 
 	//스케일을 볼륨걸 적용한 유저 로테이션을 곱해야지 회전 싱크가 맞음
@@ -582,7 +586,7 @@ void MeshRenderer::RenderMeshViewZ(ID3D11DeviceContext* context, ID3D11Buffer* m
 	ID3D11Buffer* m_clipSettingsBuffer, ID3D11Buffer* m_meshConstantBuffer, ID3D11Texture2D* m_meshTexture, ID3D11ShaderResourceView* m_meshDepthSRV,
 	ID3D11SamplerState* m_MeshSamplerState, ID3D11Device* m_pDevice, int m_meshVertexCount,
 	float maxMesh, float maxPhysicalVol, float volWidth, float volheight, float volDepth, float overallSize,
-	XMMATRIX w, XMMATRIX v, XMMATRIX p, float width, float height)
+	XMMATRIX userRotMat, XMMATRIX v, XMMATRIX p, float width, float height)
 {
 
 	if (!m_meshVertexBuffer || m_meshVertexCount == 0) {
@@ -713,7 +717,8 @@ void MeshRenderer::RenderMeshViewZ(ID3D11DeviceContext* context, ID3D11Buffer* m
 	////볼륨 - 메쉬 기본은 rotx, roty 인데 rotation은 메쉬에만 추가로 곱해줌.
 	//initialMeshWorld =coordinateSystemTransform/**flipYZ*rotation*/;
 	//initialMeshWorld = coordinateSystemTransform*XMMatrixRotationQuaternion(XMQuaternionMultiply(rotX, rotY))*rotation*test3;
-	initialMeshWorld = XMMatrixRotationQuaternion(XMQuaternionMultiply(rotX, rotY))*rotation;
+	initialMeshWorld = /*meshScale**/XMMatrixRotationQuaternion(XMQuaternionMultiply(rotX, rotY))*rotation;
+
 
 
 	//스케일을 볼륨걸 적용한 유저 로테이션을 곱해야지 회전 싱크가 맞음
@@ -727,6 +732,8 @@ void MeshRenderer::RenderMeshViewZ(ID3D11DeviceContext* context, ID3D11Buffer* m
 
 	// HLSL에서는 mul(vector, matrix) 사용
 	  // 실제 적용 순서: S -> R -> T (의도한 대로)
+
+	meshWorldMat = initialMeshWorld * XMMatrixTranspose(userRotMat)/**coordinateSystemTransform*/;
 
 	MeshConstantBufferWithCT cbM;
 	cbM.WVP = XMMatrixTranspose(meshWorldMat * v * p);
@@ -1311,8 +1318,10 @@ void MeshRenderer::RenderMeshWithCT(
 
 	//initialMeshWorld = coordinateSystemTransform*
 	//	XMMatrixRotationQuaternion(XMQuaternionMultiply(rotX, rotY))*rotation;
-	
+
+	//initialMeshWorld = XMMatrixRotationQuaternion(XMQuaternionMultiply(rotX, rotY))*rotation;
 	//meshWorldMat = initialMeshWorld * XMMatrixTranspose(userRotMat);
+
 	ExtractAxes(&volWorldMat, &meshWorldMat);
 
 	//XMVECTOR s, r, t;
@@ -1345,14 +1354,14 @@ void MeshRenderer::RenderMeshWithCT(
 	//}
 
 
-	// HLSL에서는 mul(vector, matrix) 사용
-  // 실제 적용 순서: S -> R -> T (의도한 대로)
-	cbM.WVP = XMMatrixTranspose(meshWorldMat * v * p);
+	//// HLSL에서는 mul(vector, matrix) 사용
+ // // 실제 적용 순서: S -> R -> T (의도한 대로)
+	//cbM.WVP = XMMatrixTranspose(meshWorldMat * v * p);
 
-	cbM.View = XMMatrixTranspose(v);
-	cbM.World = XMMatrixTranspose(meshWorldMat);
+	//cbM.View = XMMatrixTranspose(v);
+	//cbM.World = XMMatrixTranspose(meshWorldMat);
 
-	cbM.CTBlendParams = XMFLOAT4(ctBlendStrength, 0.0f, 0.0f, faceBlend);  // ⭐ CT 강도
+	//cbM.CTBlendParams = XMFLOAT4(ctBlendStrength, 0.0f, 0.0f, faceBlend);  // ⭐ CT 강도
 
 
 

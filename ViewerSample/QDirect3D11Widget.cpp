@@ -3890,150 +3890,210 @@ void QDirect3D11Widget::DebugSceneDepth()
 //
 //	m_pDeviceContext->Unmap(scaleRes.stagingTex, 0);
 //}
+bool renderDelta{ false };
 
-
-void QDirect3D11Widget::DebugDeltaZTex()  // ✅ 이름 변경
+float QDirect3D11Widget::FindOptimalScale()
 {
-	qDebug() << "[DEBUG] DebugDeltaZTex START";
+	float bestScale;
+	//if (!renderDelta)
+	//{
+		// 0.7 ~ 1.3 범위를 20개 구간으로 나눔
+		std::vector<float> scaleCandidates;
+		int numCandidates = 20;
+		float start = 0.7f;
+		float end = 1.3f;
+		float step = (end - start) / (numCandidates - 1);
 
-	if (!scaleRes.deltaZTex)
-	{
-		qDebug() << "[ERROR] deltaZTex is NULL!";
-		return;
-	}
-
-
-	//원본 텍스처의 크기(Width, Height 등)를 확인.
-	D3D11_TEXTURE2D_DESC desc;
-	scaleRes.deltaZTex->GetDesc(&desc);
-	qDebug() << "[DEBUG] Got texture desc:" << desc.Width << "x" << desc.Height;
-
-
-	D3D11_TEXTURE2D_DESC stagingDesc = desc;
-	stagingDesc.Usage = D3D11_USAGE_STAGING;
-	stagingDesc.BindFlags = 0;
-	stagingDesc.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
-
-	ID3D11Texture2D* staging = nullptr;
-	HRESULT hr = m_pDevice->CreateTexture2D(&stagingDesc, nullptr, &staging);
-
-
-
-	if (FAILED(hr))
-	{
-		qDebug() << "[ERROR] CreateTexture2D failed:     " << hr;
-		return;
-	}
-	qDebug() << "[DEBUG] Staging texture created";
-
-
-	m_pDeviceContext->CopyResource(staging, scaleRes.deltaZTex);
-	qDebug() << "[DEBUG] CopyResource completed";
-
-
-	D3D11_MAPPED_SUBRESOURCE mapped;
-	hr = m_pDeviceContext->Map(staging, 0, D3D11_MAP_READ, 0, &mapped);
-
-
-	if (FAILED(hr))
-	{
-		qDebug() << "[ERROR] Map failed: "  << hr;
-		staging->Release();
-		return;
-	}
-	qDebug() << "[DEBUG] Map succeeded";
-
-
-
-	float* data = (float*)mapped.pData;
-	UINT pitch = mapped.RowPitch / sizeof(float);
-
-
-	qDebug() << "[DEBUG] Starting statistics calculation...";
-
-
-	// ✅ 통계 추가
-	int nonZeroCount = 0;
-	int negativeCount = 0;
-	int positiveCount = 0;
-	float minVal = FLT_MAX;
-	float maxVal = -FLT_MAX;
-	float sum = 0.0f;
-
-	for (int y{}; y < (int)desc.Height; ++y)
-	{
-		for (int x{}; x < (int)desc.Width; ++x)
+		for (int i{}; i < numCandidates; ++i)
 		{
-			float val = data[y * pitch + x];
+			scaleCandidates.push_back(start + i * step);
 
-			if (val != 0.0f)
+			std::cout << start + i * step << std::endl;
+		}
+
+		bestScale = scaleCandidates[0];
+		float bestAvgDelta = FLT_MAX;
+
+		for (float scale : scaleCandidates)
+		{
+			meshRenderer->meshScale = scale;
+
+			//ApplyScale(scale);                 // 메시/깊이맵에 스케일 적용
+			float avgDelta = DebugDeltaZTex(); // ΔZ 평균 반환하도록 함수 수정 필요
+
+			qDebug() << "Scale:" << scale << "Avg ΔZ:" << avgDelta;
+
+			if (avgDelta < bestAvgDelta)
 			{
-				++nonZeroCount;
+				bestAvgDelta = avgDelta;
+				bestScale = scale;
+			}
+		}
 
-				if (val < 0.0f)
+		qDebug() << "Optimal scale (approx):" << bestScale
+			<< "with Avg ΔZ:" << bestAvgDelta;
+
+		renderDelta = true;
+
+	//}
+
+	return bestScale;
+
+}
+
+
+float QDirect3D11Widget::DebugDeltaZTex()  // ✅ 이름 변경
+{
+	float avgDelta;
+
+		qDebug() << "[DEBUG] DebugDeltaZTex START";
+
+		if (!scaleRes.deltaZTex)
+		{
+			qDebug() << "[ERROR] deltaZTex is NULL!";
+			return 0.f;
+		}
+
+
+		//원본 텍스처의 크기(Width, Height 등)를 확인.
+		D3D11_TEXTURE2D_DESC desc;
+		scaleRes.deltaZTex->GetDesc(&desc);
+		qDebug() << "[DEBUG] Got texture desc:" << desc.Width << "x" << desc.Height;
+
+
+		D3D11_TEXTURE2D_DESC stagingDesc = desc;
+		stagingDesc.Usage = D3D11_USAGE_STAGING;
+		stagingDesc.BindFlags = 0;
+		stagingDesc.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
+
+		ID3D11Texture2D* staging = nullptr;
+		HRESULT hr = m_pDevice->CreateTexture2D(&stagingDesc, nullptr, &staging);
+
+
+
+		if (FAILED(hr))
+		{
+			qDebug() << "[ERROR] CreateTexture2D failed:     " << hr;
+			return 0.f;
+		}
+		qDebug() << "[DEBUG] Staging texture created";
+
+
+		m_pDeviceContext->CopyResource(staging, scaleRes.deltaZTex);
+		qDebug() << "[DEBUG] CopyResource completed";
+
+
+		D3D11_MAPPED_SUBRESOURCE mapped;
+		hr = m_pDeviceContext->Map(staging, 0, D3D11_MAP_READ, 0, &mapped);
+
+
+		if (FAILED(hr))
+		{
+			qDebug() << "[ERROR] Map failed: " << hr;
+			staging->Release();
+			return 0.f;
+		}
+		qDebug() << "[DEBUG] Map succeeded";
+
+
+
+		float* data = (float*)mapped.pData;
+		UINT pitch = mapped.RowPitch / sizeof(float);
+
+
+		qDebug() << "[DEBUG] Starting statistics calculation...";
+
+
+		// ✅ 통계 추가
+		int nonZeroCount = 0;
+		int negativeCount = 0;
+		int positiveCount = 0;
+		float minVal = FLT_MAX;
+		float maxVal = -FLT_MAX;
+		float sum = 0.0f;
+
+		for (int y{}; y < (int)desc.Height; ++y)
+		{
+			for (int x{}; x < (int)desc.Width; ++x)
+			{
+				float val = data[y * pitch + x];
+
+				if (val != 0.0f)
 				{
-					++negativeCount;
-				}
-				else if (val > 0.0f)
-				{
-					++positiveCount;
-					sum += val;
-					minVal = min(minVal, val);
-					maxVal = max(maxVal, val);
+					++nonZeroCount;
+
+					if (val < 0.0f)
+					{
+						++negativeCount;
+					}
+					else if (val > 0.0f)
+					{
+						++positiveCount;
+						sum += val;
+						minVal = min(minVal, val);
+						maxVal = max(maxVal, val);
+					}
 				}
 			}
 		}
-	}
 
-	qDebug() << "=== DeltaZ Texture ===";  // ✅ 메시지 변경
-	qDebug() << "Non-zero pixels:" << nonZeroCount;
-	qDebug() << "Positive (deltaZ):" << positiveCount;
-	qDebug() << "Negative (-1):" << negativeCount;
-	qDebug() << "Background (0):" << (desc.Width * desc.Height - nonZeroCount);
+		qDebug() << "=== DeltaZ Texture ===";  // ✅ 메시지 변경
+		qDebug() << "Non-zero pixels:" << nonZeroCount;
+		qDebug() << "Positive (deltaZ):" << positiveCount;
+		qDebug() << "Negative (-1):" << negativeCount;
+		qDebug() << "Background (0):" << (desc.Width * desc.Height - nonZeroCount);
 
-	if (positiveCount > 0)
-	{
-		float avgDelta = sum / positiveCount;
 
-		qDebug() << "---";
-		qDebug() << "Min ΔZ:" << minVal << "mm";
-		qDebug() << "Max ΔZ:" << maxVal << "mm";
-		qDebug() << "Avg ΔZ:" << avgDelta << "mm";
-		qDebug() << "---";
 
-		if (avgDelta < 5.0f)
-			qDebug() << "Alignment: EXCELLENT";
-		else if (avgDelta < 20.0f)
-			qDebug() << "Alignment: GOOD";
-		else if (avgDelta < 50.0f)
-			qDebug() << "Alignment: MODERATE";
+		if (positiveCount > 0)
+		{
+			avgDelta = sum / positiveCount;
+
+			qDebug() << "---";
+			qDebug() << "Min ΔZ:" << minVal << "mm";
+			qDebug() << "Max ΔZ:" << maxVal << "mm";
+			qDebug() << "Avg ΔZ:" << avgDelta << "mm";
+			qDebug() << "---";
+
+			if (avgDelta < 5.0f)
+				qDebug() << "Alignment: EXCELLENT";
+			else if (avgDelta < 20.0f)
+				qDebug() << "Alignment: GOOD";
+			else if (avgDelta < 50.0f)
+				qDebug() << "Alignment: MODERATE";
+			else
+				qDebug() << "Alignment: POOR";
+		}
 		else
-			qDebug() << "Alignment: POOR";
-	}
-	else
-	{
-		qDebug() << "ERROR: No positive deltaZ values!";
-	}
+		{
+			qDebug() << "ERROR: No positive deltaZ values!";
+		}
 
-	// 샘플 출력
-	qDebug() << "=== DeltaZ at volume region ===";
-	int sampleY = (18 + 345) / 2;
+		// 샘플 출력
+		qDebug() << "=== DeltaZ at volume region ===";
+		int sampleY = (18 + 345) / 2;
 
-	QString row;
-	for (int x = 326; x < min(336, (int)desc.Width); ++x)
-	{
-		float val = data[sampleY * pitch + x];
-		row += QString::number(val, 'f', 1) + " ";
-	}
-	qDebug() << "Row" << sampleY << ":" << row;
+		QString row;
+		for (int x = 326; x < min(336, (int)desc.Width); ++x)
+		{
+			float val = data[sampleY * pitch + x];
+			row += QString::number(val, 'f', 1) + " ";
+		}
+		qDebug() << "Row" << sampleY << ":" << row;
 
-	qDebug() << "[DEBUG] Unmap starting...";
-	m_pDeviceContext->Unmap(staging, 0);
-	qDebug() << "[DEBUG] Unmap completed";
+		qDebug() << "[DEBUG] Unmap starting...";
+		m_pDeviceContext->Unmap(staging, 0);
+		qDebug() << "[DEBUG] Unmap completed";
 
-	qDebug() << "[DEBUG] Releasing staging texture...";
-	staging->Release();
-	qDebug() << "[DEBUG] DebugDeltaZTex COMPLETED";
+		qDebug() << "[DEBUG] Releasing staging texture...";
+		staging->Release();
+		qDebug() << "[DEBUG] DebugDeltaZTex COMPLETED";
+
+		//renderDelta = true;
+
+	
+
+	return avgDelta;
 }
 
 void QDirect3D11Widget::DebugSceneDepthDirect()
@@ -6024,6 +6084,7 @@ void QDirect3D11Widget::RenderAllQuads()
 				RenderVolumeView();
 
 				DebugDeltaZTex();
+				//FindOptimalScale();
 
 
 				//qDebug() << "[DEBUG] After DebugDeltaZTex";  // ← 이게 출력되나요?

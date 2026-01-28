@@ -361,7 +361,7 @@ private:
 		ID3D11DeviceContext* ctx
 	);
 	void DebugSceneDepth();
-	void DebugDeltaZTex();
+	float DebugDeltaZTex();
 	void DebugSceneDepthDirect();
 
 	float ComputeOptimalScale(double mean, double rms);
@@ -568,6 +568,9 @@ public:
 	XMMATRIX initialWorld;
 
 	float maxPhysicalVol, maxMesh, overallSize{ 1.f };
+
+	float FindOptimalScale();
+	std::vector<float> scaleCandidates = { 0.95f, 0.97f, 0.99f, 1.00f, 1.01f, 1.03f, 1.05f };
 	float physicalWidth, physicalHeight, physicalDepth;
 	float scaleX, scaleY, scaleZ;
 	float m_orthoScale{1.f};

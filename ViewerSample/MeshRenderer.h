@@ -76,7 +76,8 @@ public:
 
 	float meshWidth, meshHeight, meshDepth;
 	//float meshScale{ /*0.006755915f*/ };
-	float meshScale{ 1 };
+	//float meshScale{ 13.f };
+	float meshScale{ 1.f };
 
 	ID3D11Texture2D*	sceneDepthTexture=nullptr;
 
