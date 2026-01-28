@@ -76,7 +76,7 @@ public:
 
 	float meshWidth, meshHeight, meshDepth;
 	//float meshScale{ /*0.006755915f*/ };
-	float meshScale{ 1 };
+	float meshScale{ 1.f };
 
 	ID3D11Texture2D*	sceneDepthTexture=nullptr;
 
@@ -103,7 +103,7 @@ public:
 		ID3D11Buffer* m_clipSettingsBuffer, ID3D11Buffer* m_meshConstantBuffer, ID3D11Texture2D* m_meshTexture, ID3D11ShaderResourceView* m_meshDepthSRV,
 		ID3D11SamplerState* m_MeshSamplerState, ID3D11Device* m_pDevice, int m_meshVertexCount,
 		float maxMesh, float maxPhysicalVol, float volWidth, float volheight, float volDepth, float overallSize,
-		XMMATRIX w, XMMATRIX v, XMMATRIX p, float width, float height);
+		XMMATRIX wuserRotMat,XMMATRIX v, XMMATRIX p, float width, float height);
 
 
 

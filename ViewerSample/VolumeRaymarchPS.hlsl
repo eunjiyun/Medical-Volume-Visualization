@@ -551,8 +551,8 @@ float4 main(PSInput input) : SV_Target
 
 			
 				
-				if (!hasHit && col.a > 0.001)
-				//if (!hasHit && hu > 300)
+				//if (!hasHit && col.a > 0.001)
+				if (!hasHit && hu > 300)
 				{
 				
 					// hitViewZ 계산

@@ -221,6 +221,13 @@ public:
 	ID3D11SamplerState* m_tfSampler;
 	ComPtr<ID3D11Buffer> cbDebug;
 
+	bool scaleResolved = false;   // 최적 스케일 확정 여부
+	bool scaleDirty = true;    // 다시 찾아야 하는지
+	float optimalScale = 1.0f;
+
+
+
+
 public:
 
 	void UpdateVolumeMatrix();
@@ -354,15 +361,19 @@ private:
 		DXGI_FORMAT format,
 		ScaleFitResources& outRes
 	);
-	void AnalyzeZTex(
-		ID3D11Texture2D* srcTex,
-		const char* label,
-		ID3D11Device* device,
-		ID3D11DeviceContext* ctx
-	);
+
 	void DebugSceneDepth();
-	void DebugDeltaZTex();
+	float DebugDeltaZTex();
+
+
+
+
+	void ClearDeltaZ();
+
+	float FindOptimalScale();
 	void DebugSceneDepthDirect();
+
+	
 
 	float ComputeOptimalScale(double mean, double rms);
 	// UAV → CPU → 통계 → 상수 버퍼 업데이트 함수

@@ -3892,21 +3892,22 @@ void QDirect3D11Widget::DebugSceneDepth()
 //}
 
 
-void QDirect3D11Widget::DebugDeltaZTex()  // ✅ 이름 변경
+float QDirect3D11Widget::DebugDeltaZTex()  // ✅ 이름 변경
 {
-	qDebug() << "[DEBUG] DebugDeltaZTex START";
+	//qDebug() << "[DEBUG] DebugDeltaZTex START";
 
 	if (!scaleRes.deltaZTex)
 	{
-		qDebug() << "[ERROR] deltaZTex is NULL!";
-		return;
+		//qDebug() << "[ERROR] deltaZTex is NULL!";
+		return 0.f;
 	}
 
+	float avgDelta;
 
 	//원본 텍스처의 크기(Width, Height 등)를 확인.
 	D3D11_TEXTURE2D_DESC desc;
 	scaleRes.deltaZTex->GetDesc(&desc);
-	qDebug() << "[DEBUG] Got texture desc:" << desc.Width << "x" << desc.Height;
+	//qDebug() << "[DEBUG] Got texture desc:" << desc.Width << "x" << desc.Height;
 
 
 	D3D11_TEXTURE2D_DESC stagingDesc = desc;
@@ -3921,14 +3922,14 @@ void QDirect3D11Widget::DebugDeltaZTex()  // ✅ 이름 변경
 
 	if (FAILED(hr))
 	{
-		qDebug() << "[ERROR] CreateTexture2D failed:     " << hr;
-		return;
+		//qDebug() << "[ERROR] CreateTexture2D failed:     " << hr;
+		return 0.f;
 	}
-	qDebug() << "[DEBUG] Staging texture created";
+	//qDebug() << "[DEBUG] Staging texture created";
 
 
 	m_pDeviceContext->CopyResource(staging, scaleRes.deltaZTex);
-	qDebug() << "[DEBUG] CopyResource completed";
+	//qDebug() << "[DEBUG] CopyResource completed";
 
 
 	D3D11_MAPPED_SUBRESOURCE mapped;
@@ -3937,11 +3938,11 @@ void QDirect3D11Widget::DebugDeltaZTex()  // ✅ 이름 변경
 
 	if (FAILED(hr))
 	{
-		qDebug() << "[ERROR] Map failed: "  << hr;
+		//qDebug() << "[ERROR] Map failed: "  << hr;
 		staging->Release();
-		return;
+		return 0.f;
 	}
-	qDebug() << "[DEBUG] Map succeeded";
+	//qDebug() << "[DEBUG] Map succeeded";
 
 
 
@@ -3949,7 +3950,7 @@ void QDirect3D11Widget::DebugDeltaZTex()  // ✅ 이름 변경
 	UINT pitch = mapped.RowPitch / sizeof(float);
 
 
-	qDebug() << "[DEBUG] Starting statistics calculation...";
+	//qDebug() << "[DEBUG] Starting statistics calculation...";
 
 
 	// ✅ 통계 추가
@@ -3985,21 +3986,21 @@ void QDirect3D11Widget::DebugDeltaZTex()  // ✅ 이름 변경
 		}
 	}
 
-	qDebug() << "=== DeltaZ Texture ===";  // ✅ 메시지 변경
-	qDebug() << "Non-zero pixels:" << nonZeroCount;
-	qDebug() << "Positive (deltaZ):" << positiveCount;
-	qDebug() << "Negative (-1):" << negativeCount;
-	qDebug() << "Background (0):" << (desc.Width * desc.Height - nonZeroCount);
+	//qDebug() << "=== DeltaZ Texture ===";  // ✅ 메시지 변경
+	//qDebug() << "Non-zero pixels:" << nonZeroCount;
+	//qDebug() << "Positive (deltaZ):" << positiveCount;
+	//qDebug() << "Negative (-1):" << negativeCount;
+	//qDebug() << "Background (0):" << (desc.Width * desc.Height - nonZeroCount);
 
 	if (positiveCount > 0)
 	{
-		float avgDelta = sum / positiveCount;
+		avgDelta = sum / positiveCount;
 
-		qDebug() << "---";
+	/*	qDebug() << "---";
 		qDebug() << "Min ΔZ:" << minVal << "mm";
 		qDebug() << "Max ΔZ:" << maxVal << "mm";
 		qDebug() << "Avg ΔZ:" << avgDelta << "mm";
-		qDebug() << "---";
+		qDebug() << "---";*/
 
 		if (avgDelta < 5.0f)
 			qDebug() << "Alignment: EXCELLENT";
@@ -4012,11 +4013,11 @@ void QDirect3D11Widget::DebugDeltaZTex()  // ✅ 이름 변경
 	}
 	else
 	{
-		qDebug() << "ERROR: No positive deltaZ values!";
+		//qDebug() << "ERROR: No positive deltaZ values!";
 	}
 
 	// 샘플 출력
-	qDebug() << "=== DeltaZ at volume region ===";
+	//qDebug() << "=== DeltaZ at volume region ===";
 	int sampleY = (18 + 345) / 2;
 
 	QString row;
@@ -4025,16 +4026,164 @@ void QDirect3D11Widget::DebugDeltaZTex()  // ✅ 이름 변경
 		float val = data[sampleY * pitch + x];
 		row += QString::number(val, 'f', 1) + " ";
 	}
-	qDebug() << "Row" << sampleY << ":" << row;
+	//qDebug() << "Row" << sampleY << ":" << row;
 
-	qDebug() << "[DEBUG] Unmap starting...";
+	//qDebug() << "[DEBUG] Unmap starting...";
 	m_pDeviceContext->Unmap(staging, 0);
-	qDebug() << "[DEBUG] Unmap completed";
+	//qDebug() << "[DEBUG] Unmap completed";
 
-	qDebug() << "[DEBUG] Releasing staging texture...";
+	//qDebug() << "[DEBUG] Releasing staging texture...";
 	staging->Release();
-	qDebug() << "[DEBUG] DebugDeltaZTex COMPLETED";
+	//qDebug() << "[DEBUG] DebugDeltaZTex COMPLETED";
+
+	return avgDelta;
 }
+
+
+void QDirect3D11Widget::ClearDeltaZ()
+{
+	if (!scaleRes.deltaZUAV)
+	{
+		qDebug() << "[ClearDeltaZ] ❌ deltaZUAV is NULL";
+		return;
+	}
+
+	// R32_FLOAT UAV → 첫 번째 값만 의미 있음
+	float clearValue[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
+
+	m_pDeviceContext->ClearUnorderedAccessViewFloat(
+		scaleRes.deltaZUAV,
+		clearValue
+	);
+
+	// GPU 명령 밀어넣기 (중요)
+	m_pDeviceContext->Flush();
+
+	qDebug() << "[ClearDeltaZ] DeltaZ UAV cleared";
+}
+
+
+float QDirect3D11Widget::FindOptimalScale()
+{
+	// -----------------------------
+	// 1. COARSE SEARCH
+	// -----------------------------
+	float coarseStart = 0.7f;
+	float coarseEnd = 1.3f;
+	int   coarseSteps = 15;
+
+	float bestScale = 1.0f;
+	float bestDelta = FLT_MAX;
+
+	for (int i{}; i < coarseSteps; ++i)
+	{
+		float t = float(i) / float(coarseSteps - 1);
+		float scale = coarseStart + t * (coarseEnd - coarseStart);
+
+		// 🔧 스케일 적용
+		meshRenderer->meshScale = scale;
+
+		// 🔧 반드시 렌더링
+		ClearDeltaZ();
+		/*RenderMeshViewZ();
+		RenderVolumeAndDeltaZ();*/
+
+
+		meshRenderer->RenderMeshViewZ(
+			m_pDeviceContext, m_meshVertexBuffer, m_meshVS, m_meshDepthPS, meshViewZWriteRTV, m_meshInputLayout,
+			m_clipSettingsBuffer, m_meshConstantBuffer, meshRenderer->sceneDepthTexture, m_depthSRV,
+			m_MeshSamplerState, m_pDevice, m_meshVertexCount,
+			maxMesh, maxPhysicalVol,
+			physicalWidth,
+			physicalHeight,
+			physicalDepth,
+			overallSize,
+
+			userRotation, viewMat, projMat, width(), height()
+		);
+
+		RenderVolumeView();
+
+		m_pDeviceContext->Flush();
+
+		float avgDelta = DebugDeltaZTex();
+
+		qDebug() << "[COARSE] scale =" << scale << "avg ΔZ =" << avgDelta;
+
+		if (avgDelta > 0.0f && avgDelta < bestDelta)
+		{
+			bestDelta = avgDelta;
+			bestScale = scale;
+		}
+	}
+
+	qDebug() << "[COARSE RESULT] bestScale =" << bestScale
+		<< "best ΔZ =" << bestDelta;
+
+	// -----------------------------
+	// 2. FINE SEARCH (local refine)
+	// -----------------------------
+	float fineRange = 0.05f;   // ±5%
+	int   fineSteps = 10;
+
+	float fineStart = bestScale - fineRange;
+	float fineEnd = bestScale + fineRange;
+
+	float finalScale = bestScale;
+	float finalDelta = bestDelta;
+
+	for (int i = 0; i < fineSteps; ++i)
+	{
+		float t = float(i) / float(fineSteps - 1);
+		float scale = fineStart + t * (fineEnd - fineStart);
+
+		meshRenderer->meshScale = scale;
+
+		ClearDeltaZ();
+		//RenderMeshViewZ();
+		//RenderVolumeAndDeltaZ();
+
+
+		meshRenderer->RenderMeshViewZ(
+			m_pDeviceContext, m_meshVertexBuffer, m_meshVS, m_meshDepthPS, meshViewZWriteRTV, m_meshInputLayout,
+			m_clipSettingsBuffer, m_meshConstantBuffer, meshRenderer->sceneDepthTexture, m_depthSRV,
+			m_MeshSamplerState, m_pDevice, m_meshVertexCount,
+			maxMesh, maxPhysicalVol,
+			physicalWidth,
+			physicalHeight,
+			physicalDepth,
+			overallSize,
+
+			userRotation, viewMat, projMat, width(), height()
+		);
+
+		RenderVolumeView();
+
+
+		m_pDeviceContext->Flush();
+
+		float avgDelta = DebugDeltaZTex();
+
+		qDebug() << "[FINE] scale =" << scale << "avg ΔZ =" << avgDelta;
+
+		if (avgDelta > 0.0f && avgDelta < finalDelta)
+		{
+			finalDelta = avgDelta;
+			finalScale = scale;
+		}
+	}
+
+	qDebug() << "==============================";
+	qDebug() << "OPTIMAL SCALE FOUND";
+	qDebug() << "Scale =" << finalScale;
+	qDebug() << "Avg ΔZ =" << finalDelta << "mm";
+	qDebug() << "==============================";
+
+	return finalScale;
+}
+
+
+
 
 void QDirect3D11Widget::DebugSceneDepthDirect()
 {
@@ -6021,10 +6170,24 @@ void QDirect3D11Widget::RenderAllQuads()
 				//	huMax
 				//);
 
+		
+
 				RenderVolumeView();
 
-				DebugDeltaZTex();
 
+
+				if (!scaleResolved && scaleDirty)
+				{
+					optimalScale = FindOptimalScale();
+					meshRenderer->meshScale = optimalScale;
+
+					scaleResolved = true;   // ✅ 이제 끝
+					scaleDirty = false;
+				}
+
+
+				//DebugDeltaZTex();
+			
 
 				//qDebug() << "[DEBUG] After DebugDeltaZTex";  // ← 이게 출력되나요?
 				//// ========== 3단계: Mesh 최종 렌더링 (CT 합성) ==========
