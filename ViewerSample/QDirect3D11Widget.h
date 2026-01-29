@@ -68,6 +68,23 @@ struct DebugCB
 };
 
 
+// 구조체 추가 (헤더 파일에)
+struct ScaleOptimizationStats
+{
+	float scale;
+	float avgDelta;
+	float medianDelta;
+	float stdDelta;
+	float percentile95;
+	float robustMetric;  // ✅ 추가: 중앙값 + 안정성 고려
+
+	// 생성자
+	ScaleOptimizationStats()
+		: scale(0.0f), avgDelta(FLT_MAX), medianDelta(FLT_MAX),
+		stdDelta(0.0f), percentile95(FLT_MAX), robustMetric(FLT_MAX) {}
+};
+
+
 class FileReader;
 
 
@@ -341,11 +358,11 @@ private:
 		ID3D11UnorderedAccessView** outUAV
 	);
 
-	ID3D11Texture2D* CreateSrvScaleFit(
-		ID3D11Device* device,
-		DXGI_FORMAT format,
-		ID3D11ShaderResourceView** outSRV
-	);
+	//ID3D11Texture2D* CreateSrvScaleFit(
+	//	ID3D11Device* device,
+	//	DXGI_FORMAT format,
+	//	ID3D11ShaderResourceView** outSRV
+	//);
 
 	//ID3D11Texture2D* CreateStagingTexScaleFit(
 	//	ID3D11Device* device,
@@ -366,7 +383,7 @@ private:
 	float DebugDeltaZTex();
 
 
-
+	ScaleOptimizationStats DebugDeltaZTexFull();
 
 	void ClearDeltaZ();
 
@@ -678,7 +695,7 @@ public:
 
 public:
 	//ID3D11RenderTargetView* m_volumeRTV;
-	ID3D11Texture2D* deltaZTex, *stagingTex;
+	ID3D11Texture2D* /*deltaZTex,*/ *stagingTex;
 	ID3D11Buffer*               constantBuffer = nullptr;
 
 

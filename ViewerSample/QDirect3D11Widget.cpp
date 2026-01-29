@@ -3252,30 +3252,30 @@ ID3D11Texture2D* QDirect3D11Widget::CreateTexture2DUAV(
 	return texture;
 }
 
-ID3D11Texture2D* QDirect3D11Widget::CreateSrvScaleFit(
-	ID3D11Device* device,
-	DXGI_FORMAT format,
-	ID3D11ShaderResourceView** outSRV
-)
-{
-	//ID3D11ShaderResourceView* pSRV = nullptr;
-
-	D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
-	srvDesc.Format = format; // UAV와 동일한 포맷
-	srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
-	srvDesc.Texture2D.MostDetailedMip = 0;
-	srvDesc.Texture2D.MipLevels = 1;
-
-	HRESULT hr = device->CreateShaderResourceView(deltaZTex, &srvDesc, outSRV);
-	if (FAILED(hr))
-	{
-		if (*outSRV)
-			(*outSRV)->Release(); // 실패 시 SRV만 정리
-
-		return nullptr;
-
-	}
-}
+//ID3D11Texture2D* QDirect3D11Widget::CreateSrvScaleFit(
+//	ID3D11Device* device,
+//	DXGI_FORMAT format,
+//	ID3D11ShaderResourceView** outSRV
+//)
+//{
+//	//ID3D11ShaderResourceView* pSRV = nullptr;
+//
+//	D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+//	srvDesc.Format = format; // UAV와 동일한 포맷
+//	srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+//	srvDesc.Texture2D.MostDetailedMip = 0;
+//	srvDesc.Texture2D.MipLevels = 1;
+//
+//	HRESULT hr = device->CreateShaderResourceView(deltaZTex, &srvDesc, outSRV);
+//	if (FAILED(hr))
+//	{
+//		if (*outSRV)
+//			(*outSRV)->Release(); // 실패 시 SRV만 정리
+//
+//		return nullptr;
+//
+//	}
+//}
 
 //ID3D11Texture2D* CreateStagingTexScaleFit(
 //	ID3D11Device* device,
@@ -4063,6 +4063,282 @@ void QDirect3D11Widget::ClearDeltaZ()
 }
 
 
+//float QDirect3D11Widget::FindOptimalScale()
+//{
+//	// -----------------------------
+//	// 1. COARSE SEARCH
+//	// -----------------------------
+//	float coarseStart = 0.7f;
+//	float coarseEnd = 1.3f;
+//	int   coarseSteps = 15;
+//
+//	float bestScale = 1.0f;
+//	float bestDelta = FLT_MAX;
+//
+//	for (int i{}; i < coarseSteps; ++i)
+//	{
+//		float t = float(i) / float(coarseSteps - 1);
+//		float scale = coarseStart + t * (coarseEnd - coarseStart);
+//
+//		// 🔧 스케일 적용
+//		meshRenderer->meshScale = scale;
+//
+//		// 🔧 반드시 렌더링
+//		ClearDeltaZ();
+//		/*RenderMeshViewZ();
+//		RenderVolumeAndDeltaZ();*/
+//
+//
+//		meshRenderer->RenderMeshViewZ(
+//			m_pDeviceContext, m_meshVertexBuffer, m_meshVS, m_meshDepthPS, meshViewZWriteRTV, m_meshInputLayout,
+//			m_clipSettingsBuffer, m_meshConstantBuffer, meshRenderer->sceneDepthTexture, m_depthSRV,
+//			m_MeshSamplerState, m_pDevice, m_meshVertexCount,
+//			maxMesh, maxPhysicalVol,
+//			physicalWidth,
+//			physicalHeight,
+//			physicalDepth,
+//			overallSize,
+//
+//			userRotation, viewMat, projMat, width(), height()
+//		);
+//
+//		RenderVolumeView();
+//
+//		m_pDeviceContext->Flush();
+//
+//		float avgDelta = DebugDeltaZTex();
+//
+//		qDebug() << "[COARSE] scale =" << scale << "avg ΔZ =" << avgDelta;
+//
+//		if (avgDelta > 0.0f && avgDelta < bestDelta)
+//		{
+//			bestDelta = avgDelta;
+//			bestScale = scale;
+//		}
+//	}
+//
+//	qDebug() << "[COARSE RESULT] bestScale =" << bestScale
+//		<< "best ΔZ =" << bestDelta;
+//
+//	// -----------------------------
+//	// 2. FINE SEARCH (local refine)
+//	// -----------------------------
+//	float fineRange = 0.05f;   // ±5%
+//	int   fineSteps = 10;
+//
+//	float fineStart = bestScale - fineRange;
+//	float fineEnd = bestScale + fineRange;
+//
+//	float finalScale = bestScale;
+//	float finalDelta = bestDelta;
+//
+//	for (int i = 0; i < fineSteps; ++i)
+//	{
+//		float t = float(i) / float(fineSteps - 1);
+//		float scale = fineStart + t * (fineEnd - fineStart);
+//
+//		meshRenderer->meshScale = scale;
+//
+//		ClearDeltaZ();
+//		//RenderMeshViewZ();
+//		//RenderVolumeAndDeltaZ();
+//
+//
+//		meshRenderer->RenderMeshViewZ(
+//			m_pDeviceContext, m_meshVertexBuffer, m_meshVS, m_meshDepthPS, meshViewZWriteRTV, m_meshInputLayout,
+//			m_clipSettingsBuffer, m_meshConstantBuffer, meshRenderer->sceneDepthTexture, m_depthSRV,
+//			m_MeshSamplerState, m_pDevice, m_meshVertexCount,
+//			maxMesh, maxPhysicalVol,
+//			physicalWidth,
+//			physicalHeight,
+//			physicalDepth,
+//			overallSize,
+//
+//			userRotation, viewMat, projMat, width(), height()
+//		);
+//
+//		RenderVolumeView();
+//
+//
+//		m_pDeviceContext->Flush();
+//
+//		float avgDelta = DebugDeltaZTex();
+//
+//		qDebug() << "[FINE] scale =" << scale << "avg ΔZ =" << avgDelta;
+//
+//		if (avgDelta > 0.0f && avgDelta < finalDelta)
+//		{
+//			finalDelta = avgDelta;
+//			finalScale = scale;
+//		}
+//	}
+//
+//	qDebug() << "==============================";
+//	qDebug() << "OPTIMAL SCALE FOUND";
+//	qDebug() << "Scale =" << finalScale;
+//	qDebug() << "Avg ΔZ =" << finalDelta << "mm";
+//	qDebug() << "==============================";
+//
+//	return finalScale;
+//}
+
+// DebugDeltaZTex 함수 수정 (전체 통계 반환)
+ScaleOptimizationStats QDirect3D11Widget::DebugDeltaZTexFull()
+{
+	ScaleOptimizationStats stats;
+
+	// DeltaZ 텍스처에서 데이터 읽기
+	D3D11_TEXTURE2D_DESC desc;
+	scaleRes.deltaZTex->GetDesc(&desc);
+
+	// CPU에서 읽을 수 있는 스테이징 텍스처 생성
+	D3D11_TEXTURE2D_DESC stagingDesc = desc;
+	stagingDesc.Usage = D3D11_USAGE_STAGING;
+	stagingDesc.BindFlags = 0;
+	stagingDesc.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
+
+	ID3D11Texture2D* stagingTexture = nullptr;
+	m_pDevice->CreateTexture2D(&stagingDesc, nullptr, &stagingTexture);
+
+	// GPU → CPU 복사
+	m_pDeviceContext->CopyResource(stagingTexture, scaleRes.deltaZTex);
+
+	// 데이터 읽기
+	D3D11_MAPPED_SUBRESOURCE mapped;
+	m_pDeviceContext->Map(stagingTexture, 0, D3D11_MAP_READ, 0, &mapped);
+
+	std::vector<float> validDeltas;
+	validDeltas.reserve(desc.Width * desc.Height);
+
+	float* data = (float*)mapped.pData;
+	for (UINT y = 0; y < desc.Height; ++y)
+	{
+		float* row = (float*)((BYTE*)data + y * mapped.RowPitch);
+		for (UINT x = 0; x < desc.Width; ++x)
+		{
+			float delta = row[x];
+			// 유효한 값만 수집
+			if (delta > 0.0f && delta < 500.0f)
+			{
+				validDeltas.push_back(delta);
+			}
+		}
+	}
+
+	m_pDeviceContext->Unmap(stagingTexture, 0);
+	stagingTexture->Release();
+
+	// 유효한 데이터가 없으면 리턴
+	if (validDeltas.empty())
+	{
+		return stats;
+	}
+
+	// 정렬 (중앙값, percentile 계산용)
+	std::vector<float> sortedDeltas = validDeltas;
+	std::sort(sortedDeltas.begin(), sortedDeltas.end());
+	size_t n = sortedDeltas.size();
+
+	// ✅ Outlier 제거 (IQR 방법)
+	float Q1 = sortedDeltas[n / 4];
+	float Q3 = sortedDeltas[n * 3 / 4];
+	float IQR = Q3 - Q1;
+
+	/*float lowerBound = Q1 - 1.5f * IQR;
+	float upperBound = Q3 + 1.5f * IQR;*/
+
+	float lowerBound = Q1 - 1.0f * IQR;  // 1.5 → 1.0
+	float upperBound = Q3 + 1.0f * IQR;  // 1.5 → 1.0
+
+	qDebug() << "Q1:" << Q1 << "Q3:" << Q3 << "IQR:" << IQR;
+	qDebug() << "Upper bound:" << upperBound;
+	qDebug() << "Max value:" << sortedDeltas.back();
+
+	// ✅ 방법 2: 고정 임계값 추가
+	float hardLimit = 30.0f;  // 30mm 이상은 무조건 제거
+
+	// Outlier 필터링
+	std::vector<float> filteredDeltas;
+	int outlierCount = 0;
+
+	for (float val : sortedDeltas)
+	{
+		if (val >= lowerBound && val <= upperBound && val <= hardLimit)  // ✅
+			filteredDeltas.push_back(val);
+		else
+			++outlierCount;
+	}
+
+	qDebug() << "--- Outlier Removal Details ---";
+	qDebug() << "Q1:" << Q1 << "Q3:" << Q3 << "IQR:" << IQR;
+	qDebug() << "Bounds:" << lowerBound << "~" << upperBound;
+	qDebug() << "Hard limit:" << hardLimit << "mm";
+	qDebug() << "Outliers removed:" << outlierCount << "/" << n
+		<< "(" << QString::number(100.0f * outlierCount / n, 'f', 1) << "%)";
+	qDebug() << "Remaining:" << filteredDeltas.size();
+
+	// 필터링된 데이터가 없으면 원본 사용
+	if (filteredDeltas.empty())
+	{
+		filteredDeltas = sortedDeltas;
+		qDebug() << "Warning: All data filtered out, using original data";
+	}
+
+	// ========================================
+	// ✅ 필터링된 데이터로 통계 계산
+	// ========================================
+
+	// -----------------------------
+	// 1. 평균 (Average)
+	// -----------------------------
+	float sum = 0.0f;
+	for (float val : filteredDeltas)  // ✅ filteredDeltas 사용!
+	{
+		sum += val;
+	}
+	stats.avgDelta = sum / filteredDeltas.size();
+
+	// -----------------------------
+	// 2. 중앙값 (Median)
+	// -----------------------------
+	size_t nFiltered = filteredDeltas.size();
+	if (nFiltered % 2 == 0)
+	{
+		stats.medianDelta = (filteredDeltas[nFiltered / 2 - 1] + filteredDeltas[nFiltered / 2]) / 2.0f;
+	}
+	else
+	{
+		stats.medianDelta = filteredDeltas[nFiltered / 2];
+	}
+
+	// -----------------------------
+	// 3. 표준편차 (Standard Deviation)
+	// -----------------------------
+	float variance = 0.0f;
+	for (float val : filteredDeltas)  // ✅ filteredDeltas 사용!
+	{
+		float diff = val - stats.avgDelta;
+		variance += diff * diff;
+	}
+	variance /= filteredDeltas.size();
+	stats.stdDelta = std::sqrt(variance);
+
+	// -----------------------------
+	// 4. 95th Percentile
+	// -----------------------------
+	size_t idx95 = static_cast<size_t>(nFiltered * 0.95f);
+	if (idx95 >= nFiltered) idx95 = nFiltered - 1;
+	stats.percentile95 = filteredDeltas[idx95];
+
+	// ========================================
+	// ✅ Robust Metric 추가 (중앙값 + 안정성)
+	// ========================================
+	stats.robustMetric = stats.medianDelta + 0.3f * stats.stdDelta;
+
+	return stats;
+}
+
+// FindOptimalScale 함수 수정
 float QDirect3D11Widget::FindOptimalScale()
 {
 	// -----------------------------
@@ -4073,64 +4349,81 @@ float QDirect3D11Widget::FindOptimalScale()
 	int   coarseSteps = 15;
 
 	float bestScale = 1.0f;
-	float bestDelta = FLT_MAX;
+	ScaleOptimizationStats bestStats;
+	bestStats.medianDelta = FLT_MAX;  // ✅ 초기값 설정
 
-	for (int i{}; i < coarseSteps; ++i)
+	qDebug() << "==============================";
+	qDebug() << "COARSE SEARCH (Median-based)";  // ✅ 명시
+	qDebug() << "==============================";
+	qDebug() << QString("Scale\tAvg(mm)\tMedian(mm)\tStd(mm)\t95th(mm)");
+
+	for (int i = 0; i < coarseSteps; ++i)
 	{
 		float t = float(i) / float(coarseSteps - 1);
 		float scale = coarseStart + t * (coarseEnd - coarseStart);
 
-		// 🔧 스케일 적용
+		// 스케일 적용
 		meshRenderer->meshScale = scale;
 
-		// 🔧 반드시 렌더링
+		// 렌더링
 		ClearDeltaZ();
-		/*RenderMeshViewZ();
-		RenderVolumeAndDeltaZ();*/
-
-
 		meshRenderer->RenderMeshViewZ(
 			m_pDeviceContext, m_meshVertexBuffer, m_meshVS, m_meshDepthPS, meshViewZWriteRTV, m_meshInputLayout,
 			m_clipSettingsBuffer, m_meshConstantBuffer, meshRenderer->sceneDepthTexture, m_depthSRV,
 			m_MeshSamplerState, m_pDevice, m_meshVertexCount,
 			maxMesh, maxPhysicalVol,
-			physicalWidth,
-			physicalHeight,
-			physicalDepth,
-			overallSize,
-
-			userRotation, viewMat, projMat, width(), height()
+			physicalWidth, physicalHeight, physicalDepth,
+			overallSize, userRotation, viewMat, projMat, width(), height()
 		);
-
 		RenderVolumeView();
-
 		m_pDeviceContext->Flush();
 
-		float avgDelta = DebugDeltaZTex();
+		// 전체 통계 계산
+		ScaleOptimizationStats stats = DebugDeltaZTexFull();
+		stats.scale = scale;
 
-		qDebug() << "[COARSE] scale =" << scale << "avg ΔZ =" << avgDelta;
+		qDebug() << QString("%1\t%2\t%3\t%4\t%5")
+			.arg(stats.scale, 0, 'f', 4)
+			.arg(stats.avgDelta, 0, 'f', 2)
+			.arg(stats.medianDelta, 0, 'f', 2)
+			.arg(stats.stdDelta, 0, 'f', 2)
+			.arg(stats.percentile95, 0, 'f', 2);
 
-		if (avgDelta > 0.0f && avgDelta < bestDelta)
+		//// 최적값 갱신 (평균 기준)
+		//if (stats.avgDelta > 0.0f && stats.avgDelta < bestStats.avgDelta)
+		// 개선: 중앙값 최소화
+		if (stats.medianDelta > 0.0f && stats.medianDelta < bestStats.medianDelta)
 		{
-			bestDelta = avgDelta;
+			bestStats = stats;
 			bestScale = scale;
 		}
 	}
 
-	qDebug() << "[COARSE RESULT] bestScale =" << bestScale
-		<< "best ΔZ =" << bestDelta;
+	qDebug() << "------------------------------";
+	qDebug() << "[COARSE RESULT]";
+	qDebug() << "Best Scale:" << bestStats.scale;
+	qDebug() << "Median ΔZ:" << bestStats.medianDelta << "mm (PRIMARY)";  // ✅
+	qDebug() << "Avg ΔZ:" << bestStats.avgDelta << "mm";
+	qDebug() << "Std Dev:" << bestStats.stdDelta << "mm";
+	qDebug() << "95th %ile:" << bestStats.percentile95 << "mm";
+	qDebug() << "------------------------------";
 
 	// -----------------------------
 	// 2. FINE SEARCH (local refine)
 	// -----------------------------
 	float fineRange = 0.05f;   // ±5%
 	int   fineSteps = 10;
-
 	float fineStart = bestScale - fineRange;
 	float fineEnd = bestScale + fineRange;
 
+	ScaleOptimizationStats finalStats = bestStats;
 	float finalScale = bestScale;
-	float finalDelta = bestDelta;
+
+	qDebug() << "";
+	qDebug() << "==============================";
+	qDebug() << "FINE SEARCH (Median-based)";  // ✅ 명시
+	qDebug() << "==============================";
+	qDebug() << QString("Scale\tAvg(mm)\tMedian(mm)\tStd(mm)\t95th(mm)");
 
 	for (int i = 0; i < fineSteps; ++i)
 	{
@@ -4140,43 +4433,68 @@ float QDirect3D11Widget::FindOptimalScale()
 		meshRenderer->meshScale = scale;
 
 		ClearDeltaZ();
-		//RenderMeshViewZ();
-		//RenderVolumeAndDeltaZ();
-
-
 		meshRenderer->RenderMeshViewZ(
 			m_pDeviceContext, m_meshVertexBuffer, m_meshVS, m_meshDepthPS, meshViewZWriteRTV, m_meshInputLayout,
 			m_clipSettingsBuffer, m_meshConstantBuffer, meshRenderer->sceneDepthTexture, m_depthSRV,
 			m_MeshSamplerState, m_pDevice, m_meshVertexCount,
 			maxMesh, maxPhysicalVol,
-			physicalWidth,
-			physicalHeight,
-			physicalDepth,
-			overallSize,
-
-			userRotation, viewMat, projMat, width(), height()
+			physicalWidth, physicalHeight, physicalDepth,
+			overallSize, userRotation, viewMat, projMat, width(), height()
 		);
-
 		RenderVolumeView();
-
-
 		m_pDeviceContext->Flush();
 
-		float avgDelta = DebugDeltaZTex();
+		ScaleOptimizationStats stats = DebugDeltaZTexFull();
+		stats.scale = scale;
 
-		qDebug() << "[FINE] scale =" << scale << "avg ΔZ =" << avgDelta;
+		qDebug() << QString("%1\t%2\t%3\t%4\t%5")
+			.arg(stats.scale, 0, 'f', 4)
+			.arg(stats.avgDelta, 0, 'f', 2)
+			.arg(stats.medianDelta, 0, 'f', 2)
+			.arg(stats.stdDelta, 0, 'f', 2)
+			.arg(stats.percentile95, 0, 'f', 2);
 
-		if (avgDelta > 0.0f && avgDelta < finalDelta)
+		// ✅✅✅ 여기가 핵심! 중앙값으로 변경!
+		if (stats.medianDelta > 0.0f && stats.medianDelta < finalStats.medianDelta)
 		{
-			finalDelta = avgDelta;
+			finalStats = stats;
 			finalScale = scale;
 		}
 	}
 
+	// -----------------------------
+	// 3. 최종 결과 출력
+	// -----------------------------
+	qDebug() << "";
 	qDebug() << "==============================";
-	qDebug() << "OPTIMAL SCALE FOUND";
-	qDebug() << "Scale =" << finalScale;
-	qDebug() << "Avg ΔZ =" << finalDelta << "mm";
+	qDebug() << "OPTIMAL SCALE FOUND (Median-based)";
+	qDebug() << "==============================";
+	qDebug() << "Optimal Scale:" << finalStats.scale;
+	qDebug() << "Median Distance:" << finalStats.medianDelta << "mm (PRIMARY)";  // ✅ 순서 변경
+	qDebug() << "Average Distance:" << finalStats.avgDelta << "mm";
+	qDebug() << "Std Deviation:" << finalStats.stdDelta << "mm";
+	qDebug() << "95th Percentile:" << finalStats.percentile95 << "mm";
+	qDebug() << "";
+
+	// ✅ 데이터 품질 검증 - 중앙값 기준으로!
+	float avgMedianDiff = std::abs(finalStats.avgDelta - finalStats.medianDelta);
+	float stdRatio = finalStats.stdDelta / finalStats.medianDelta;  // ✅ 중앙값 기준!
+	float p95Ratio = finalStats.percentile95 / finalStats.medianDelta;  // ✅ 중앙값 기준!
+
+	qDebug() << "--- Data Quality Check ---";
+	qDebug() << "|Avg - Median|:" << QString::number(avgMedianDiff, 'f', 2) << "mm"
+		<< (avgMedianDiff < 5.0f ? "[GOOD]" : "[WARNING: Outliers detected]");
+	qDebug() << "Std/Median ratio:" << QString::number(stdRatio * 100.0f, 'f', 1) << "%"  // ✅
+		<< (stdRatio < 0.5f ? "[GOOD]" : "[WARNING: High variance]");
+	qDebug() << "95th/Median ratio:" << QString::number(p95Ratio, 'f', 2)  // ✅
+		<< (p95Ratio < 2.5f ? "[GOOD]" : "[WARNING: Large outliers]");
+	qDebug() << "";
+
+	// ✅ 추가: 해석 도움말
+	qDebug() << "--- Interpretation ---";
+	qDebug() << "- Median represents the TYPICAL distance (most reliable)";
+	qDebug() << "- Average is influenced by outliers (less reliable)";
+	qDebug() << "- Use MEDIAN as the ground truth value";
 	qDebug() << "==============================";
 
 	return finalScale;
