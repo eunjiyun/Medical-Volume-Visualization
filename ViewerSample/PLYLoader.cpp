@@ -4,7 +4,6 @@
 #include <iostream>
 
 // PLYLoader.cpp
-#include "PLYLoader.h"
 #include <sstream>
 
 PLYLoader::PLYLoader()
@@ -77,7 +76,7 @@ bool PLYLoader::ParseHeader(std::ifstream& file) {
 bool PLYLoader::LoadVertices(std::ifstream& file) {
 	m_vertices.resize(m_vertexCount);
 
-	for (int i = 0; i < m_vertexCount; i++) {
+	for (int i{}; i < m_vertexCount; ++i) {
 		file.read(reinterpret_cast<char*>(&m_vertices[i].x), sizeof(float));
 		file.read(reinterpret_cast<char*>(&m_vertices[i].y), sizeof(float));
 		file.read(reinterpret_cast<char*>(&m_vertices[i].z), sizeof(float));
@@ -92,7 +91,7 @@ bool PLYLoader::LoadVertices(std::ifstream& file) {
 bool PLYLoader::LoadFaces(std::ifstream& file) {
 	m_faces.resize(m_faceCount);
 
-	for (int i = 0; i < m_faceCount; i++) {
+	for (int i{}; i < m_faceCount; ++i) {
 		// vertex_indices 읽기
 		uint8_t indexCount;
 		file.read(reinterpret_cast<char*>(&indexCount), sizeof(uint8_t));
@@ -121,7 +120,8 @@ bool PLYLoader::LoadFaces(std::ifstream& file) {
 	return true;
 }
 
-void PLYLoader::CreateRenderVertices() {
+void PLYLoader::CreateRenderVertices() 
+{
 	m_renderVertices.clear();
 	m_renderVertices.reserve(m_faceCount * 3);
 
@@ -129,17 +129,17 @@ void PLYLoader::CreateRenderVertices() {
 		for (int i{}; i < 3; ++i) {
 			PLY::VertexWithTexture v;
 
-			int idx = face.indices[i];
+			int idx{ face.indices[i] };
 
 
 			/*	v.x = m_vertices[idx].x;
 				v.y = m_vertices[idx].y;
 				v.z = m_vertices[idx].z;*/
 
-				// === 좌표축 변환 (PLY → CT/DX) ===
-			float px = m_vertices[idx].x;
-			float py = m_vertices[idx].y;
-			float pz = m_vertices[idx].z;
+			// === 좌표축 변환 (PLY → CT/DX) ===
+			float px{ m_vertices[idx].x };
+			float py{ m_vertices[idx].y };
+			float pz{ m_vertices[idx].z };
 
 			////v.x = px;
 			////v.y = py;
@@ -183,9 +183,9 @@ void PLYLoader::CreateRenderVertices() {
 
 
 
-			float nx = m_vertices[idx].nx;
-			float ny = m_vertices[idx].ny;
-			float nz = m_vertices[idx].nz;
+			float nx{ m_vertices[idx].nx };
+			float ny{ m_vertices[idx].ny };
+			float nz{ m_vertices[idx].nz };
 
 			// PLY → CT 축 변환
 		/*	v.nx = nx;

@@ -889,7 +889,7 @@ ID3D11Texture2D* FileReader::CreateTextureFromSlice(const std::vector<uint8_t>& 
 
 	hr = g_pd3dDevice->CreateBuffer(&cbDesc, nullptr, &m_crosshairBuffer);
 	if (FAILED(hr)) {
-		cerr << "[?먮윭] Crosshair ConstantBuffer ?앹꽦 ?ㅽ뙣!";
+		cerr << "Crosshair ConstantBuffer ?";
 	}
 
 	return texture;

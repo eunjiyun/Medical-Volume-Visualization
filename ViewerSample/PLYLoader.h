@@ -1,5 +1,3 @@
-
-
 // PLYLoader.h
 #pragma once
 #include <vector>

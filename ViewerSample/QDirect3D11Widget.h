@@ -404,9 +404,7 @@ private:
 	void InitTextures(UINT, UINT);
 
 	void InitSampler();
-	void InitializeGraphics();
-
-
+	
 
 	int ComputeSliceIndexFromPatientCoord(int viewIndex, XMFLOAT3 patientCoord);
 	int ComputeSliceIndexFromPatientCoord_Robust(

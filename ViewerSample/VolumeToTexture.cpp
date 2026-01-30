@@ -42,26 +42,26 @@ bool VolumeToTexture::Initialize(ID3D11Device* device, int width, int height)
 	// ========== Step 1: CreateRenderTarget ==========
 	std::cout << ">> Step 1/5: CreateRenderTarget..." << std::endl;
 	if (!CreateRenderTarget(device, width, height)) {
-		std::cout << "   ❌❌❌ CreateRenderTarget FAILED!" << std::endl;
+		std::cout << "CreateRenderTarget FAILED!" << std::endl;
 		return false;
 	}
-	std::cout << "   ✅ CreateRenderTarget succeeded\n" << std::endl;
+	std::cout << "CreateRenderTarget succeeded\n" << std::endl;
 
 	// ========== Step 2: CreateFullscreenQuad ==========
 	std::cout << ">> Step 2/5: CreateFullscreenQuad..." << std::endl;
 	if (!CreateFullscreenQuad(device)) {
-		std::cout << "   ❌❌❌ CreateFullscreenQuad FAILED!" << std::endl;
+		std::cout << "CreateFullscreenQuad FAILED!" << std::endl;
 		return false;
 	}
-	std::cout << "   ✅ CreateFullscreenQuad succeeded" << std::endl;
+	std::cout << "CreateFullscreenQuad succeeded" << std::endl;
 	std::cout << "   >> m_quadVertexBuffer: " << m_quadVertexBuffer << std::endl;
 
 	// ⭐ 여기서 NULL 체크!
 	if (!m_quadVertexBuffer) {
-		std::cout << "   ❌❌❌ CRITICAL: m_quadVertexBuffer is NULL after CreateFullscreenQuad!" << std::endl;
+		std::cout << "CRITICAL: m_quadVertexBuffer is NULL after CreateFullscreenQuad!" << std::endl;
 		return false;
 	}
-	std::cout << "   >> QuadVB verified: NOT NULL ✅\n" << std::endl;
+	std::cout << "   >> QuadVB verified: NOT NULL\n" << std::endl;
 
 	if (!LoadShaders(device))
 		return false;

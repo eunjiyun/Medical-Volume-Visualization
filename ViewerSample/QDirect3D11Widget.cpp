@@ -3965,7 +3965,7 @@ float QDirect3D11Widget::DebugDeltaZTex()  // ✅ 이름 변경
 	{
 		for (int x{}; x < (int)desc.Width; ++x)
 		{
-			float val = data[y * pitch + x];
+			float val{ data[y * pitch + x] };
 
 			if (val != 0.0f)
 			{
@@ -4021,7 +4021,7 @@ float QDirect3D11Widget::DebugDeltaZTex()  // ✅ 이름 변경
 	int sampleY = (18 + 345) / 2;
 
 	QString row;
-	for (int x = 326; x < min(336, (int)desc.Width); ++x)
+	for (int x{ 326 }; x < min(336, (int)desc.Width); ++x)
 	{
 		float val = data[sampleY * pitch + x];
 		row += QString::number(val, 'f', 1) + " ";
@@ -4211,7 +4211,7 @@ ScaleOptimizationStats QDirect3D11Widget::DebugDeltaZTexFull()
 	validDeltas.reserve(desc.Width * desc.Height);
 
 	float* data = (float*)mapped.pData;
-	for (UINT y = 0; y < desc.Height; ++y)
+	for (UINT y{}; y < desc.Height; ++y)
 	{
 		float* row = (float*)((BYTE*)data + y * mapped.RowPitch);
 		for (UINT x = 0; x < desc.Width; ++x)
@@ -4255,11 +4255,11 @@ ScaleOptimizationStats QDirect3D11Widget::DebugDeltaZTexFull()
 	qDebug() << "Max value:" << sortedDeltas.back();
 
 	// ✅ 방법 2: 고정 임계값 추가
-	float hardLimit = 30.0f;  // 30mm 이상은 무조건 제거
+	float hardLimit{ 30.0f };  // 30mm 이상은 무조건 제거
 
 	// Outlier 필터링
 	std::vector<float> filteredDeltas;
-	int outlierCount = 0;
+	int outlierCount{};
 
 	for (float val : sortedDeltas)
 	{
@@ -4291,7 +4291,7 @@ ScaleOptimizationStats QDirect3D11Widget::DebugDeltaZTexFull()
 	// -----------------------------
 	// 1. 평균 (Average)
 	// -----------------------------
-	float sum = 0.0f;
+	float sum{ 0.0f };
 	for (float val : filteredDeltas)  // ✅ filteredDeltas 사용!
 	{
 		sum += val;
@@ -4302,7 +4302,7 @@ ScaleOptimizationStats QDirect3D11Widget::DebugDeltaZTexFull()
 	// 2. 중앙값 (Median)
 	// -----------------------------
 	size_t nFiltered = filteredDeltas.size();
-	if (nFiltered % 2 == 0)
+	if (0==nFiltered % 2 )
 	{
 		stats.medianDelta = (filteredDeltas[nFiltered / 2 - 1] + filteredDeltas[nFiltered / 2]) / 2.0f;
 	}
@@ -4314,10 +4314,10 @@ ScaleOptimizationStats QDirect3D11Widget::DebugDeltaZTexFull()
 	// -----------------------------
 	// 3. 표준편차 (Standard Deviation)
 	// -----------------------------
-	float variance = 0.0f;
+	float variance{ 0.0f };
 	for (float val : filteredDeltas)  // ✅ filteredDeltas 사용!
 	{
-		float diff = val - stats.avgDelta;
+		float diff{ val - stats.avgDelta };
 		variance += diff * diff;
 	}
 	variance /= filteredDeltas.size();
@@ -4344,11 +4344,11 @@ float QDirect3D11Widget::FindOptimalScale()
 	// -----------------------------
 	// 1. COARSE SEARCH
 	// -----------------------------
-	float coarseStart = 0.7f;
-	float coarseEnd = 1.3f;
-	int   coarseSteps = 15;
+	float coarseStart{ 0.7f };
+	float coarseEnd{ 1.3f };
+	int   coarseSteps{ 15 };
 
-	float bestScale = 1.0f;
+	float bestScale{ 1.0f };
 	ScaleOptimizationStats bestStats;
 	bestStats.medianDelta = FLT_MAX;  // ✅ 초기값 설정
 
@@ -4357,10 +4357,10 @@ float QDirect3D11Widget::FindOptimalScale()
 	qDebug() << "==============================";
 	qDebug() << QString("Scale\tAvg(mm)\tMedian(mm)\tStd(mm)\t95th(mm)");
 
-	for (int i = 0; i < coarseSteps; ++i)
+	for (int i{}; i < coarseSteps; ++i)
 	{
-		float t = float(i) / float(coarseSteps - 1);
-		float scale = coarseStart + t * (coarseEnd - coarseStart);
+		float t{ float(i) / float(coarseSteps - 1) };
+		float scale{ coarseStart + t * (coarseEnd - coarseStart) };
 
 		// 스케일 적용
 		meshRenderer->meshScale = scale;
@@ -4411,13 +4411,13 @@ float QDirect3D11Widget::FindOptimalScale()
 	// -----------------------------
 	// 2. FINE SEARCH (local refine)
 	// -----------------------------
-	float fineRange = 0.05f;   // ±5%
-	int   fineSteps = 10;
-	float fineStart = bestScale - fineRange;
-	float fineEnd = bestScale + fineRange;
+	float fineRange{ 0.05f };   // ±5%
+	int   fineSteps{ 10 };
+	float fineStart{ bestScale - fineRange };
+	float fineEnd{ bestScale + fineRange };
 
 	ScaleOptimizationStats finalStats = bestStats;
-	float finalScale = bestScale;
+	float finalScale{ bestScale };
 
 	qDebug() << "";
 	qDebug() << "==============================";
@@ -4425,10 +4425,10 @@ float QDirect3D11Widget::FindOptimalScale()
 	qDebug() << "==============================";
 	qDebug() << QString("Scale\tAvg(mm)\tMedian(mm)\tStd(mm)\t95th(mm)");
 
-	for (int i = 0; i < fineSteps; ++i)
+	for (int i{}; i < fineSteps; ++i)
 	{
-		float t = float(i) / float(fineSteps - 1);
-		float scale = fineStart + t * (fineEnd - fineStart);
+		float t{ float(i) / float(fineSteps - 1) };
+		float scale{ fineStart + t * (fineEnd - fineStart) };
 
 		meshRenderer->meshScale = scale;
 
@@ -4522,22 +4522,22 @@ void QDirect3D11Widget::DebugSceneDepthDirect()
 	D3D11_MAPPED_SUBRESOURCE mapped;
 	m_pDeviceContext->Map(staging, 0, D3D11_MAP_READ, 0, &mapped);
 
-	float* data = (float*)mapped.pData;
-	UINT pitch = mapped.RowPitch / sizeof(float);
+	float* data{ (float*)mapped.pData };
+	UINT pitch{ mapped.RowPitch / sizeof(float) };
 
 	// 통계
-	int nonZero = 0;
-	float minVal = FLT_MAX;
-	float maxVal = -FLT_MAX;
+	int nonZero{};
+	float minVal{ FLT_MAX };
+	float maxVal{ -FLT_MAX };
 
-	for (int y = 0; y < (int)desc.Height; ++y)
+	for (int y{}; y < (int)desc.Height; ++y)
 	{
-		for (int x = 0; x < (int)desc.Width; ++x)
+		for (int x{}; x < (int)desc.Width; ++x)
 		{
-			float val = data[y * pitch + x];
-			if (val != 0.0f)
+			float val{ data[y * pitch + x] };
+			if (0.0f!=val )
 			{
-				nonZero++;
+				++nonZero;
 				minVal = min(minVal, val);
 				maxVal = max(maxVal, val);
 			}
@@ -4548,7 +4548,7 @@ void QDirect3D11Widget::DebugSceneDepthDirect()
 	qDebug() << "Texture size:" << desc.Width << "x" << desc.Height;
 	qDebug() << "Non-zero pixels:" << nonZero;
 
-	if (nonZero > 0)
+	if (0<nonZero )
 	{
 		qDebug() << "Min:" << minVal;
 		qDebug() << "Max:" << maxVal;
@@ -4560,10 +4560,10 @@ void QDirect3D11Widget::DebugSceneDepthDirect()
 
 	// 샘플 영역 (볼륨이 있는 326~367, 18~345)
 	qDebug() << "Sample at (330, 180):";
-	for (int y = 180; y < 185; ++y)
+	for (int y{ 180 }; y < 185; ++y)
 	{
 		QString row;
-		for (int x = 330; x < 340; ++x)
+		for (int x{ 330 }; x < 340; ++x)
 		{
 			float val = data[y * pitch + x];
 			row += QString::number(val, 'f', 1) + " ";
@@ -4639,19 +4639,19 @@ void QDirect3D11Widget::ProcessDeltaZAndUpdateConstantBuffer(
 
 	// ✅ 전체 텍스처 스캔
 	qDebug() << "=== Scanning entire texture ===";
-	int totalNonZero = 0;
-	int totalPositive = 0;
-	int totalNegative = 0;
+	int totalNonZero{};
+	int totalPositive{};
+	int totalNegative{};
 
-	for (int y = 0; y < (int)desc.Height; ++y)  // ← desc 사용!
+	for (int y{}; y < (int)desc.Height; ++y)  // ← desc 사용!
 	{
-		for (int x = 0; x < (int)desc.Width; ++x)  // ← desc 사용!
+		for (int x{}; x < (int)desc.Width; ++x)  // ← desc 사용!
 		{
-			float val = data[y * pitch + x];
+			float val{ data[y * pitch + x] };
 
-			if (val != 0.0f) totalNonZero++;
-			if (val > 0.0f) totalPositive++;
-			if (val < 0.0f) totalNegative++;
+			if (val != 0.0f) ++totalNonZero;
+			if (val > 0.0f) ++totalPositive;
+			if (val < 0.0f) ++totalNegative;
 		}
 	}
 
@@ -4692,15 +4692,15 @@ void QDirect3D11Widget::ProcessDeltaZAndUpdateConstantBuffer(
 	//}
 
 	// ✅ 6. 통계 계산 (같은 data 포인터 사용)
-	float sum = 0.0f;
-	float sumSq = 0.0f;
-	int validCount = 0;
-	int meshOnlyCount = 0;
-	int volumeOnlyCount = 0;
-	int overlapCount = 0;
+	float sum{ 0.0f };
+	float sumSq{ 0.0f };
+	int validCount{ 0 };
+	int meshOnlyCount{ 0 };
+	int volumeOnlyCount{ 0 };
+	int overlapCount{ 0 };
 
-	float minDelta = FLT_MAX;
-	float maxDelta = 0.0f;
+	float minDelta{ FLT_MAX };
+	float maxDelta{ 0.0f };
 
 
 	//// 디버깅 추가
@@ -4712,22 +4712,22 @@ void QDirect3D11Widget::ProcessDeltaZAndUpdateConstantBuffer(
 	{
 		for (int x{}; x < resources.width; ++x)
 		{
-			float delta = data[y * pitch + x];
+			float delta{ data[y * pitch + x] };
 
-			if (delta == -1.0f)
+			if (-1.0f==delta )
 			{
 				++volumeOnlyCount;
 			}
-			else if (delta == 0.0f)
+			else if (0.0f==delta )
 			{
 				// 배경
 			}
-			else if (delta > 0.0f)
+			else if (0.0f<delta )
 			{
-				overlapCount++;
+				++overlapCount;
 				sum += delta;
 				sumSq += delta * delta;
-				validCount++;
+				++validCount;
 
 				minDelta = min(minDelta, delta);
 				maxDelta = max(maxDelta, delta);
@@ -4745,11 +4745,11 @@ void QDirect3D11Widget::ProcessDeltaZAndUpdateConstantBuffer(
 	//qDebug() << "Volume only:" << volumeOnlyCount;
 	//qDebug() << "Background:" << (desc.Width * desc.Height - overlapCount - volumeOnlyCount);
 
-	if (validCount > 0)
+	if (0<validCount)
 	{
-		float avgDelta = sum / validCount;
-		float variance = (sumSq / validCount) - (avgDelta * avgDelta);
-		float stdDev = sqrt(variance);
+		float avgDelta{ sum / validCount };
+		float variance{ (sumSq / validCount) - (avgDelta * avgDelta) };
+		float stdDev{ sqrt(variance) };
 
 		/*qDebug() << "Average ΔZ:" << avgDelta << "mm";
 		qDebug() << "Min ΔZ:" << minDelta << "mm";
@@ -4826,18 +4826,18 @@ void QDirect3D11Widget::ProcessDeltaZAndUpdateConstantBuffer(
 
 
 
-	int minX = INT_MAX;
-	int maxX = -1;
-	int minY = INT_MAX;
-	int maxY = -1;
+	int minX{ INT_MAX };
+	int maxX{ -1 };
+	int minY{ INT_MAX };
+	int maxY{ -1 };
 
-	for (int y = 0; y < (int)desc.Height; ++y)
+	for (int y{}; y < (int)desc.Height; ++y)
 	{
-		for (int x = 0; x < (int)desc.Width; ++x)
+		for (int x{}; x < (int)desc.Width; ++x)
 		{
-			float val = data[y * pitch + x];
+			float val{ data[y * pitch + x] };
 
-			if (val > 0.0f)
+			if (0.0f<val )
 			{
 				minX = min(minX, x);
 				maxX = max(maxX, x);
@@ -4855,12 +4855,12 @@ void QDirect3D11Widget::ProcessDeltaZAndUpdateConstantBuffer(
 	if (minX <= maxX)
 	{
 		qDebug() << "=== Sample from data region ===";
-		int sampleY = (minY + maxY) / 2;
+		int sampleY{ (minY + maxY) / 2 };
 
 		QString row;
-		for (int x = minX; x < min(minX + 10, maxX + 1); ++x)
+		for (int x{ minX }; x < min(minX + 10, maxX + 1); ++x)
 		{
-			float val = data[sampleY * pitch + x];
+			float val{ data[sampleY * pitch + x] };
 			row += QString::number(val, 'f', 1) + " ";
 		}
 		qDebug() << "Row" << sampleY << ":" << row;
@@ -4923,10 +4923,6 @@ void QDirect3D11Widget::InitSampler()
 }
 
 
-void QDirect3D11Widget::InitializeGraphics()
-{
-
-}
 
 void QDirect3D11Widget::plasterVolumeShow()
 {
@@ -4943,17 +4939,17 @@ void QDirect3D11Widget::plasterVolumeShow()
 	float blendFactor[4] = { 0,0,0,0 };
 	m_pDeviceContext->OMSetBlendState(m_alphaBlendState.Get(), blendFactor, 0xffffffff);
 
-	float centerY = (fileReader->m_height - 1) * 0.5f;
+	float centerY{ (fileReader->m_height - 1) * 0.5f };
 
 
 
-	for (int y = fileReader->m_height - 1; y >= 0; --y)
+	for (int y{ fileReader->m_height - 1 }; y >= 0; --y)
 	{
-		float alpha = 1.0f / fileReader->m_height * 0.2f;
+		float alpha{ 1.0f / fileReader->m_height * 0.2f };
 
 
 
-		XMMATRIX scale = XMMatrixScaling(0.9f, 0.9f, 0.9f); // ← 여기서 크기 조절
+		XMMATRIX scale{ XMMatrixScaling(0.9f, 0.9f, 0.9f) }; // ← 여기서 크기 조절
 
 			// 2️⃣ 회전 — 플레인과 동일한 카메라 시점 정합
 		XMMATRIX volRotation =
@@ -4964,7 +4960,7 @@ void QDirect3D11Widget::plasterVolumeShow()
 		XMMATRIX volOffset = XMMatrixTranslation(0.0f, -0.08f, 0.0f);
 
 		// 4️⃣ 슬라이스 간 세로 offset (적층 높이)
-		float offsetY = ((y - centerY) / centerY) * 0.4f;
+		float offsetY{ ((y - centerY) / centerY) * 0.4f };
 		offsetY *= fileReader->views.spacing.y * 0.7f;
 
 		XMMATRIX translation = XMMatrixTranslation(0.0f, offsetY, 0.0f);
@@ -5001,8 +4997,6 @@ void QDirect3D11Widget::RenderVolumeView()
 		plasterVolumeShow();
 	}
 	else {
-
-
 
 		ComPtr<ID3D11BlendState> prevBS;
 		FLOAT prevBlendFactor[4] = { 0, 0, 0, 0 };
@@ -5065,8 +5059,8 @@ void QDirect3D11Widget::RenderVolumeView()
 		XMFLOAT3 voxelDim(fileReader->m_width, fileReader->m_height, fileReader->m_depth);
 
 
-		float huMin = fileReader->volWC - fileReader->volWW / 2.0f;  // -500
-		float huMax = fileReader->volWC + fileReader->volWW / 2.0f;  // +1500
+		float huMin{ fileReader->volWC - fileReader->volWW / 2.0f };  // -500
+		float huMax{ fileReader->volWC + fileReader->volWW / 2.0f };  // +1500
 
 		//		renderMode,
 
@@ -5235,9 +5229,9 @@ void QDirect3D11Widget::InitializeVolumeCamera()
 	XMVECTOR scaleVec, rotQuat, transVec;
 	XMMatrixDecompose(&scaleVec, &rotQuat, &transVec, worldMat);
 
-	float sx = XMVectorGetX(scaleVec);
-	float sy = XMVectorGetY(scaleVec);
-	float sz = XMVectorGetZ(scaleVec);
+	float sx{ XMVectorGetX(scaleVec) };
+	float sy{ XMVectorGetY(scaleVec) };
+	float sz{ XMVectorGetZ(scaleVec) };
 
 	//printf("Volume world scale = (%f, %f, %f)\n", sx, sy, sz);
 
@@ -5261,11 +5255,11 @@ void QDirect3D11Widget::InitializeVolumeCamera()
 	// ---------- Orthographic 정석 계산 ----------
 
 	// 화면 aspect
-	float aspect = (float)width() / (float)height();
+	float aspect{ (float)width() / (float)height() };
 
 
 	// 화면 여유
-	float marginXY = 1.05f;
+	float marginXY{ 1.05f };
 	
 
 	//float baseViewSize = 1.4f;
@@ -5300,9 +5294,9 @@ void QDirect3D11Widget::InitializeVolumeCamera()
 	
 
 	// near / far
-	float halfZ = 0.75f;
-	float d = 3.0f;
-	float marginZ = 0.05f;
+	float halfZ{ 0.75f };
+	float d{ 3.0f };
+	float marginZ{ 0.05f };
 
 
 	//projMat = XMMatrixPerspectiveFovLH(
@@ -5322,7 +5316,7 @@ void QDirect3D11Widget::InitializeVolumeCamera()
 	//);
 
 
-	float halfSize = 300.0f; // 여유 포함
+	float halfSize{ 300.0f }; // 여유 포함
 	float initFactor{ 0.6f };
 
 	qDebug() << "viewWidth : " << viewWidth;
@@ -5357,8 +5351,8 @@ void QDirect3D11Widget::InitializeVolumeCamera()
 	//);
 
 
-	float volumeDepth = 196.4f;  // Z 크기
-	float cameraDistance = 500.0f;
+	float volumeDepth{ 196.4f };  // Z 크기
+	float cameraDistance{ 500.0f };
 
 	//float nearZ{ cameraDistance - volumeDepth * 0.6f };  // 382mm
 	//float farZ{ cameraDistance + volumeDepth * 0.6f };   // 618mm
@@ -5374,9 +5368,9 @@ void QDirect3D11Widget::InitializeVolumeCamera()
 
 
 		// Near/Far (볼륨을 완전히 포함)
-	float depthMargin = 1.5f;  // 50% 여유
-	float nearZ = cameraDistance - volumeDepth * depthMargin;  // 205.4mm
-	float farZ = cameraDistance + volumeDepth * depthMargin;   // 794.6mm
+	float depthMargin{ 1.5f };  // 50% 여유
+	float nearZ{ cameraDistance - volumeDepth * depthMargin };  // 205.4mm
+	float farZ{ cameraDistance + volumeDepth * depthMargin };   // 794.6mm
 
 	projMat = XMMatrixOrthographicLH(
 		viewWidth*m_orthoScale,
@@ -5766,7 +5760,7 @@ void QDirect3D11Widget::InitShaders()
 	);
 	if (FAILED(hr)) {
 		if (errorBlob) OutputDebugStringA((char*)errorBlob->GetBufferPointer());
-		throw std::runtime_error("Vertex Shader ?뚮똾?????쎈솭");
+		throw std::runtime_error("Vertex Shader");
 	}
 
 
@@ -5782,7 +5776,7 @@ void QDirect3D11Widget::InitShaders()
 	);
 	if (FAILED(hr)) {
 		if (errorBlob) OutputDebugStringA((char*)errorBlob->GetBufferPointer());
-		throw std::runtime_error("Pixel Shader ?뚮똾?????쎈솭");
+		throw std::runtime_error("Pixel Shader");
 	}
 
 	DXCall(m_pDevice->CreatePixelShader(
@@ -6794,14 +6788,14 @@ int QDirect3D11Widget::ComputeSliceIndexFromPatientCoord_Robust(
 	float m20 = bx.z, m21 = by.z, m22 = bz.z;
 
 	// determinant
-	float det = m00 * (m11*m22 - m12 * m21)
+	float det{ m00 * (m11*m22 - m12 * m21)
 		- m01 * (m10*m22 - m12 * m20)
-		+ m02 * (m10*m21 - m11 * m20);
+		+ m02 * (m10*m21 - m11 * m20) };
 
 	if (fabs(det) < 1e-8f) {
 		// degenerate basis; fallback to axis-aligned approximate
 		// Choose axis based on viewIndex
-		int idx = 0;
+		int idx{};
 		switch (viewIndex) {
 		case 1: // Axial -> use Z
 			idx = static_cast<int>(round((patientCoord.z - origin.z) / sliceSpacing));
@@ -6821,16 +6815,16 @@ int QDirect3D11Widget::ComputeSliceIndexFromPatientCoord_Robust(
 	}
 
 	// inverse matrix M^-1 (compute adjugate / det)
-	float invDet = 1.0f / det;
-	float i00 = (m11*m22 - m12 * m21) * invDet;
-	float i01 = -(m01*m22 - m02 * m21) * invDet;
-	float i02 = (m01*m12 - m02 * m11) * invDet;
-	float i10 = -(m10*m22 - m12 * m20) * invDet;
-	float i11 = (m00*m22 - m02 * m20) * invDet;
-	float i12 = -(m00*m12 - m02 * m10) * invDet;
-	float i20 = (m10*m21 - m11 * m20) * invDet;
-	float i21 = -(m00*m21 - m01 * m20) * invDet;
-	float i22 = (m00*m11 - m01 * m10) * invDet;
+	float invDet{ 1.0f / det };
+	float i00{ (m11*m22 - m12 * m21) * invDet };
+	float i01{ -(m01*m22 - m02 * m21) * invDet };
+	float i02{ (m01*m12 - m02 * m11) * invDet };
+	float i10{ -(m10*m22 - m12 * m20) * invDet };
+	float i11{ (m00*m22 - m02 * m20) * invDet };
+	float i12{ -(m00*m12 - m02 * m10) * invDet };
+	float i20{ (m10*m21 - m11 * m20) * invDet };
+	float i21{ -(m00*m21 - m01 * m20) * invDet };
+	float i22{ (m00*m11 - m01 * m10) * invDet };
 
 
 	// M = [basisX basisY basisZ] 행렬 구성
@@ -6838,14 +6832,14 @@ int QDirect3D11Widget::ComputeSliceIndexFromPatientCoord_Robust(
 	// (i, j, k) = M⁻¹ * d
 	XMFLOAT3 dv; XMStoreFloat3(&dv, d);
 	// multiply M^-1 * d to get (i, j, k) in floating
-	float fi = i00 * dv.x + i01 * dv.y + i02 * dv.z;
-	float fj = i10 * dv.x + i11 * dv.y + i12 * dv.z;
-	float fk = i20 * dv.x + i21 * dv.y + i22 * dv.z;
+	float fi{ i00 * dv.x + i01 * dv.y + i02 * dv.z };
+	float fj{ i10 * dv.x + i11 * dv.y + i12 * dv.z };
+	float fk{ i20 * dv.x + i21 * dv.y + i22 * dv.z };
 
 	// Round to nearest integer voxel indices
-	int ii = static_cast<int>(std::lround(fi));// 정수 복셀 인덱스로 변환
-	int jj = static_cast<int>(std::lround(fj));
-	int kk = static_cast<int>(std::lround(fk));
+	int ii{ static_cast<int>(std::lround(fi)) };// 정수 복셀 인덱스로 변환
+	int jj{ static_cast<int>(std::lround(fj)) };
+	int kk{ static_cast<int>(std::lround(fk)) };
 
 	// clamp to valid range
 	ii = std::clamp(ii, 0, static_cast<int>(dims.x) - 1); // 범위 제한
@@ -6874,10 +6868,10 @@ int QDirect3D11Widget::ComputeSliceIndexFromPatientCoord(int viewIndex, XMFLOAT3
 {
 	XMFLOAT3 origin = fileReader->views.origin;
 	XMFLOAT3 spacing = fileReader->views.spacing;
-	int imageSize = fileReader->sliceIndex[viewIndex]; // 각 축의 슬라이스 개수
+	int imageSize{ fileReader->sliceIndex[viewIndex] }; // 각 축의 슬라이스 개수
 
 
-	int index = 0;
+	int index{};
 	float dz;
 
 	switch (viewIndex)
@@ -6917,15 +6911,15 @@ DirectX::XMFLOAT2 QDirect3D11Widget::GetNormalizedUV(int px, int py, int viewInd
 	D3D11_VIEWPORT vp = CreateViewport(viewIndex);
 
 	// 클릭 좌표 → 뷰포트 내 좌표
-	float localX = px - vp.TopLeftX;
-	float localY = py - vp.TopLeftY;
+	float localX{ px - vp.TopLeftX };
+	float localY{ py - vp.TopLeftY };
 
 	// ✅ 정규화 (0~1 범위)
-	float normX = localX / vp.Width;
-	float normY = localY / vp.Height;
+	float normX{ localX / vp.Width };
+	float normY{ localY / vp.Height };
 
 	// ✅ Aspect Ratio 보정
-	float viewportAspect = vp.Width / vp.Height;
+	float viewportAspect{ vp.Width / vp.Height };
 
 	// 각 뷰의 실제 데이터 aspect ratio
 	float dataAspect = 1.0f;
@@ -6947,12 +6941,12 @@ DirectX::XMFLOAT2 QDirect3D11Widget::GetNormalizedUV(int px, int py, int viewInd
 	// ✅ Aspect ratio 차이 보정
 	if (viewportAspect > dataAspect) {
 		// 뷰포트가 더 넓음 → X 좌표 보정
-		float scale = dataAspect / viewportAspect;
+		float scale{ dataAspect / viewportAspect };
 		normX = (normX - 0.5f) * scale + 0.5f;
 	}
 	else {
 		// 뷰포트가 더 높음 → Y 좌표 보정
-		float scale = viewportAspect / dataAspect;
+		float scale{ viewportAspect / dataAspect };
 		normY = (normY - 0.5f) * scale + 0.5f;
 	}
 
@@ -6963,14 +6957,14 @@ DirectX::XMFLOAT2 QDirect3D11Widget::GetNormalizedUV(int px, int py, int viewInd
 XMFLOAT3 QDirect3D11Widget::GetPatientCoordFromClick(int viewIndex, XMFLOAT2 uv)
 {
 	// 영상 정보
-	XMFLOAT3 origin = fileReader->views.origin;     // 환자 좌표계 시작점
-	XMFLOAT3 spacing = fileReader->views.spacing;   // 픽셀 간격
-	XMFLOAT3 imageSize = fileReader->views.imageSize; // 영상 크기 (픽셀 단위)
-	int sliceIndex = fileReader->currentIndex[viewIndex];  // 현재 슬라이스 인덱스
+	XMFLOAT3 origin{ fileReader->views.origin };     // 환자 좌표계 시작점
+	XMFLOAT3 spacing{ fileReader->views.spacing };   // 픽셀 간격
+	XMFLOAT3 imageSize{ fileReader->views.imageSize }; // 영상 크기 (픽셀 단위)
+	int sliceIndex{ fileReader->currentIndex[viewIndex] };  // 현재 슬라이스 인덱스
 
 	//// 텍스처 좌표 → 픽셀 좌표
-	float px = uv.x * imageSize.x;
-	float py = uv.y * imageSize.y;
+	float px{ uv.x * imageSize.x };
+	float py{ uv.y * imageSize.y };
 
 	currentUV[viewIndex] = uv;
 
@@ -7550,18 +7544,18 @@ void QDirect3D11Widget::UpdateSlicePlanePositions() {
 		// Sagittal은 "YZ plane"이 정석
 		// 슬라이스 위치는 X축으로 이동
 
-		float totalX = fileReader->m_width * spacing.x;
+		float totalX{ fileReader->m_width * spacing.x };
 
 
 		// Sagittal (yz 평면)
-		float sagittalSize = max(scaleY, scaleZ) * overallSize;
+		float sagittalSize{ max(scaleY, scaleZ) * overallSize };
 
 		XMMATRIX sagittalScale = XMMatrixScaling(sagittalSize, 1.0f, sagittalSize);
 
 
-		float sagittalX = origin.x + fileReader->currentIndex[3] * spacing.x;
+		float sagittalX{ origin.x + fileReader->currentIndex[3] * spacing.x };
 
-		float nx = (sagittalX - origin.x) / totalX;  // [0..1]
+		float nx{ (sagittalX - origin.x) / totalX };  // [0..1]
 		nx = (nx - 0.5f);               // [-0.5..0.5] * planeScale
 
 		XMMATRIX sagittalLocal =
@@ -7800,9 +7794,9 @@ void QDirect3D11Widget::mouseMoveEvent(QMouseEvent* event)
 		if (XMVector3Length(axis).m128_f32[0] > 0.0001f)
 		{
 			axis = XMVector3Normalize(axis);
-			float dot = XMVector3Dot(v0, v1).m128_f32[0];
+			float dot{ XMVector3Dot(v0, v1).m128_f32[0] };
 			dot = std::clamp(dot, -1.0f, 1.0f);
-			float angle = acosf(dot);
+			float angle{ acosf(dot) };
 
 
 			// 쿼터니언 생성 및 적용
@@ -7885,7 +7879,7 @@ void QDirect3D11Widget::mouseDoubleClickEvent(QMouseEvent* event)
 
 void QDirect3D11Widget::mouseReleaseEvent(QMouseEvent* event) {
 
-	if (event->button() == Qt::LeftButton)
+	if (Qt::LeftButton==event->button() )
 	{
 		m_isDragging = false;
 		setCursor(Qt::ArrowCursor);
@@ -7919,7 +7913,7 @@ void QDirect3D11Widget::onAxialScroll(int value) {
 	clickedViewIndex = 1;
 
 	// ImGui 로직과 동일: 스크롤 값을 슬라이스 인덱스로 변환
-	int newIndex = value;
+	int newIndex{ value };
 	newIndex = std::clamp(newIndex, 0, fileReader->m_depth - 1);
 
 	if (newIndex != fileReader->currentIndex[1]) {
@@ -7962,7 +7956,7 @@ void QDirect3D11Widget::onCoronalScroll(int value) {
 	clickedViewIndex = 2;
 
 	// ImGui 로직: Coronal은 역방향으로 계산
-	int newIndex = fileReader->m_height - 1 - value;
+	int newIndex{ fileReader->m_height - 1 - value };
 	// 또는 정방향으로 하려면:
 
 	newIndex = std::clamp(newIndex, 0, fileReader->m_height - 1);
@@ -8002,7 +7996,7 @@ void QDirect3D11Widget::onSagittalScroll(int value) {
 	clickedViewIndex = 3;
 
 	// ImGui 로직과 동일
-	int newIndex = fileReader->m_width - 1 - value;;
+	int newIndex{ fileReader->m_width - 1 - value };
 	newIndex = std::clamp(newIndex, 0, fileReader->m_width - 1);
 
 	if (newIndex != fileReader->currentIndex[3]) {
@@ -8066,8 +8060,8 @@ void QDirect3D11Widget::wheelEvent(QWheelEvent* event)
 	//event->accept();
 	//QWidget::wheelEvent(event);
 
-	int delta = event->angleDelta().y();
-	float zoomFactor = delta / 1200.0f;
+	int delta{ event->angleDelta().y() };
+	float zoomFactor{ delta / 1200.0f };
 
 	m_orthoScale *= (1.0f - zoomFactor);
 	m_orthoScale = std::clamp(m_orthoScale, 0.1f, 4.0f);

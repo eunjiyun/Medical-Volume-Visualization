@@ -645,10 +645,6 @@ void MeshRenderer::RenderMeshViewZ(ID3D11DeviceContext* context, ID3D11Buffer* m
 	//if (curDSV) curDSV->Release();
 
 
-
-
-
-
 	//// 🔥 Depth pass는 반드시 full-res viewport
 	D3D11_VIEWPORT fullVP = {};
 	fullVP.TopLeftX = 0.0f;
@@ -1207,9 +1203,6 @@ int printRotate{};
 
 
 
-
-
-
 void MeshRenderer::RenderMeshWithCT(
 	ID3D11DeviceContext* context,
 	ID3D11Buffer* m_meshVertexBuffer,
@@ -1369,7 +1362,6 @@ void MeshRenderer::RenderMeshWithCT(
 
 	//XMVECTOR s, r, t;
 	//XMMatrixDecompose(&s, &r, &t, initialMeshWorld*XMMatrixTranspose(userRotMat));
-
 	//
 
 	//std::cout
