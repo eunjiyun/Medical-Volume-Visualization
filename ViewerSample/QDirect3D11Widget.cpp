@@ -693,9 +693,9 @@ bool QDirect3D11Widget::init()
 	//transMat = XMMatrixTranslation(0.0f, 0.0f, 0.0f);
 
 	// DICOM에서 읽어온 값
-	float voxelSpacingX = fileReader->views.spacing.x;  // mm
-	float voxelSpacingY = fileReader->views.spacing.y;  // mm
-	float voxelSpacingZ = fileReader->views.spacing.z;  // mm (슬라이스 간격)
+	float voxelSpacingX{ fileReader->views.spacing.x };  // mm
+	float voxelSpacingY{ fileReader->views.spacing.y };  // mm
+	float voxelSpacingZ{ fileReader->views.spacing.z };  // mm (슬라이스 간격)
 
 	// 실제 물리적 크기
 	physicalWidth = fileReader->m_width * voxelSpacingX;   // 994 * 0.2 = 198.8mm
@@ -1255,9 +1255,9 @@ void QDirect3D11Widget::CreateTexture3D()
 
 
 	D3D11_DEPTH_STENCIL_DESC pass2DepthDesc = {};
-	pass2DepthDesc.DepthEnable = TRUE;                          // ✅ Test ON
-	pass2DepthDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ALL; // ✅ Write ON
-	pass2DepthDesc.DepthFunc = D3D11_COMPARISON_LESS;           // ✅ 정상 depth test
+	pass2DepthDesc.DepthEnable = TRUE;                          //  Test ON
+	pass2DepthDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ALL; //  Write ON
+	pass2DepthDesc.DepthFunc = D3D11_COMPARISON_LESS;           //  정상 depth test
 	pass2DepthDesc.StencilEnable = FALSE;
 
 	hr = m_pDevice->CreateDepthStencilState(&pass2DepthDesc, &m_VolumeDepthState);
@@ -2437,23 +2437,23 @@ void QDirect3D11Widget::ComposePeeledLayers(ID3D11DeviceContext* context)
 
 	// ✅ 셰이더 체크
 	if (!m_fullscreenVS) {
-		qDebug() << "❌ m_fullscreenVS is null!";
+		qDebug() << " m_fullscreenVS is null!";
 		return;
 	}
 	if (!m_composePS) {
-		qDebug() << "❌ m_composePS is null!";
+		qDebug() << " m_composePS is null!";
 		return;
 	}
-	qDebug() << "✅ Compose shaders valid";
+	qDebug() << " Compose shaders valid";
 
 	//  SRV 체크
 	for (int i{}; i < MAX_DEPTH_PEELS; ++i) {
 		if (!m_colorPeelSRVs[i]) {
-			qDebug() << "❌ colorPeelSRV" << i << "is null!";
+			qDebug() << " colorPeelSRV" << i << "is null!";
 			return;
 		}
 	}
-	qDebug() << "✅ All colorPeelSRVs valid";
+	qDebug() << " All colorPeelSRVs valid";
 
 
 
@@ -3224,7 +3224,7 @@ float QDirect3D11Widget::DebugDeltaZTex()  // ✅ 이름 변경
 	//qDebug() << "Negative (-1):" << negativeCount;
 	//qDebug() << "Background (0):" << (desc.Width * desc.Height - nonZeroCount);
 
-	if (positiveCount > 0)
+	if (0<positiveCount )
 	{
 		avgDelta = sum / positiveCount;
 
@@ -3234,11 +3234,11 @@ float QDirect3D11Widget::DebugDeltaZTex()  // ✅ 이름 변경
 		qDebug() << "Avg ΔZ:" << avgDelta << "mm";
 		qDebug() << "---";*/
 
-		if (avgDelta < 5.0f)
+		if (5.0f>avgDelta )
 			qDebug() << "Alignment: EXCELLENT";
-		else if (avgDelta < 20.0f)
+		else if (20.0f>avgDelta )
 			qDebug() << "Alignment: GOOD";
-		else if (avgDelta < 50.0f)
+		else if (50.0f>avgDelta )
 			qDebug() << "Alignment: MODERATE";
 		else
 			qDebug() << "Alignment: POOR";
@@ -3250,12 +3250,12 @@ float QDirect3D11Widget::DebugDeltaZTex()  // ✅ 이름 변경
 
 	// 샘플 출력
 	//qDebug() << "=== DeltaZ at volume region ===";
-	int sampleY = (18 + 345) / 2;
+	int sampleY{ (18 + 345) / 2 };
 
 	QString row;
 	for (int x{ 326 }; x < min(336, (int)desc.Width); ++x)
 	{
-		float val = data[sampleY * pitch + x];
+		float val{ data[sampleY * pitch + x] };
 		row += QString::number(val, 'f', 1) + " ";
 	}
 	//qDebug() << "Row" << sampleY << ":" << row;
@@ -3403,15 +3403,15 @@ ScaleOptimizationStats QDirect3D11Widget::DebugDeltaZTexFull()
 	//강점 : 극단치에 민감하지 않고 데이터 분포를 잘 반영
 	//단점 : 데이터가 매우 치우쳐 있으면 일부 합리적 값까지 제거될 수 있음
 
-	float Q1 = sortedDeltas[n / 4];
-	float Q3 = sortedDeltas[n * 3 / 4];
-	float IQR = Q3 - Q1;
+	float Q1{ sortedDeltas[n / 4] };
+	float Q3{ sortedDeltas[n * 3 / 4] };
+	float IQR{ Q3 - Q1 };
 
 	/*float lowerBound = Q1 - 1.5f * IQR;
 	float upperBound = Q3 + 1.5f * IQR;*/
 
-	float lowerBound = Q1 - 1.0f * IQR;  // 1.5 → 1.0
-	float upperBound = Q3 + 1.0f * IQR;  // 1.5 → 1.0
+	float lowerBound{ Q1 - 1.0f * IQR };  // 1.5 → 1.0
+	float upperBound{ Q3 + 1.0f * IQR };  // 1.5 → 1.0
 
 	qDebug() << "Q1:" << Q1 << "Q3:" << Q3 << "IQR:" << IQR;
 	qDebug() << "Upper bound:" << upperBound;
@@ -4242,7 +4242,7 @@ void QDirect3D11Widget::RenderVolumeView()
 			rtvs,       // RTV array
 			//m_pDepthStencilView, // DSV (있으면 전달, 없으면 nullptr)
 			nullptr,
-			1,          // UAV start slot (⚠ 중요)
+			1,          // UAV start slot ( 중요)
 			1,          // Num UAVs
 			uavs,       // UAV array
 			initialCounts
@@ -4260,7 +4260,7 @@ void QDirect3D11Widget::RenderVolumeView()
 		//		renderMode,
 
 
-	//	//// ✅ 7️⃣ 파이프라인 세팅
+	//	////  7️⃣ 파이프라인 세팅
 	//	//UINT stride = sizeof(Vtx);
 	//	//UINT offset = 0;
 	//	//ID3D11Buffer* vb[] = { m_quadVB.Get() };

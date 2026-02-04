@@ -205,7 +205,7 @@ void MeshRenderer::RenderMeshDepth(ID3D11DeviceContext* context, ID3D11Buffer* m
 	XMMATRIX userRotMat, XMMATRIX v, XMMATRIX p, float width, float height)
 {
 
-	if (!m_meshVertexBuffer || m_meshVertexCount == 0) {
+	if (!m_meshVertexBuffer || 0==m_meshVertexCount ) {
 		//std::cout << "[RenderMeshDepth]  VertexBuffer 없음 또는 VertexCount=0" << std::endl;
 		return;
 	}
