@@ -1,16 +1,13 @@
 #include<iostream>
 #include "MeshRenderer.h"
 #include "PLYLoader.h"
-//#include "QDirect3D11Widget.h"
-
-
 
 
 void MeshRenderer::CreateTwoPassStates(ID3D11Device* device)
 {
 	HRESULT hr;
 
-	// ✅ Description 구조체: 지역 변수로 선언
+	//  Description 구조체: 지역 변수로 선언
 	D3D11_DEPTH_STENCIL_DESC depthDesc = {};
 	D3D11_BLEND_DESC blendDesc = {};
 
@@ -25,38 +22,31 @@ void MeshRenderer::CreateTwoPassStates(ID3D11Device* device)
 	hr = device->CreateRasterizerState(&rastDesc, &rastState);
 
 
-	// ✅ 디버그 추가!
+	//  디버그 추가!
 	if (FAILED(hr)) {
-		std::cout << "❌ Failed to create rasterizer state!" << std::endl;
+		std::cout << " Failed to create rasterizer state!" << std::endl;
 	}
 	else {
-		std::cout << "✅ Rasterizer state created:" << rastState << std::endl;
+		std::cout << " Rasterizer state created:" << rastState << std::endl;
 	}
 
-
-	//// Depth State: Write ON
-	////D3D11_DEPTH_STENCIL_DESC depthDesc = {};
-	//depthDesc.DepthEnable = TRUE;
-	//depthDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ALL;  // ZWrite On
-	//depthDesc.DepthFunc = D3D11_COMPARISON_LESS;
-	//depthDesc.StencilEnable = FALSE;
 
 	D3D11_DEPTH_STENCIL_DESC depthWriteDesc = {};
 	depthWriteDesc.DepthEnable = TRUE;
 	//depthWriteDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ZERO; // 중요
-	depthWriteDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ALL;  // 🔥 반드시 ALL
-	//depthWriteDesc.DepthFunc = D3D11_COMPARISON_LESS_EQUAL;      // 🔥 핵심
+	depthWriteDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ALL;  //  반드시 ALL
+	//depthWriteDesc.DepthFunc = D3D11_COMPARISON_LESS_EQUAL;      //  핵심
 	depthWriteDesc.DepthFunc = D3D11_COMPARISON_LESS;
 	depthWriteDesc.StencilEnable = FALSE;
 
 	device->CreateDepthStencilState(&depthWriteDesc, &depthWriteState);
 
-	// ✅ 디버그 추가!
+	//  디버그 추가!
 	if (FAILED(hr)) {
-		std::cout << "❌ Failed to create depthWriteState!" << std::endl;
+		std::cout << " Failed to create depthWriteState!" << std::endl;
 	}
 	else {
-		std::cout << "✅ depthWriteState created:" << depthWriteState << std::endl;
+		std::cout << " depthWriteState created:" << depthWriteState << std::endl;
 	}
 
 
@@ -70,12 +60,12 @@ void MeshRenderer::CreateTwoPassStates(ID3D11Device* device)
 	//hr=device->CreateBlendState(&blendDesc, &noColorWriteState);
 
 
-	// ✅ 디버그 추가!
+	//  디버그 추가!
 	if (FAILED(hr)) {
-		std::cout << "❌ Failed to create noColorWriteState!" << std::endl;
+		std::cout << " Failed to create noColorWriteState!" << std::endl;
 	}
 	else {
-		std::cout << "✅ noColorWriteState created:" << noColorWriteState << std::endl;
+		std::cout << " noColorWriteState created:" << noColorWriteState << std::endl;
 	}
 
 	ID3D11BlendState* noColorWriteState = nullptr;
@@ -85,18 +75,18 @@ void MeshRenderer::CreateTwoPassStates(ID3D11Device* device)
 	noColorDesc.IndependentBlendEnable = FALSE;
 
 	D3D11_RENDER_TARGET_BLEND_DESC& rt = noColorDesc.RenderTarget[0];
-	rt.BlendEnable = FALSE;                 // ❗ 블렌딩 자체도 꺼도 됨
-	rt.RenderTargetWriteMask = 0;           // ❗❗ 컬러 출력 완전 차단 (핵심)
+	rt.BlendEnable = FALSE;                 //  블렌딩 자체도 꺼도 됨
+	rt.RenderTargetWriteMask = 0;           //  컬러 출력 완전 차단 (핵심)
 
 	hr = device->CreateBlendState(&noColorDesc, &noColorWriteState);
 
 	if (FAILED(hr))
 	{
-		std::cout << "❌ Failed to create noColorWriteState!" << std::endl;
+		std::cout << " Failed to create noColorWriteState!" << std::endl;
 	}
 	else
 	{
-		std::cout << "✅ noColorWriteState created: " << noColorWriteState << std::endl;
+		std::cout << " noColorWriteState created: " << noColorWriteState << std::endl;
 	}
 
 
@@ -108,23 +98,23 @@ void MeshRenderer::CreateTwoPassStates(ID3D11Device* device)
 
 	// Depth State: Write OFF, Test ON
 	D3D11_DEPTH_STENCIL_DESC pass3DepthDesc = {};
-	//	pass3DepthDesc.DepthEnable = FALSE;                         // ✅ Test OFF!
-	pass3DepthDesc.DepthEnable = TRUE;                      // 🔥 ON
-	pass3DepthDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ZERO; // ✅ Write OFF
-	pass3DepthDesc.DepthFunc = D3D11_COMPARISON_LESS_EQUAL; // 🔥 핵심
+	//	pass3DepthDesc.DepthEnable = FALSE;                         //  Test OFF!
+	pass3DepthDesc.DepthEnable = TRUE;                      //  ON
+	pass3DepthDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ZERO; //  Write OFF
+	pass3DepthDesc.DepthFunc = D3D11_COMPARISON_LESS_EQUAL; //  핵심
 	pass3DepthDesc.StencilEnable = FALSE;
 	hr = device->CreateDepthStencilState(&pass3DepthDesc, &depthReadState);
 
 	//depthDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ZERO;  // ZWrite Off
-	//depthDesc.DepthFunc = D3D11_COMPARISON_LESS_EQUAL;  // ✅ LESS_EQUAL!
+	//depthDesc.DepthFunc = D3D11_COMPARISON_LESS_EQUAL;  //  LESS_EQUAL!
 	//hr=device->CreateDepthStencilState(&depthDesc, &depthReadState);
 
-	// ✅ 디버그 추가!
+	//  디버그 추가!
 	if (FAILED(hr)) {
-		std::cout << "❌ Failed to create depthReadState!" << std::endl;
+		std::cout << " Failed to create depthReadState!" << std::endl;
 	}
 	else {
-		std::cout << "✅ depthReadState created:" << depthReadState << std::endl;
+		std::cout << " depthReadState created:" << depthReadState << std::endl;
 	}
 
 
@@ -145,10 +135,10 @@ void MeshRenderer::CreateTwoPassStates(ID3D11Device* device)
 
 	// ✅ 디버그 추가!
 	if (FAILED(hr)) {
-		std::cout << "❌ Failed to create alphaBlendState!" << std::endl;
+		std::cout << " Failed to create alphaBlendState!" << std::endl;
 	}
 	else {
-		std::cout << "✅ alphaBlendState created:" << alphaBlendState << std::endl;
+		std::cout << " alphaBlendState created:" << alphaBlendState << std::endl;
 	}
 
 
@@ -216,7 +206,7 @@ void MeshRenderer::RenderMeshDepth(ID3D11DeviceContext* context, ID3D11Buffer* m
 {
 
 	if (!m_meshVertexBuffer || m_meshVertexCount == 0) {
-		//std::cout << "[RenderMeshDepth] ❌ VertexBuffer 없음 또는 VertexCount=0" << std::endl;
+		//std::cout << "[RenderMeshDepth]  VertexBuffer 없음 또는 VertexCount=0" << std::endl;
 		return;
 	}
 
@@ -231,7 +221,7 @@ void MeshRenderer::RenderMeshDepth(ID3D11DeviceContext* context, ID3D11Buffer* m
 
 	if (curRTV) curRTV->Release();
 	if (!curDSV) {
-		//std::cout << "[RenderMeshDepth] ❌ curDSV가 nullptr" << std::endl;
+		//std::cout << "[RenderMeshDepth]  curDSV가 nullptr" << std::endl;
 		return;
 	}
 	/*std::cout << "[RenderMeshDepth] BEGIN" << std::endl;
@@ -242,7 +232,7 @@ void MeshRenderer::RenderMeshDepth(ID3D11DeviceContext* context, ID3D11Buffer* m
 
 
 
-	// ✅ SceneDepth를 RenderTarget으로 설정
+	//  SceneDepth를 RenderTarget으로 설정
 	ID3D11RenderTargetView* rtvs[] = { sceneDepthRTV  };
 	context->OMSetRenderTargets(1, rtvs, curDSV);
 	//std::cout << "[RenderMeshDepth] OMSetRenderTargets 완료" << std::endl;
@@ -262,7 +252,7 @@ void MeshRenderer::RenderMeshDepth(ID3D11DeviceContext* context, ID3D11Buffer* m
 	if (dbgDSV) dbgDSV->Release();
 
 
-	// ✅ SceneDepth 클리어
+	//  SceneDepth 클리어
 	float clearColor[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
 	context->ClearRenderTargetView(sceneDepthRTV, clearColor);
 
@@ -276,7 +266,7 @@ void MeshRenderer::RenderMeshDepth(ID3D11DeviceContext* context, ID3D11Buffer* m
 
 
 
-	//// 🔥 Depth pass는 반드시 full-res viewport
+	////  Depth pass는 반드시 full-res viewport
 	D3D11_VIEWPORT fullVP = {};
 	fullVP.TopLeftX = 0.0f;
 	fullVP.TopLeftY = 0.0f;
@@ -298,7 +288,7 @@ void MeshRenderer::RenderMeshDepth(ID3D11DeviceContext* context, ID3D11Buffer* m
 	context->RSSetViewports(1, &fullVP);
 
 
-	//// ✅ SceneDepth를 RenderTarget으로 설정
+	////  SceneDepth를 RenderTarget으로 설정
 	//ID3D11RenderTargetView* rtvs[] = { rtv };  // ← 추가 필요
 	//context->OMSetRenderTargets(1, rtvs, depthStencilView);
 
@@ -485,7 +475,7 @@ void MeshRenderer::RenderMeshDepth(ID3D11DeviceContext* context, ID3D11Buffer* m
 
 
 
-	//// ✅ 실제로 바인딩되었는지 확인
+	////  실제로 바인딩되었는지 확인
 	//ID3D11DepthStencilState* currentDepthState = nullptr;
 	//UINT stencilRef;
 	//context->OMGetDepthStencilState(&currentDepthState, &stencilRef);
@@ -494,15 +484,15 @@ void MeshRenderer::RenderMeshDepth(ID3D11DeviceContext* context, ID3D11Buffer* m
 
 	//if (currentDepthState) {
 	//	if (currentDepthState == depthWriteState) {
-	//		std::cout << "✅ Correct depth state bound!" << std::endl;
+	//		std::cout << " Correct depth state bound!" << std::endl;
 	//	}
 	//	else {
-	//		std::cout << "❌ Wrong depth state bound!" << std::endl;
+	//		std::cout << " Wrong depth state bound!" << std::endl;
 	//	}
 	//	currentDepthState->Release();
 	//}
 	//else {
-	//	std::cout << "❌ No depth state bound!" << std::endl;
+	//	std::cout << " No depth state bound!" << std::endl;
 	//}
 
 
@@ -532,7 +522,7 @@ void MeshRenderer::RenderMeshDepth(ID3D11DeviceContext* context, ID3D11Buffer* m
 	}
 	else
 	{
-		std::cout << "❌ depthTex is null" << std::endl;
+		std::cout << " depthTex is null" << std::endl;
 	}
 
 	if (depthTex) depthTex->Release();
@@ -541,7 +531,7 @@ void MeshRenderer::RenderMeshDepth(ID3D11DeviceContext* context, ID3D11Buffer* m
 
 
 
-	//// ✅ 깊이 버퍼를 SceneDepth 텍스처로 복사
+	////  깊이 버퍼를 SceneDepth 텍스처로 복사
 	//
 	//curDSV->GetResource((ID3D11Resource**)&m_meshTexture);
 
@@ -589,7 +579,7 @@ void MeshRenderer::RenderMeshViewZ(ID3D11DeviceContext* context, ID3D11Buffer* m
 {
 
 	if (!m_meshVertexBuffer || m_meshVertexCount == 0) {
-		//std::cout << "[RenderMeshDepth] ❌ VertexBuffer 없음 또는 VertexCount=0" << std::endl;
+		//std::cout << "[RenderMeshDepth]  VertexBuffer 없음 또는 VertexCount=0" << std::endl;
 		return;
 	}
 
@@ -604,7 +594,7 @@ void MeshRenderer::RenderMeshViewZ(ID3D11DeviceContext* context, ID3D11Buffer* m
 
 	//if (curRTV) curRTV->Release();
 	//if (!curDSV) {
-	//	//std::cout << "[RenderMeshDepth] ❌ curDSV가 nullptr" << std::endl;
+	//	//std::cout << "[RenderMeshDepth]  curDSV가 nullptr" << std::endl;
 	//	return;
 	//}
 	///*std::cout << "[RenderMeshDepth] BEGIN" << std::endl;
@@ -615,7 +605,7 @@ void MeshRenderer::RenderMeshViewZ(ID3D11DeviceContext* context, ID3D11Buffer* m
 
 
 
-	// ✅ SceneDepth를 RenderTarget으로 설정
+	//  SceneDepth를 RenderTarget으로 설정
 	ID3D11RenderTargetView* rtvs[] = { sceneDepthRTV };
 	context->OMSetRenderTargets(1, rtvs, nullptr);
 	//std::cout << "[RenderMeshDepth] OMSetRenderTargets 완료" << std::endl;
@@ -635,7 +625,7 @@ void MeshRenderer::RenderMeshViewZ(ID3D11DeviceContext* context, ID3D11Buffer* m
 	if (dbgDSV) dbgDSV->Release();
 
 
-	// ✅ SceneDepth 클리어
+	//  SceneDepth 클리어
 	float clearColor[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
 	context->ClearRenderTargetView(sceneDepthRTV, clearColor);
 
@@ -645,7 +635,7 @@ void MeshRenderer::RenderMeshViewZ(ID3D11DeviceContext* context, ID3D11Buffer* m
 	//if (curDSV) curDSV->Release();
 
 
-	//// 🔥 Depth pass는 반드시 full-res viewport
+	////  Depth pass는 반드시 full-res viewport
 	D3D11_VIEWPORT fullVP = {};
 	fullVP.TopLeftX = 0.0f;
 	fullVP.TopLeftY = 0.0f;
@@ -695,18 +685,6 @@ void MeshRenderer::RenderMeshViewZ(ID3D11DeviceContext* context, ID3D11Buffer* m
 		XM_PI  // Y축 180도
 	);
 
-
-
-
-	//// 테스트할 회전들
-	//XMMATRIX test1 = XMMatrixRotationX(XM_PIDIV2);        // 90도
-	//XMMATRIX test2 = XMMatrixRotationX(-XM_PIDIV2);       // -90도
-	//XMMATRIX test3 = XMMatrixRotationX(XM_PI);            // 180도
-
-	//XMMATRIX test4 = XMMatrixRotationY(XM_PI);            // Y축 180도
-
-	//XMMATRIX test5 = XMMatrixRotationX(-XM_PIDIV2) * XMMatrixRotationY(XM_PI);
-	//XMMATRIX test6 = XMMatrixRotationX(XM_PIDIV2) * XMMatrixRotationZ(XM_PI);
 
 
 	////볼륨 - 메쉬 기본은 rotx, roty 인데 rotation은 메쉬에만 추가로 곱해줌.
@@ -790,7 +768,7 @@ void MeshRenderer::RenderMeshViewZ(ID3D11DeviceContext* context, ID3D11Buffer* m
 
 	if (curRTV) curRTV->Release();
 	if (!curDSV) {
-		//std::cout << "[RenderMeshDepth] ❌ curDSV가 nullptr" << std::endl;
+		//std::cout << "[RenderMeshDepth]  curDSV가 nullptr" << std::endl;
 		return;
 	}
 	/*std::cout << "[RenderMeshDepth] BEGIN" << std::endl;
@@ -808,215 +786,7 @@ float MeshRenderer::ComputeHandedness(XMVECTOR X, XMVECTOR Y, XMVECTOR Z)
 
 
 
-//bool MeshRenderer::ExtractAxes(XMMATRIX* volWorld, XMMATRIX* meshWorld)
-//{
-//	Axes volAx, meshAx;
-//
-//	// Row-major 기준
-//	volAx.X = XMVectorSet((*volWorld).r[0].m128_f32[0],
-//		(*volWorld).r[0].m128_f32[1],
-//		(*volWorld).r[0].m128_f32[2],
-//		0.0f);
-//
-//	volAx.Y = XMVectorSet((*volWorld).r[1].m128_f32[0],
-//		(*volWorld).r[1].m128_f32[1],
-//		(*volWorld).r[1].m128_f32[2],
-//		0.0f);
-//
-//	volAx.Z = XMVectorSet((*volWorld).r[2].m128_f32[0],
-//		(*volWorld).r[2].m128_f32[1],
-//		(*volWorld).r[2].m128_f32[2],
-//		0.0f);
-//
-//	// 방향 비교용이므로 정규화
-//	volAx.X = XMVector3Normalize(volAx.X);
-//	volAx.Y = XMVector3Normalize(volAx.Y);
-//	volAx.Z = XMVector3Normalize(volAx.Z);
-//
-//
-//
-//	// Row-major 기준
-//	meshAx.X = XMVectorSet((*meshWorld).r[0].m128_f32[0],
-//		(*meshWorld).r[0].m128_f32[1],
-//		(*meshWorld).r[0].m128_f32[2],
-//		0.0f);
-//
-//	meshAx.Y = XMVectorSet((*meshWorld).r[1].m128_f32[0],
-//		(*meshWorld).r[1].m128_f32[1],
-//		(*meshWorld).r[1].m128_f32[2],
-//		0.0f);
-//
-//	meshAx.Z = XMVectorSet((*meshWorld).r[2].m128_f32[0],
-//		(*meshWorld).r[2].m128_f32[1],
-//		(*meshWorld).r[2].m128_f32[2],
-//		0.0f);
-//	 
-//	// 방향 비교용이므로 정규화
-//	meshAx.X = XMVector3Normalize(meshAx.X);
-//	meshAx.Y = XMVector3Normalize(meshAx.Y);
-//	meshAx.Z = XMVector3Normalize(meshAx.Z);
-//
-//
-//	float dotX = XMVectorGetX(XMVector3Dot(volAx.X, meshAx.X));
-//	float dotY = XMVectorGetX(XMVector3Dot(volAx.Y, meshAx.Y));
-//	float dotZ = XMVectorGetX(XMVector3Dot(volAx.Z, meshAx.Z));
-//
-//	bool axisMatched =
-//		fabs(dotX) > 0.99f &&
-//		fabs(dotY) > 0.99f &&
-//		fabs(dotZ) > 0.99f;
-//
-//
-//	/*std::cout << "[Axis Dot Product]" << std::endl;
-//	std::cout << "X axis dot:" << dotX << std::endl;
-//	std::cout << "Y axis dot:" << dotY << std::endl;
-//	std::cout << "Z axis dot:" << dotZ << std::endl << std::endl;
-//
-//
-//	if (dotX < 0) std::cout << "⚠ X axis flipped" << std::endl;
-//	if (dotY < 0)std::cout << "⚠ Y axis flipped" << std::endl;
-//	if (dotZ < 0) std::cout << "⚠ Z axis flipped" << std::endl << std::endl;
-//
-//	if (axisMatched)
-//		std::cout << "==============volume and mesh axes are match" << std::endl;
-//	else
-//		std::cout << "@@@@@@@@@@@@volume and mesh axes are not match" << std::endl;*/
-//
-//
-//
-//		// X축 이동
-//	{
-//		XMVECTOR delta = XMVectorSet(50, 0, 0, 0); // +X 이동
-//		XMVECTOR volPos0 = XMVector3TransformCoord(XMVectorZero(), (*volWorld));
-//		XMVECTOR meshPos0 = XMVector3TransformCoord(XMVectorZero(), (*meshWorld));
-//
-//		XMVECTOR volPos1 = XMVector3TransformCoord(delta, (*volWorld));
-//		XMVECTOR meshPos1 = XMVector3TransformCoord(delta, (*meshWorld));
-//
-//		XMVECTOR volMove = XMVector3Normalize(XMVectorSubtract(volPos1, volPos0));
-//		XMVECTOR meshMove = XMVector3Normalize(XMVectorSubtract(meshPos1, meshPos0));
-//
-//		float moveDot = XMVectorGetX(XMVector3Dot(volMove, meshMove));
-//
-//		std::cout << "[X축] ";
-//		if (moveDot > 0.99f)       std::cout << "두 벡터는 거의 같은 방향입니다.\n";
-//		else if (moveDot > 0.0f)   std::cout << "두 벡터는 유사한 방향(θ < 90°)입니다.\n";
-//		else if (moveDot == 0.0f)  std::cout << "두 벡터는 직교합니다.\n";
-//		else {
-//			std::cout << "두 벡터는 반대 방향입니다. → X축 반전 적용\n";
-//			(*meshWorld) = XMMatrixMultiply(XMMatrixScaling(-1, 1, 1), (*meshWorld));
-//
-//			// ✅ 반전 후 다시 검사
-//			meshPos1 = XMVector3TransformCoord(delta, (*meshWorld));
-//			meshMove = XMVector3Normalize(XMVectorSubtract(meshPos1, meshPos0));
-//			moveDot = XMVectorGetX(XMVector3Dot(volMove, meshMove));
-//
-//			if (moveDot > 0.99f)
-//				std::cout << "반전 적용 후: 방향 일치 확인 완료!\n";
-//			else
-//				std::cout << "반전 적용 후에도 방향 불일치!\n";
-//		}
-//
-//		//// ✅ 실제 이동 적용
-//		//XMMATRIX moveMatrix = XMMatrixTranslationFromVector(delta);
-//		//(*volWorld) = XMMatrixMultiply(moveMatrix, (*volWorld));
-//		//(*meshWorld) = XMMatrixMultiply(moveMatrix, (*meshWorld));
-//
-//		//std::cout << "볼륨과 메쉬를 X축으로 +50 이동 완료!\n";
-//
-//	}
-//
-//	// Y축 이동
-//	{
-//		XMVECTOR delta = XMVectorSet(0, 50, 0, 0); // +Y 이동
-//		XMVECTOR volPos0 = XMVector3TransformCoord(XMVectorZero(), (*volWorld));
-//		XMVECTOR meshPos0 = XMVector3TransformCoord(XMVectorZero(), (*meshWorld));
-//
-//		XMVECTOR volPos1 = XMVector3TransformCoord(delta, (*volWorld));
-//		XMVECTOR meshPos1 = XMVector3TransformCoord(delta, (*meshWorld));
-//
-//		XMVECTOR volMove = XMVector3Normalize(XMVectorSubtract(volPos1, volPos0));
-//		XMVECTOR meshMove = XMVector3Normalize(XMVectorSubtract(meshPos1, meshPos0));
-//
-//		float moveDot = XMVectorGetX(XMVector3Dot(volMove, meshMove));
-//
-//		std::cout << "[Y축] ";
-//		if (moveDot > 0.99f)       std::cout << "두 벡터는 거의 같은 방향입니다.\n";
-//		else if (moveDot > 0.0f)   std::cout << "두 벡터는 유사한 방향(θ < 90°)입니다.\n";
-//		else if (moveDot == 0.0f)  std::cout << "두 벡터는 직교합니다.\n";
-//		else {
-//			std::cout << "두 벡터는 반대 방향입니다. → Y축 반전 적용\n";
-//			(*meshWorld) = XMMatrixMultiply(XMMatrixScaling(1, -1, 1), (*meshWorld));
-//
-//			// ✅ 반전 후 다시 검사
-//			meshPos1 = XMVector3TransformCoord(delta, (*meshWorld));
-//			meshMove = XMVector3Normalize(XMVectorSubtract(meshPos1, meshPos0));
-//			moveDot = XMVectorGetX(XMVector3Dot(volMove, meshMove));
-//
-//			if (moveDot > 0.99f)
-//				std::cout << "반전 적용 후: 방향 일치 확인 완료!\n";
-//			else
-//				std::cout << "반전 적용 후에도 방향 불일치!\n";
-//		}
-//
-//		//// ✅ 실제 이동 적용
-//		//XMMATRIX moveMatrix = XMMatrixTranslationFromVector(delta);
-//		//(*volWorld) = XMMatrixMultiply(moveMatrix, (*volWorld));
-//		//(*meshWorld) = XMMatrixMultiply(moveMatrix, (*meshWorld));
-//
-//		//std::cout << "볼륨과 메쉬를 Y축으로 +50 이동 완료!\n";
-//
-//	}
-//
-//	// Z축 이동
-//	{
-//		XMVECTOR delta = XMVectorSet(0, 0, 50, 0); // +Z 이동
-//		XMVECTOR volPos0 = XMVector3TransformCoord(XMVectorZero(), (*volWorld));
-//		XMVECTOR meshPos0 = XMVector3TransformCoord(XMVectorZero(), (*meshWorld));
-//
-//		XMVECTOR volPos1 = XMVector3TransformCoord(delta, (*volWorld));
-//		XMVECTOR meshPos1 = XMVector3TransformCoord(delta, (*meshWorld));
-//
-//		XMVECTOR volMove = XMVector3Normalize(XMVectorSubtract(volPos1, volPos0));
-//		XMVECTOR meshMove = XMVector3Normalize(XMVectorSubtract(meshPos1, meshPos0));
-//
-//		float moveDot = XMVectorGetX(XMVector3Dot(volMove, meshMove));
-//
-//		std::cout << "[Z축] ";
-//		if (moveDot > 0.99f)       std::cout << "두 벡터는 거의 같은 방향입니다.\n";
-//		else if (moveDot > 0.0f)   std::cout << "두 벡터는 유사한 방향(θ < 90°)입니다.\n";
-//		else if (moveDot == 0.0f)  std::cout << "두 벡터는 직교합니다.\n";
-//		else {
-//			std::cout << "두 벡터는 반대 방향입니다. → Z축 반전 적용\n";
-//
-//			(*meshWorld) = XMMatrixMultiply(XMMatrixScaling(1, 1, -1), (*meshWorld));
-//
-//			// ✅ 반전 후 다시 검사
-//			meshPos1 = XMVector3TransformCoord(delta, (*meshWorld));
-//			meshMove = XMVector3Normalize(XMVectorSubtract(meshPos1, meshPos0));
-//			moveDot = XMVectorGetX(XMVector3Dot(volMove, meshMove));
-//
-//			if (moveDot > 0.99f)
-//				std::cout << "반전 적용 후: 방향 일치 확인 완료!\n";
-//			else
-//				std::cout << "반전 적용 후에도 방향 불일치!\n";
-//		}
-//
-//		//// ✅ 실제 이동 적용
-//		//XMMATRIX moveMatrix = XMMatrixTranslationFromVector(delta);
-//		////(*volWorld) = XMMatrixMultiply(moveMatrix, (*volWorld));
-//		//(*meshWorld) = XMMatrixMultiply(moveMatrix, (*meshWorld));
-//
-//		//std::cout << "볼륨과 메쉬를 Z축으로 +50 이동 완료!\n";
-//	}
-//
-//
-//
-//	return axisMatched;
-//}
-
 int cnt{};
-
 bool MeshRenderer::ExtractAxes(const XMMATRIX* volWorld, const XMMATRIX* meshWorld)
 {
 	Axes volAx, meshAx;
@@ -1044,9 +814,9 @@ bool MeshRenderer::ExtractAxes(const XMMATRIX* volWorld, const XMMATRIX* meshWor
 	// =========================
 	// 2. 축 방향 내적 비교
 	// =========================
-	float dotX = XMVectorGetX(XMVector3Dot(volAx.X, meshAx.X));
-	float dotY = XMVectorGetX(XMVector3Dot(volAx.Y, meshAx.Y));
-	float dotZ = XMVectorGetX(XMVector3Dot(volAx.Z, meshAx.Z));
+	float dotX{ XMVectorGetX(XMVector3Dot(volAx.X, meshAx.X)) };
+	float dotY{ XMVectorGetX(XMVector3Dot(volAx.Y, meshAx.Y)) };
+	float dotZ{ XMVectorGetX(XMVector3Dot(volAx.Z, meshAx.Z)) };
 
 	bool axisAligned =
 		fabs(dotX) > 0.99f &&
@@ -1059,12 +829,12 @@ bool MeshRenderer::ExtractAxes(const XMMATRIX* volWorld, const XMMATRIX* meshWor
 	float volHand = ComputeHandedness(volAx.X, volAx.Y, volAx.Z);
 	float meshHand = ComputeHandedness(meshAx.X, meshAx.Y, meshAx.Z);
 
-	bool sameHandedness = (volHand * meshHand) > 0.0f;
+	bool sameHandedness{ (volHand * meshHand) > 0.0f };
 
 	// =========================
 	// 4. 좌우 반전 판정 (핵심)
 	// =========================
-	bool isLeftRightFlipped = (dotX < 0.0f);
+	bool isLeftRightFlipped{ (dotX < 0.0f) };
 
 
 	if (0 == cnt) {
@@ -1103,7 +873,7 @@ bool MeshRenderer::ExtractAxes(const XMMATRIX* volWorld, const XMMATRIX* meshWor
   // =========================
   // 덴탈 기준:
   // - 축 정렬 OK
-  // - 좌우 반전 ❌
+  // - 좌우 반전 
 
 
 	return axisAligned && sameHandedness;
@@ -1355,9 +1125,6 @@ void MeshRenderer::RenderMeshWithCT(
 
 
 
-
-
-
 	//XMMATRIX vp = v*p;
 
 	//XMVECTOR s, r, t;
@@ -1384,7 +1151,7 @@ void MeshRenderer::RenderMeshWithCT(
 	context->PSSetConstantBuffers(1, 1, &m_clipSettingsBuffer);
 
 	// ========== Texture/Sampler 바인딩 ==========
-	// ⭐ t0 = 얼굴 텍스처, t1 = CT 텍스처
+	//  t0 = 얼굴 텍스처, t1 = CT 텍스처
 	ID3D11ShaderResourceView* srvs[3] = {
 		m_meshTexture,  // t0
 		ctTexture ,      // t1 ⭐ CT 텍스처
@@ -1394,7 +1161,7 @@ void MeshRenderer::RenderMeshWithCT(
 
 
 
-	// ⭐ s0 = linear sampler (양쪽 다 사용)
+	//  s0 = linear sampler (양쪽 다 사용)
 	context->PSSetSamplers(0, 1, &m_MeshSamplerState);
 	context->PSSetSamplers(1, 1, &m_PointClampSampler);
 
@@ -1408,7 +1175,7 @@ void MeshRenderer::RenderMeshWithCT(
 	context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
 	// ========== 렌더 스테이트 설정 ==========
-	// ⭐ 불투명하게 그리기 (CT 합성 후 완전 불투명)
+	//  불투명하게 그리기 (CT 합성 후 완전 불투명)
 	context->OMSetDepthStencilState(depthReadState, 0);      // Depth test ON, write OFF
 	//context->OMSetBlendState(nullptr, nullptr, 0xffffffff);  // ⭐ 블렌딩 OFF (불투명)
 	context->OMSetBlendState(alphaBlendState, nullptr, 0xffffffff);

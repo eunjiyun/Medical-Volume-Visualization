@@ -78,10 +78,24 @@ struct ScaleOptimizationStats
 	float percentile95;
 	float robustMetric;  // ✅ 추가: 중앙값 + 안정성 고려
 
+
+	float inlier2mm;
+	float inlier5mm;
+	float validRatio;
+	bool  isValid;
+
 	// 생성자
 	ScaleOptimizationStats()
 		: scale(0.0f), avgDelta(FLT_MAX), medianDelta(FLT_MAX),
-		stdDelta(0.0f), percentile95(FLT_MAX), robustMetric(FLT_MAX) {}
+		stdDelta(0.0f), percentile95(FLT_MAX), robustMetric(FLT_MAX) ,
+	
+		// 품질 지표 초기값
+		inlier2mm(0.0f),      // 맞은 비율 0%
+		inlier5mm(0.0f),      // 맞은 비율 0%
+		validRatio(0.0f),     // 겹친 영역 0%
+		isValid(false)       // 기본은 무조건 FAIL
+	
+	{}
 };
 
 

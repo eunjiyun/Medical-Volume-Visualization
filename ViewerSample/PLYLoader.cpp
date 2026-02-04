@@ -18,7 +18,7 @@ PLYLoader::~PLYLoader() {
 
 bool PLYLoader::Load(const std::string& filename) {
 
-	// ✅ 1. 어떤 경로로 열려고 하는지 확인
+	//  1. 어떤 경로로 열려고 하는지 확인
 	std::cout << "Trying to load PLY from :" << filename << std::endl;
 
 

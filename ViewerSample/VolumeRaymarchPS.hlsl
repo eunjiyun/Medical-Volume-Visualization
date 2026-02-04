@@ -40,6 +40,7 @@ SamplerState pointClamp : register(s5); // 포인트+클램프 추천 (디버그
 //SamplerState MeshViewZSamp : register(s2); // 포인트+클램프 추천 (디버그용)
 
 RWTexture2D<float> DeltaZTex : register(u1);
+
 Texture2D<float> DebugTex : register(t3);
 
 struct PSInput
@@ -193,7 +194,11 @@ float4 main(PSInput input) : SV_Target
 
 
 	// World step size (THIS is the big fix: marching distance is in world units)
+	
+	
 	float maxSteps = VoxelAndMaxSteps.w;
+
+	//float maxSteps = 1024;
 
 	//월드 단위 stepSize
 	float stepW = (tFarW - tNearW) / maxSteps;
@@ -539,72 +544,55 @@ float4 main(PSInput input) : SV_Target
 				//float meshViewZ = view.z;
 
 
+
+				//메쉬 전용 패스에서 미리 계산해 둔 View Space Z 텍스처
+				//이 픽셀에서 메쉬 표면이 
+				//카메라로부터 얼마나 떨어져 있는지
 				float meshViewZ = MeshViewZTex.Load(int3(pixelCoord, 0));
 
-		// meshViewZ = mul(float4(meshPosWS, 1), View).z;
-
-
-				//// meshViewZ만 보기
-				//float viz = saturate(abs(meshViewZ) / 500.0);
-				//return float4(viz, viz, viz, 1);
-
-
-			
-				
+				//볼륨에서 hit 지점 찾는 부분
+				//활성화된 볼륨 투명도 기준으로 충돌 지점 설정
 				//if (!hasHit && col.a > 0.001)
+				
+				//hu 300 이상(해면골) 기준으로 충돌 지점 설정
 				if (!hasHit && hu > 300)
 				{
-				
 					// hitViewZ 계산
+					//볼륨 hit 지점의 View Z 계산
 					float4 posView = mul(float4(posWS, 1), View);
 					posView /= max(abs(posView.w), 1e-6);
 
 					//view space 변환
 					//정규화
-
-					//
 					float hitViewZ = posView.z;
 
-					// meshViewZ 읽기
-					//float meshViewZ = SceneDepth.SampleLevel(pointClamp, input.uv, 0);
-
-
-
-			/*		float viz = saturate(abs(hitViewZ) / 500.0);
-					return float4(viz, 0, 0, 1);*/
-
-					//float nearZ = 205.4f;          // 카메라 바로 앞
-					//float farZ = 794.6f; // 볼륨 깊이 + 여유
-
-					//float meshViewZ = ReconstructViewZ_InvProj(depth01,-1000,1000);
-					//float meshViewZ = ReconstructViewZ_InvProj(depth01, nearZ, farZ);
-
-
-
-
-					// ✅ 깊이 차이
+					// 깊이 차이
 					if (meshDepth01 > 0.001f && meshDepth01 < 0.9999f)  // 메시 있음
 					{
+						//최종 깊이 변화량 계산
+						//카메라 좌표계에서 피부-뼈 두께를 직접 측정하는
+						//의료 계측식
 						float deltaZ = abs(meshViewZ - hitViewZ);
 
-						//if (deltaZ < 500.0f)  // 50cm 이상 차이는 무시
-						{
-							DeltaZTex[pixelCoord] = deltaZ;
-						}
-						//else
-						//{
-						//	DeltaZTex[pixelCoord] = -1.0f;  // 이상치
-						//}
+						//UAV : GPU 계산 결과를 CPU에서 읽을 수 있는 리소스
+						//DeltaZTex가 UAV로 사용됨.
 
+						//메쉬와 볼륨 간 깊이 차이는 
+						//얼굴 전체 픽셀에 대해 계산해야 하므로 
+						//GPU에서 수행
+						//이후 UAV에 저장된 깊이 차이 값을 CPU에서 통계 계산하는 순서
+						DeltaZTex[pixelCoord] = deltaZ;
 					}
-					//else
-					//{
-					//	DeltaZTex[pixelCoord] = -1.0f;    // 메시 없음 표시
-					//}
+					else
+					{
+						DeltaZTex[pixelCoord] = -1.0f;    // 메시 없음 표시
+					}
 
 					hasHit = true;
-
 				}
+
+
+
 				//else
 				//{
 				//	//여기가 주로 row 값 실패값으로 출력됨.

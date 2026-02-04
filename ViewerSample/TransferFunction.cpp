@@ -112,13 +112,13 @@ void TransferFunction::UpdateTexture(ID3D11Device* device)
 	// 256개 샘플 데이터 생성
 	float* tfData = new float[TF_SIZE * 4]; // RGBA
 
-	for (int i = 0; i < TF_SIZE; i++) {
-		float t = (float)i / (TF_SIZE - 1);
+	for (int i{}; i < TF_SIZE; ++i) {
+		float t{ (float)i / (TF_SIZE - 1) };
 
 		float r = 1.0f, g = 1.0f, b = 1.0f, a = 0.0f;
 
 		// 컨트롤 포인트 사이 선형 보간
-		for (size_t j = 0; j < m_controlPoints.size() - 1; j++) {
+		for (size_t j{}; j < m_controlPoints.size() - 1; ++j) {
 			TFPoint& p1 = m_controlPoints[j];
 			TFPoint& p2 = m_controlPoints[j + 1];
 

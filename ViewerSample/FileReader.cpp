@@ -83,7 +83,7 @@ bool FileReader::LoadDICOMSeries(std::string folderPath, ID3D11Device* g_pd3dDev
 				if (dataset->findAndGetOFString(DCM_PatientName, rawName).good())
 				{
 					std::string utf8Name = convertCP949ToUTF8(rawName.c_str());
-					patientName = utf8Name.c_str(); // ✅ OFString은 std::string에서 바로 대입 가능
+					patientName = utf8Name.c_str(); //  OFString은 std::string에서 바로 대입 가능
 				}
 
 
@@ -164,7 +164,7 @@ bool FileReader::LoadDICOMSeries(std::string folderPath, ID3D11Device* g_pd3dDev
 				if (dataset->findAndGetOFString(DCM_ImageOrientationPatient, imageOrientationStr).good()) {
 					std::stringstream ss(imageOrientationStr.c_str());
 					std::string vals[6];
-					int count = 0;
+					int count{};
 
 					// 백슬래시로 구분하여 읽기
 					std::string token;
@@ -175,7 +175,7 @@ bool FileReader::LoadDICOMSeries(std::string folderPath, ID3D11Device* g_pd3dDev
 
 					// 값 검증 및 출력
 					std::cout << "Parsed " << count << " values:" << std::endl;
-					for (int i = 0; i < count; ++i) {
+					for (int i{}; i < count; ++i) {
 						std::cout << "  vals[" << i << "] = [" << vals[i] << "]" << std::endl;
 					}
 
@@ -183,7 +183,7 @@ bool FileReader::LoadDICOMSeries(std::string folderPath, ID3D11Device* g_pd3dDev
 
 
 					// 6개 값이 모두 있는지 확인
-					if (count == 6) {
+					if (6==count) {
 						try {
 							views.rowDir.x = std::stof(vals[0]);
 							views.rowDir.y = std::stof(vals[1]);
@@ -223,7 +223,7 @@ bool FileReader::LoadDICOMSeries(std::string folderPath, ID3D11Device* g_pd3dDev
 
 				OFString slopeStr, interceptStr;
 
-				// ⚙️ Rescale Slope (0028,1053)
+				//  Rescale Slope (0028,1053)
 				/*if (dataset->findAndGetOFString(DCM_RescaleSlope, slopeStr).good()) {
 					m_rescaleSlope = std::stof(slopeStr.c_str());
 				}
@@ -231,7 +231,7 @@ bool FileReader::LoadDICOMSeries(std::string folderPath, ID3D11Device* g_pd3dDev
 				m_rescaleSlope = 1.0f; // 기본값
 			//}
 
-			//// ⚙️ Rescale Intercept (0028,1052)
+			////  Rescale Intercept (0028,1052)
 			//if (dataset->findAndGetOFString(DCM_RescaleIntercept, interceptStr).good()) {
 			//	m_rescaleIntercept = std::stof(interceptStr.c_str());
 			//}
@@ -301,16 +301,16 @@ bool FileReader::DecompressDICOM(DcmDataset* dataset) {
 		return true;
 	}
 
-	std::cout << "📦 Decompressing from: " << originalXfer.getXferName() << std::endl;
+	std::cout << " Decompressing from: " << originalXfer.getXferName() << std::endl;
 
 	OFCondition status = dataset->chooseRepresentation(EXS_LittleEndianExplicit, nullptr);
 
 	if (!status.good()) {
-		std::cerr << "❌ Decompression failed: " << status.text() << std::endl;
+		std::cerr << " Decompression failed: " << status.text() << std::endl;
 		return false;
 	}
 
-	std::cout << "✅ Decompressed successfully" << std::endl;
+	std::cout << " Decompressed successfully" << std::endl;
 	return true;
 }
 
@@ -319,12 +319,12 @@ const Sint16* FileReader::GetPixelData(DcmDataset* dataset) {
 	OFCondition status = dataset->findAndGetElement(DCM_PixelData, element);
 
 	if (!status.good() || element == nullptr) {
-		std::cerr << "❌ Pixel Data element not found" << std::endl;
+		std::cerr << " Pixel Data element not found" << std::endl;
 		return nullptr;
 	}
 
 	DcmVR vr(element->getVR());
-	std::cout << "🔍 VR: " << vr.getVRName()
+	std::cout << " VR: " << vr.getVRName()
 		<< ", Length: " << element->getLength() << " bytes" << std::endl;
 
 	// OW, US, SS 모두 처리
@@ -333,7 +333,7 @@ const Sint16* FileReader::GetPixelData(DcmDataset* dataset) {
 		status = element->getUint16Array(data);
 
 		if (status.good() && data != nullptr) {
-			std::cout << "✅ Pixel data loaded (as Uint16)" << std::endl;
+			std::cout << " Pixel data loaded (as Uint16)" << std::endl;
 			return reinterpret_cast<Sint16*>(data);
 		}
 	}
@@ -342,12 +342,12 @@ const Sint16* FileReader::GetPixelData(DcmDataset* dataset) {
 		status = element->getSint16Array(data);
 
 		if (status.good() && data != nullptr) {
-			std::cout << "✅ Pixel data loaded (as Sint16)" << std::endl;
+			std::cout << " Pixel data loaded (as Sint16)" << std::endl;
 			return data;
 		}
 	}
 
-	std::cerr << "❌ Failed to read pixel data: " << status.text() << std::endl;
+	std::cerr << " Failed to read pixel data: " << status.text() << std::endl;
 	return nullptr;
 }
 
@@ -356,7 +356,7 @@ bool FileReader::ParseSlice(const std::string path, int sliceIndex) {
 	OFCondition status = file.loadFile(path.c_str());
 
 	if (!status.good()) {
-		std::cerr << "❌ Failed to load: " << path << std::endl;
+		std::cerr << " Failed to load: " << path << std::endl;
 		return false;
 	}
 
@@ -370,29 +370,29 @@ bool FileReader::ParseSlice(const std::string path, int sliceIndex) {
 	// Pixel Data 읽기
 	const Sint16* pixelData = GetPixelData(dataset);
 	if (pixelData == nullptr) {
-		std::cerr << "❌ Failed to get pixel data from: " << path << std::endl;
+		std::cerr << " Failed to get pixel data from: " << path << std::endl;
 		return false;
 	}
 
 	// 데이터 복사
-	int sliceSize = m_width * m_height;
-	int offset = sliceIndex * sliceSize;
+	int sliceSize{ m_width * m_height };
+	int offset{ sliceIndex * sliceSize };
 
-	for (int i = 0; i < sliceSize; ++i) {
+	for (int i{}; i < sliceSize; ++i) {
 		m_volumeData[offset + i] = pixelData[i];
 	}
 
 	//m_volumeData[offset + sliceIndex] = pixelData[sliceIndex];
 
-	std::cout << "✅ Slice " << sliceIndex << " loaded" << std::endl;
-	std::cout << "✅ volume data " << m_volumeData[sliceIndex] << " loaded" << std::endl;
+	std::cout << " Slice " << sliceIndex << " loaded" << std::endl;
+	std::cout << " volume data " << m_volumeData[sliceIndex] << " loaded" << std::endl;
 	return true;
 }
 
 
 bool FileReader::BuildVolume()
 {
-	for (int i = 0; i < m_filePaths.size(); ++i) {
+	for (int i{}; i < m_filePaths.size(); ++i) {
 		std::string path = m_filePaths[i];
 		if (!ParseSlice(path, i)) {
 			std::cerr << "BuildVolume : Failed to parse slice: " << path << std::endl;
@@ -545,13 +545,13 @@ bool FileReader::NormalizeSlice(const std::vector<int16_t>& rawSlice,
 		}
 
 		// ⭐⭐⭐ Rescale 제거! Raw 값이 이미 HU!
-		float val = static_cast<float>(rawSlice[i]);  // ← 이것만!
+		float val{ static_cast<float>(rawSlice[i]) };  // ← 이것만!
 
 		// Window/Level 적용
 		if (val < minHU) val = minHU;
 		if (val > maxHU) val = maxHU;
 
-		float normalized = (val - minHU) / (maxHU - minHU);
+		float normalized{ (val - minHU) / (maxHU - minHU) };
 		outSlice[i] = static_cast<uint8_t>(normalized * 255.0f);
 	}
 
@@ -624,35 +624,35 @@ void FileReader::AnalyzeHUDistribution()
 {
 	if (m_volumeData.empty()) return;
 
-	// ⭐ Raw 값 직접 확인!
+	//  Raw 값 직접 확인!
 	std::cout << "\n=== Raw Value Samples ===" << std::endl;
 	std::cout << "First 100 raw values:" << std::endl;
-	for (int i = 0; i < 100 && i < m_volumeData.size(); ++i) {
+	for (int i{}; i < 100 && i < m_volumeData.size(); ++i) {
 		std::cout << m_volumeData[i] << " ";
 		if ((i + 1) % 20 == 0) std::cout << std::endl;
 	}
 	std::cout << "\n" << std::endl;
 
 	std::map<int, int> histogram;
-	float minRaw = FLT_MAX;
-	float maxRaw = -FLT_MAX;
-	float minHU = FLT_MAX;
-	float maxHU = -FLT_MAX;
-	int paddingCount = 0;
-	int outlierCount = 0;  // ⭐ Outlier 카운트
+	float minRaw{ FLT_MAX };
+	float maxRaw{ -FLT_MAX };
+	float minHU{ FLT_MAX };
+	float maxHU{ -FLT_MAX };
+	int paddingCount{};
+	int outlierCount{};  //  Outlier 카운트
 
 	for (const auto& raw : m_volumeData) {
-		// ⭐ 패딩 체크
+		//  패딩 체크
 		if (raw > 60000 || raw < -30000) {
-			paddingCount++;
+			++paddingCount;
 			//	continue;
 		}
 
-		// ⭐⭐⭐ Outlier 체크 (정상 HU 범위 밖)
+		//  Outlier 체크 (정상 HU 범위 밖)
 		// 정상 HU 범위: -1024 ~ 3000
 		// 여유있게: -1500 ~ 3500
 		if (raw < -1500 || raw > 3500) {
-			outlierCount++;
+			++outlierCount;
 			//continue;  // ⭐ 분석에서 제외!
 		}
 
@@ -661,17 +661,17 @@ void FileReader::AnalyzeHUDistribution()
 		if (raw > maxRaw) maxRaw = raw;
 
 		// Raw 값 = HU
-		float hu = static_cast<float>(raw) /** 1 + (-1024.f)*/;
+		float hu{ static_cast<float>(raw) } /** 1 + (-1024.f)*/;
 
 
 		if (hu < minHU) minHU = hu;
 		if (hu > maxHU) maxHU = hu;
 
-		int bucket = static_cast<int>(hu / 100) * 100;
-		histogram[bucket]++;
+		int bucket{ static_cast<int>(hu / 100) * 100 };
+		++histogram[bucket];
 	}
 
-	int validVoxels = m_volumeData.size() - paddingCount - outlierCount;
+	int validVoxels= m_volumeData.size() - paddingCount - outlierCount ;
 
 	std::cout << "=== Raw Value Range ===" << std::endl;
 	std::cout << "Min Raw: " << minRaw << std::endl;
@@ -706,10 +706,10 @@ void FileReader::AnalyzeHUDistribution()
 
 		float hu = static_cast<float>(raw);
 
-		if (hu < -400) air++;
-		else if (hu < 200) soft++;
-		else if (hu < 1500) bone++;
-		else teeth++;
+		if (hu < -400) ++air;
+		else if (hu < 200) ++soft;
+		else if (hu < 1500) ++bone;
+		else ++teeth;
 	}
 
 	std::cout << "\n=== Tissue Distribution (Outliers Excluded) ===" << std::endl;
@@ -723,36 +723,36 @@ void FileReader::AnalyzeHUDistribution()
 
 
 
-	// ⭐ 추가: 특정 범위 샘플 확인
+	//  추가: 특정 범위 샘플 확인
 	std::cout << "\n=== Sample Analysis ===" << std::endl;
 
 	// -1100~-1000 (공기) 샘플
 	std::cout << "Air range (-1100~-1000) samples: ";
-	int airSampleCount = 0;
+	int airSampleCount{};
 	for (const auto& raw : m_volumeData) {
 		if (raw >= -1100 && raw <= -1000) {
 			if (airSampleCount < 20) {
 				std::cout << raw << " ";
 			}
-			airSampleCount++;
+			++airSampleCount;
 		}
 	}
 	std::cout << "\nTotal: " << airSampleCount << std::endl;
 
 	// 0~100 샘플
 	std::cout << "\n0~100 range samples: ";
-	int zeroSampleCount = 0;
+	int zeroSampleCount{};
 	for (const auto& raw : m_volumeData) {
 		if (raw >= 0 && raw <= 100) {
 			if (zeroSampleCount < 20) {
 				std::cout << raw << " ";
 			}
-			zeroSampleCount++;
+			++zeroSampleCount;
 		}
 	}
 	std::cout << "\nTotal: " << zeroSampleCount << std::endl;
 
-	// ⭐ 중앙값(Median) 확인
+	//  중앙값(Median) 확인
 	std::vector<int16_t> sortedData;
 	for (const auto& raw : m_volumeData) {
 		if (raw > 60000 || raw < -30000) continue;
