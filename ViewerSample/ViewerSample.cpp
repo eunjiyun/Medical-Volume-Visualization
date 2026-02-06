@@ -167,7 +167,7 @@ void ViewerSample::meshScaleSet()
 void ViewerSample::huValueChanged(int value)
 {
 
-	float huCenter = (float)value;
+	float huCenter{ (float)value };
 	ui->huValueLabel->setText(QString::number((int)huCenter));
 
 	if (!m_pScene || !m_pScene->fileReader) return;
@@ -175,20 +175,20 @@ void ViewerSample::huValueChanged(int value)
 	// ⭐ Width를 늘림
 	m_pScene->fileReader->volWC = huCenter;
 	// ⭐ HU 값을 0~1로 정규화
-	float t = (huCenter + 1000.0f) / 4000.0f;  // -1000~3000 → 0~1
+	float t{ (huCenter + 1000.0f) / 4000.0f };  // -1000~3000 → 0~1
 	// ⭐ Window Width를 역으로 조정 (HU 높을수록 좁게)
-	float windowWidth = 4000.0f - t * 3000.0f;  // 4000 → 1000
+	float windowWidth{ 4000.0f - t * 3000.0f };  // 4000 → 1000
 
 	m_pScene->fileReader->volWW = windowWidth;  // 1500 → 3000
 
 
-	float sliderNorm = (huCenter - (-1000.0f)) / (3000.0f - (-1000.0f));
+	float sliderNorm{ (huCenter - (-1000.0f)) / (3000.0f - (-1000.0f)) };
 	// 결과: HU=-3600 → 0.0
 	//       HU=-1000 → 1.0
 	sliderNorm = std::clamp(sliderNorm, 0.0f, 1.0f);
 
-	float minBoost = 3.0f;   // HU 최소 → soft tissue 3배 진하게
-	float maxBoost = 0.4f;   // HU 최대 → soft tissue 40%만 남김
+	float minBoost{ 3.0f };   // HU 최소 → soft tissue 3배 진하게
+	float maxBoost{ 0.4f };   // HU 최대 → soft tissue 40%만 남김
 
 	//m_pScene->cb.alphaScale = minBoost * (1.0f - sliderNorm) + maxBoost * sliderNorm;
 
@@ -200,7 +200,7 @@ void ViewerSample::huValueChanged(int value)
 void ViewerSample::transparencyValueChanged(int value)
 {
 
-	float trans = (float)value;
+	float trans{ (float)value };
 	//ui->huValueLabel->setText(QString::number((int)huCenter));
 
 	if (!m_pScene || !m_pScene->fileReader) return;
@@ -248,8 +248,8 @@ void ViewerSample::brightnessCenterChanged(double brightness)
 
 	// brightness: -0.5 ~ 0.5
 // WC를 ±WW의 절반 범위로 조절 (±2000)
-	float offset = brightness / 1000.0  * m_initialWindowWidth;  // -2000 ~ +2000
-	float newWC = m_initialWindowCenter + offset;      // -1000 ~ 3000
+	float offset= brightness / 1000.0  * m_initialWindowWidth ;  // -2000 ~ +2000
+	float newWC= m_initialWindowCenter + offset ;      // -1000 ~ 3000
 
 	m_pScene->fileReader->windowCenter = newWC;
 
@@ -339,7 +339,7 @@ void ViewerSample::contrastWidthChanged(double contrast)
 
 	// contrast: 0.0 ~ 2.0, 초기값 1.0
    // WW를 배율로 조절
-	float newWW = m_initialWindowWidth * (contrast / 1000.0);  // 0 ~ 8000
+	float newWW= m_initialWindowWidth * (contrast / 1000.0) ;  // 0 ~ 8000
 
 	m_pScene->fileReader->windowWidth = newWW;
 
@@ -413,7 +413,7 @@ void ViewerSample::contrastWidthChanged(double contrast)
 }
 void ViewerSample::sharpnessChanged(int value)
 {
-	float sharpness = value / 100.0f;  // 0~200 → 0.0~2.0
+	float sharpness{ value / 100.0f };  // 0~200 → 0.0~2.0
 
 	ui->sharpnessValueLabel->setText(QString::number(sharpness, 'f', 2));
 

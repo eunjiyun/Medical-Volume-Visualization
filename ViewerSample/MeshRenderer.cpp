@@ -818,16 +818,16 @@ bool MeshRenderer::ExtractAxes(const XMMATRIX* volWorld, const XMMATRIX* meshWor
 	float dotY{ XMVectorGetX(XMVector3Dot(volAx.Y, meshAx.Y)) };
 	float dotZ{ XMVectorGetX(XMVector3Dot(volAx.Z, meshAx.Z)) };
 
-	bool axisAligned =
+	bool axisAligned{
 		fabs(dotX) > 0.99f &&
 		fabs(dotY) > 0.99f &&
-		fabs(dotZ) > 0.99f;
+		fabs(dotZ) > 0.99f };
 
 	// =========================
 	// 3. handedness 비교
 	// =========================
-	float volHand = ComputeHandedness(volAx.X, volAx.Y, volAx.Z);
-	float meshHand = ComputeHandedness(meshAx.X, meshAx.Y, meshAx.Z);
+	float volHand{ ComputeHandedness(volAx.X, volAx.Y, volAx.Z) };
+	float meshHand{ ComputeHandedness(meshAx.X, meshAx.Y, meshAx.Z) };
 
 	bool sameHandedness{ (volHand * meshHand) > 0.0f };
 
@@ -1121,8 +1121,6 @@ void MeshRenderer::RenderMeshWithCT(
 	cbM.World = XMMatrixTranspose(meshWorldMat);
 
 	cbM.CTBlendParams = XMFLOAT4(ctBlendStrength, 0.0f, 0.0f, faceBlend);  // ⭐ CT 강도
-
-
 
 
 	//XMMATRIX vp = v*p;

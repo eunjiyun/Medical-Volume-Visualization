@@ -71,10 +71,10 @@ float4 main(PSInput input) : SV_Target
 	//boneMask = pow(boneMask, 1.15);   // 연결성 강화
 
 	//boneMask = smoothstep(0.15, 0.8, boneMask);
-	//boneMask = pow(boneMask, 0.85);   // 🔥 약한 영역 확장
+	//boneMask = pow(boneMask, 0.85);   //  약한 영역 확장
 
 	boneMask = smoothstep(0.12, 0.75, boneMask);
-	boneMask = pow(boneMask, 0.7);   // 🔥 중심 강화
+	boneMask = pow(boneMask, 0.7);   //  중심 강화
 
 
 
@@ -122,8 +122,8 @@ float4 main(PSInput input) : SV_Target
 
 	/* ============================
 	   5️⃣ Planmeca-style carve
-	   - CT = 색 ❌
-	   - CT = 음영 ⭕
+	   - CT = 색 
+	   - CT = 음영 
 	============================ */
 
 	//float3 color = skinLayer * (1.0 - localShadow);
@@ -147,7 +147,7 @@ float4 main(PSInput input) : SV_Target
 	   6️⃣ 미세 구조 대비 보정
 	============================ */
 
-	// 뼈를 하얗게 ❌
+	// 뼈를 하얗게 
 	// 대신 대비만 살짝
 	//color = lerp(color, color * 1.05, boneMask * 0.25);
 

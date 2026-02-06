@@ -154,6 +154,7 @@
     <FxCompile Include="lineVS.hlsl" />
     <FxCompile Include="linePS.hlsl" />
     <FxCompile Include="MeshDepthPS.hlsl" />
+    <FxCompile Include="ScaleCS.hlsl" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="icon.ico">

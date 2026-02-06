@@ -1925,10 +1925,10 @@ bool QDirect3D11Widget::InitializeMeshShaders() {
 
 	//if (FAILED(hr)) {
 	//	if (errorBlob) {
-	//		qDebug() << "❌ FullscreenVS compile error:" << (char*)errorBlob->GetBufferPointer();
+	//		qDebug() << " FullscreenVS compile error:" << (char*)errorBlob->GetBufferPointer();
 	//		errorBlob->Release();
 	//	}
-	//	qDebug() << "❌ Failed to compile FullscreenVS.hlsl";
+	//	qDebug() << " Failed to compile FullscreenVS.hlsl";
 	//	return false;
 	//}
 
@@ -1940,11 +1940,11 @@ bool QDirect3D11Widget::InitializeMeshShaders() {
 	//fullscreenVSBlob->Release();
 
 	//if (FAILED(hr)) {
-	//	qDebug() << "❌ Failed to create FullscreenVS";
+	//	qDebug() << " Failed to create FullscreenVS";
 	//	return false;
 	//}
 
-	//qDebug() << "✅ FullscreenVS created successfully";
+	//qDebug() << " FullscreenVS created successfully";
 
 
 
@@ -1965,7 +1965,7 @@ bool QDirect3D11Widget::InitializeMeshShaders() {
 	//);
 	//if (FAILED(hr)) {
 	//	if (errorBlob) {
-	//		qDebug() << "❌ ComposePS compile error:" << (char*)errorBlob->GetBufferPointer();
+	//		qDebug() << " ComposePS compile error:" << (char*)errorBlob->GetBufferPointer();
 	//		errorBlob->Release();
 	//	}
 	//	return false;
@@ -1978,10 +1978,10 @@ bool QDirect3D11Widget::InitializeMeshShaders() {
 	//);
 	//composePSBlob->Release();
 	//if (FAILED(hr)) {
-	//	qDebug() << "❌ Failed to create ComposePS";
+	//	qDebug() << " Failed to create ComposePS";
 	//	return false;
 	//}
-	//qDebug() << "✅ ComposePS created";
+	//qDebug() << " ComposePS created";
 
 	qDebug() << " All mesh shaders initialized successfully";
 	return true;
@@ -3074,7 +3074,7 @@ void QDirect3D11Widget::DebugSceneDepth()
 	UINT pitch = mapped.RowPitch / sizeof(float);
 
 	// 통계
-	int nonZeroCount = 0;
+	int nonZeroCount{ 0 };
 	float minVal = FLT_MAX;
 	float maxVal = -FLT_MAX;
 
@@ -3109,12 +3109,12 @@ void QDirect3D11Widget::DebugSceneDepth()
 
 	// 볼륨 영역 (326~367, 18~345) 샘플
 	qDebug() << "=== SceneDepth at volume region ===";
-	int sampleY = (18 + 345) / 2;  // Y=181
+	int sampleY{ (18 + 345) / 2 };  // Y=181
 
 	QString row;
 	for (int x{ 326 }; x < min(336, (int)desc.Width); ++x)
 	{
-		float val = data[sampleY * pitch + x];
+		float val{ data[sampleY * pitch + x] };
 		row += QString::number(val, 'f', 1) + " ";
 	}
 	qDebug() << "Row" << sampleY << ":" << row;
@@ -3203,11 +3203,11 @@ float QDirect3D11Widget::DebugDeltaZTex()  // ✅ 이름 변경
 			{
 				++nonZeroCount;
 
-				if (val < 0.0f)
+				if (0.0f>val )
 				{
 					++negativeCount;
 				}
-				else if (val > 0.0f)
+				else if (0.0f<val )
 				{
 					++positiveCount;
 					sum += val;
@@ -3329,9 +3329,9 @@ ScaleOptimizationStats QDirect3D11Widget::DebugDeltaZTexFull()
 		float* row = (float*)((BYTE*)data + y * mapped.RowPitch);
 		for (UINT x = 0; x < desc.Width; ++x)
 		{
-			float delta = row[x];
+			float delta{ row[x] };
 			// 유효한 값만 수집
-			if (delta > 0.0f && delta < 500.f)
+			if (0.0f<delta  && 500.f>delta )
 			{
 				//cout << delta << endl;
 				validDeltas.push_back(delta);
@@ -5249,8 +5249,8 @@ int QDirect3D11Widget::ComputeSliceIndexForView(const XMFLOAT3& patientCoord, in
 }
 float QDirect3D11Widget::Distance2D(const ScreenPoint& a, const ScreenPoint& b)
 {
-	float dx = a.x - b.x;
-	float dy = a.y - b.y;
+	float dx{ a.x - b.x };
+	float dy{ a.y - b.y };
 	return std::sqrt(dx * dx + dy * dy);
 }
 
@@ -5261,8 +5261,8 @@ float QDirect3D11Widget::ComputeMeshScaleFromLandmarks(
 	const ScreenPoint& volumeRightEye
 )
 {
-	float meshDist = Distance2D(meshLeftEye, meshRightEye);
-	float volumeDist = Distance2D(volumeLeftEye, volumeRightEye);
+	float meshDist{ Distance2D(meshLeftEye, meshRightEye) };
+	float volumeDist{ Distance2D(volumeLeftEye, volumeRightEye) };
 
 	if (meshDist < 1e-6f)
 		return 1.0f; // 안전장치
