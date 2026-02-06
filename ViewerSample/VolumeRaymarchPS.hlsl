@@ -249,7 +249,7 @@ float4 main(PSInput input) : SV_Target
 
 	int2 pixelCoord = int2(floor(input.pos.xy));
 
-		// ✅ 전체 화면 기준 UV 계산
+		//  전체 화면 기준 UV 계산
 	float2 screenUV;
 	screenUV.x = pixelCoord.x / ViewSize.x;  // ViewSize는 CB로 전달 (1276)
 	screenUV.y = pixelCoord.y / ViewSize.y;  // (728)
@@ -271,7 +271,7 @@ float4 main(PSInput input) : SV_Target
 
 
 
-	////	  // ✅ SceneDepth 샘플링
+	////	  //  SceneDepth 샘플링
 	////float depth01 = SceneDepth.SampleLevel(pointClamp, screenUV, 0);
 
 	//// clip space
@@ -289,7 +289,7 @@ float4 main(PSInput input) : SV_Target
 
 	//float meshViewZ = view.z;
 
-	//// 🔴 디버그 출력
+	////  디버그 출력
 	//return float4(abs(meshViewZ) / 500.0, 0, 0, 1);
 
 
@@ -394,9 +394,6 @@ float4 main(PSInput input) : SV_Target
 
 		////=>볼륨 3D 텍스처의 W(Z)축은 Axial 방향으로 정의되어 있으며,
 		////현재 볼륨 데이터는 Axial 기준으로 정상 적재됨을 확인함.
-
-
-
 
 
 
@@ -690,9 +687,6 @@ float4 main(PSInput input) : SV_Target
 			return float4(v, v, 0, 1);
 */
 
-
-
-			
 
 			if (CameraPosAndAlpha.w == 1.0) return float4(acc.rgb, 1.0);
 			if (CameraPosAndAlpha.w == 0.0) return float4(acc.rgb, 0.0);

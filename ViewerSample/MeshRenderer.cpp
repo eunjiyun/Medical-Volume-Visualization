@@ -302,7 +302,7 @@ void MeshRenderer::RenderMeshDepth(ID3D11DeviceContext* context, ID3D11Buffer* m
 
 	// ========== Shader 바인딩 ==========
 	context->VSSetShader(m_meshVS, nullptr, 0);
-	context->PSSetShader(m_meshPS, nullptr, 0); // 🔥
+	context->PSSetShader(m_meshPS, nullptr, 0); //
 	context->IASetInputLayout(m_meshInputLayout);
 
 
@@ -663,7 +663,7 @@ void MeshRenderer::RenderMeshViewZ(ID3D11DeviceContext* context, ID3D11Buffer* m
 
 	// ========== Shader 바인딩 ==========
 	context->VSSetShader(m_meshVS, nullptr, 0);
-	context->PSSetShader(m_meshPS, nullptr, 0); // 🔥
+	context->PSSetShader(m_meshPS, nullptr, 0); // 
 	context->IASetInputLayout(m_meshInputLayout);
 
 

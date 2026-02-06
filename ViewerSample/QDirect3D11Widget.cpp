@@ -4250,7 +4250,7 @@ void QDirect3D11Widget::RenderVolumeView()
 
 		FullScreenPassSet();
 
-		// ⭐ VolumeToTexture 사용
+		//  VolumeToTexture 사용
 		XMFLOAT3 voxelDim(fileReader->m_width, fileReader->m_height, fileReader->m_depth);
 
 
@@ -4260,7 +4260,7 @@ void QDirect3D11Widget::RenderVolumeView()
 		//		renderMode,
 
 
-	//	////  7️⃣ 파이프라인 세팅
+	//	////  7️ 파이프라인 세팅
 	//	//UINT stride = sizeof(Vtx);
 	//	//UINT offset = 0;
 	//	//ID3D11Buffer* vb[] = { m_quadVB.Get() };
@@ -4297,7 +4297,7 @@ void QDirect3D11Widget::RenderVolumeView()
 			//	//m_pDeviceContext->PSSetShader(psRaymarch, nullptr, 0);
 
 
-			//		// ✅ 7️⃣ 파이프라인 세팅
+			//		//  7️ 파이프라인 세팅
 			//	UINT stride = sizeof(Vtx);
 			//	UINT offset = 0;
 			//	ID3D11Buffer* vb[] = { m_quadVB.Get() };
@@ -4362,7 +4362,7 @@ void QDirect3D11Widget::RenderVolumeView()
 
 	//// ---- Axial (XY plane, z=0)
 	//{
-	//	constants.World = m_AxialPlane.worldMatrix;  // ✅ 저장된 World Matrix 사용
+	//	constants.World = m_AxialPlane.worldMatrix;  //  저장된 World Matrix 사용
 	//	constants.Voxel = XMFLOAT4(1.0f, 0.0f, 1.0f, 1.0f); // 자홍
 	//	m_pDeviceContext->UpdateSubresource(m_volumeConstantBuffer, 0, nullptr, &constants, 0, 0);
 	//	DrawPlane(m_AxialPlane);
@@ -4373,7 +4373,7 @@ void QDirect3D11Widget::RenderVolumeView()
 	//{
 
 
-	//	constants.World = m_CoronalPlane.worldMatrix; // ✅ 저장된 World Matrix 사용
+	//	constants.World = m_CoronalPlane.worldMatrix; //  저장된 World Matrix 사용
 	//	constants.Voxel = XMFLOAT4(0.0f, 1.0f, 1.0f, 1.0f); // 청록
 	//	m_pDeviceContext->UpdateSubresource(m_volumeConstantBuffer, 0, nullptr, &constants, 0, 0);
 	//	DrawPlane(m_CoronalPlane);
@@ -4381,7 +4381,7 @@ void QDirect3D11Widget::RenderVolumeView()
 
 	//// ---- Sagittal (YZ plane, x=0)
 	//{
-	//	constants.World = m_SagittalPlane.worldMatrix; // ✅ 저장된 World Matrix 사용
+	//	constants.World = m_SagittalPlane.worldMatrix; //  저장된 World Matrix 사용
 	//	constants.Voxel = XMFLOAT4(1.0f, 1.0f, 0.0f, 1.0f); // 노랑
 	//	m_pDeviceContext->UpdateSubresource(m_volumeConstantBuffer, 0, nullptr, &constants, 0, 0);
 	//	DrawPlane(m_SagittalPlane);
@@ -4677,7 +4677,7 @@ void QDirect3D11Widget::InitializeVolumeShaders()
 			qDebug() << "VS Compile Error:" << (char*)errorBlob->GetBufferPointer();
 			errorBlob->Release();
 		}
-		qDebug() << "Failed to compile volume vertex shader!";
+		qDebug() << "Failed to compile volume vertex shader";
 		return;
 	}
 
@@ -4687,7 +4687,7 @@ void QDirect3D11Widget::InitializeVolumeShaders()
 		nullptr, &m_volumeVS);
 
 	if (FAILED(hr)) {
-		qDebug() << "Failed to create volume vertex shader!";
+		qDebug() << "Failed to create volume vertex shader";
 		return;
 	}
 
@@ -4700,7 +4700,7 @@ void QDirect3D11Widget::InitializeVolumeShaders()
 			qDebug() << "PS Compile Error:" << (char*)errorBlob->GetBufferPointer();
 			errorBlob->Release();
 		}
-		qDebug() << "Failed to compile volume pixel shader!";
+		qDebug() << "Failed to compile volume pixel shader";
 		return;
 	}
 
@@ -4709,7 +4709,7 @@ void QDirect3D11Widget::InitializeVolumeShaders()
 		nullptr, &m_volumePS);
 
 	if (FAILED(hr)) {
-		qDebug() << "Failed to create volume pixel shader!";
+		qDebug() << "Failed to create volume pixel shader";
 		return;
 	}
 
@@ -4725,7 +4725,7 @@ void QDirect3D11Widget::InitializeVolumeShaders()
 
 	hr = m_pDevice->CreateBuffer(&cbDesc, nullptr, &m_volumeConstantBuffer);
 	if (FAILED(hr)) {
-		qDebug() << "Failed to create volume constant buffer!";
+		qDebug() << "Failed to create volume constant buffer";
 	}
 
 	hr = D3DCompileFromFile(L"prevVolumeVS.hlsl", nullptr, nullptr,
@@ -4737,7 +4737,7 @@ void QDirect3D11Widget::InitializeVolumeShaders()
 			qDebug() << "VS Compile Error:" << (char*)errorPrevBlob->GetBufferPointer();
 			errorPrevBlob->Release();
 		}
-		qDebug() << "Failed to compile volume vertex shader!";
+		qDebug() << "Failed to compile volume vertex shader";
 		return;
 	}
 
@@ -4747,7 +4747,7 @@ void QDirect3D11Widget::InitializeVolumeShaders()
 		nullptr, &m_volumeQuadVS);
 
 	if (FAILED(hr)) {
-		qDebug() << "Failed to create volume vertex shader!";
+		qDebug() << "Failed to create volume vertex shader";
 		return;
 	}
 
@@ -4761,7 +4761,7 @@ void QDirect3D11Widget::InitializeVolumeShaders()
 			qDebug() << "PS Compile Error:" << (char*)errorPrevBlob->GetBufferPointer();
 			errorPrevBlob->Release();
 		}
-		qDebug() << "Failed to compile volume pixel shader!";
+		qDebug() << "Failed to compile volume pixel shader";
 		return;
 	}
 
@@ -4770,7 +4770,7 @@ void QDirect3D11Widget::InitializeVolumeShaders()
 		nullptr, &m_volumeQuadPS);
 
 	if (FAILED(hr)) {
-		qDebug() << "Failed to create volume pixel shader!";
+		qDebug() << "Failed to create volume pixel shader";
 		return;
 	}
 
@@ -4785,7 +4785,7 @@ void QDirect3D11Widget::InitializeVolumeShaders()
 			qDebug() << "VS Compile Error:" << (char*)errorRaymarchBlob->GetBufferPointer();
 			errorRaymarchBlob->Release();
 		}
-		qDebug() << "Failed to compile volume vertex shader!";
+		qDebug() << "Failed to compile volume vertex shader";
 		return;
 	}
 
@@ -4796,7 +4796,7 @@ void QDirect3D11Widget::InitializeVolumeShaders()
 		nullptr, &vsFullscreen);
 
 	if (FAILED(hr)) {
-		qDebug() << "Failed to create volume vertex shader!";
+		qDebug() << "Failed to create volume vertex shader";
 		return;
 	}
 
@@ -4809,7 +4809,7 @@ void QDirect3D11Widget::InitializeVolumeShaders()
 			qDebug() << "PS Compile Error:" << (char*)errorRaymarchBlob->GetBufferPointer();
 			errorRaymarchBlob->Release();
 		}
-		qDebug() << "Failed to compile volume pixel shader!";
+		qDebug() << "Failed to compile volume pixel shader";
 		return;
 	}
 
@@ -4818,7 +4818,7 @@ void QDirect3D11Widget::InitializeVolumeShaders()
 		nullptr, &psRaymarch);
 
 	if (FAILED(hr)) {
-		qDebug() << "Failed to create volume pixel shader!";
+		qDebug() << "Failed to create volume pixel shader";
 		return;
 	}
 
@@ -4834,7 +4834,7 @@ void QDirect3D11Widget::InitializeVolumeShaders()
 
 	hr = m_pDevice->CreateBuffer(&cbDescPrev, nullptr, &m_volumePrevConstantBuffer);
 	if (FAILED(hr)) {
-		qDebug() << "Failed to create volume constant buffer!";
+		qDebug() << "Failed to create volume constant buffer";
 	}
 
 

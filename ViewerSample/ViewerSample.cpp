@@ -143,8 +143,6 @@ void ViewerSample::meshScaleSet()
 			std::cout << "meshscale : " << m_pScene->meshRenderer->meshScale << std::endl;
 		}
 
-
-
 		m_pScene->m_debugPointValid = false;
 		/*	m_pScene->update();
 			m_pScene->RenderAllQuads();*/
@@ -158,8 +156,6 @@ void ViewerSample::meshScaleSet()
 	}
 
 	m_pScene->update();
-
-
 }
 
 
@@ -172,11 +168,11 @@ void ViewerSample::huValueChanged(int value)
 
 	if (!m_pScene || !m_pScene->fileReader) return;
 
-	// ⭐ Width를 늘림
+	//  Width를 늘림
 	m_pScene->fileReader->volWC = huCenter;
-	// ⭐ HU 값을 0~1로 정규화
+	//  HU 값을 0~1로 정규화
 	float t{ (huCenter + 1000.0f) / 4000.0f };  // -1000~3000 → 0~1
-	// ⭐ Window Width를 역으로 조정 (HU 높을수록 좁게)
+	//  Window Width를 역으로 조정 (HU 높을수록 좁게)
 	float windowWidth{ 4000.0f - t * 3000.0f };  // 4000 → 1000
 
 	m_pScene->fileReader->volWW = windowWidth;  // 1500 → 3000
@@ -248,7 +244,7 @@ void ViewerSample::brightnessCenterChanged(double brightness)
 
 	// brightness: -0.5 ~ 0.5
 // WC를 ±WW의 절반 범위로 조절 (±2000)
-	float offset= brightness / 1000.0  * m_initialWindowWidth ;  // -2000 ~ +2000
+	float offset=brightness / 1000.0  * m_initialWindowWidth ;  // -2000 ~ +2000
 	float newWC= m_initialWindowCenter + offset ;      // -1000 ~ 3000
 
 	m_pScene->fileReader->windowCenter = newWC;

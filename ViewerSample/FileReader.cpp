@@ -671,7 +671,7 @@ void FileReader::AnalyzeHUDistribution()
 		++histogram[bucket];
 	}
 
-	int validVoxels= m_volumeData.size() - paddingCount - outlierCount ;
+	int validVoxels=m_volumeData.size() - paddingCount - outlierCount ;
 
 	std::cout << "=== Raw Value Range ===" << std::endl;
 	std::cout << "Min Raw: " << minRaw << std::endl;

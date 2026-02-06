@@ -13,7 +13,7 @@
 //	float4 Pos : SV_POSITION;
 //	float3 ViewPos : TEXCOORD0;
 //	float2 Tex : TEXCOORD1;
-//	float WorldY : TEXCOORD2;  // ✅ 추가!
+//	float WorldY : TEXCOORD2;  //  추가!
 //};l
 //
 //float4 main(PS_INPUT input) : SV_TARGET
@@ -36,7 +36,7 @@
 //	float4 pos : SV_POSITION;
 //	float2 uv : TEXCOORD0;
 //	float2 screenUV : TEXCOORD1;  // 스크린 UV
-//	float viewZ : TEXCOORD2;  // ✅ 추가: View Space Z
+//	float viewZ : TEXCOORD2;  //  추가: View Space Z
 //};
 
 struct PS_INPUT
@@ -44,7 +44,7 @@ struct PS_INPUT
 	float4 pos : SV_POSITION;
 	float2 uv : TEXCOORD0;
 	float2 screenUV : TEXCOORD1;
-	float viewZ : TEXCOORD2;  // ✅ 추가: View Space Z
+	float viewZ : TEXCOORD2;  //  추가: View Space Z
 };
 
 

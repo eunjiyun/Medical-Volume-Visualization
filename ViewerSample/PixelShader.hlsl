@@ -21,7 +21,7 @@ struct VSOutput
 	float2 texcoord : TEXCOORD;
 };
 
-PSOutput PSMain(VSOutput input)
+PSOutput PSMain(VSOutput input) 
 {
 	PSOutput o;
 	float2 uv = input.texcoord;
@@ -43,6 +43,9 @@ PSOutput PSMain(VSOutput input)
 		// 4 16 24 16  4
 		// 1  4  6  4  1
 		// 총합 = 256
+
+
+
 
 		blur += tex.Sample(samp0, uv + float2(-2, -2)*ts) * 1.0;
 		blur += tex.Sample(samp0, uv + float2(-1, -2)*ts) * 4.0;
