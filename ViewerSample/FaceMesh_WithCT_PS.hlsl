@@ -168,9 +168,11 @@ float4 main(PSInput input) : SV_Target
 	//// 알파는 "합성용" 고정
 	//float finalAlpha = 1.0;
 
-	float finalAlpha = lerp(CTBlendParams.w*1.5f, 0.6, boneMask);  // ⭐ 피부(0.3) → 뼈(0.95)
+	float finalAlpha = lerp(CTBlendParams.w*1.5f, 0.6, boneMask);  //  피부(0.3) → 뼈(0.95)
 
 	finalAlpha *= hasFace;
+
+	color = float3(0.5f, 0.5f, 0.5f);
 
 	return float4(color, finalAlpha);
 }

@@ -23,12 +23,17 @@
 			</size>
 		</property>
 		<property name="windowTitle">
-			<string>bright CT</string>
+			<string>Medical Volume Visualization</string>
 		</property>
+	
+		
+		
 		<property name="windowIcon">
 			<iconset>
 				<normaloff>images/iconDico.ico</normaloff>images/iconDico.ico</iconset>
 		</property>
+						
+						
 		<widget class="QWidget" name="centralWidget">
 			<layout class="QGridLayout" name="gridLayout">
 				<property name="leftMargin">
