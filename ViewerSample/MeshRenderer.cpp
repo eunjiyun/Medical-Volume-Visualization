@@ -133,7 +133,7 @@ void MeshRenderer::CreateTwoPassStates(ID3D11Device* device)
 	hr = device->CreateBlendState(&blendDesc, &alphaBlendState);
 
 
-	// ✅ 디버그 추가!
+	//  디버그 추가!
 	if (FAILED(hr)) {
 		std::cout << " Failed to create alphaBlendState!" << std::endl;
 	}
@@ -162,7 +162,7 @@ void MeshRenderer::CreateTwoPassStates(ID3D11Device* device)
 
 	//// ========== Pass 2: Depth Read State ==========
 	//depthDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ZERO;  // ZWrite Off
-	//depthDesc.DepthFunc = D3D11_COMPARISON_LESS_EQUAL;       // ✅ LESS_EQUAL 중요!
+	//depthDesc.DepthFunc = D3D11_COMPARISON_LESS_EQUAL;       //  LESS_EQUAL 중요!
 
 	//hr = device->CreateDepthStencilState(&depthDesc, &m_depthReadState);
 	//if (FAILED(hr)) {
@@ -897,8 +897,6 @@ void MeshRenderer::RenderMesh(ID3D11DeviceContext* context, ID3D11Buffer* m_mesh
 
 
 
-
-
 	//MeshConstantBuffer cb;
 	DirectX::XMMATRIX rotation = XMMatrixRotationX(XM_PI);
 	//	DirectX::XMMATRIX fullWorld = /*centerTranslate **/scale * rotation * w;
@@ -983,8 +981,8 @@ void MeshRenderer::RenderMeshWithCT(
 	ID3D11Buffer* m_meshConstantBuffer,
 	ID3D11ShaderResourceView* m_meshTexture,      // 얼굴 텍스처
 
-	ID3D11ShaderResourceView* ctTexture,          // ⭐ CT 텍스처
-	ID3D11ShaderResourceView* depthTexture,          // ⭐ depth 텍스처
+	ID3D11ShaderResourceView* ctTexture,          //  CT 텍스처
+	ID3D11ShaderResourceView* depthTexture,          //  depth 텍스처
 	ID3D11SamplerState* m_MeshSamplerState,
 	//ID3D11SamplerState* depthSamplerState,
 	ID3D11Device* m_pDevice,
@@ -996,18 +994,18 @@ void MeshRenderer::RenderMeshWithCT(
 	XMMATRIX userRotMat,
 	XMMATRIX v,
 	XMMATRIX p,
-	float ctBlendStrength)                        // ⭐ CT 합성 강도
+	float ctBlendStrength)                        //  CT 합성 강도
 {
 	if (!m_meshVertexBuffer || m_meshVertexCount == 0) return;
 
 	// ========== Shader 바인딩 ==========
 	context->VSSetShader(m_meshVS, nullptr, 0);
-	context->PSSetShader(m_meshPS, nullptr, 0);   // ⭐ FaceMesh_WithCT.hlsl 사용
+	context->PSSetShader(m_meshPS, nullptr, 0);   //  FaceMesh_WithCT.hlsl 사용
 	context->IASetInputLayout(m_meshInputLayout);
 
 	// ========== Transform 계산 ==========
-	//float meshScale = 1.5f / maxPhysicalVol;  // ⭐ XMFLOAT3 대응
-	//float meshScale =1.f;  // ⭐ XMFLOAT3 대응
+	//float meshScale = 1.5f / maxPhysicalVol;  //  XMFLOAT3 대응
+	//float meshScale =1.f;  //  XMFLOAT3 대응
 
 	//DirectX::XMMATRIX scale = XMMatrixScaling(meshScale, meshScale, meshScale);
 
@@ -1027,11 +1025,7 @@ void MeshRenderer::RenderMeshWithCT(
 	//);
 
 
-
-
 	//s r t v p
-
-
 
 	rotX = XMQuaternionRotationAxis(
 		XMVectorSet(1, 0, 0, 0),  // X축
@@ -1051,8 +1045,8 @@ void MeshRenderer::RenderMeshWithCT(
 
 	//s r t v p
 	//initialMeshWorld =scale * rotation;                // 그 다음 회전
-	//initialMeshWorld =rotation* centerTranslate;  // ✅ 스케일 없음
-	//initialMeshWorld = rotation/**XMMatrixTranslation(0.0f, 0.0f, 0.0f)*/; // ✅ 스케일 없음
+	//initialMeshWorld =rotation* centerTranslate;  //  스케일 없음
+	//initialMeshWorld = rotation/**XMMatrixTranslation(0.0f, 0.0f, 0.0f)*/; //  스케일 없음
 
 
 	//// 테스트할 회전들
@@ -1120,7 +1114,7 @@ void MeshRenderer::RenderMeshWithCT(
 	cbM.View = XMMatrixTranspose(v);
 	cbM.World = XMMatrixTranspose(meshWorldMat);
 
-	cbM.CTBlendParams = XMFLOAT4(ctBlendStrength, 0.0f, 0.0f, faceBlend);  // ⭐ CT 강도
+	cbM.CTBlendParams = XMFLOAT4(ctBlendStrength, 0.0f, 0.0f, faceBlend);  //  CT 강도
 
 
 	//XMMATRIX vp = v*p;
@@ -1138,7 +1132,7 @@ void MeshRenderer::RenderMeshWithCT(
 
 	context->UpdateSubresource(m_meshConstantBuffer, 0, nullptr, &cbM, 0, 0);
 	context->VSSetConstantBuffers(0, 1, &m_meshConstantBuffer);
-	context->PSSetConstantBuffers(0, 1, &m_meshConstantBuffer);  // ⭐ PS에도 전달
+	context->PSSetConstantBuffers(0, 1, &m_meshConstantBuffer);  //  PS에도 전달
 
 	// ========== Clipping Settings ==========
 	ClipSettings cs;
@@ -1152,7 +1146,7 @@ void MeshRenderer::RenderMeshWithCT(
 	//  t0 = 얼굴 텍스처, t1 = CT 텍스처
 	ID3D11ShaderResourceView* srvs[3] = {
 		m_meshTexture,  // t0
-		ctTexture ,      // t1 ⭐ CT 텍스처
+		ctTexture ,      // t1  CT 텍스처
 		depthTexture
 	};
 	context->PSSetShaderResources(0, 3, srvs);
@@ -1175,7 +1169,7 @@ void MeshRenderer::RenderMeshWithCT(
 	// ========== 렌더 스테이트 설정 ==========
 	//  불투명하게 그리기 (CT 합성 후 완전 불투명)
 	context->OMSetDepthStencilState(depthReadState, 0);      // Depth test ON, write OFF
-	//context->OMSetBlendState(nullptr, nullptr, 0xffffffff);  // ⭐ 블렌딩 OFF (불투명)
+	//context->OMSetBlendState(nullptr, nullptr, 0xffffffff);  //  블렌딩 OFF (불투명)
 	context->OMSetBlendState(alphaBlendState, nullptr, 0xffffffff);
 
 	// ========== 렌더링 ==========

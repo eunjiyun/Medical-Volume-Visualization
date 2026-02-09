@@ -235,7 +235,7 @@ bool VolumeToTexture::LoadShaders(ID3D11Device* device)
 		m_inputLayout.GetAddressOf()
 	);
 
-	vsBlob->Release();  // ⭐ 여기서 해제
+	vsBlob->Release();  //  여기서 해제
 
 	if (FAILED(hr)) {
 		std::cout << "       CreateInputLayout failed! HRESULT: 0x" << std::hex << hr << std::dec << std::endl;
@@ -282,7 +282,7 @@ bool VolumeToTexture::LoadShaders(ID3D11Device* device)
 		m_pixelShader.GetAddressOf()
 	);
 
-	psBlob->Release();  // ⭐ 여기서 해제
+	psBlob->Release();  //  여기서 해제
 
 	if (FAILED(hr)) {
 		std::cout << "       CreatePixelShader failed! HRESULT: 0x" << std::hex << hr << std::dec << std::endl;
@@ -373,7 +373,7 @@ void VolumeToTexture::RenderVolumeToTexture(
 
 
 	////// DrawTextureToScreen() 시작에 추가
-	//std::cout << "✅ RenderVolumeToTexture called" << std::endl;
+	//std::cout << " RenderVolumeToTexture called" << std::endl;
 	//////	std::cout << "   SRV: " << srv << std::endl;
 
 	////if (nullptr == m_quadVertexBuffer)

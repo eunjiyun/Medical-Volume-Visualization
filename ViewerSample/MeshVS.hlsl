@@ -1,8 +1,8 @@
 cbuffer MeshConstantBuffer : register(b0)
 {
 	matrix WVP;
-	matrix World;  // ✅ 추가
-	matrix WorldView;  // ✅ 추가!
+	matrix World;  //  추가
+	matrix WorldView;  //  추가!
 }
 
 
@@ -18,9 +18,9 @@ struct VS_INPUT
 struct VS_OUTPUT
 {
 	float4 Pos : SV_POSITION;
-	float3 ViewPos : TEXCOORD0;  // ✅ View 좌표
+	float3 ViewPos : TEXCOORD0;  //  View 좌표
 	float2 Tex : TEXCOORD1;
-	float WorldY : TEXCOORD2;  // ✅ 추가!
+	float WorldY : TEXCOORD2;  //  추가!
 };
 
 VS_OUTPUT main(VS_INPUT input)
@@ -40,7 +40,7 @@ VS_OUTPUT main(VS_INPUT input)
 	output.Tex = input.Tex;
 
 
-	// ✅ World Y 계산
+	//  World Y 계산
 	float4 worldPos = mul(float4(input.Pos, 1), World);
 	output.WorldY = worldPos.y;
 

@@ -453,66 +453,7 @@ float4 main(PSInput input) : SV_Target
 					continue;
 
 
-				
-
-
-//if (!hasHit && col.a > 0.001)
-//{
-//	// hitViewZ 계산
-//	float4 posView = mul(float4(posWS, 1), View);
-//	posView /= max(abs(posView.w), 1e-6);
-//	float hitViewZ = posView.z;
-//
-//	// meshViewZ 읽기
-//	//float meshViewZ = SceneDepth.SampleLevel(pointClamp, input.uv, 0);
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//	//float nearZ = 205.4f;          // 카메라 바로 앞
-//	//float farZ = 794.6f; // 볼륨 깊이 + 여유
-//
-//	//float meshViewZ = ReconstructViewZ_InvProj(depth01,-1000,1000);
-//	//float meshViewZ = ReconstructViewZ_InvProj(depth01, nearZ, farZ);
-//
-//	
-//
-//	
-//	// ✅ 깊이 차이
-//	if (meshDepth01 > 0.001f && meshDepth01 < 0.9999f)  // 메시 있음
-//	{
-//		float deltaZ = abs(meshViewZ - hitViewZ);
-//		
-//		//if (deltaZ < 500.0f)  // 50cm 이상 차이는 무시
-//		{
-//			DeltaZTex[pixelCoord] = hitViewZ;
-//		}
-//		//else
-//		//{
-//		//	DeltaZTex[pixelCoord] = -1.0f;  // 이상치
-//		//}
-//
-//	}
-//	else
-//	{
-//		DeltaZTex[pixelCoord] = -1.0f;    // 메시 없음 표시
-//
-//	}
-//
-//	hasHit = true;
-//
-//}
-//else
-//{
-//	int2 pixelCoord = int2(floor(input.pos.xy));
-//	DeltaZTex[pixelCoord] = -1.0f;  // 메시 없음
-//}
+		
 
 
 				//half viewport, uvFull 보정

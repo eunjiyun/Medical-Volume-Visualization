@@ -140,7 +140,6 @@
     <FxCompile Include="VertexShader.hlsl" />
     <FxCompile Include="VolumeVS.hlsl" />
     <FxCompile Include="VolumePS.hlsl" />
-    <FxCompile Include="CubeWireframe.hlsl" />
     <FxCompile Include="prevVolumeVS.hlsl" />
     <FxCompile Include="prevVolumePS.hlsl" />
     <FxCompile Include="VolumeRaymarchVS.hlsl" />
@@ -151,10 +150,7 @@
     <FxCompile Include="FaceMesh_WithCT_PS.hlsl" />
     <FxCompile Include="SimpleQuad_PS.hlsl" />
     <FxCompile Include="SimpleQuad_VS.hlsl" />
-    <FxCompile Include="lineVS.hlsl" />
-    <FxCompile Include="linePS.hlsl" />
     <FxCompile Include="MeshDepthPS.hlsl" />
-    <FxCompile Include="ScaleCS.hlsl" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="icon.ico">

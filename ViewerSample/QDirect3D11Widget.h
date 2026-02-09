@@ -726,7 +726,7 @@ public:
 
 	bool CreateDepthPeelingBuffers();
 	void RenderMeshWithDepthPeeling(ID3D11DeviceContext* context);
-	void ComposePeeledLayers(ID3D11DeviceContext* context);
+	//void ComposePeeledLayers(ID3D11DeviceContext* context);
 
 
 

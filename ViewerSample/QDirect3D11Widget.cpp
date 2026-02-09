@@ -669,7 +669,7 @@ bool QDirect3D11Widget::init()
 
 
 
-	// ⭐ 한 번만 생성 + 초기화
+	//  한 번만 생성 + 초기화
 	if (!m_volumeToTexture) {
 		m_volumeToTexture = std::make_unique<VolumeToTexture>();
 		m_volumeToTexture->Initialize(m_pDevice, width() / 2, height() / 2);
@@ -677,7 +677,7 @@ bool QDirect3D11Widget::init()
 		std::cout << "VolumeToTexture object created at: " << m_volumeToTexture->m_quadVertexBuffer << std::endl;
 	}
 
-	// ⭐ 한 번만 생성 + 초기화
+	//  한 번만 생성 + 초기화
 	if (!meshSceneDepth) {
 		meshSceneDepth = std::make_unique<VolumeToTexture>();
 		meshSceneDepth->Initialize(m_pDevice, width() / 2, height() / 2);
@@ -689,7 +689,7 @@ bool QDirect3D11Widget::init()
 	roty = XMMatrixRotationY(XM_PI);  // 90도 회전
 
 
-	//// ✅ center 변환 제거
+	////  center 변환 제거
 	//transMat = XMMatrixTranslation(0.0f, 0.0f, 0.0f);
 
 	// DICOM에서 읽어온 값
@@ -1956,7 +1956,7 @@ bool QDirect3D11Widget::InitializeMeshShaders() {
 
 
 
-	//// ===== ComposePS ===== (✅ 주석 풀기!)
+	//// ===== ComposePS ===== ( 주석 풀기!)
 	//ID3DBlob* composePSBlob = nullptr;
 	//hr = D3DCompileFromFile(
 	//	L"ComposePS.hlsl", nullptr, nullptr, "main", "ps_5_0",
@@ -2331,7 +2331,7 @@ void QDirect3D11Widget::CreateDepthStencil()  // 또는 initializeGL 안에서
 		m_depthSRV->Release();
 		m_depthSRV = nullptr;
 	}
-	//if (m_depthTexture) {  // ✅ 새로 추가 (멤버로 저장)
+	//if (m_depthTexture) {  //  새로 추가 (멤버로 저장)
 	//	m_depthTexture->Release();
 	//	m_depthTexture = nullptr;
 	//}
@@ -2361,11 +2361,11 @@ void QDirect3D11Widget::CreateDepthStencil()  // 또는 initializeGL 안에서
 	//depthDesc.Height = height();
 	//depthDesc.MipLevels = 1;
 	//depthDesc.ArraySize = 1;
-	//depthDesc.Format = DXGI_FORMAT_R32_TYPELESS;  // ✅ 변경!
+	//depthDesc.Format = DXGI_FORMAT_R32_TYPELESS;  //  변경!
 	//depthDesc.SampleDesc.Count = 1;
 	//depthDesc.SampleDesc.Quality = 0;
 	//depthDesc.Usage = D3D11_USAGE_DEFAULT;
-	//depthDesc.BindFlags = D3D11_BIND_DEPTH_STENCIL | D3D11_BIND_SHADER_RESOURCE;  // ✅ 추가!
+	//depthDesc.BindFlags = D3D11_BIND_DEPTH_STENCIL | D3D11_BIND_SHADER_RESOURCE;  //  추가!
 	//depthDesc.CPUAccessFlags = 0;
 	//depthDesc.MiscFlags = 0;
 
@@ -2387,7 +2387,7 @@ void QDirect3D11Widget::CreateDepthStencil()  // 또는 initializeGL 안에서
 	depthDescMesh.SampleDesc.Count = 1;
 	depthDescMesh.SampleDesc.Quality = 0;
 	depthDescMesh.Usage = D3D11_USAGE_DEFAULT;
-	depthDescMesh.BindFlags = D3D11_BIND_DEPTH_STENCIL | D3D11_BIND_SHADER_RESOURCE;  // ✅ 추가!
+	depthDescMesh.BindFlags = D3D11_BIND_DEPTH_STENCIL | D3D11_BIND_SHADER_RESOURCE;  //  추가!
 	depthDescMesh.CPUAccessFlags = 0;
 	depthDescMesh.MiscFlags = 0;
 
@@ -2430,101 +2430,101 @@ void QDirect3D11Widget::CreateDepthStencil()  // 또는 initializeGL 안에서
 
 
 
-void QDirect3D11Widget::ComposePeeledLayers(ID3D11DeviceContext* context)
-{
-	qDebug() << "=== ComposePeeledLayers START ===";
-
-
-	// ✅ 셰이더 체크
-	if (!m_fullscreenVS) {
-		qDebug() << " m_fullscreenVS is null!";
-		return;
-	}
-	if (!m_composePS) {
-		qDebug() << " m_composePS is null!";
-		return;
-	}
-	qDebug() << " Compose shaders valid";
-
-	//  SRV 체크
-	for (int i{}; i < MAX_DEPTH_PEELS; ++i) {
-		if (!m_colorPeelSRVs[i]) {
-			qDebug() << " colorPeelSRV" << i << "is null!";
-			return;
-		}
-	}
-	qDebug() << " All colorPeelSRVs valid";
-
-
-
-	//  1. Volume 뷰포트 설정
-	D3D11_VIEWPORT vp = CreateViewport(0);
-	context->RSSetViewports(1, &vp);
-
-	//  2. 원래 렌더 타겟으로 (볼륨 위에 합성)
-	context->OMSetRenderTargets(1, &m_pSwapChainRTV, nullptr);
-
-	//  3. 풀스크린 셰이더 설정
-	context->VSSetShader(m_fullscreenVS, nullptr, 0);
-	context->PSSetShader(m_composePS, nullptr, 0);
-
-	//  4. 블렌딩 설정 (기존 화면 위에 합성)
-	D3D11_BLEND_DESC blendDesc = {};
-	blendDesc.RenderTarget[0].BlendEnable = TRUE;
-	blendDesc.RenderTarget[0].SrcBlend = D3D11_BLEND_SRC_ALPHA;
-	blendDesc.RenderTarget[0].DestBlend = D3D11_BLEND_INV_SRC_ALPHA;
-	blendDesc.RenderTarget[0].BlendOp = D3D11_BLEND_OP_ADD;
-	blendDesc.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
-
-	ID3D11BlendState* blendState = nullptr;
-	m_pDevice->CreateBlendState(&blendDesc, &blendState);
-	context->OMSetBlendState(blendState, nullptr, 0xffffffff);
-
-	//  5. Rasterizer 설정
-	D3D11_RASTERIZER_DESC rastDesc = {};
-	rastDesc.FillMode = D3D11_FILL_SOLID;
-	//rastDesc.CullMode = D3D11_CULL_NONE;
-	rastDesc.CullMode = D3D11_CULL_BACK;  
-	rastDesc.FrontCounterClockwise = FALSE;
-	rastDesc.DepthBias = 0;
-	rastDesc.DepthBiasClamp = 0.0f;
-	rastDesc.SlopeScaledDepthBias = 0.0f;
-
-	ID3D11RasterizerState* rastState = nullptr;
-	m_pDevice->CreateRasterizerState(&rastDesc, &rastState);
-	context->RSSetState(rastState);
-
-	//  6. Depth test 끄기
-	D3D11_DEPTH_STENCIL_DESC depthDesc = {};
-	depthDesc.DepthEnable = FALSE;
-	ID3D11DepthStencilState* depthState = nullptr;
-	m_pDevice->CreateDepthStencilState(&depthDesc, &depthState);
-	context->OMSetDepthStencilState(depthState, 1);
-
-	//  7. 뒤에서부터 앞으로 레이어 합성
-	for (int i{ MAX_DEPTH_PEELS - 1 }; i >= 0; --i)
-	{
-		qDebug() << "Composing layer" << i;  
-
-		// 현재 레이어 텍스처 바인딩
-		context->PSSetShaderResources(0, 1, &m_colorPeelSRVs[i]);
-		context->PSSetSamplers(0, 1, &m_MeshSamplerState);
-
-		// 풀스크린 삼각형 그리기
-		context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-		context->IASetInputLayout(nullptr);
-		context->Draw(3, 0);
-
-		// 언바인딩
-		ID3D11ShaderResourceView* nullSRV = nullptr;
-		context->PSSetShaderResources(0, 1, &nullSRV);
-	}
-
-	// Cleanup
-	if (blendState) blendState->Release();
-	if (rastState) rastState->Release();
-	if (depthState) depthState->Release();
-}
+//void QDirect3D11Widget::ComposePeeledLayers(ID3D11DeviceContext* context)
+//{
+//	qDebug() << "=== ComposePeeledLayers START ===";
+//
+//
+//	// ✅ 셰이더 체크
+//	if (!m_fullscreenVS) {
+//		qDebug() << " m_fullscreenVS is null!";
+//		return;
+//	}
+//	if (!m_composePS) {
+//		qDebug() << " m_composePS is null!";
+//		return;
+//	}
+//	qDebug() << " Compose shaders valid";
+//
+//	//  SRV 체크
+//	for (int i{}; i < MAX_DEPTH_PEELS; ++i) {
+//		if (!m_colorPeelSRVs[i]) {
+//			qDebug() << " colorPeelSRV" << i << "is null!";
+//			return;
+//		}
+//	}
+//	qDebug() << " All colorPeelSRVs valid";
+//
+//
+//
+//	//  1. Volume 뷰포트 설정
+//	D3D11_VIEWPORT vp = CreateViewport(0);
+//	context->RSSetViewports(1, &vp);
+//
+//	//  2. 원래 렌더 타겟으로 (볼륨 위에 합성)
+//	context->OMSetRenderTargets(1, &m_pSwapChainRTV, nullptr);
+//
+//	//  3. 풀스크린 셰이더 설정
+//	context->VSSetShader(m_fullscreenVS, nullptr, 0);
+//	context->PSSetShader(m_composePS, nullptr, 0);
+//
+//	//  4. 블렌딩 설정 (기존 화면 위에 합성)
+//	D3D11_BLEND_DESC blendDesc = {};
+//	blendDesc.RenderTarget[0].BlendEnable = TRUE;
+//	blendDesc.RenderTarget[0].SrcBlend = D3D11_BLEND_SRC_ALPHA;
+//	blendDesc.RenderTarget[0].DestBlend = D3D11_BLEND_INV_SRC_ALPHA;
+//	blendDesc.RenderTarget[0].BlendOp = D3D11_BLEND_OP_ADD;
+//	blendDesc.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
+//
+//	ID3D11BlendState* blendState = nullptr;
+//	m_pDevice->CreateBlendState(&blendDesc, &blendState);
+//	context->OMSetBlendState(blendState, nullptr, 0xffffffff);
+//
+//	//  5. Rasterizer 설정
+//	D3D11_RASTERIZER_DESC rastDesc = {};
+//	rastDesc.FillMode = D3D11_FILL_SOLID;
+//	//rastDesc.CullMode = D3D11_CULL_NONE;
+//	rastDesc.CullMode = D3D11_CULL_BACK;  
+//	rastDesc.FrontCounterClockwise = FALSE;
+//	rastDesc.DepthBias = 0;
+//	rastDesc.DepthBiasClamp = 0.0f;
+//	rastDesc.SlopeScaledDepthBias = 0.0f;
+//
+//	ID3D11RasterizerState* rastState = nullptr;
+//	m_pDevice->CreateRasterizerState(&rastDesc, &rastState);
+//	context->RSSetState(rastState);
+//
+//	//  6. Depth test 끄기
+//	D3D11_DEPTH_STENCIL_DESC depthDesc = {};
+//	depthDesc.DepthEnable = FALSE;
+//	ID3D11DepthStencilState* depthState = nullptr;
+//	m_pDevice->CreateDepthStencilState(&depthDesc, &depthState);
+//	context->OMSetDepthStencilState(depthState, 1);
+//
+//	//  7. 뒤에서부터 앞으로 레이어 합성
+//	for (int i{ MAX_DEPTH_PEELS - 1 }; i >= 0; --i)
+//	{
+//		qDebug() << "Composing layer" << i;  
+//
+//		// 현재 레이어 텍스처 바인딩
+//		context->PSSetShaderResources(0, 1, &m_colorPeelSRVs[i]);
+//		context->PSSetSamplers(0, 1, &m_MeshSamplerState);
+//
+//		// 풀스크린 삼각형 그리기
+//		context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+//		context->IASetInputLayout(nullptr);
+//		context->Draw(3, 0);
+//
+//		// 언바인딩
+//		ID3D11ShaderResourceView* nullSRV = nullptr;
+//		context->PSSetShaderResources(0, 1, &nullSRV);
+//	}
+//
+//	// Cleanup
+//	if (blendState) blendState->Release();
+//	if (rastState) rastState->Release();
+//	if (depthState) depthState->Release();
+//}
 
 
 
@@ -2774,8 +2774,6 @@ void QDirect3D11Widget::createSwapChainRTV()
 	DXCall(m_pDevice->CreateRenderTargetView(pBackBuffer, nullptr, &m_pSwapChainRTV));
 	ReleaseObject(pBackBuffer);
 }
-
-
 
 void QDirect3D11Widget::render()
 {
@@ -3327,7 +3325,7 @@ ScaleOptimizationStats QDirect3D11Widget::DebugDeltaZTexFull()
 	for (UINT y{}; y < desc.Height; ++y)
 	{
 		float* row = (float*)((BYTE*)data + y * mapped.RowPitch);
-		for (UINT x = 0; x < desc.Width; ++x)
+		for (UINT x{}; x < desc.Width; ++x)
 		{
 			float delta{ row[x] };
 			// 유효한 값만 수집
@@ -4871,7 +4869,7 @@ void QDirect3D11Widget::InitializeVolumeShaders()
 
 	D3D11_INPUT_ELEMENT_DESC layoutDesc[] =
 	{
-		{ "POSITION", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 0,                               D3D11_INPUT_PER_VERTEX_DATA, 0 },
+		{ "POSITION", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
 		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT,   D3D11_INPUT_PER_VERTEX_DATA, 0 },
 	};
 
@@ -5080,12 +5078,12 @@ D3D11_VIEWPORT QDirect3D11Widget::CreateViewport(int index)
 		dataAspect = 1;
 
 	//  Aspect ratio 유지하며 최대 크기로 맞춤
-	float renderWidth = quadWidth;
-	float renderHeight = quadHeight;
-	float offsetX = 0.0f;
-	float offsetY = 0.0f;
+	float renderWidth{ quadWidth };
+	float renderHeight{ quadHeight };
+	float offsetX{ 0.0f };
+	float offsetY{ 0.0f };
 
-	float quadAspect = quadWidth / quadHeight;
+	float quadAspect{ quadWidth / quadHeight };
 
 	if (quadAspect > dataAspect) {
 		// 4분할 영역이 더 넓음 → 세로에 맞추고 가로 중앙 정렬
@@ -5684,7 +5682,7 @@ void QDirect3D11Widget::RenderAllQuads()
 					optimalScale = FindOptimalScale();
 					meshRenderer->meshScale = optimalScale;
 
-					scaleResolved = true;   // ✅ 이제 끝
+					scaleResolved = true;   //  이제 끝
 					scaleDirty = false;
 				}
 
@@ -5790,11 +5788,13 @@ void QDirect3D11Widget::RenderAllQuads()
 	ImGui::End();*/
 
 
-	ImGui::Begin("Volume Axis");
-	ImGui::TextColored(ImVec4(255.f/255.f , 0, 0, 1), "X+ : Sagittal");
-	ImGui::TextColored(ImVec4(0, 255.f/255.f, 0, 1), "Y+ : Coronal");
-	ImGui::TextColored(ImVec4(0, 0, 255.f / 255.f, 1), "Z+ : Axial");
-	ImGui::End();
+	//ImGui::Begin("Volume Axis");
+	//ImGui::TextColored(ImVec4(255.f/255.f , 0, 0, 1), "X+ : Sagittal");
+	//ImGui::TextColored(ImVec4(0, 255.f/255.f, 0, 1), "Y+ : Coronal");
+	//ImGui::TextColored(ImVec4(0, 0, 255.f / 255.f, 1), "Z+ : Axial");
+
+
+	//ImGui::End();
 
 
 
@@ -7019,7 +7019,7 @@ void QDirect3D11Widget::mouseMoveEvent(QMouseEvent* event)
 			m_clipSettingsBuffer,
 			m_meshConstantBuffer,
 			m_meshTexture,      // 얼굴 텍스처
-			m_volumeToTexture->m_resultSRV,          // ⭐ CT 텍스처
+			m_volumeToTexture->m_resultSRV,          //  CT 텍스처
 			m_depthSRV,
 			m_MeshSamplerState,
 			m_pDevice,
@@ -7038,7 +7038,7 @@ void QDirect3D11Widget::mouseMoveEvent(QMouseEvent* event)
 
 		UpdateVolumeMatrix();
 
-		UpdateSlicePlanePositions();  // ✅ 추가
+		UpdateSlicePlanePositions();  //  추가
 		FullScreenPassSet();
 		update();
 	}
@@ -7049,7 +7049,7 @@ void QDirect3D11Widget::mouseDoubleClickEvent(QMouseEvent* event)
 {
 	if (event->button() == Qt::LeftButton)
 	{
-		// ✅ 리셋
+		//  리셋
 		m_rotation = m_initialRotation;
 
 		qDebug() << "Rotation Reset!";
@@ -7058,7 +7058,7 @@ void QDirect3D11Widget::mouseDoubleClickEvent(QMouseEvent* event)
 
 		m_orthoScale = 1;
 
-		InitializeVolumeCamera();  // 👈 여기
+		InitializeVolumeCamera();  //  여기
 
 		//w *= rotx;
 		FullScreenPassSet();
@@ -7222,7 +7222,7 @@ void QDirect3D11Widget::onSagittalScroll(int value) {
 void QDirect3D11Widget::SetSharpness(float value)
 {
 	m_sharpness = value;
-	qDebug() << "SetSharpness called:" << value;  // ⭐ 확인
+	qDebug() << "SetSharpness called:" << value;  //  확인
 }
 
 void QDirect3D11Widget::resetEnvironment()
@@ -7259,7 +7259,7 @@ void QDirect3D11Widget::wheelEvent(QWheelEvent* event)
 
 	qDebug() << "Zoom:" << m_orthoScale;
 
-	InitializeVolumeCamera();  // 👈 여기
+	InitializeVolumeCamera();  //  여기
 
 	update();
 	event->accept();
