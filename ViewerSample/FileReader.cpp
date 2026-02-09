@@ -538,13 +538,13 @@ bool FileReader::NormalizeSlice(const std::vector<int16_t>& rawSlice,
 	outSlice.resize(rawSlice.size());
 
 	for (size_t i = 0; i < rawSlice.size(); ++i) {
-		// ⭐ 패딩 체크
+		//  패딩 체크
 		if (rawSlice[i] > 60000 || rawSlice[i] < -30000) {
 			outSlice[i] = 0;  // 검은색
 			continue;
 		}
 
-		// ⭐⭐⭐ Rescale 제거! Raw 값이 이미 HU!
+		//  Rescale 제거! Raw 값이 이미 HU!
 		float val{ static_cast<float>(rawSlice[i]) };  // ← 이것만!
 
 		// Window/Level 적용
@@ -580,7 +580,7 @@ bool FileReader::NormalizeVolumeFloat(
 
 	for (size_t i = 0; i < rawVolume.size(); ++i)
 	{
-		//// ⭐ 패딩 체크
+		////  패딩 체크
 
 		//// HU 변환
 		float hu = static_cast<float>(rawVolume[i]) * rescaleSlope + rescaleIntercept;
@@ -653,7 +653,7 @@ void FileReader::AnalyzeHUDistribution()
 		// 여유있게: -1500 ~ 3500
 		if (raw < -1500 || raw > 3500) {
 			++outlierCount;
-			//continue;  // ⭐ 분석에서 제외!
+			//continue;  //  분석에서 제외!
 		}
 
 		// Raw 값 범위 확인
@@ -702,7 +702,7 @@ void FileReader::AnalyzeHUDistribution()
 
 	for (const auto& raw : m_volumeData) {
 		if (raw > 60000 || raw < -30000) continue;
-		if (raw < -1500 || raw > 3500) continue;  // ⭐ Outlier 제외
+		if (raw < -1500 || raw > 3500) continue;  //  Outlier 제외
 
 		float hu = static_cast<float>(raw);
 
@@ -717,9 +717,6 @@ void FileReader::AnalyzeHUDistribution()
 	std::cout << "Soft Tissue (-400~200): " << (soft * 100.0f / validVoxels) << "%" << std::endl;
 	std::cout << "Bone (200~1500): " << (bone * 100.0f / validVoxels) << "%" << std::endl;
 	std::cout << "Teeth (1500~3500): " << (teeth * 100.0f / validVoxels) << "%" << std::endl;
-
-
-
 
 
 

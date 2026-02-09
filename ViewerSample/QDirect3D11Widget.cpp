@@ -5357,9 +5357,6 @@ void QDirect3D11Widget::mousePressEvent(QMouseEvent* event)
 
 				qDebug() << "[Landmark] Computed mesh scale:";
 
-
-
-
 				break;
 
 			default:
@@ -5542,8 +5539,8 @@ void QDirect3D11Widget::UpdateCrosshairFromPatientCoord(DirectX::XMFLOAT3 patien
 	else
 		crosshair.crossThickness = 0.002f;
 
-	crosshair.sharpness = m_sharpness;  // ⭐ 여기서 사용
-	//qDebug() << "Sending sharpness to GPU:" << m_sharpness;  // ⭐ 확인
+	crosshair.sharpness = m_sharpness;  //  여기서 사용
+	//qDebug() << "Sending sharpness to GPU:" << m_sharpness;  //  확인
 
 	crosshair.crossColor = { 1.0f, 0.0f, 0.0f, 1.0f }; // 빨강
 
@@ -5649,7 +5646,7 @@ void QDirect3D11Widget::RenderAllQuads()
 
 
 				// ========== 2단계: Volume → Texture (CT 렌더링) ==========
-				// ⭐ DSV unbind (SRV로 읽기 위해)
+				//  DSV unbind (SRV로 읽기 위해)
 				m_pDeviceContext->OMSetRenderTargets(1, &m_pSwapChainRTV, nullptr);
 
 
@@ -5694,11 +5691,11 @@ void QDirect3D11Widget::RenderAllQuads()
 				//// ========== 3단계: Mesh 최종 렌더링 (CT 합성) ==========
 				m_pDeviceContext->OMSetRenderTargets(1, &m_pSwapChainRTV, m_pDepthStencilView);
 
-				//// ⭐ CT 텍스처를 메쉬 렌더러에 전달
+				////  CT 텍스처를 메쉬 렌더러에 전달
 				ID3D11ShaderResourceView* ctTexture = m_volumeToTexture->m_resultSRV;
 
 
-				////// ⭐ 텍스처를 화면에 복사 (Fullscreen Quad)
+				//////  텍스처를 화면에 복사 (Fullscreen Quad)
 				//m_volumeToTexture->DrawTextureToScreen(m_pDevice,m_volumeToTexture->m_resultSRV, m_pDeviceContext);
 
 
