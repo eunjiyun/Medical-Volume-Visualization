@@ -307,12 +307,8 @@ void MeshRenderer::RenderMeshDepth(ID3D11DeviceContext* context, ID3D11Buffer* m
 
 
 
-
-	rotation = XMMatrixRotationX(XM_PI);
-
 	//s r t v p
-
-
+	rotation = XMMatrixRotationX(XM_PI);
 
 	rotX = XMQuaternionRotationAxis(
 		XMVectorSet(1, 0, 0, 0),  // X축
@@ -323,9 +319,6 @@ void MeshRenderer::RenderMeshDepth(ID3D11DeviceContext* context, ID3D11Buffer* m
 		XMVectorSet(0, 0, 1, 0),
 		XM_PI  // Y축 180도
 	);
-
-
-
 
 	//// 테스트할 회전들
 	//XMMATRIX test1 = XMMatrixRotationX(XM_PIDIV2);        // 90도
@@ -338,13 +331,18 @@ void MeshRenderer::RenderMeshDepth(ID3D11DeviceContext* context, ID3D11Buffer* m
 	//XMMATRIX test6 = XMMatrixRotationX(XM_PIDIV2) * XMMatrixRotationZ(XM_PI);
 
 
+	//Dx11 좌표계로 메쉬 정렬 안 하면 
+	//크기가 변해서 볼륨과의 스케일 정합이 깨지는 이유는
+	//Scale 값이 바뀐 게 아니라
+	//Scale이 적용되는 축 기준이 바뀌었기 때문
 	DirectX::XMMATRIX scale = XMMatrixScaling(meshScale, meshScale, meshScale);
 
+	//볼륨 - 메쉬 기본은 rotx, roty 인데 rotation은 메쉬에만 추가로 곱해줌.
 
-	////볼륨 - 메쉬 기본은 rotx, roty 인데 rotation은 메쉬에만 추가로 곱해줌.
-	//initialMeshWorld =coordinateSystemTransform/**flipYZ*rotation*/;
 	//initialMeshWorld = coordinateSystemTransform*XMMatrixRotationQuaternion(XMQuaternionMultiply(rotX, rotY))*rotation*test3;
 	initialMeshWorld = scale* XMMatrixRotationQuaternion(XMQuaternionMultiply(rotX, rotY))*rotation;
+	meshWorldMat = initialMeshWorld * XMMatrixTranspose(userRotMat)/**coordinateSystemTransform*/;
+
 
 
 	//스케일을 볼륨걸 적용한 유저 로테이션을 곱해야지 회전 싱크가 맞음
@@ -372,25 +370,7 @@ void MeshRenderer::RenderMeshDepth(ID3D11DeviceContext* context, ID3D11Buffer* m
 
 
 
-
-
-	//XMMATRIX coordinateSystemTransform = XMMatrixSet(
-	//	1.0f, 0.0f, 0.0f, 0.0f,
-	//	0.0f, 0.0f, 1.0f, 0.0f,
-	//	0.0f, 1.0f, 0.0f, 0.0f,
-	//	0.0f, 0.0f, 0.0f, 1.0f
-	//);
-
-	//initialMeshWorld = coordinateSystemTransform
-	//	* XMMatrixRotationX(XM_PIDIV2)
-	//	* scale
-	//	/** centerTranslate*/
-	//	* userRotMat;  // DICOM 회전 그대로 사용
-
-
-
-
-	meshWorldMat = initialMeshWorld * XMMatrixTranspose(userRotMat)/**coordinateSystemTransform*/;
+	
 
 	ExtractAxes(&volWorldMat, &meshWorldMat);
 
@@ -401,7 +381,7 @@ void MeshRenderer::RenderMeshDepth(ID3D11DeviceContext* context, ID3D11Buffer* m
 	cbM.WVP = XMMatrixTranspose(meshWorldMat * v * p);
 	cbM.View = XMMatrixTranspose(v);
 	cbM.World = XMMatrixTranspose(meshWorldMat);
-	//cbM.CTBlendParams = XMFLOAT4(ctBlendStrength, 0.0f, 0.0f, faceBlend);  // ⭐ CT 강도
+	//cbM.CTBlendParams = XMFLOAT4(ctBlendStrength, 0.0f, 0.0f, faceBlend);  //  CT 강도
 
 
 

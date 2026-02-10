@@ -793,15 +793,11 @@ bool QDirect3D11Widget::init()
 	float scale = 1.0f; // ← 여기만 바꾸는 것
 	XMMATRIX scaleMat = XMMatrixScaling(scale, scale, scale);
 
-
-
-
-
-
-
 	initialWorld = scaleMat * XMMatrixRotationQuaternion(XMQuaternionMultiply(rotX, rotY));
 
 	worldMat = initialWorld;
+
+
 	invWorldMat = XMMatrixInverse(nullptr, worldMat);
 
 	XMVECTOR s, r, t;
@@ -5778,11 +5774,11 @@ void QDirect3D11Widget::RenderAllQuads()
 
 
 
-	/*ImGui::Begin("Volume Axis");
-	ImGui::TextColored(ImVec4(255.f / 255.f, 215.f / 255.f, 0, 1), "X+ : Sagittal");
-	ImGui::TextColored(ImVec4(0, 206.f / 255.f, 209.f / 255.f, 1), "Y+ : Coronal");
-	ImGui::TextColored(ImVec4(216.f / 255.f, 127.f / 255.f, 216.f / 255.f, 1), "Z+ : Axial");
-	ImGui::End();*/
+	//ImGui::Begin("Volume Axis");
+	//ImGui::TextColored(ImVec4(255.f / 255.f, 215.f / 255.f, 0, 1), "X+ : Sagittal");
+	//ImGui::TextColored(ImVec4(0, 206.f / 255.f, 209.f / 255.f, 1), "Y+ : Coronal");
+	//ImGui::TextColored(ImVec4(216.f / 255.f, 127.f / 255.f, 216.f / 255.f, 1), "Z+ : Axial");
+	//ImGui::End();
 
 
 	//ImGui::Begin("Volume Axis");
@@ -6175,7 +6171,7 @@ XMFLOAT3 QDirect3D11Widget::GetPatientCoordFromClick(int viewIndex, XMFLOAT2 uv)
 
 	case 2: // 관상 (XZ 평면, Y 고정)
 		px = uv.x * fileReader->m_width;   // X 방향
-		py = uv.y * fileReader->m_depth;   // ✅ Z 방향 (depth 사용!)
+		py = uv.y * fileReader->m_depth;   // Z 방향 (depth 사용)
 
 
 		patientCoord.x = origin.x + px * spacing.x;
@@ -6187,7 +6183,7 @@ XMFLOAT3 QDirect3D11Widget::GetPatientCoordFromClick(int viewIndex, XMFLOAT2 uv)
 	case 3: // 시상 (YZ 평면, X 고정)
 
 		px = uv.x * fileReader->m_height;  // Y 방향
-		py = uv.y * fileReader->m_depth;   // ✅ Z 방향 (depth 사용!)
+		py = uv.y * fileReader->m_depth;   // Z 방향 (depth 사용)
 
 
 		patientCoord.x = origin.x + sliceIndex * spacing.x;
@@ -6260,7 +6256,7 @@ XMFLOAT2 QDirect3D11Widget::GetCrossUVFromPatientCoord(int viewIndex, XMFLOAT3 p
 	uv.x = px / sizeX;
 	uv.y = py / sizeY;
 
-	// ✅ Aspect ratio 보정
+	//  Aspect ratio 보정
 	float dataAspect{ (sizeX * spacingX) / (sizeY * spacingY) };
 	D3D11_VIEWPORT vp = CreateViewport(viewIndex);
 	float viewportAspect{ vp.Width / vp.Height };
@@ -6352,18 +6348,18 @@ void QDirect3D11Widget::InitializeSlicePlanes() {
 
 	XMMATRIX worldA = /*scale **/ XMMatrixRotationX(XM_PIDIV2);
 	XMStoreFloat4x4(&m_AxialPlane.worldMatrix, XMMatrixTranspose(worldA));
-	//constants.World = m_axialPlane.worldMatrix; // ✅ 저장된 World Matrix 사용
+	//constants.World = m_axialPlane.worldMatrix; //  저장된 World Matrix 사용
 
 	// ---- Coronal (XZ plane, y=0)
 
 	XMMATRIX worldC = /*scale **/ XMMatrixTranslation(0.0f, 0.0f, 0.0f);
 	XMStoreFloat4x4(&m_CoronalPlane.worldMatrix, XMMatrixTranspose(worldC));
-	//constants.World = m_coronalPlane.worldMatrix; // ✅ 저장된 World Matrix 사용
+	//constants.World = m_coronalPlane.worldMatrix; //  저장된 World Matrix 사용
 
 
 	XMMATRIX worldS = /*scale **/ XMMatrixRotationY(XM_PIDIV2);
 	XMStoreFloat4x4(&m_SagittalPlane.worldMatrix, XMMatrixTranspose(worldS));
-	//constants.World = m_sagittalPlane.worldMatrix; // ✅ 저장된 World Matrix 사용
+	//constants.World = m_sagittalPlane.worldMatrix; //  저장된 World Matrix 사용
 
 
 	//===============================================================
@@ -7303,7 +7299,7 @@ void QDirect3D11Widget::resizeEvent(QResizeEvent* event)
 	labelSagittal->move(w + 2, h + labelMargin);
 
 	// 슬라이스 정보 라벨 위치 (뷰 이름 라벨 바로 아래)
-	int sliceInfoOffset = 28; // 뷰 이름 라벨 높이 + 간격
+	int sliceInfoOffset{ 28 }; // 뷰 이름 라벨 높이 + 간격
 	sliceInfoAxial->move(w + labelMargin, labelMargin + sliceInfoOffset);
 	sliceInfoCoronal->move(labelMargin, h + labelMargin + sliceInfoOffset);
 	sliceInfoSagittal->move(w + labelMargin, h + labelMargin + sliceInfoOffset);

@@ -505,7 +505,7 @@ void ViewerSample::init(bool success)
 	ui->contrastSlider->setMinimum(1);
 	ui->contrastSlider->setMaximum(2000);
 	ui->contrastSlider->setValue(1000);
-	ui->contrastSlider->setInvertedAppearance(true);  // ⭐ UI 방향 반대로
+	ui->contrastSlider->setInvertedAppearance(true);  //  UI 방향 반대로
 	ui->contrastSlider->setInvertedControls(true);
 
 
