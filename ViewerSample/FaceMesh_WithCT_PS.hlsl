@@ -19,6 +19,8 @@ struct PSInput
 	float4 pos : SV_POSITION;
 	float2 uv : TEXCOORD0;
 	float2 screenUV : TEXCOORD1;
+
+	float4 viewZ : TEXCOORD2;  //  추가: View Space Z
 };
 float4 main(PSInput input) : SV_Target
 {
@@ -172,7 +174,19 @@ float4 main(PSInput input) : SV_Target
 
 	finalAlpha *= hasFace;
 
-	color = float3(0.5f, 0.5f, 0.5f);
+	//color = float3(0.5f, 0.5f, 0.5f);
+
+
+	float z = input.viewZ;
+
+	// 더 큰 범위
+	if (z < 420) return float4(1, 0, 1, finalAlpha);  // 빨강
+	if (z < 450) return float4(1, 1, 0, finalAlpha);  // 노랑
+	if (z <490) return float4(0, 1, 0, finalAlpha);  // 초록
+	if (z <530) return float4(0, 1, 1, finalAlpha);  // 청록
+	return float4(0, 0, 1, finalAlpha);  // 파랑
+	
+	
 
 	return float4(color, finalAlpha);
 }

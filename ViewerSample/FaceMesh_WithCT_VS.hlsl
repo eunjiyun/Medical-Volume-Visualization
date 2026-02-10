@@ -4,7 +4,7 @@ cbuffer MeshCB : register(b0)
 {
 	matrix WorldViewProj;
 	matrix View;
-	matrix World;  // ✅ 추가: View 행렬
+	matrix World;  //  추가: View 행렬
 	float4 CTBlendParams;  // x = strength, y = unused...
 };
 
@@ -19,7 +19,8 @@ struct VSOutput
 	float4 pos : SV_POSITION;
 	float2 uv : TEXCOORD0;
 	float2 screenUV : TEXCOORD1;  // 스크린 UV
-	float viewZ : TEXCOORD2;  // ✅ 추가: View Space Z
+	//float4 viewPos : TEXCOORD2;  //  추가: View Space Z
+	float viewZ : TEXCOORD2;  //  추가: View Space Z
 };
 
 VSOutput main(VSInput input)
@@ -38,8 +39,8 @@ VSOutput main(VSInput input)
  // View Space Z
 	float4 posWorld = mul(float4(input.position, 1.0f), World);
 	float4 posView = mul(posWorld, View);
+	//output.viewPos = posView;
 	output.viewZ = posView.z;
-
 
 	return output;
 }
