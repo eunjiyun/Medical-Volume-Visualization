@@ -3277,9 +3277,9 @@ void QDirect3D11Widget::ProcessDeltaZAndUpdateConstantBuffer(
 	int totalPositive{};
 	int totalNegative{};
 
-	for (int y{}; y < (int)desc.Height; ++y)  // ← desc 사용!
+	for (int y{}; y < (int)desc.Height; ++y)  //  desc 사용!
 	{
-		for (int x{}; x < (int)desc.Width; ++x)  // ← desc 사용!
+		for (int x{}; x < (int)desc.Width; ++x)  //  desc 사용!
 		{
 			float val{ data[y * pitch + x] };
 
@@ -4018,7 +4018,7 @@ void QDirect3D11Widget::InitializeVolumeShaders()
 	//  Constant Buffer 생성
 	D3D11_BUFFER_DESC cbDescPrev = {};
 	cbDescPrev.Usage = D3D11_USAGE_DEFAULT;
-	cbDescPrev.ByteWidth = sizeof(VolumeConstants);  // ← 구조체 크기
+	cbDescPrev.ByteWidth = sizeof(VolumeConstants);  //  구조체 크기
 	cbDescPrev.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
 	cbDescPrev.CPUAccessFlags = 0;
 	cbDescPrev.MiscFlags = 0;
@@ -4226,11 +4226,11 @@ D3D11_VIEWPORT QDirect3D11Widget::CreateViewport(int index)
 	float screenHeight = static_cast<float>(height());
 
 	// 기본 4분할 영역
-	float quadWidth = screenWidth / 2.0f;
-	float quadHeight = screenHeight / 2.0f;
+	float quadWidth{ screenWidth / 2.0f };
+	float quadHeight{ screenHeight / 2.0f };
 
 	//  각 뷰의 실제 데이터 aspect ratio 계산
-	float dataAspect = 1.0f;
+	float dataAspect{ 1.0f };
 
 
 	if (0 == index) {
