@@ -27,7 +27,7 @@ PSOutput PSMain(VSOutput input)
 	float2 uv = input.texcoord;
 	float4 base = tex.Sample(samp0, uv);
 
-	// ⭐ Sharpness 적용 (5x5 커널)
+	//  Sharpness 적용 (5x5 커널)
 	if (sharpness > 0.01) {
 		float width, height;
 		tex.GetDimensions(width, height);

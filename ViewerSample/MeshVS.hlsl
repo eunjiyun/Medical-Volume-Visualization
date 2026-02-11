@@ -25,12 +25,6 @@ struct VS_OUTPUT
 
 VS_OUTPUT main(VS_INPUT input)
 {
-	//VS_OUTPUT o;
-	//o.Pos = mul(float4(input.Pos, 1.0), WVP);
-	//o.ViewPos = mul(float4(input.Pos, 1.0), WorldView).xyz;  // ✅ View 좌표
-	//o.Tex = input.Tex;
-	//return o;
-
 
 	VS_OUTPUT output;
 

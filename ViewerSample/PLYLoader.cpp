@@ -13,7 +13,8 @@ PLYLoader::PLYLoader()
 {
 }
 
-PLYLoader::~PLYLoader() {
+PLYLoader::~PLYLoader() 
+{
 }
 
 bool PLYLoader::Load(const std::string& filename) {
@@ -120,7 +121,7 @@ bool PLYLoader::LoadFaces(std::ifstream& file) {
 	return true;
 }
 
-void PLYLoader::CreateRenderVertices() 
+void PLYLoader::CreateRenderVertices()
 {
 	m_renderVertices.clear();
 	m_renderVertices.reserve(m_faceCount * 3);
@@ -136,14 +137,14 @@ void PLYLoader::CreateRenderVertices()
 				v.y = m_vertices[idx].y;
 				v.z = m_vertices[idx].z;*/
 
-			// === 좌표축 변환 (PLY → CT/DX) ===
+				// === 좌표축 변환 (PLY -> CT/DX) ===
 			float px{ m_vertices[idx].x };
 			float py{ m_vertices[idx].y };
 			float pz{ m_vertices[idx].z };
 
 			////v.x = px;
 			////v.y = py;
-			////v.z = pz;   // ← 여기 부호가 중요
+			////v.z = pz;   // 여기 부호가 중요
 
 
 			//// Case A
@@ -204,6 +205,7 @@ void PLYLoader::CreateRenderVertices()
 }
 
 
-const std::vector<PLY::VertexWithTexture>& PLYLoader::GetRenderVertices() const {
+const std::vector<PLY::VertexWithTexture>& PLYLoader::GetRenderVertices() const 
+{
 	return m_renderVertices;
 }

@@ -1,4 +1,3 @@
-
 #include "QDirect3D11Widget.h"
 #include <QDebug>
 #include <QEvent>
@@ -9,7 +8,6 @@
 #include <comdef.h>
 #include "FileReader.h"
 #include "PLYLoader.h"
-//#include "MeshRenderer.h"
 
 #include<algorithm>
 #include<iostream>
@@ -39,14 +37,14 @@ QDirect3D11Widget::QDirect3D11Widget(QWidget* parent)
 	, m_bRenderActive(false)
 	, m_bStarted(false)
 	, m_BackColor{ 0.0f, 0.0f, 0.0f, 1.0f }
-	, m_volumeVS(nullptr)           // ← 추가
-	, m_volumePS(nullptr)           // ← 추가
-	, m_volumeConstantBuffer(nullptr)  // ← 추가
+	, m_volumeVS(nullptr)
+	, m_volumePS(nullptr)
+	, m_volumeConstantBuffer(nullptr)
 
 	, m_rotationX(0.0f)
 	, m_rotationY(0.0f)
 	, m_cameraDistance(3.0f)
-	, m_pDepthStencilView(nullptr)  // ✅ 이게 핵심!
+	, m_pDepthStencilView(nullptr)
 
 {
 	setMouseTracking(false);
@@ -67,18 +65,10 @@ QDirect3D11Widget::QDirect3D11Widget(QWidget* parent)
 	);
 
 
-
 	m_initialRotation = XMQuaternionIdentity();
-
-	//m_initialRotation = XMQuaternionMultiply(rotX, rotY);
-
-	//m_initialRotation = XMQuaternionMultiply(rotY, rotX);
-	//m_initialRotation = XMQuaternionIdentity();
 
 	// 현재 회전도 초기값으로 설정
 	m_rotation = m_initialRotation;
-
-
 
 	cb.CameraPosAndAlpha.w = 1.f;
 
@@ -110,7 +100,7 @@ QDirect3D11Widget::QDirect3D11Widget(QWidget* parent)
 	labelCoronal = new QLabel("Coronal(C)", this);
 	labelSagittal = new QLabel("Sagittal(S)", this);
 
-	//huSlider = slider1;
+
 
 	// Axial 스크롤바 - 보라/마젠타
 	scrollAxial->setStyleSheet(
@@ -497,8 +487,6 @@ QDirect3D11Widget::QDirect3D11Widget(QWidget* parent)
 
 
 
-
-
 	// 시그널 연결
 	connect(scrollAxial, &QScrollBar::valueChanged, this, &QDirect3D11Widget::onAxialScroll);
 	connect(scrollCoronal, &QScrollBar::valueChanged, this, &QDirect3D11Widget::onCoronalScroll);
@@ -715,7 +703,6 @@ bool QDirect3D11Widget::init()
 		-volCenterMM.z
 	);
 
-	//meshRenderer->centerTranslate = centerTranslate;
 
 	// 최대 크기
 	maxPhysicalVol = Max3(physicalWidth, physicalHeight, physicalDepth);
@@ -741,43 +728,6 @@ bool QDirect3D11Widget::init()
 	scaleY = physicalDepth / maxPhysicalVol;
 	scaleZ = physicalHeight / maxPhysicalVol;
 
-	// 스케일 행렬
-	//overallSize = 1.3f;
-	//overallSize = 1.f;
-	scale = XMMatrixScaling(
-		scaleX*overallSize,
-		scaleY*overallSize,
-		scaleZ*overallSize
-	);
-
-
-	////	worldMat = scale * roty*rotx;
-
-	//initialWorld = centerTranslate    // ① 볼륨 물리 중심(mm)을 원점으로 이동
-
-	//	/*scale*/;              // ④ mm → 정규화 world
-
-
-
-
-
-	//initialWorld = XMMatrixIdentity();
-
-
-
-	//XMMATRIX W = worldMat; // VolumeWorld
-	//XMVECTOR xAxis = XMVector3TransformNormal(XMVectorSet(1, 0, 0, 0), W);
-	//XMVECTOR yAxis = XMVector3TransformNormal(XMVectorSet(0, 1, 0, 0), W);
-	//XMVECTOR zAxis = XMVector3TransformNormal(XMVectorSet(0, 0, 1, 0), W);
-
-	//qDebug() << "Vol X axis in world:"
-	//	<< XMVectorGetX(xAxis) << XMVectorGetY(xAxis) << XMVectorGetZ(xAxis);
-
-	//qDebug() << "Vol Y axis in world:"
-	//	<< XMVectorGetX(yAxis) << XMVectorGetY(yAxis) << XMVectorGetZ(yAxis);
-
-	//qDebug() << "Vol Z axis in world:"
-	//	<< XMVectorGetX(zAxis) << XMVectorGetY(zAxis) << XMVectorGetZ(zAxis);
 
 
 	XMVECTOR rotX = XMQuaternionRotationAxis(
@@ -790,7 +740,7 @@ bool QDirect3D11Widget::init()
 		XM_PI  // Y축 180도
 	);
 
-	float scale = 1.0f; // ← 여기만 바꾸는 것
+	float scale = 1.0f;
 	XMMATRIX scaleMat = XMMatrixScaling(scale, scale, scale);
 
 	initialWorld = scaleMat * XMMatrixRotationQuaternion(XMQuaternionMultiply(rotX, rotY));
@@ -821,50 +771,17 @@ bool QDirect3D11Widget::init()
 
 	CreateDepthStencil();
 
-	////  4. Depth Stencil Buffer 생성 (여기서 호출!)
+	//  4. Depth Stencil Buffer 생성 (여기서 호출!)
 	//CreateDepthStencilBuffer();
 
 
 	InitShaders();
 	InitializeVolumeShaders();    // 셰이더 컴파일
-	InitializeSlicePlanes();      // ← 1번
-	//InitializeBoundingCube();     // ← 2번
+	InitializeSlicePlanes();
+
 	InitializeVolumeCamera();     // 카메라 설정
 	InitializeTFVolume();
 
-	//D:\Data\faceData\Mouse_open
-	//c_facescan_Face_texture0
-
-	//"D:\\Data\\faceData\\Mouse_close\\c_facescan_Face.ply"
-	//"D:\\Data\\faceData\\Mouse_close\\c_facescan_Face_texture0.png"
-
-	//deltaZTex = nullptr;
-	////ID3D11UnorderedAccessView* deltaZUAV = nullptr;
-
-	//deltaZTex = CreateTexture2DUAV(
-	//	m_pDevice,
-	//	width(),
-	//	height(),
-	//	DXGI_FORMAT_R32_FLOAT,
-	//	&m_deltaZUAV
-	//);
-
-	//CreateSrvScaleFit(
-	//	m_pDevice,
-	//	DXGI_FORMAT_R32_FLOAT,
-	//	&m_deltaZSRV
-	//);
-
-	/*deltaZTexRtv = CreateTexture2D(
-		m_pDevice,
-		width(),
-		height(),
-		DXGI_FORMAT_R8G8B8A8_UNORM,
-		&m_volumeRTV
-	);
-
-
-	DXCall(m_pDevice->CreateRenderTargetView(deltaZTexRtv, nullptr, &m_volumeRTV));*/
 
 	CreateScaleFitResources(m_pDevice,
 		width(),
@@ -874,18 +791,12 @@ bool QDirect3D11Widget::init()
 
 
 
-	// ✅ PLY 메쉬 로드 추가
+	//  PLY 메쉬 로드 추가
 	if (!LoadMeshFromPLY("D:\\Data\\faceData\\Mouse_open\\c_facescan_Face.ply", m_pDevice)) {
 		qDebug() << "Failed to load PLY mesh";
 		// 에러 처리 (필요시)
 	}
 
-
-	//// ✅ PLY 메쉬 로드 추가
-	//if (!TestSimpleTriangle()) {
-	//	qDebug() << "Failed to load PLY mesh";
-	//	// 에러 처리 (필요시)
-	//}
 
 	// 텍스처 로드
 	if (!LoadMeshTexture("D:\\Data\\faceData\\Mouse_open\\c_facescan_Face_texture0.png", m_pDevice)) {
@@ -908,24 +819,11 @@ bool QDirect3D11Widget::init()
 	}
 	CreateSRV(meshRenderer->sceneDepthTexture, m_UAVDebugSRV);
 	CreateMeshViewZResource();
-	
+
 
 	// ==========  Two-Pass States 생성 ==========
 	meshRenderer->CreateTwoPassStates(m_pDevice);
 
-
-
-	////  여기에 추가!
-	//if (!CreateMeshDepthState()) {
-	//	qDebug() << "Failed to create mesh depth state";
-	//	return false;
-	//}
-
-	//// 초기화 어딘가에
-	//if (!CreateOITBuffers()) {
-	//	qDebug() << "Failed to create OIT buffers";
-	//	return false;
-	//}
 
 	// 메쉬 초기화 어딘가에
 	if (!CreateDepthPeelingBuffers()) {
@@ -937,7 +835,7 @@ bool QDirect3D11Widget::init()
 	}
 
 
-	
+
 
 	D3D11_BUFFER_DESC bd{};
 	bd.Usage = D3D11_USAGE_DYNAMIC;
@@ -1000,82 +898,10 @@ void QDirect3D11Widget::onFrame()
 {
 	if (m_bRenderActive) tick();
 
-
-
-	//// 볼륨 월드 행렬에서 실제 스케일 추출
-	//XMVECTOR scaleVec, rotQuat, transVec;
-	//XMMatrixDecompose(&scaleVec, &rotQuat, &transVec, worldMat);
-
-	//float sx = XMVectorGetX(scaleVec);
-	//float sy = XMVectorGetY(scaleVec);
-	//float sz = XMVectorGetZ(scaleVec);
-
-	//printf("Volume world scale = (%f, %f, %f)\n", sx, sy, sz);
-
-
-
-	//eye = XMVectorSet(0.0f, 0.0f, -3.0f, 1.0f);
-	//at = XMVectorSet(0.0f, 0.0f, 0.0f, 1.0f);
-	//up = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
-
-	//viewMat = XMMatrixLookAtLH(eye, at, up);
-
-	//// ---------- Orthographic 정석 계산 ----------
-
-	//// 화면 aspect
-	//float aspect = (float)width() / (float)height();
-
-	//// 볼륨 기준 크기 (-0.75 ~ +0.75)
-	///*float viewWidth = 1.5f;
-	//float viewHeight = 1.5f;*/
-	//float viewWidth = 2.2f;
-	//float viewHeight = 2.2f;
-
-	//// aspect 보정 (안 잘리게)
-	//if (viewWidth / viewHeight > aspect)
-	//{
-	//	viewHeight = viewWidth / aspect;
-	//}
-	//else
-	//{
-	//	viewWidth = viewHeight * aspect;
-	//}
-
-	//// 화면 여유
-	//float marginXY = 1.05f;
-	//viewWidth *= marginXY;
-	//viewHeight *= marginXY;
-
-	//// near / far
-	//float halfZ = 0.75f;
-	//float d = 3.0f;
-	//float marginZ = 0.05f;
-
-	//float nearZ = max(0.001f, d - halfZ - marginZ);
-	//float farZ = d + halfZ + marginZ;
-
-	//// Projection
-	//projMat = XMMatrixOrthographicLH(
-	//	viewWidth,
-	//	viewHeight,
-	//	nearZ,
-	//	farZ
-	//);
-
-	//invViewMat = XMMatrixInverse(nullptr, viewMat);
-	//invProjMat = XMMatrixInverse(nullptr, projMat);
-
-
-
-
 	////beginScene();
 	////render();
 	RenderAllQuads();
 	////RenderVolumeView();
-
-
-
-	//RenderMesh(m_pDeviceContext);
 
 	endScene();
 }
@@ -1121,12 +947,12 @@ void QDirect3D11Widget::PrintMatrix(const XMMATRIX& mat)
 
 void QDirect3D11Widget::CreateTexture3D()
 {
-	const UINT w= fileReader->m_width ;
-	const UINT h=fileReader->m_height ;
-	const UINT d= fileReader->m_depth ;
+	const UINT w = fileReader->m_width;
+	const UINT h = fileReader->m_height;
+	const UINT d = fileReader->m_depth;
 
 	// 0) 크기 검증
-	if (0==w  ||0== h  ||0== d ) {
+	if (0 == w || 0 == h || 0 == d) {
 		OutputDebugStringA(" Volume size is zero\n");
 		return;
 	}
@@ -1139,15 +965,10 @@ void QDirect3D11Widget::CreateTexture3D()
 	float windowMaxHU{ windowCenter + windowWidth / 2.0f };  // +1500
 
 
-	// 1) 정규화 (HU -> 0~65535)  ※ 기본 HU 범위 예시: -1000 ~ 3000
-	//   C2572 오류(기본 인수 재정의)는 선언부(.h)에만 default 인수 두고
-	//   정의부(.cpp)에서는 default 제거하세요.
-	//fileReader->normalizedU16Data.resize(size_t(w) * h * d);
-//	fileReader->floatData.resize(size_t(w) * h * d);
+	// 1) 정규화 (HU -> 0~65535)  기본 HU 범위 예시: -1000 ~ 3000
 
 	const bool ok = fileReader->NormalizeVolumeFloat(
 		fileReader->m_volumeData,
-
 		fileReader->m_rescaleSlope,
 		fileReader->m_rescaleIntercept,
 		windowMinHU, windowMaxHU
@@ -1173,7 +994,7 @@ void QDirect3D11Widget::CreateTexture3D()
 	td.Height = h;
 	td.Depth = d;
 	td.MipLevels = 1;
-	// ✔ 권장: R16_FLOAT (샘플링/필터링/호환성 안전)
+	//  권장: R16_FLOAT (샘플링/필터링/호환성 안전)
 	//   R16_UNORM도 가능하지만 드라이버/샘플링측 이슈 줄이려면 FLOAT이 편합니다.
 	td.Format = DXGI_FORMAT_R32_FLOAT;
 	td.Usage = D3D11_USAGE_DEFAULT;
@@ -1264,7 +1085,7 @@ void QDirect3D11Widget::CreateTexture3D()
 
 
 
-struct Vtx { XMFLOAT2 pos; XMFLOAT2 uv; }; // NDC용이 아니라 스크린→NDC는 셰이더에서 변환
+struct Vtx { XMFLOAT2 pos; XMFLOAT2 uv; }; // NDC용이 아니라 스크린->NDC는 셰이더에서 변환
 
 
 void QDirect3D11Widget::FullScreenPassSet()
@@ -1320,76 +1141,24 @@ void QDirect3D11Widget::FullScreenPassSet()
 		}
 	}
 
-	//  6️⃣ 상수 버퍼 데이터 채우기
-
-	////cb.View = XMMatrixTranspose(v);
-	////cb.Proj = XMMatrixTranspose(p);
-	//cb.InvView = XMMatrixTranspose(iv);
-	//cb.InvProj = XMMatrixTranspose(ip);
-	////cb.VolumeWorld = XMMatrixTranspose(w);
-	//cb.InvVolumeWorld = XMMatrixTranspose(iw);
-
-
-
-
 	m_pDeviceContext->OMSetDepthStencilState(m_VolumeDepthState.Get(), 0);
-	//m_pDeviceContext->OMSetDepthStencilState(meshRenderer->depthReadState, 0);
 
 	XMStoreFloat4x4(&cb.VolumeWorld, XMMatrixTranspose(worldMat));
 	XMStoreFloat4x4(&cb.InvView, XMMatrixTranspose(invViewMat));
 	XMStoreFloat4x4(&cb.InvProj, XMMatrixTranspose(invProjMat));
-
-	//PrintMatrix(invProjMat);
-
-	 
 	XMStoreFloat4x4(&cb.InvVolumeWorld, XMMatrixTranspose(invWorldMat));
-	
-	XMMATRIX VolumeWorldCorrected = /*AxisFix **/ worldMat;
+
+	XMMATRIX VolumeWorldCorrected = worldMat;
 	XMMATRIX InvVolumeWorldCorrected = XMMatrixInverse(nullptr, VolumeWorldCorrected);
 
 	XMStoreFloat4x4(&cb.InvVolumeWorldCorrected, XMMatrixTranspose(InvVolumeWorldCorrected));
 
-
-
-	//// 디버깅용
-	//XMMATRIX i= XMMatrixMultiply(projMat, invProjMat);
-
-	//XMFLOAT4X4 I;
-	//XMStoreFloat4x4(&I, i);
-	//std::cout <<
-	//	 I._11 << " " << I._12 << " " << I._13 << " " << I._14 << "\n" <<
-	//	I._21 << " " << I._22 << " " << I._23 << " " << I._24 << "\n" <<
-	//	I._31 << " " << I._32 << " " << I._33 << " " << I._34 << "\n" <<
-	//	I._41 << " " << I._42 << " " << I._43 << " " << I._44 << "\n\n";
-
-
-
-
-	////  실제 카메라 위치 사용
-	//cb.CameraPosWS = XMFLOAT3(
-	//	XMVectorGetX(eye),
-	//	XMVectorGetY(up),
-	//	XMVectorGetZ(at)
-	//);
-
 	XMStoreFloat4x4(&cb.View, XMMatrixTranspose(viewMat));
 	XMStoreFloat4x4(&cb.Projection, XMMatrixTranspose(projMat));
-
-
-	//cout << "projMat" << endl;
-	//PrintMatrix(projMat);
-
 
 	cb.CameraPosAndAlpha.x = XMVectorGetX(eye);
 	cb.CameraPosAndAlpha.y = XMVectorGetY(eye);
 	cb.CameraPosAndAlpha.z = XMVectorGetZ(eye);
-
-
-	////  권장값
-	//cb.MaxSteps = 256;  // 또는 128~512 사이
-	////cb.MaxSteps =1536;  // 또는 128~512 사이
-
-	//cb.Voxel = XMFLOAT3(fileReader->m_width, fileReader->m_height, fileReader->m_depth);
 
 	cb.VoxelAndMaxSteps.x = fileReader->m_width;
 	cb.VoxelAndMaxSteps.y = fileReader->m_height;
@@ -1415,12 +1184,6 @@ void QDirect3D11Widget::FullScreenPassSet()
 	m_pDeviceContext->Unmap(cbRay.Get(), 0);
 
 
-
-
-
-
-
-
 	DebugCB debugCB{};
 	debugCB.ViewSize = DirectX::XMFLOAT2(width(), height());
 	debugCB.pad = DirectX::XMFLOAT2(0.f, 0.f);
@@ -1434,9 +1197,7 @@ void QDirect3D11Widget::FullScreenPassSet()
 	m_pDeviceContext->PSSetConstantBuffers(1, 1, cbDebug.GetAddressOf());
 
 
-
-
-	//  7️⃣ 파이프라인 세팅
+	//  7️ 파이프라인 세팅
 	UINT stride = sizeof(Vtx);
 	UINT offset = 0;
 	ID3D11Buffer* vb[] = { m_quadVB.Get() };
@@ -1453,7 +1214,7 @@ void QDirect3D11Widget::FullScreenPassSet()
 	m_pDeviceContext->PSSetConstantBuffers(0, 1, cbs);
 
 
-	// ⭐ 텍스처 바인딩
+	//  텍스처 바인딩
 	ID3D11ShaderResourceView* srvs[5] = {
 		 m_volumeSRV.Get(),                          // t0
 		m_transferFunction->GetSRV()   ,       // t1
@@ -1463,19 +1224,9 @@ void QDirect3D11Widget::FullScreenPassSet()
 	};
 	m_pDeviceContext->PSSetShaderResources(0, 5, srvs);
 
-	////  바인딩 직후 확인
-	//qDebug() << "SceneDepth SRV:" << (m_depthSRV ? "OK" : "NULL");
-
-	//// SceneDepth 텍스처가 실제로 데이터를 가지고 있는지 확인
-	//D3D11_TEXTURE2D_DESC desc;
 
 
-	//m_depthTexture->GetDesc(&desc);
-	//qDebug() << "SceneDepth format:" << desc.Format;
-	//qDebug() << "SceneDepth size:" << desc.Width << "x" << desc.Height;
-
-
-	// ⭐ Sampler 바인딩
+	//  Sampler 바인딩
 	ID3D11SamplerState* samplers[2] = {
 		m_volumeSampler.Get(),    // s0
 		m_tfSampler         // s1
@@ -1483,7 +1234,7 @@ void QDirect3D11Widget::FullScreenPassSet()
 	m_pDeviceContext->PSSetSamplers(0, 2, samplers);
 
 
-	//  8️⃣ 드로우
+	//  8️ 드로우
 	m_pDeviceContext->Draw(4, 0);
 }
 
@@ -1492,70 +1243,13 @@ void QDirect3D11Widget::FullScreenPassSet()
 
 void QDirect3D11Widget::UpdateVolumeMatrix()
 {
-	//// 1. 볼륨을 원점 중심으로
-	//XMMATRIX translation = XMMatrixTranslation(0, 0, 0);
-
-	// ✅ 쿼터니언 → 행렬
+	//  쿼터니언 → 행렬
 	userRotation = XMMatrixRotationQuaternion(m_rotation);
 
-	//// 4. 최종 행렬
-	//XMMATRIX volumeWorld = s * rotY * rotX * translation;
-
 	XMMATRIX volumeWorld = userRotation * initialWorld;
-
-	//volumeWorld *= XMMatrixRotationX(-XM_PIDIV2);
-
-	//CB cb{};
 	worldMat = XMMatrixTranspose(volumeWorld);
 
-	//meshRenderer->ExtractAxes(&worldMat, &meshRenderer->meshWorldMat);
-
 	invWorldMat = XMMatrixTranspose(XMMatrixInverse(nullptr, volumeWorld));
-
-
-	//XMVECTOR s, r, t;
-	//XMMatrixDecompose(&s, &r, &t, worldMat);
-	//if (!XMMatrixIsIdentity(userRotation)) {
-	//	qDebug() << "after rotate World scale:"
-	//		<< XMVectorGetX(s)
-	//		<< XMVectorGetY(s)
-	//		<< XMVectorGetZ(s);
-
-	//	qDebug() << "after rotate World translation:"
-	//		<< XMVectorGetX(t)
-	//		<< XMVectorGetY(t)
-	//		<< XMVectorGetZ(t);
-	//}
-
-
-	//XMMATRIX W = userRotation; // VolumeWorld
-	//XMVECTOR xAxis = XMVector3TransformNormal(XMVectorSet(1, 0, 0, 0), W);
-	//XMVECTOR yAxis = XMVector3TransformNormal(XMVectorSet(0, 1, 0, 0), W);
-	//XMVECTOR zAxis = XMVector3TransformNormal(XMVectorSet(0, 0, 1, 0), W);
-
-	//qDebug() << "Vol X axis in world:"
-	//	<< XMVectorGetX(xAxis) << XMVectorGetY(xAxis) << XMVectorGetZ(xAxis);
-
-	//qDebug() << "Vol Y axis in world:"
-	//	<< XMVectorGetX(yAxis) << XMVectorGetY(yAxis) << XMVectorGetZ(yAxis);
-
-	//qDebug() << "Vol Z axis in world:"
-	//	<< XMVectorGetX(zAxis) << XMVectorGetY(zAxis) << XMVectorGetZ(zAxis);
-
-
-
-
-	//XMMATRIX meshWorld = userRotation * meshRenderer->initialMeshWorld/**rotx*/;
-	////XMMATRIX volumeWorld = scale * userRotation/**rotx*/;
-	////XMMATRIX volumeWorld = userRotation/**rotx*/;
-
-
-	//
-	//meshRenderer->cbM.WVP = XMMatrixTranspose(meshWorld * viewMat * projMat);
-	//meshRenderer->cbM.World = XMMatrixTranspose(meshWorld);
-	//meshRenderer->cbM.WorldView = XMMatrixTranspose(meshWorld * viewMat);
-
-
 }
 //======================================================================================
 
@@ -1575,7 +1269,7 @@ bool QDirect3D11Widget::LoadMeshFromPLY(const std::string& filename, ID3D11Devic
 	//centeredVertices.reserve(vertices.size());
 
 
-	// ✅ 메쉬 범위 계산
+	//  메쉬 범위 계산
 	if (vertices.size() > 0) {
 		float minX = FLT_MAX, maxX = -FLT_MAX;
 		float minY = FLT_MAX, maxY = -FLT_MAX;
@@ -1627,7 +1321,7 @@ bool QDirect3D11Widget::LoadMeshFromPLY(const std::string& filename, ID3D11Devic
 		qDebug() << "Center:" << (minX + maxX) / 2 << (minY + maxY) / 2 << (minZ + maxZ) / 2;
 
 
-		// ✅ 실제 좌표 범위 출력
+		//  실제 좌표 범위 출력
 		qDebug() << "=== PLY Coordinates ===";
 		qDebug() << "X range:" << minX << "to" << maxX << "=" << (maxX - minX);
 		qDebug() << "Y range:" << minY << "to" << maxY << "=" << (maxY - minY);
@@ -1708,7 +1402,7 @@ bool QDirect3D11Widget::LoadMeshTexture(const std::string& filename, ID3D11Devic
 	D3D11_SAMPLER_DESC samplerDesc = {};
 
 	//samplerDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
-	samplerDesc.Filter = D3D11_FILTER_ANISOTROPIC; // ✅ 변경
+	samplerDesc.Filter = D3D11_FILTER_ANISOTROPIC; //  변경
 
 
 	samplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
@@ -1716,7 +1410,7 @@ bool QDirect3D11Widget::LoadMeshTexture(const std::string& filename, ID3D11Devic
 	samplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
 	samplerDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
 
-	samplerDesc.MaxAnisotropy = 16; // ✅ 추가
+	samplerDesc.MaxAnisotropy = 16; //  추가
 	samplerDesc.MinLOD = 0;
 	samplerDesc.MaxLOD = D3D11_FLOAT32_MAX;
 
@@ -1755,24 +1449,6 @@ bool QDirect3D11Widget::LoadMeshTexture(const std::string& filename, ID3D11Devic
 	return true;
 }
 
-//bool QDirect3D11Widget::CreateMeshDepthBuffer()
-//{
-//	D3D11_TEXTURE2D_DESC depthDesc = {};
-//	depthDesc.Width = this->width();
-//	depthDesc.Height = this->height();
-//	depthDesc.MipLevels = 1;
-//	depthDesc.ArraySize = 1;
-//	depthDesc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
-//	depthDesc.SampleDesc.Count = 1;
-//	depthDesc.Usage = D3D11_USAGE_DEFAULT;
-//	depthDesc.BindFlags = D3D11_BIND_DEPTH_STENCIL;
-//
-//	HRESULT hr = m_pDevice->CreateTexture2D(&depthDesc, nullptr, &m_meshDepthTexture);
-//	if (FAILED(hr)) return false;
-//
-//	hr = m_pDevice->CreateDepthStencilView(m_meshDepthTexture, nullptr, &m_meshDepthView);
-//	return SUCCEEDED(hr);
-//}
 
 bool QDirect3D11Widget::InitializeMeshShaders() {
 	HRESULT hr;
@@ -1909,75 +1585,6 @@ bool QDirect3D11Widget::InitializeMeshShaders() {
 		return false;
 	}
 
-	//// ✅ FullscreenVS 추가
-	//ID3DBlob* fullscreenVSBlob = nullptr;
-
-	//hr = D3DCompileFromFile(
-	//	L"FullscreenVS.hlsl",
-	//	nullptr, nullptr, "main", "vs_5_0",
-	//	D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION,
-	//	0, &fullscreenVSBlob, &errorBlob
-	//);
-
-	//if (FAILED(hr)) {
-	//	if (errorBlob) {
-	//		qDebug() << " FullscreenVS compile error:" << (char*)errorBlob->GetBufferPointer();
-	//		errorBlob->Release();
-	//	}
-	//	qDebug() << " Failed to compile FullscreenVS.hlsl";
-	//	return false;
-	//}
-
-	//hr = m_pDevice->CreateVertexShader(
-	//	fullscreenVSBlob->GetBufferPointer(),
-	//	fullscreenVSBlob->GetBufferSize(),
-	//	nullptr, &m_fullscreenVS
-	//);
-	//fullscreenVSBlob->Release();
-
-	//if (FAILED(hr)) {
-	//	qDebug() << " Failed to create FullscreenVS";
-	//	return false;
-	//}
-
-	//qDebug() << " FullscreenVS created successfully";
-
-
-
-
-
-
-
-
-
-
-
-	//// ===== ComposePS ===== ( 주석 풀기!)
-	//ID3DBlob* composePSBlob = nullptr;
-	//hr = D3DCompileFromFile(
-	//	L"ComposePS.hlsl", nullptr, nullptr, "main", "ps_5_0",
-	//	D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION,
-	//	0, &composePSBlob, &errorBlob
-	//);
-	//if (FAILED(hr)) {
-	//	if (errorBlob) {
-	//		qDebug() << " ComposePS compile error:" << (char*)errorBlob->GetBufferPointer();
-	//		errorBlob->Release();
-	//	}
-	//	return false;
-	//}
-
-	//hr = m_pDevice->CreatePixelShader(
-	//	composePSBlob->GetBufferPointer(),
-	//	composePSBlob->GetBufferSize(),
-	//	nullptr, &m_composePS
-	//);
-	//composePSBlob->Release();
-	//if (FAILED(hr)) {
-	//	qDebug() << " Failed to create ComposePS";
-	//	return false;
-	//}
-	//qDebug() << " ComposePS created";
 
 	qDebug() << " All mesh shaders initialized successfully";
 	return true;
@@ -2000,37 +1607,6 @@ bool QDirect3D11Widget::CreateMeshConstantBuffer() {
 	return true;
 }
 
-//bool QDirect3D11Widget::CreateMeshDepthState()
-//{
-//	//D3D11_DEPTH_STENCIL_DESC meshDepthDesc = {};
-//	//meshDepthDesc.DepthEnable = TRUE;
-//	//meshDepthDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ZERO; // ✅ 핵심!
-//	//meshDepthDesc.DepthFunc = D3D11_COMPARISON_LESS;
-//	//meshDepthDesc.StencilEnable = FALSE;
-//
-//	//HRESULT hr = m_pDevice->CreateDepthStencilState(&meshDepthDesc, &m_meshDepthState);
-//	//if (FAILED(hr)) {
-//	//	qDebug() << "Failed to create mesh depth stencil state";
-//	//	return false;
-//	//}
-//
-//	//return true;
-//
-//
-//	D3D11_DEPTH_STENCIL_DESC meshDepthDesc = {};
-//	meshDepthDesc.DepthEnable = TRUE;
-//	meshDepthDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ALL; // ✅ ALL로 변경!
-//	meshDepthDesc.DepthFunc = D3D11_COMPARISON_LESS;
-////	meshDepthDesc.DepthFunc = D3D11_COMPARISON_LESS_EQUAL; // ✅ LESS_EQUAL로 변경
-//	meshDepthDesc.StencilEnable = FALSE;
-//
-//	HRESULT hr = m_pDevice->CreateDepthStencilState(&meshDepthDesc, &m_meshDepthState);
-//	if (FAILED(hr)) {
-//		qDebug() << "Failed to create mesh depth stencil state";
-//		return false;
-//	}
-//	return true;
-//}
 
 
 bool QDirect3D11Widget::TestSimpleTriangle() {
@@ -2285,9 +1861,7 @@ void QDirect3D11Widget::RenderMeshWithDepthPeeling(ID3D11DeviceContext* context)
 			XMMatrixRotationX(XM_PI) *
 			worldMat * viewMat * projMat
 		);
-		/*	cb.peelLayer = layer;
-			cb.viewportWidth = this->width() / 2;
-			cb.viewportWidth=this->height() / 2;*/
+
 
 
 		qDebug() << "Layer" << layer << "- Setting peelLayer to" << layer;  //  로그 추가!
@@ -2341,36 +1915,6 @@ void QDirect3D11Widget::CreateDepthStencil()  // 또는 initializeGL 안에서
 	}
 
 
-	//D3D11_VIEWPORT vp{};
-	//vp.TopLeftX = 0;
-	//vp.TopLeftY = 0;
-	//vp.Width = width() / 2;   // width()/2
-	//vp.Height = height() / 2;  // height()/2
-	//vp.MinDepth = 0.0f;
-	//vp.MaxDepth = 1.0f;
-
-	//m_pDeviceContext->RSSetViewports(1, &vp);
-
-	//// ========== Depth Texture 생성 ==========
-	//D3D11_TEXTURE2D_DESC depthDesc = {};
-	//depthDesc.Width = width();
-	//depthDesc.Height = height();
-	//depthDesc.MipLevels = 1;
-	//depthDesc.ArraySize = 1;
-	//depthDesc.Format = DXGI_FORMAT_R32_TYPELESS;  //  변경!
-	//depthDesc.SampleDesc.Count = 1;
-	//depthDesc.SampleDesc.Quality = 0;
-	//depthDesc.Usage = D3D11_USAGE_DEFAULT;
-	//depthDesc.BindFlags = D3D11_BIND_DEPTH_STENCIL | D3D11_BIND_SHADER_RESOURCE;  //  추가!
-	//depthDesc.CPUAccessFlags = 0;
-	//depthDesc.MiscFlags = 0;
-
-	//HRESULT hr = m_pDevice->CreateTexture2D(&depthDesc, nullptr, &m_depthTexture);
-	//if (FAILED(hr)) {
-	//	qDebug() << "Failed to create depth texture";
-	//	return;
-	//}
-
 
 
 	// ========== Mesh Depth Texture 생성 ==========
@@ -2387,7 +1931,7 @@ void QDirect3D11Widget::CreateDepthStencil()  // 또는 initializeGL 안에서
 	depthDescMesh.CPUAccessFlags = 0;
 	depthDescMesh.MiscFlags = 0;
 
-	
+
 
 	HRESULT hr = m_pDevice->CreateTexture2D(&depthDescMesh, nullptr, &meshRenderer->sceneDepthTexture);
 	if (FAILED(hr)) {
@@ -2424,103 +1968,6 @@ void QDirect3D11Widget::CreateDepthStencil()  // 또는 initializeGL 안에서
 	qDebug() << "Depth buffer created with SRV support";
 }
 
-
-
-//void QDirect3D11Widget::ComposePeeledLayers(ID3D11DeviceContext* context)
-//{
-//	qDebug() << "=== ComposePeeledLayers START ===";
-//
-//
-//	// ✅ 셰이더 체크
-//	if (!m_fullscreenVS) {
-//		qDebug() << " m_fullscreenVS is null!";
-//		return;
-//	}
-//	if (!m_composePS) {
-//		qDebug() << " m_composePS is null!";
-//		return;
-//	}
-//	qDebug() << " Compose shaders valid";
-//
-//	//  SRV 체크
-//	for (int i{}; i < MAX_DEPTH_PEELS; ++i) {
-//		if (!m_colorPeelSRVs[i]) {
-//			qDebug() << " colorPeelSRV" << i << "is null!";
-//			return;
-//		}
-//	}
-//	qDebug() << " All colorPeelSRVs valid";
-//
-//
-//
-//	//  1. Volume 뷰포트 설정
-//	D3D11_VIEWPORT vp = CreateViewport(0);
-//	context->RSSetViewports(1, &vp);
-//
-//	//  2. 원래 렌더 타겟으로 (볼륨 위에 합성)
-//	context->OMSetRenderTargets(1, &m_pSwapChainRTV, nullptr);
-//
-//	//  3. 풀스크린 셰이더 설정
-//	context->VSSetShader(m_fullscreenVS, nullptr, 0);
-//	context->PSSetShader(m_composePS, nullptr, 0);
-//
-//	//  4. 블렌딩 설정 (기존 화면 위에 합성)
-//	D3D11_BLEND_DESC blendDesc = {};
-//	blendDesc.RenderTarget[0].BlendEnable = TRUE;
-//	blendDesc.RenderTarget[0].SrcBlend = D3D11_BLEND_SRC_ALPHA;
-//	blendDesc.RenderTarget[0].DestBlend = D3D11_BLEND_INV_SRC_ALPHA;
-//	blendDesc.RenderTarget[0].BlendOp = D3D11_BLEND_OP_ADD;
-//	blendDesc.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
-//
-//	ID3D11BlendState* blendState = nullptr;
-//	m_pDevice->CreateBlendState(&blendDesc, &blendState);
-//	context->OMSetBlendState(blendState, nullptr, 0xffffffff);
-//
-//	//  5. Rasterizer 설정
-//	D3D11_RASTERIZER_DESC rastDesc = {};
-//	rastDesc.FillMode = D3D11_FILL_SOLID;
-//	//rastDesc.CullMode = D3D11_CULL_NONE;
-//	rastDesc.CullMode = D3D11_CULL_BACK;  
-//	rastDesc.FrontCounterClockwise = FALSE;
-//	rastDesc.DepthBias = 0;
-//	rastDesc.DepthBiasClamp = 0.0f;
-//	rastDesc.SlopeScaledDepthBias = 0.0f;
-//
-//	ID3D11RasterizerState* rastState = nullptr;
-//	m_pDevice->CreateRasterizerState(&rastDesc, &rastState);
-//	context->RSSetState(rastState);
-//
-//	//  6. Depth test 끄기
-//	D3D11_DEPTH_STENCIL_DESC depthDesc = {};
-//	depthDesc.DepthEnable = FALSE;
-//	ID3D11DepthStencilState* depthState = nullptr;
-//	m_pDevice->CreateDepthStencilState(&depthDesc, &depthState);
-//	context->OMSetDepthStencilState(depthState, 1);
-//
-//	//  7. 뒤에서부터 앞으로 레이어 합성
-//	for (int i{ MAX_DEPTH_PEELS - 1 }; i >= 0; --i)
-//	{
-//		qDebug() << "Composing layer" << i;  
-//
-//		// 현재 레이어 텍스처 바인딩
-//		context->PSSetShaderResources(0, 1, &m_colorPeelSRVs[i]);
-//		context->PSSetSamplers(0, 1, &m_MeshSamplerState);
-//
-//		// 풀스크린 삼각형 그리기
-//		context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-//		context->IASetInputLayout(nullptr);
-//		context->Draw(3, 0);
-//
-//		// 언바인딩
-//		ID3D11ShaderResourceView* nullSRV = nullptr;
-//		context->PSSetShaderResources(0, 1, &nullSRV);
-//	}
-//
-//	// Cleanup
-//	if (blendState) blendState->Release();
-//	if (rastState) rastState->Release();
-//	if (depthState) depthState->Release();
-//}
 
 
 
@@ -3078,7 +2525,7 @@ void QDirect3D11Widget::DebugSceneDepth()
 		{
 			float val{ data[y * pitch + x] };
 
-			if (0.0f!=val )
+			if (0.0f != val)
 			{
 				++nonZeroCount;
 				minVal = min(minVal, val);
@@ -3091,7 +2538,7 @@ void QDirect3D11Widget::DebugSceneDepth()
 	qDebug() << "Non-zero pixels:" << nonZeroCount;
 
 	//0127
-	if (0<nonZeroCount)
+	if (0 < nonZeroCount)
 	{
 		qDebug() << "Min meshViewZ:" << minVal << "mm";
 		qDebug() << "Max meshViewZ:" << maxVal << "mm";
@@ -3179,7 +2626,7 @@ float QDirect3D11Widget::DebugDeltaZTex()  // ✅ 이름 변경
 	//qDebug() << "[DEBUG] Starting statistics calculation...";
 
 
-	// ✅ 통계 추가
+	//  통계 추가
 	int nonZeroCount{};
 	int negativeCount{};
 	int positiveCount{};
@@ -3193,15 +2640,15 @@ float QDirect3D11Widget::DebugDeltaZTex()  // ✅ 이름 변경
 		{
 			float val{ data[y * pitch + x] };
 
-			if (0.0f!=val )
+			if (0.0f != val)
 			{
 				++nonZeroCount;
 
-				if (0.0f>val )
+				if (0.0f > val)
 				{
 					++negativeCount;
 				}
-				else if (0.0f<val )
+				else if (0.0f < val)
 				{
 					++positiveCount;
 					sum += val;
@@ -3212,27 +2659,27 @@ float QDirect3D11Widget::DebugDeltaZTex()  // ✅ 이름 변경
 		}
 	}
 
-	//qDebug() << "=== DeltaZ Texture ===";  // ✅ 메시지 변경
+	//qDebug() << "=== DeltaZ Texture ===";  //  메시지 변경
 	//qDebug() << "Non-zero pixels:" << nonZeroCount;
 	//qDebug() << "Positive (deltaZ):" << positiveCount;
 	//qDebug() << "Negative (-1):" << negativeCount;
 	//qDebug() << "Background (0):" << (desc.Width * desc.Height - nonZeroCount);
 
-	if (0<positiveCount )
+	if (0 < positiveCount)
 	{
 		avgDelta = sum / positiveCount;
 
-	/*	qDebug() << "---";
-		qDebug() << "Min ΔZ:" << minVal << "mm";
-		qDebug() << "Max ΔZ:" << maxVal << "mm";
-		qDebug() << "Avg ΔZ:" << avgDelta << "mm";
-		qDebug() << "---";*/
+		/*	qDebug() << "---";
+			qDebug() << "Min ΔZ:" << minVal << "mm";
+			qDebug() << "Max ΔZ:" << maxVal << "mm";
+			qDebug() << "Avg ΔZ:" << avgDelta << "mm";
+			qDebug() << "---";*/
 
-		if (5.0f>avgDelta )
+		if (5.0f > avgDelta)
 			qDebug() << "Alignment: EXCELLENT";
-		else if (20.0f>avgDelta )
+		else if (20.0f > avgDelta)
 			qDebug() << "Alignment: GOOD";
-		else if (50.0f>avgDelta )
+		else if (50.0f > avgDelta)
 			qDebug() << "Alignment: MODERATE";
 		else
 			qDebug() << "Alignment: POOR";
@@ -3325,7 +2772,7 @@ ScaleOptimizationStats QDirect3D11Widget::DebugDeltaZTexFull()
 		{
 			float delta{ row[x] };
 			// 유효한 값만 수집
-			if (0.0f<delta  && 500.f>delta )
+			if (0.0f<delta  && 500.f>delta)
 			{
 				//cout << delta << endl;
 				validDeltas.push_back(delta);
@@ -3381,21 +2828,21 @@ ScaleOptimizationStats QDirect3D11Widget::DebugDeltaZTexFull()
 
 		장점 : 유연함, 분포 왜곡 최소
 
-		단점 : 데이터 자체가 매우 좁거나 극단값이 많으면 범위가 넓어짐 
+		단점 : 데이터 자체가 매우 좁거나 극단값이 많으면 범위가 넓어짐
 		→ 일부 극단치 남을 수 있음*/
 
-	//IQR 방식의 기원
-	//통계학에서 오래전부터 사용된 분포 기반 이상치(outlier) 판단 기법
-	
-	//신뢰성
-	//데이터 분포에 강건함(robust)
-	//평균, 표준편차 기반 이상치 판단보다 극단치에 민감하지 않음
-	//데이터가 정규분포가 아니어도 사용 가능
-	//학계, 금융, 공학, 머신러닝 등 다양한 분야에서 outlier 제거 기준으로
-	//광범위하게 사용됨
+		//IQR 방식의 기원
+		//통계학에서 오래전부터 사용된 분포 기반 이상치(outlier) 판단 기법
 
-	//강점 : 극단치에 민감하지 않고 데이터 분포를 잘 반영
-	//단점 : 데이터가 매우 치우쳐 있으면 일부 합리적 값까지 제거될 수 있음
+		//신뢰성
+		//데이터 분포에 강건함(robust)
+		//평균, 표준편차 기반 이상치 판단보다 극단치에 민감하지 않음
+		//데이터가 정규분포가 아니어도 사용 가능
+		//학계, 금융, 공학, 머신러닝 등 다양한 분야에서 outlier 제거 기준으로
+		//광범위하게 사용됨
+
+		//강점 : 극단치에 민감하지 않고 데이터 분포를 잘 반영
+		//단점 : 데이터가 매우 치우쳐 있으면 일부 합리적 값까지 제거될 수 있음
 
 	float Q1{ sortedDeltas[n / 4] };
 	float Q3{ sortedDeltas[n * 3 / 4] };
@@ -3422,8 +2869,8 @@ ScaleOptimizationStats QDirect3D11Widget::DebugDeltaZTexFull()
 	//outlier 필터링 루프
 	for (float val : sortedDeltas)
 	{
-		if (val >= lowerBound && val <= upperBound && val <= hardLimit)  
-		//if (true)
+		if (val >= lowerBound && val <= upperBound && val <= hardLimit)
+			//if (true)
 			filteredDeltas.push_back(val);
 		else
 			++outlierCount;
@@ -3490,8 +2937,8 @@ ScaleOptimizationStats QDirect3D11Widget::DebugDeltaZTexFull()
 	// 2. 중앙값 (Median)
 	// -----------------------------
 	size_t nFiltered = filteredDeltas.size();
-	if (0==nFiltered % 2 )
-		stats.medianDelta = (filteredDeltas[nFiltered / 2 - 1] 
+	if (0 == nFiltered % 2)
+		stats.medianDelta = (filteredDeltas[nFiltered / 2 - 1]
 			+ filteredDeltas[nFiltered / 2]) / 2.0f;
 	else
 		stats.medianDelta = filteredDeltas[nFiltered / 2];
@@ -3560,7 +3007,7 @@ float QDirect3D11Widget::FindOptimalScale()
 			m_MeshSamplerState, m_pDevice, m_meshVertexCount,
 			maxMesh, maxPhysicalVol,
 			physicalWidth, physicalHeight, physicalDepth,
-			overallSize, userRotation, viewMat, projMat, width(), height()
+			userRotation, viewMat, projMat, width(), height()
 		);
 		RenderVolumeView();
 		m_pDeviceContext->Flush();
@@ -3626,7 +3073,7 @@ float QDirect3D11Widget::FindOptimalScale()
 			m_MeshSamplerState, m_pDevice, m_meshVertexCount,
 			maxMesh, maxPhysicalVol,
 			physicalWidth, physicalHeight, physicalDepth,
-			overallSize, userRotation, viewMat, projMat, width(), height()
+			userRotation, viewMat, projMat, width(), height()
 		);
 		RenderVolumeView();
 		m_pDeviceContext->Flush();
@@ -3722,7 +3169,7 @@ void QDirect3D11Widget::DebugSceneDepthDirect()
 		for (int x{}; x < (int)desc.Width; ++x)
 		{
 			float val{ data[y * pitch + x] };
-			if (0.0f!=val )
+			if (0.0f != val)
 			{
 				++nonZero;
 				minVal = min(minVal, val);
@@ -3735,7 +3182,7 @@ void QDirect3D11Widget::DebugSceneDepthDirect()
 	qDebug() << "Texture size:" << desc.Width << "x" << desc.Height;
 	qDebug() << "Non-zero pixels:" << nonZero;
 
-	if (0<nonZero )
+	if (0 < nonZero)
 	{
 		qDebug() << "Min:" << minVal;
 		qDebug() << "Max:" << maxVal;
@@ -3815,7 +3262,7 @@ void QDirect3D11Widget::ProcessDeltaZAndUpdateConstantBuffer(
 
 	if (FAILED(hr))
 	{
-		qDebug() << "ERROR: Map failed!            "  << hr;
+		qDebug() << "ERROR: Map failed!            " << hr;
 		return;
 	}
 
@@ -3842,41 +3289,7 @@ void QDirect3D11Widget::ProcessDeltaZAndUpdateConstantBuffer(
 		}
 	}
 
-	//qDebug() << "Total non-zero:" << totalNonZero;
-	//qDebug() << "Total positive:" << totalPositive;
-	//qDebug() << "Total negative:" << totalNegative;
 
-
-
-	////  5. 먼저 디버그 출력
-	//qDebug() << "=== DeltaZTex Content (first 100 pixels) ===";
-	//int nonZeroCount = 0;
-	//for (int i = 0; i < 100; ++i)
-	//{
-	//	float val = data[i];
-	//	if (val != 0.0f)
-	//	{
-	//		qDebug() << "Pixel" << i << ":" << val;
-	//		nonZeroCount++;
-	//	}
-	//}
-	//qDebug() << "Non-zero pixels in first 100:" << nonZeroCount;
-
-	//// 중앙 영역 확인
-	//int centerX = desc.Width / 2;
-	//int centerY = desc.Height / 2;
-
-	//qDebug() << "=== Center Region ===";
-	//for (int y = -5; y < 5; ++y)
-	//{
-	//	QString row;
-	//	for (int x = -5; x < 5; ++x)
-	//	{
-	//		float val = data[(centerY + y) * pitch + (centerX + x)];
-	//		row += QString::number(val, 'f', 2) + " ";
-	//	}
-	//	qDebug() << row;
-	//}
 
 	//  6. 통계 계산 (같은 data 포인터 사용)
 	float sum{ 0.0f };
@@ -3903,15 +3316,15 @@ void QDirect3D11Widget::ProcessDeltaZAndUpdateConstantBuffer(
 		{
 			float delta{ data[y * pitch + x] };
 
-			if (-1.0f==delta )
+			if (-1.0f == delta)
 			{
 				++volumeOnlyCount;
 			}
-			else if (0.0f==delta )
+			else if (0.0f == delta)
 			{
 				// 배경
 			}
-			else if (0.0f<delta )
+			else if (0.0f < delta)
 			{
 				++overlapCount;
 				sum += delta;
@@ -3934,7 +3347,7 @@ void QDirect3D11Widget::ProcessDeltaZAndUpdateConstantBuffer(
 	//qDebug() << "Volume only:" << volumeOnlyCount;
 	//qDebug() << "Background:" << (desc.Width * desc.Height - overlapCount - volumeOnlyCount);
 
-	if (0<validCount)
+	if (0 < validCount)
 	{
 		float avgDelta{ sum / validCount };
 		float variance{ (sumSq / validCount) - (avgDelta * avgDelta) };
@@ -4026,7 +3439,7 @@ void QDirect3D11Widget::ProcessDeltaZAndUpdateConstantBuffer(
 		{
 			float val{ data[y * pitch + x] };
 
-			if (0.0f<val )
+			if (0.0f < val)
 			{
 				minX = min(minX, x);
 				maxX = max(maxX, x);
@@ -4192,16 +3605,16 @@ void QDirect3D11Widget::RenderVolumeView()
 		UINT prevSampleMask = 0xffffffff;
 		m_pDeviceContext->OMGetBlendState(&prevBS, prevBlendFactor, &prevSampleMask);
 
-		////// ✅ (2) 볼륨 렌더링용 상태 설정
+		//////  (2) 볼륨 렌더링용 상태 설정
 		m_pDeviceContext->OMSetDepthStencilState(nullptr, 0);
 
-		// ✅ Depth Test 활성화
+		//  Depth Test 활성화
 	//m_pDeviceContext->OMSetDepthStencilState(m_depthStencilState, 1);
 
 		//m_pDeviceContext->OMSetBlendState(nullptr, nullptr, 0xffffffff);
 
 
-		  // ✅ 새로운: Alpha Blending ON
+		  //  새로운: Alpha Blending ON
 		D3D11_BLEND_DESC blendDesc = {};
 		blendDesc.RenderTarget[0].BlendEnable = TRUE;
 		blendDesc.RenderTarget[0].SrcBlend = D3D11_BLEND_SRC_ALPHA;
@@ -4218,7 +3631,7 @@ void QDirect3D11Widget::RenderVolumeView()
 
 		UpdateVolumeMatrix();
 
-		// ✅ (3) 볼륨 렌더링 수행
+		//  (3) 볼륨 렌더링 수행
 
 		// 1. RTV 설정
 		ID3D11RenderTargetView* rtvs[1] = { m_pSwapChainRTV };
@@ -4251,61 +3664,7 @@ void QDirect3D11Widget::RenderVolumeView()
 		float huMin{ fileReader->volWC - fileReader->volWW / 2.0f };  // -500
 		float huMax{ fileReader->volWC + fileReader->volWW / 2.0f };  // +1500
 
-		//		renderMode,
 
-
-	//	////  7️ 파이프라인 세팅
-	//	//UINT stride = sizeof(Vtx);
-	//	//UINT offset = 0;
-	//	//ID3D11Buffer* vb[] = { m_quadVB.Get() };
-
-	//	//m_pDeviceContext->IASetVertexBuffers(0, 1, vb, &stride, &offset);
-	//	//m_pDeviceContext->IASetInputLayout(layoutQuad);
-
-
-
-
-	/*	void VolumeToTexture::RenderVolumeToTexture(
-			ID3D11DeviceContext* context,
-			ID3D11ShaderResourceView* volumeSRV,
-			ID3D11ShaderResourceView* transferFunctionSRV,
-			ID3D11ShaderResourceView* sceneDepthSRV,
-			const XMMATRIX& invView,
-			const XMMATRIX& invProj,
-			const XMMATRIX& invVolumeWorld,
-			const XMMATRIX& view,
-			const XMMATRIX& projection,
-			const XMFLOAT3& cameraPos,
-			float renderMode,
-			const XMFLOAT3& voxelDim,
-			float maxSteps,
-			float huMin,
-			float huMax
-			,
-			ID3D11VertexShader* vs, ID3D11PixelShader* ps,
-			ID3D11InputLayout* layout, ID3D11Buffer* cb
-			, UINT stride, UINT offset, ID3D11Buffer* m_quadVertexBuffer)*/
-
-
-			//	//m_pDeviceContext->VSSetShader(vsFullscreen, nullptr, 0);
-			//	//m_pDeviceContext->PSSetShader(psRaymarch, nullptr, 0);
-
-
-			//		//  7️ 파이프라인 세팅
-			//	UINT stride = sizeof(Vtx);
-			//	UINT offset = 0;
-			//	ID3D11Buffer* vb[] = { m_quadVB.Get() };
-
-			//	m_pDeviceContext->IASetVertexBuffers(0, 1, vb, &stride, &offset);
-			//	m_pDeviceContext->IASetInputLayout(layoutQuad);
-			//	m_pDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
-
-			//	m_pDeviceContext->VSSetShader(vsFullscreen, nullptr, 0);
-			//	m_pDeviceContext->PSSetShader(psRaymarch, nullptr, 0);
-
-			//	ID3D11Buffer* cbs[] = { cbRay.Get() };
-			//	m_pDeviceContext->VSSetConstantBuffers(0, 1, cbs);
-			//	m_pDeviceContext->PSSetConstantBuffers(0, 1, cbs);
 
 
 		size_t s = sizeof(Vtx);
@@ -4392,28 +3751,6 @@ void QDirect3D11Widget::RenderVolumeView()
 
 void QDirect3D11Widget::InitializeVolumeCamera()
 {
-	//using namespace DirectX;
-
-	//// View 행렬 (카메라 위치 설정)
-	//XMVECTOR eyePos = XMVectorSet(0.0f, 0.0f, -500.0f, 1.0f);  // 카메라 위치
-	//XMVECTOR focusPos = XMVectorSet(0.0f, 0.0f, 0.0f, 1.0f);   // 바라보는 점
-	//XMVECTOR upDir = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);      // 위쪽 방향
-
-	//XMMATRIX view = XMMatrixLookAtLH(eyePos, focusPos, upDir);
-	//XMStoreFloat4x4(&m_volumeViewMatrix, view);
-
-	//// Projection 행렬 (원근 투영)
-	//float aspectRatio = static_cast<float>(width()) / static_cast<float>(height());
-	//XMMATRIX projection = XMMatrixPerspectiveFovLH(
-	//	XM_PIDIV4,      // 45도 시야각
-	//	aspectRatio,
-	//	1.0f,           // Near plane
-	//	1000.0f         // Far plane
-	//);
-	//XMStoreFloat4x4(&m_volumeProjectionMatrix, projection);
-
-
-
 	// 볼륨 월드 행렬에서 실제 스케일 추출
 	XMVECTOR scaleVec, rotQuat, transVec;
 	XMMatrixDecompose(&scaleVec, &rotQuat, &transVec, worldMat);
@@ -4421,18 +3758,6 @@ void QDirect3D11Widget::InitializeVolumeCamera()
 	float sx{ XMVectorGetX(scaleVec) };
 	float sy{ XMVectorGetY(scaleVec) };
 	float sz{ XMVectorGetZ(scaleVec) };
-
-	//printf("Volume world scale = (%f, %f, %f)\n", sx, sy, sz);
-
-
-
-	//eye = XMVectorSet(0.0f, 0.0f, -3.0f, 1.0f);
-
-	////eye = XMVectorSet(0.0f, 0.0f, -300.0f, 1.0f);
-	//at = XMVectorSet(0.0f, 0.0f, 0.0f, 1.0f);
-	//up = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
-
-
 
 
 	eye = XMVectorSet(0, 0, -500.0f, 1);
@@ -4449,26 +3774,10 @@ void QDirect3D11Widget::InitializeVolumeCamera()
 
 	// 화면 여유
 	float marginXY{ 1.05f };
-	
-
-	//float baseViewSize = 1.4f;
-	//float viewWidth = baseViewSize * m_orthoScale;
-	//float viewHeight = baseViewSize * m_orthoScale;
-
-	/*viewWidth *= marginXY;
-	viewHeight *= marginXY;*/
 
 	float viewWidth{ physicalWidth *marginXY };
 	float viewHeight{ physicalHeight *marginXY };
 
-
-
-
-	//// 볼륨 기준 크기 (-0.75 ~ +0.75)
-	///*float viewWidth = 1.5f;
-	//float viewHeight = 1.5f;*/
-	//float viewWidth = 2.2f;
-	//float viewHeight = 2.2f;
 
 	// aspect 보정 (안 잘리게)
 	if (viewWidth / viewHeight > aspect)
@@ -4480,29 +3789,12 @@ void QDirect3D11Widget::InitializeVolumeCamera()
 		viewWidth = viewHeight * aspect;
 	}
 
-	
+
 
 	// near / far
 	float halfZ{ 0.75f };
 	float d{ 3.0f };
 	float marginZ{ 0.05f };
-
-
-	//projMat = XMMatrixPerspectiveFovLH(
-	//	XM_PIDIV4,
-	//	(float)width() / (float)height(),
-	//	0.1f,
-	//	100.0f  // Far plane 증가
-	//);
-
-
-	//projMat = XMMatrixOrthographicLH(
-	//	viewWidth,
-	//	viewHeight,
-	//	nearZ,
-	//	farZ
-	//	//1,2000
-	//);
 
 
 	float halfSize{ 300.0f }; // 여유 포함
@@ -4523,40 +3815,10 @@ void QDirect3D11Widget::InitializeVolumeCamera()
 
 
 
-	//XMMatrixOrthographicLH(
-	//	float ViewWidth,   // 1. 보이는 영역의 가로 크기 (world units)
-	//	float ViewHeight,  // 2. 보이는 영역의 세로 크기 (world units)
-	//	float NearZ,       // 3. Near plane (카메라로부터의 거리)
-	//	float FarZ         // 4. Far plane (카메라로부터의 거리)
-	//);
-
-
-
-	//projMat = XMMatrixOrthographicLH(
-	//	(float)width() / 2.f*initFactor *m_orthoScale,   // width  = 600mm
-	//	(float)width() / 2.f / aspect * initFactor *m_orthoScale,   // height = 600mm
-	//	-1000.0f,          // near
-	//	1000.0f            // far
-	//);
-
-
 	float volumeDepth{ 196.4f };  // Z 크기
 	float cameraDistance{ 500.0f };
 
-	//float nearZ{ cameraDistance - volumeDepth * 0.6f };  // 382mm
-	//float farZ{ cameraDistance + volumeDepth * 0.6f };   // 618mm
-
-
-
-	//projMat = XMMatrixOrthographicLH(
-	//	(float)width() / 2.f*initFactor *m_orthoScale,   // width  = 600mm
-	//	(float)width() / 2.f / aspect * initFactor *m_orthoScale,   // height = 600mm
-	//	nearZ,          // near
-	//	farZ           // far
-	//);
-
-
-		// Near/Far (볼륨을 완전히 포함)
+	// Near/Far (볼륨을 완전히 포함)
 	float depthMargin{ 1.5f };  // 50% 여유
 	float nearZ{ cameraDistance - volumeDepth * depthMargin };  // 205.4mm
 	float farZ{ cameraDistance + volumeDepth * depthMargin };   // 794.6mm
@@ -4577,70 +3839,6 @@ void QDirect3D11Widget::InitializeVolumeCamera()
 	invViewMat = XMMatrixInverse(nullptr, viewMat);
 	invProjMat = XMMatrixInverse(nullptr, projMat);
 }
-
-//void QDirect3D11Widget::InitializeVolumeCamera()
-//{
-//	using namespace DirectX;
-//
-//	// 카메라 위치 (월드 기준)
-//	eye = XMVectorSet(0, 0, -500.0f, 1);
-//	at = XMVectorZero();
-//	up = XMVectorSet(0, 1, 0, 0);
-//
-//	viewMat = XMMatrixLookAtLH(eye, at, up);
-//
-//	// 화면 aspect
-//	float aspect = (float)width() / (float)height();
-//
-//	//// 볼륨 실제 물리 크기 (mm 단위)
-//	//float physicalWidth = 198.8f;
-//	//float physicalHeight = 198.8f;
-//	//float physicalDepth = 196.4f;
-//
-//	// 화면 여유
-//	//float marginXY = 1.05f;
-//
-//
-//	float marginXYFar{ 2.0f };   // far=400mm 맞춤
-//	float marginXYNear{ 0.4f }; // near=80mm 맞춤
-//
-//	float viewWidth = physicalWidth * marginXYFar;
-//	float viewHeight = physicalHeight * marginXYNear;
-//
-//	// aspect 보정
-//	if (viewWidth / viewHeight > aspect)
-//		viewHeight = viewWidth / aspect;
-//	else
-//		viewWidth = viewHeight * aspect;
-//
-//	//// near / far (볼륨 깊이에 맞게 설정)
-//	//float nearZ = 0.1f;                     // 카메라 바로 앞
-//	//float farZ = -(physicalDepth + 50.0f);    // 볼륨 깊이 + 여유
-//
-//
-//	// near / far (볼륨 깊이에 맞게 설정)
-//	float nearZ = 50.f;                     // 카메라 바로 앞
-//	float farZ = 600;    // 볼륨 깊이 + 여유
-//
-//	// 최종 Orthographic Projection 행렬
-//	projMat = XMMatrixOrthographicLH(
-//		viewWidth,
-//		viewHeight,
-//		nearZ,
-//		farZ
-//	);
-//
-//	invViewMat = XMMatrixInverse(nullptr, viewMat);
-//	invProjMat = XMMatrixInverse(nullptr, projMat);
-//
-//	qDebug() << "viewWidth : " << viewWidth;
-//	qDebug() << "viewHeight : " << viewHeight;
-//	qDebug() << "aspect : " << aspect;
-//	qDebug() << "nearZ : " << nearZ;
-//	qDebug() << "farZ : " << farZ;
-//}
-
-
 
 void QDirect3D11Widget::InitializeVolumeShaders()
 {
@@ -4712,7 +3910,7 @@ void QDirect3D11Widget::InitializeVolumeShaders()
 	//  Constant Buffer 생성
 	D3D11_BUFFER_DESC cbDesc = {};
 	cbDesc.Usage = D3D11_USAGE_DEFAULT;
-	cbDesc.ByteWidth = sizeof(VolumeConstants);  // ← 구조체 크기
+	cbDesc.ByteWidth = sizeof(VolumeConstants);  //  구조체 크기
 	cbDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
 	cbDesc.CPUAccessFlags = 0;
 	cbDesc.MiscFlags = 0;
@@ -4783,8 +3981,7 @@ void QDirect3D11Widget::InitializeVolumeShaders()
 		return;
 	}
 
-	//	ID3D11VertexShader*       m_vertexShader, *vsFullscree
-	//ID3D11PixelShader*        m_pixelShader, *psRaymarch;
+
 	hr = m_pDevice->CreateVertexShader(vsRaymarchBlob->GetBufferPointer(),
 		vsRaymarchBlob->GetBufferSize(),
 		nullptr, &vsFullscreen);
@@ -5065,7 +4262,6 @@ D3D11_VIEWPORT QDirect3D11Widget::CreateViewport(int index)
 			break;
 
 		default: // Volume (3D)
-			//dataAspect = 1.0f;
 			dataAspect = (float)(fileReader->m_width) / (float)(fileReader->m_depth);
 			break;
 		}
@@ -5181,7 +4377,6 @@ ViewGeometry QDirect3D11Widget::GetSagittalGeometry() {
 
 	// Origin: 볼륨의 좌측 하단 전방 (left-bottom-front)
 	geom.origin = fileReader->views.origin;
-
 	geom.rowDir = fileReader->views.rowDir;
 	geom.colDir = fileReader->views.colDir;
 
@@ -5614,7 +4809,6 @@ void QDirect3D11Widget::RenderAllQuads()
 					physicalWidth,
 					physicalHeight,
 					physicalDepth,
-					overallSize,
 
 					userRotation, viewMat, projMat, width(), height()
 				);
@@ -5629,13 +4823,12 @@ void QDirect3D11Widget::RenderAllQuads()
 					physicalWidth,
 					physicalHeight,
 					physicalDepth,
-					overallSize,
 
 					userRotation, viewMat, projMat, width(), height()
 				);
 
 
-			
+
 				//DebugSceneDepth();
 
 				//DebugSceneDepthDirect();
@@ -5664,7 +4857,7 @@ void QDirect3D11Widget::RenderAllQuads()
 				//	huMax
 				//);
 
-		
+
 
 				RenderVolumeView();
 
@@ -5681,9 +4874,9 @@ void QDirect3D11Widget::RenderAllQuads()
 
 
 				//DebugDeltaZTex();
-			
 
-				//qDebug() << "[DEBUG] After DebugDeltaZTex";  // ← 이게 출력되나요?
+
+				//qDebug() << "[DEBUG] After DebugDeltaZTex";  //
 				//// ========== 3단계: Mesh 최종 렌더링 (CT 합성) ==========
 				m_pDeviceContext->OMSetRenderTargets(1, &m_pSwapChainRTV, m_pDepthStencilView);
 
@@ -5706,12 +4899,10 @@ void QDirect3D11Widget::RenderAllQuads()
 					m_clipSettingsBuffer,
 					m_meshConstantBuffer,
 					m_meshTexture,      // 얼굴 텍스처
-					ctTexture,          // ⭐ CT 텍스처
+					ctTexture,          //  CT 텍스처
 					m_depthSRV,
 					m_MeshSamplerState,
 
-
-					/*			m_pointClampSampler,*/
 
 					m_pDevice,
 					m_meshVertexCount,
@@ -5720,7 +4911,7 @@ void QDirect3D11Widget::RenderAllQuads()
 					physicalWidth,
 					physicalHeight,
 					physicalDepth,
-					overallSize,
+
 					userRotation,
 					viewMat,
 					projMat,
@@ -5731,15 +4922,8 @@ void QDirect3D11Widget::RenderAllQuads()
 				//qDebug() << "[RENDER] After ProcessDeltaZ";
 
 
-				/*	meshRenderer->RenderMesh(
-						m_pDeviceContext, m_meshVertexBuffer, m_meshVS, m_meshPS, m_meshInputLayout,
-						m_clipSettingsBuffer, m_meshConstantBuffer, m_meshTexture,
-						m_MeshSamplerState, m_pDevice, m_meshVertexCount,
-						maxMesh, maxPhysicalVol, overallSize,
-						worldMat, viewMat, projMat
-					);*/
 
-					// ⭐ SRV unbind
+					//  SRV unbind
 				ID3D11ShaderResourceView* nullSRV = nullptr;
 				m_pDeviceContext->PSSetShaderResources(1, 1, &nullSRV);
 			}
@@ -5749,7 +4933,7 @@ void QDirect3D11Widget::RenderAllQuads()
 				RenderVolumeView();
 
 
-				//// ⭐ 텍스처를 화면에 복사 (Fullscreen Quad)
+				////  텍스처를 화면에 복사 (Fullscreen Quad)
 				//m_volumeToTexture->DrawTextureToScreen(m_pDevice,m_volumeToTexture->m_resultSRV, m_pDeviceContext,
 				//	vsFullscreen, psRaymarch);
 			}
@@ -6063,7 +5247,7 @@ int QDirect3D11Widget::ComputeSliceIndexFromPatientCoord(int viewIndex, XMFLOAT3
 	case 1: // Axial (Z축 기준)
 
 		dz = patientCoord.z - origin.z;
-		if (0>spacing.z )  // Z축 반전되어 있으면
+		if (0 > spacing.z)  // Z축 반전되어 있으면
 			dz = -dz;
 
 		index = round(dz / abs(spacing.z));
@@ -6430,114 +5614,8 @@ void QDirect3D11Widget::InitializeBoundingCube() {
 
 
 
-void QDirect3D11Widget::UpdateSlicePlanePositions() {
-	//if (!fileReader) return;
-
-	//XMFLOAT3 origin = fileReader->views.origin;
-	//XMFLOAT3 spacing = fileReader->views.spacing;
-
-	//////  볼륨과 동일하게 inverse 변환 사용
-	//XMMATRIX volumeRotation = XMMatrixRotationQuaternion(m_rotation);
-	//XMMATRIX volumeWorld = scale * /*roty * rotx **/ volumeRotation;
-	//XMMATRIX invVolumeWorld = XMMatrixInverse(nullptr, volumeWorld);
-
-
-	////  Scout line 평면 크기 조절 (1.5~2.0 정도로 조절)
-	//float planeScale = 1.0f;
-	//XMMATRIX planeScaleMatrix = XMMatrixScaling(planeScale, planeScale, planeScale);
-
-	//{
-	//	// ===== Axial 평면 (XZ 평면) =====
-	////  invVolumeWorld의 역변환을 상쇄하기 위해 미리 볼륨 스케일 곱하기
-	//	//XMMATRIX axialScale = XMMatrixScaling(
-	//	//	scaleX * overallSize * planeScale,  // X축
-	//	//	scaleZ * overallSize * planeScale,  // Z축 (회전 후 Y축이 됨)
-	//	//	1.0f
-	//	//);
-	//	XMMATRIX axialScale = XMMatrixScaling(
-	//		planeScale,
-	//		planeScale,
-	//		1.0f
-	//	);
-
-
-	//	float totalDepth = fileReader->m_height * spacing.y;
-	//	float axialZ = origin.y + fileReader->currentIndex[2] * spacing.y;
-	//	float normalizedZ = -(axialZ - origin.y - totalDepth * 0.5f) / totalDepth;
-	//	//normalizedZ *= 2.2f;
-	//	//normalizedZ *= overallSize;  // 2.2 대신
-	//	normalizedZ *= planeScale;
-
-
-	//	XMMATRIX axialLocal =
-	//		axialScale *  // ✅ 정사각형 대신 비율 적용한 스케일
-	//		XMMatrixRotationX(XM_PIDIV2) *
-	//		XMMatrixTranslation(0.0f, normalizedZ, 0.0f);
-
-	//	//  inverse 변환 적용
-	//	XMMATRIX axialWorld = axialLocal * invVolumeWorld;
-	//	//XMStoreFloat4x4(&m_AxialPlane.worldMatrix, XMMatrixTranspose(axialWorld));
-	//	XMStoreFloat4x4(&m_CoronalPlane.worldMatrix, XMMatrixTranspose(axialWorld));
-	//}
-
-	//{
-	//	// ===== Coronal 평면 (XY 평면) =====
-	//	//XMMATRIX coronalScale = XMMatrixScaling(
-	//	//	scaleX * overallSize * planeScale,  // X축
-	//	//	scaleY * overallSize * planeScale,  // Y축
-	//	//	1.0f
-	//	//);
-	//	XMMATRIX coronalScale = XMMatrixScaling(
-	//		planeScale,
-	//		planeScale,
-	//		1.0f
-	//	);
-
-	//	float totalHeight = fileReader->m_depth * spacing.z;
-	//	float coronalY = origin.z + fileReader->currentIndex[1] * spacing.z;
-	//	float normalizedY = (coronalY - origin.z - totalHeight * 0.5f) / totalHeight;
-	//	//normalizedY *= 2.2f;
-	//	//normalizedY *= overallSize;  // 2.2 대신
-	//	normalizedY *= planeScale;
-
-	//	XMMATRIX coronalLocal = coronalScale * XMMatrixTranslation(0.0f, 0.0f, normalizedY);
-
-	//	XMMATRIX coronalWorld = coronalLocal * invVolumeWorld;
-	//	//XMStoreFloat4x4(&m_CoronalPlane.worldMatrix, XMMatrixTranspose(coronalWorld));
-	//	XMStoreFloat4x4(&m_AxialPlane.worldMatrix, XMMatrixTranspose(coronalWorld));
-	//}
-
-	//{
-	//	// ===== Sagittal 평면 (YZ 평면) =====
-	//	//XMMATRIX sagittalScale = XMMatrixScaling(
-	//	//	scaleY * overallSize * planeScale,  // Y축 (회전 후 X축이 됨)
-	//	//	scaleZ * overallSize * planeScale,  // Z축
-	//	//	1.0f
-	//	//);
-	//	XMMATRIX sagittalScale = XMMatrixScaling(
-	//		planeScale,
-	//		planeScale,
-	//		1.0f
-	//	);
-
-
-
-	//	float totalWidth = fileReader->m_width * spacing.x;
-	//	float sagittalX = origin.x + fileReader->currentIndex[3] * spacing.x;
-	//	float normalizedX = (sagittalX - origin.x - totalWidth * 0.5f) / totalWidth;
-	//	//normalizedX *= -2.2f;
-	//	//normalizedX *= -overallSize;
-	//	normalizedX *= -planeScale;
-
-	//	XMMATRIX sagittalLocal =
-	//		sagittalScale *
-	//		XMMatrixRotationY(XM_PIDIV2) *
-	//		XMMatrixTranslation(normalizedX, 0.0f, 0.0f);
-
-	//	XMMATRIX sagittalWorld = sagittalLocal * invVolumeWorld;
-	//	XMStoreFloat4x4(&m_SagittalPlane.worldMatrix, XMMatrixTranspose(sagittalWorld));
-	//}
-
+void QDirect3D11Widget::UpdateSlicePlanePositions()
+{
 
 	if (!fileReader) return;
 
@@ -6564,7 +5642,7 @@ void QDirect3D11Widget::UpdateSlicePlanePositions() {
 	// 2. World Transform 적용
 	XMMATRIX volumeRotation = XMMatrixRotationQuaternion(m_rotation);
 	XMMATRIX worldTransform =
-		XMMatrixScaling(overallSize, overallSize, overallSize) *
+		/*	XMMatrixScaling(overallSize, overallSize, overallSize) **/
 		roty * rotx * volumeRotation;
 
 	// 3. 변환 후 Bounding Box 계산
@@ -6601,7 +5679,7 @@ void QDirect3D11Widget::UpdateSlicePlanePositions() {
 		//	float axialSize = max(scaleX, scaleY) * overallSize;
 		//	qDebug() << "axialSize :" << axialSize;
 		//
-		//	// ✅ XY 평면의 대각선 (overallSize 제외)
+		//	//  XY 평면의 대각선 (overallSize 제외)
 		//	float diagonalXY = sqrt(scaleX * scaleX + scaleY * scaleY);
 		//
 		//	XMMATRIX axialScale = XMMatrixScaling(diagonalXY, diagonalXY, 1.0f);
@@ -6678,7 +5756,7 @@ void QDirect3D11Widget::UpdateSlicePlanePositions() {
 
 
 		XMMATRIX axialWorld = axialScale *  //  주석 해제! 
-			roty*	XMMatrixTranslation(0.0f, 0.0f, nz * scaleZ * overallSize)
+			roty*	XMMatrixTranslation(0.0f, 0.0f, nz * scaleZ)
 			*XMMatrixTranspose(volumeRotation);
 
 		XMStoreFloat4x4(&m_AxialPlane.worldMatrix, XMMatrixTranspose(axialWorld));
@@ -6697,7 +5775,7 @@ void QDirect3D11Widget::UpdateSlicePlanePositions() {
 
 
 			// Coronal (XZ 평면)
-		float coronalSize{ max(scaleX, scaleZ) * overallSize };
+		float coronalSize{ max(scaleX, scaleZ) };
 
 		XMMATRIX coronalScale = XMMatrixScaling(coronalSize, 1.0f, coronalSize);
 
@@ -6732,7 +5810,7 @@ void QDirect3D11Widget::UpdateSlicePlanePositions() {
 
 
 		// Sagittal (yz 평면)
-		float sagittalSize{ max(scaleY, scaleZ) * overallSize };
+		float sagittalSize{ max(scaleY, scaleZ) };
 
 		XMMATRIX sagittalScale = XMMatrixScaling(sagittalSize, 1.0f, sagittalSize);
 
@@ -6994,13 +6072,7 @@ void QDirect3D11Widget::mouseMoveEvent(QMouseEvent* event)
 		m_pDeviceContext->VSSetConstantBuffers(0, 1, &m_meshConstantBuffer);
 
 		m_lastMousePos = currentPos;
-		/*meshRenderer->RenderMesh(
-			m_pDeviceContext, m_meshVertexBuffer, m_meshVS, m_meshPS, m_meshInputLayout,
-			m_clipSettingsBuffer, m_meshConstantBuffer, m_meshTexture,
-			m_MeshSamplerState, m_pDevice, m_meshVertexCount,
-			maxMesh, maxPhysicalVol, overallSize,
-			worldMat, viewMat, projMat
-		);*/
+
 
 
 		meshRenderer->RenderMeshWithCT(
@@ -7022,7 +6094,7 @@ void QDirect3D11Widget::mouseMoveEvent(QMouseEvent* event)
 			fileReader->m_width,
 			fileReader->m_height,
 			fileReader->m_depth,
-			overallSize,
+
 			worldMat,
 			viewMat,
 			projMat,
@@ -7063,7 +6135,7 @@ void QDirect3D11Widget::mouseDoubleClickEvent(QMouseEvent* event)
 
 void QDirect3D11Widget::mouseReleaseEvent(QMouseEvent* event) {
 
-	if (Qt::LeftButton==event->button() )
+	if (Qt::LeftButton == event->button())
 	{
 		m_isDragging = false;
 		setCursor(Qt::ArrowCursor);
@@ -7230,19 +6302,6 @@ void QDirect3D11Widget::resetEnvironment()
 
 void QDirect3D11Widget::wheelEvent(QWheelEvent* event)
 {
-
-	//int delta = event->angleDelta().y();
-
-	//// 줌
-	//float zoomFactor = delta / 1200.0f;
-	//m_cameraDistance *= (1.0f - zoomFactor);
-	//m_cameraDistance = std::clamp(m_cameraDistance, 1.0f, 10.0f);
-
-	//qDebug() << "Zoom:" << m_cameraDistance;
-
-	//update();
-	//event->accept();
-	//QWidget::wheelEvent(event);
 
 	int delta{ event->angleDelta().y() };
 	float zoomFactor{ delta / 1200.0f };

@@ -8,7 +8,7 @@ struct MeshConstantBuffer
 {
 	DirectX::XMMATRIX WVP;
 	DirectX::XMMATRIX World;
-	DirectX::XMMATRIX WorldView;  // ✅ 추가
+	DirectX::XMMATRIX WorldView;  //  추가
 };
 
 
@@ -16,7 +16,7 @@ struct MeshConstantBufferWithCT
 {
 	XMMATRIX WVP;
 	XMMATRIX View;
-	XMMATRIX World;  // ✅ 추가: View 행렬
+	XMMATRIX World;  //  추가: View 행렬
 	XMFLOAT4 CTBlendParams;  // ⭐ x = strength, yzw = unused
 };
 
@@ -62,39 +62,36 @@ public:
 
 	ID3D11ShaderResourceView* m_faceColorSRV;
 
-	XMMATRIX centerTranslate = XMMatrixTranslation(
-		1,
-		1,
-		1
-	);
 	float centerX;
 	float centerY;
 	float centerZ;
-	// ⭐ 메쉬 셰이더는 여기서 관리
+	//  메쉬 셰이더는 여기서 관리
 	ID3D11VertexShader* m_meshVS;  // FaceMesh_WithCT_VS
 	ID3D11PixelShader* m_meshPS;   // FaceMesh_WithCT_PS
 
 	float meshWidth, meshHeight, meshDepth;
-	//float meshScale{ /*0.006755915f*/ };
 	float meshScale{ 1.f };
 
-	ID3D11Texture2D*	sceneDepthTexture=nullptr;
+	ID3D11Texture2D*	sceneDepthTexture = nullptr;
 
 
 	XMVECTOR rotY, rotX;
 	DirectX::XMMATRIX rotation;
 	XMMATRIX volWorldMat;
+	float faceBlend{ 0.5f };
+
+	DirectX::XMMATRIX initialMeshWorld, meshWorldMat;
+	MeshConstantBufferWithCT cbM;
 public:
-	void CreateTwoPassStates(ID3D11Device* device);
-	//void RenderMeshTwoPass(ID3D11DeviceContext* context);
 	float ComputeHandedness(XMVECTOR X, XMVECTOR Y, XMVECTOR Z);
-	//bool ExtractAxes(XMMATRIX* volWorld, XMMATRIX* meshWorld);
+	void CreateTwoPassStates(ID3D11Device* device);
+
 	bool ExtractAxes(const XMMATRIX* volWorld, const XMMATRIX* meshWorld);
 	void RenderMeshDepth(ID3D11DeviceContext* context, ID3D11Buffer* m_meshVertexBuffer,
-		ID3D11VertexShader* m_meshVS, ID3D11PixelShader* m_meshPS, ID3D11RenderTargetView* sceneDepthRTV ,ID3D11InputLayout* m_meshInputLayout,
+		ID3D11VertexShader* m_meshVS, ID3D11PixelShader* m_meshPS, ID3D11RenderTargetView* sceneDepthRTV, ID3D11InputLayout* m_meshInputLayout,
 		ID3D11Buffer* m_clipSettingsBuffer, ID3D11Buffer* m_meshConstantBuffer, ID3D11Texture2D* m_meshTexture, ID3D11ShaderResourceView* m_meshDepthSRV,
 		ID3D11SamplerState* m_MeshSamplerState, ID3D11Device* m_pDevice, int m_meshVertexCount,
-		float maxMesh, float maxPhysicalVol, float volWidth, float volheight, float volDepth, float overallSize,
+		float maxMesh, float maxPhysicalVol, float volWidth, float volheight, float volDepth,
 		XMMATRIX w, XMMATRIX v, XMMATRIX p, float width, float height);
 
 
@@ -102,24 +99,18 @@ public:
 		ID3D11VertexShader* m_meshVS, ID3D11PixelShader* m_meshPS, ID3D11RenderTargetView* sceneDepthRTV, ID3D11InputLayout* m_meshInputLayout,
 		ID3D11Buffer* m_clipSettingsBuffer, ID3D11Buffer* m_meshConstantBuffer, ID3D11Texture2D* m_meshTexture, ID3D11ShaderResourceView* m_meshDepthSRV,
 		ID3D11SamplerState* m_MeshSamplerState, ID3D11Device* m_pDevice, int m_meshVertexCount,
-		float maxMesh, float maxPhysicalVol, float volWidth, float volheight, float volDepth, float overallSize,
-		XMMATRIX wuserRotMat,XMMATRIX v, XMMATRIX p, float width, float height);
+		float maxMesh, float maxPhysicalVol, float volWidth, float volheight, float volDepth,
+		XMMATRIX wuserRotMat, XMMATRIX v, XMMATRIX p, float width, float height);
 
 
-
-
-
-
-
-	DirectX::XMMATRIX initialMeshWorld, meshWorldMat;
 	void RenderMesh(ID3D11DeviceContext* context, ID3D11Buffer* m_meshVertexBuffer,
 		ID3D11VertexShader* m_meshVS, ID3D11PixelShader* m_meshPS, ID3D11InputLayout* m_meshInputLayout,
 		ID3D11Buffer* m_clipSettingsBuffer, ID3D11Buffer* m_meshConstantBuffer, ID3D11ShaderResourceView* m_meshTexture,
 		ID3D11SamplerState* m_MeshSamplerState, ID3D11Device* m_pDevice, int m_meshVertexCount,
 		float maxMesh, float maxPhysicalVol, float volWidth, float volHeight, float volDepth, float overallSize,
 		XMMATRIX w, XMMATRIX v, XMMATRIX p);
-	MeshConstantBufferWithCT cbM;
-	float faceBlend{ 0.5f };
+
+
 	void MeshRenderer::RenderMeshWithCT(
 		ID3D11DeviceContext* context,
 		ID3D11Buffer* m_meshVertexBuffer,
@@ -129,8 +120,8 @@ public:
 		ID3D11Buffer* m_clipSettingsBuffer,
 		ID3D11Buffer* m_meshConstantBuffer,
 		ID3D11ShaderResourceView* m_meshTexture,      // 얼굴 텍스처
-		ID3D11ShaderResourceView* ctTexture,          // ⭐ CT 텍스처
-		ID3D11ShaderResourceView* 
+		ID3D11ShaderResourceView* ctTexture,          //  CT 텍스처
+		ID3D11ShaderResourceView*
 		,
 		ID3D11SamplerState* m_MeshSamplerState,
 		//ID3D11SamplerState* depthSamplerState,
@@ -139,7 +130,7 @@ public:
 		float maxMesh,
 		float maxPhysicalVol,
 		float volWidth, float volHeight, float volDepth,
-		float overallSize,
+
 		XMMATRIX userRotMat,
 		XMMATRIX v,
 		XMMATRIX p,

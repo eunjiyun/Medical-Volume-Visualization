@@ -22,7 +22,7 @@ void MeshRenderer::CreateTwoPassStates(ID3D11Device* device)
 	hr = device->CreateRasterizerState(&rastDesc, &rastState);
 
 
-	//  디버그 추가!
+	//  디버그 추가
 	if (FAILED(hr)) {
 		std::cout << " Failed to create rasterizer state!" << std::endl;
 	}
@@ -55,12 +55,10 @@ void MeshRenderer::CreateTwoPassStates(ID3D11Device* device)
 
 	//blendDesc.RenderTarget[0].BlendEnable = FALSE;
 	//blendDesc.RenderTarget[0].RenderTargetWriteMask = 0;  // ColorMask 0
-
-
 	//hr=device->CreateBlendState(&blendDesc, &noColorWriteState);
 
 
-	//  디버그 추가!
+	//  디버그 추가
 	if (FAILED(hr)) {
 		std::cout << " Failed to create noColorWriteState!" << std::endl;
 	}
@@ -143,97 +141,38 @@ void MeshRenderer::CreateTwoPassStates(ID3D11Device* device)
 
 
 
-
-
-
 	std::cout << "========== All States Created ==========" << std::endl;
 
-	//// ========== Pass 1: Depth Write State ==========
-	//D3D11_DEPTH_STENCIL_DESC depthDesc = {};
-	//depthDesc.DepthEnable = TRUE;
-	//depthDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ALL;  // ZWrite On
-	//depthDesc.DepthFunc = D3D11_COMPARISON_LESS;
-	//depthDesc.StencilEnable = FALSE;
-
-	//hr = device->CreateDepthStencilState(&depthDesc, &m_depthWriteState);
-	//if (FAILED(hr)) {
-	//	// 에러 처리
-	//}
-
-	//// ========== Pass 2: Depth Read State ==========
-	//depthDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ZERO;  // ZWrite Off
-	//depthDesc.DepthFunc = D3D11_COMPARISON_LESS_EQUAL;       //  LESS_EQUAL 중요!
-
-	//hr = device->CreateDepthStencilState(&depthDesc, &m_depthReadState);
-	//if (FAILED(hr)) {
-	//	// 에러 처리
-	//}
-
-	//// ========== Pass 1: No Color Write State ==========
-	//D3D11_BLEND_DESC blendDesc = {};
-	//blendDesc.AlphaToCoverageEnable = FALSE;
-	//blendDesc.IndependentBlendEnable = FALSE;
-	//blendDesc.RenderTarget[0].BlendEnable = FALSE;
-	//blendDesc.RenderTarget[0].RenderTargetWriteMask = 0;  // ColorMask 0 (색상 안 씀)
-
-	//hr = device->CreateBlendState(&blendDesc, &m_noColorWriteState);
-	//if (FAILED(hr)) {
-	//	// 에러 처리
-	//}
-
-	//// ========== Pass 2: Alpha Blend State ==========
-	//blendDesc.RenderTarget[0].BlendEnable = TRUE;
-	//blendDesc.RenderTarget[0].SrcBlend = D3D11_BLEND_SRC_ALPHA;
-	//blendDesc.RenderTarget[0].DestBlend = D3D11_BLEND_INV_SRC_ALPHA;
-	//blendDesc.RenderTarget[0].BlendOp = D3D11_BLEND_OP_ADD;
-	//blendDesc.RenderTarget[0].SrcBlendAlpha = D3D11_BLEND_ONE;
-	//blendDesc.RenderTarget[0].DestBlendAlpha = D3D11_BLEND_ZERO;
-	//blendDesc.RenderTarget[0].BlendOpAlpha = D3D11_BLEND_OP_ADD;
-	//blendDesc.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
-
-	//hr = device->CreateBlendState(&blendDesc, &m_alphaBlendState);
-	//if (FAILED(hr)) {
-	//	// 에러 처리
-	//}
 }
 
 void MeshRenderer::RenderMeshDepth(ID3D11DeviceContext* context, ID3D11Buffer* m_meshVertexBuffer,
-	ID3D11VertexShader* m_meshVS, ID3D11PixelShader* m_meshPS, ID3D11RenderTargetView* sceneDepthRTV , ID3D11InputLayout* m_meshInputLayout,
-	ID3D11Buffer* m_clipSettingsBuffer, ID3D11Buffer* m_meshConstantBuffer,  ID3D11Texture2D* m_meshTexture, ID3D11ShaderResourceView* m_meshDepthSRV,
+	ID3D11VertexShader* m_meshVS, ID3D11PixelShader* m_meshPS, ID3D11RenderTargetView* sceneDepthRTV, ID3D11InputLayout* m_meshInputLayout,
+	ID3D11Buffer* m_clipSettingsBuffer, ID3D11Buffer* m_meshConstantBuffer, ID3D11Texture2D* m_meshTexture, ID3D11ShaderResourceView* m_meshDepthSRV,
 	ID3D11SamplerState* m_MeshSamplerState, ID3D11Device* m_pDevice, int m_meshVertexCount,
-	float maxMesh, float maxPhysicalVol, float volWidth, float volHeight, float volDepth, float overallSize,
+	float maxMesh, float maxPhysicalVol, float volWidth, float volHeight, float volDepth,
 	XMMATRIX userRotMat, XMMATRIX v, XMMATRIX p, float width, float height)
 {
 
-	if (!m_meshVertexBuffer || 0==m_meshVertexCount ) {
+	if (!m_meshVertexBuffer || 0 == m_meshVertexCount) {
 		//std::cout << "[RenderMeshDepth]  VertexBuffer 없음 또는 VertexCount=0" << std::endl;
 		return;
 	}
 
-	//std::cout << "[RenderMeshDepth] 시작" << std::endl;
 
 
 	ID3D11RenderTargetView* curRTV = nullptr;
 	ID3D11DepthStencilView* curDSV = nullptr;
 	context->OMGetRenderTargets(1, &curRTV, &curDSV);
-	//std::cout << "[RenderMeshDepth] OMGetRenderTargets: curRTV=" << curRTV << " curDSV=" << curDSV << std::endl;
 
 
 	if (curRTV) curRTV->Release();
 	if (!curDSV) {
-		//std::cout << "[RenderMeshDepth]  curDSV가 nullptr" << std::endl;
+
 		return;
 	}
-	/*std::cout << "[RenderMeshDepth] BEGIN" << std::endl;
-	std::cout << "  VertexCount = " << m_meshVertexCount << std::endl;
-	std::cout << "  sceneDepthRTV = " << sceneDepthRTV << std::endl;
-	std::cout << "  curDSV(before) = " << curDSV << std::endl;*/
-
-
-
 
 	//  SceneDepth를 RenderTarget으로 설정
-	ID3D11RenderTargetView* rtvs[] = { sceneDepthRTV  };
+	ID3D11RenderTargetView* rtvs[] = { sceneDepthRTV };
 	context->OMSetRenderTargets(1, rtvs, curDSV);
 	//std::cout << "[RenderMeshDepth] OMSetRenderTargets 완료" << std::endl;
 
@@ -264,14 +203,12 @@ void MeshRenderer::RenderMeshDepth(ID3D11DeviceContext* context, ID3D11Buffer* m
 
 
 
-
-
 	////  Depth pass는 반드시 full-res viewport
 	D3D11_VIEWPORT fullVP = {};
 	fullVP.TopLeftX = 0.0f;
 	fullVP.TopLeftY = 0.0f;
-	fullVP.Width = static_cast<float>(width)/2;   // 전체 화면 width
-	fullVP.Height = static_cast<float>(height)/2;  // 전체 화면 height
+	fullVP.Width = static_cast<float>(width) / 2;   // 전체 화면 width
+	fullVP.Height = static_cast<float>(height) / 2;  // 전체 화면 height
 	fullVP.MinDepth = 0.0f;
 	fullVP.MaxDepth = 1.0f;
 
@@ -279,22 +216,8 @@ void MeshRenderer::RenderMeshDepth(ID3D11DeviceContext* context, ID3D11Buffer* m
 	UINT vpCount = 1;
 	context->RSGetViewports(&vpCount, &vp);
 
-	/*std::cout << "[Viewport]" << std::endl;
-	std::cout << "  x=" << vp.TopLeftX
-		<< " y=" << vp.TopLeftY
-		<< " w=" << vp.Width
-		<< " h=" << vp.Height << std::endl;*/
 
 	context->RSSetViewports(1, &fullVP);
-
-
-	////  SceneDepth를 RenderTarget으로 설정
-	//ID3D11RenderTargetView* rtvs[] = { rtv };  // ← 추가 필요
-	//context->OMSetRenderTargets(1, rtvs, depthStencilView);
-
-	//// SceneDepth 클리어
-	//float clearColor[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
-	//context->ClearRenderTargetView(m_sceneDepthRTV, clearColor);
 
 
 	context->PSSetSamplers(5, 1, &m_PointClampSampler);  // s5 채우기
@@ -339,8 +262,7 @@ void MeshRenderer::RenderMeshDepth(ID3D11DeviceContext* context, ID3D11Buffer* m
 
 	//볼륨 - 메쉬 기본은 rotx, roty 인데 rotation은 메쉬에만 추가로 곱해줌.
 
-	//initialMeshWorld = coordinateSystemTransform*XMMatrixRotationQuaternion(XMQuaternionMultiply(rotX, rotY))*rotation*test3;
-	initialMeshWorld = scale* XMMatrixRotationQuaternion(XMQuaternionMultiply(rotX, rotY))*rotation;
+	initialMeshWorld = scale * XMMatrixRotationQuaternion(XMQuaternionMultiply(rotX, rotY))*rotation;
 	meshWorldMat = initialMeshWorld * XMMatrixTranspose(userRotMat)/**coordinateSystemTransform*/;
 
 
@@ -370,7 +292,7 @@ void MeshRenderer::RenderMeshDepth(ID3D11DeviceContext* context, ID3D11Buffer* m
 
 
 
-	
+
 
 	ExtractAxes(&volWorldMat, &meshWorldMat);
 
@@ -388,10 +310,7 @@ void MeshRenderer::RenderMeshDepth(ID3D11DeviceContext* context, ID3D11Buffer* m
 	context->UpdateSubresource(m_meshConstantBuffer, 0, nullptr, &cbM, 0, 0);
 	context->VSSetConstantBuffers(0, 1, &m_meshConstantBuffer);
 
-	//// 깊이 스테이트
-	//context->OMSetDepthStencilState(depthWriteState, 0);
-	//context->OMSetBlendState(nullptr, nullptr, 0xffffffff);
-	//context->RSSetState(rastState);
+
 
 	// ========== Clipping Settings ==========
 	ClipSettings cs;
@@ -400,24 +319,6 @@ void MeshRenderer::RenderMeshDepth(ID3D11DeviceContext* context, ID3D11Buffer* m
 
 	context->UpdateSubresource(m_clipSettingsBuffer, 0, nullptr, &cs, 0, 0);
 	context->PSSetConstantBuffers(1, 1, &m_clipSettingsBuffer);
-
-	//// ========== Texture/Sampler ==========
-	//context->PSSetShaderResources(0, 1, &m_meshDepthSRV);
-	//context->PSSetSamplers(0, 1, &m_MeshSamplerState);
-
-	//// ========== Rasterizer ==========
-	//D3D11_RASTERIZER_DESC rastDesc = {};
-	//rastDesc.FillMode = D3D11_FILL_SOLID;
-	//rastDesc.CullMode = D3D11_CULL_BACK;
-	//rastDesc.FrontCounterClockwise = FALSE;
-	//rastDesc.DepthBias = 0;
-	//rastDesc.DepthBiasClamp = 0.0f;
-	//rastDesc.SlopeScaledDepthBias = 0.0f;
-
-	//ID3D11RasterizerState* rastState = nullptr;
-	//m_pDevice->CreateRasterizerState(&rastDesc, &rastState);
-
-
 
 
 	context->RSSetState(rastState);
@@ -437,9 +338,6 @@ void MeshRenderer::RenderMeshDepth(ID3D11DeviceContext* context, ID3D11Buffer* m
 
 	// 바인딩
 	context->OMSetDepthStencilState(depthWriteState, 0);
-	//context->OMSetBlendState(noColorWriteState, nullptr, 0xffffffff);
-	//context->OMSetBlendState(nullptr, nullptr, 0xffffffff);
-	//context->OMSetBlendState(noColorWriteState, nullptr, 0xffffffff);
 	context->OMSetBlendState(nullptr, nullptr, 0xffffffff);
 
 
@@ -454,107 +352,18 @@ void MeshRenderer::RenderMeshDepth(ID3D11DeviceContext* context, ID3D11Buffer* m
 	if (dbgDepthState) dbgDepthState->Release();
 
 
-
-	////  실제로 바인딩되었는지 확인
-	//ID3D11DepthStencilState* currentDepthState = nullptr;
-	//UINT stencilRef;
-	//context->OMGetDepthStencilState(&currentDepthState, &stencilRef);
-
-	//std::cout << "Actually bound depth state:" << currentDepthState << std::endl;
-
-	//if (currentDepthState) {
-	//	if (currentDepthState == depthWriteState) {
-	//		std::cout << " Correct depth state bound!" << std::endl;
-	//	}
-	//	else {
-	//		std::cout << " Wrong depth state bound!" << std::endl;
-	//	}
-	//	currentDepthState->Release();
-	//}
-	//else {
-	//	std::cout << " No depth state bound!" << std::endl;
-	//}
-
-
-
-
 	//std::cout << "Drawing" << m_meshVertexCount << "vertices..." << std::endl;
 
 
 	// 렌더링 (Depth만 기록)
 	context->Draw(m_meshVertexCount, 0);
-
-
-	/*ID3D11Resource* depthRes = nullptr;
-	curDSV->GetResource(&depthRes);
-
-	ID3D11Texture2D* depthTex = nullptr;
-	depthRes->QueryInterface(__uuidof(ID3D11Texture2D), (void**)&depthTex);
-
-	if (depthTex)
-	{
-		D3D11_TEXTURE2D_DESC desc;
-		depthTex->GetDesc(&desc);
-
-		std::cout << "[DepthBuffer Desc]" << std::endl;
-		std::cout << "  Format = " << desc.Format << std::endl;
-		std::cout << "  Size = " << desc.Width << " x " << desc.Height << std::endl;
-	}
-	else
-	{
-		std::cout << " depthTex is null" << std::endl;
-	}
-
-	if (depthTex) depthTex->Release();
-	if (depthRes) depthRes->Release();*/
-
-
-
-
-	////  깊이 버퍼를 SceneDepth 텍스처로 복사
-	//
-	//curDSV->GetResource((ID3D11Resource**)&m_meshTexture);
-
-	//if (curDSV) curDSV->Release();
-
-	//if (m_meshTexture && sceneDepthTexture)
-	//{
-	//	// Depth Stencil Buffer → SceneDepth 복사
-	//	context->CopyResource(sceneDepthTexture, m_meshTexture);
-	//}
-
-	//if (m_meshTexture) m_meshTexture->Release();
-
-
-
-
-	/*ID3D11Resource* res = nullptr;
-	curDSV->GetResource(&res);
-
-	ID3D11Texture2D* depthTex = nullptr;
-	res->QueryInterface(__uuidof(ID3D11Texture2D), (void**)&depthTex);
-
-	if (depthTex && sceneDepthTexture)
-		context->CopyResource(sceneDepthTexture, depthTex);
-
-
-	std::cout << "[CopyResource]" << std::endl;
-	std::cout << "  depthTex = " << depthTex << std::endl;
-	std::cout << "  sceneDepthTexture = " << sceneDepthTexture << std::endl;
-
-
-
-
-	if (depthTex) depthTex->Release();
-	if (res) res->Release();*/
-
 }
 
 void MeshRenderer::RenderMeshViewZ(ID3D11DeviceContext* context, ID3D11Buffer* m_meshVertexBuffer,
 	ID3D11VertexShader* m_meshVS, ID3D11PixelShader* m_meshPS, ID3D11RenderTargetView* sceneDepthRTV, ID3D11InputLayout* m_meshInputLayout,
 	ID3D11Buffer* m_clipSettingsBuffer, ID3D11Buffer* m_meshConstantBuffer, ID3D11Texture2D* m_meshTexture, ID3D11ShaderResourceView* m_meshDepthSRV,
 	ID3D11SamplerState* m_MeshSamplerState, ID3D11Device* m_pDevice, int m_meshVertexCount,
-	float maxMesh, float maxPhysicalVol, float volWidth, float volheight, float volDepth, float overallSize,
+	float maxMesh, float maxPhysicalVol, float volWidth, float volheight, float volDepth,
 	XMMATRIX userRotMat, XMMATRIX v, XMMATRIX p, float width, float height)
 {
 
@@ -570,17 +379,6 @@ void MeshRenderer::RenderMeshViewZ(ID3D11DeviceContext* context, ID3D11Buffer* m
 	ID3D11DepthStencilView* curDSV = nullptr;
 	context->OMGetRenderTargets(1, &curRTV, &curDSV);
 	//std::cout << "[RenderMeshDepth] OMGetRenderTargets: curRTV=" << curRTV << " curDSV=" << curDSV << std::endl;
-
-
-	//if (curRTV) curRTV->Release();
-	//if (!curDSV) {
-	//	//std::cout << "[RenderMeshDepth]  curDSV가 nullptr" << std::endl;
-	//	return;
-	//}
-	///*std::cout << "[RenderMeshDepth] BEGIN" << std::endl;
-	//std::cout << "  VertexCount = " << m_meshVertexCount << std::endl;
-	//std::cout << "  sceneDepthRTV = " << sceneDepthRTV << std::endl;
-	//std::cout << "  curDSV(before) = " << curDSV << std::endl;*/
 
 
 
@@ -628,12 +426,6 @@ void MeshRenderer::RenderMeshViewZ(ID3D11DeviceContext* context, ID3D11Buffer* m
 	UINT vpCount = 1;
 	context->RSGetViewports(&vpCount, &vp);
 
-	/*std::cout << "[Viewport]" << std::endl;
-	std::cout << "  x=" << vp.TopLeftX
-		<< " y=" << vp.TopLeftY
-		<< " w=" << vp.Width
-		<< " h=" << vp.Height << std::endl;*/
-
 	context->RSSetViewports(1, &fullVP);
 
 
@@ -670,7 +462,7 @@ void MeshRenderer::RenderMeshViewZ(ID3D11DeviceContext* context, ID3D11Buffer* m
 	////볼륨 - 메쉬 기본은 rotx, roty 인데 rotation은 메쉬에만 추가로 곱해줌.
 	//initialMeshWorld =coordinateSystemTransform/**flipYZ*rotation*/;
 	//initialMeshWorld = coordinateSystemTransform*XMMatrixRotationQuaternion(XMQuaternionMultiply(rotX, rotY))*rotation*test3;
-	initialMeshWorld = meshScale*XMMatrixRotationQuaternion(XMQuaternionMultiply(rotX, rotY))*rotation;
+	initialMeshWorld = meshScale * XMMatrixRotationQuaternion(XMQuaternionMultiply(rotX, rotY))*rotation;
 
 
 	//스케일을 볼륨걸 적용한 유저 로테이션을 곱해야지 회전 싱크가 맞음
@@ -685,7 +477,7 @@ void MeshRenderer::RenderMeshViewZ(ID3D11DeviceContext* context, ID3D11Buffer* m
 	// HLSL에서는 mul(vector, matrix) 사용
 	  // 실제 적용 순서: S -> R -> T (의도한 대로)
 
-	meshWorldMat = initialMeshWorld * XMMatrixTranspose(userRotMat)/**coordinateSystemTransform*/;
+	meshWorldMat = initialMeshWorld * XMMatrixTranspose(userRotMat);
 
 	MeshConstantBufferWithCT cbM;
 	cbM.WVP = XMMatrixTranspose(meshWorldMat * v * p);
@@ -879,43 +671,7 @@ void MeshRenderer::RenderMesh(ID3D11DeviceContext* context, ID3D11Buffer* m_mesh
 
 	//MeshConstantBuffer cb;
 	DirectX::XMMATRIX rotation = XMMatrixRotationX(XM_PI);
-	//	DirectX::XMMATRIX fullWorld = /*centerTranslate **/scale * rotation * w;
-	//DirectX::XMMATRIX fullWorld = scale * rotation * w;
 
-	//	//s r t v p
- // //  DirectX::XMMATRIX fullWorld = scale * rotation /**centerTranslate*/* w;
-	//DirectX::XMMATRIX fullWorld = centerTranslate * scale   * rotation  /** w*/;
-	////DirectX::XMMATRIX fullWorld = centerTranslate * rotation *scale* w;
-	////DirectX::XMMATRIX fullWorld = /*scale * */rotation /**centerTranslate*/* w;
-
-
-
-		//rotx = XMMatrixRotationX(-XM_PIDIV2);  // 90도 회전
-	//roty = XMMatrixRotationY(XM_PI);  // 90도 회전
-
-	//initialMeshWorld = centerTranslate * scale
-	//	* XMMatrixRotationY(XM_PI)*XMMatrixRotationX(XM_PIDIV2)  /** w*/;
-
-
-	//initialMeshWorld = centerTranslate /** XMMatrixRotationX(XM_PI)*/ * scale
-	//	/** XMMatrixRotationY(XM_PI)*/ /** w*/;
-
-	////initialMeshWorld = scale * XMMatrixRotationX(XM_PI)*centerTranslate;
-
-	///*std::cout << "meshScale : " << meshScale << std::endl;
-	//std::cout << "scale x : " << volWidth / meshWidth / maxPhysicalVol << std::endl;
-	//std::cout << "scale y : " << volHeight / meshHeight / maxPhysicalVol << std::endl;
-	//std::cout << "scale z : " << volDepth / meshDepth / maxPhysicalVol << std::endl << std::endl << std::endl;*/
-
-
-
-	//MeshConstantBuffer cb;
-	//cb.WVP = XMMatrixTranspose(initialMeshWorld * v * p);
-	//cb.World = XMMatrixTranspose(initialMeshWorld);
-	//cb.WorldView = XMMatrixTranspose(initialMeshWorld * v);
-
-	//context->UpdateSubresource(m_meshConstantBuffer, 0, nullptr, &cb, 0, 0);
-	//context->VSSetConstantBuffers(0, 1, &m_meshConstantBuffer);
 
 	// ========== Clipping Settings ==========
 	ClipSettings cs;
@@ -946,11 +702,6 @@ void MeshRenderer::RenderMesh(ID3D11DeviceContext* context, ID3D11Buffer* m_mesh
 	context->Draw(m_meshVertexCount, 0);
 }
 
-int print{};
-int printRotate{};
-
-
-
 void MeshRenderer::RenderMeshWithCT(
 	ID3D11DeviceContext* context,
 	ID3D11Buffer* m_meshVertexBuffer,
@@ -970,7 +721,7 @@ void MeshRenderer::RenderMeshWithCT(
 	float maxMesh,
 	float maxPhysicalVol,
 	float volWidth, float volHeight, float volDepth,
-	float overallSize,
+
 	XMMATRIX userRotMat,
 	XMMATRIX v,
 	XMMATRIX p,
@@ -982,27 +733,6 @@ void MeshRenderer::RenderMeshWithCT(
 	context->VSSetShader(m_meshVS, nullptr, 0);
 	context->PSSetShader(m_meshPS, nullptr, 0);   //  FaceMesh_WithCT.hlsl 사용
 	context->IASetInputLayout(m_meshInputLayout);
-
-	// ========== Transform 계산 ==========
-	//float meshScale = 1.5f / maxPhysicalVol;  //  XMFLOAT3 대응
-	//float meshScale =1.f;  //  XMFLOAT3 대응
-
-	//DirectX::XMMATRIX scale = XMMatrixScaling(meshScale, meshScale, meshScale);
-
-
-	//DirectX::XMMATRIX scale = XMMatrixScaling(
-	//	/*	meshToVolume,
-	//		meshToVolume,
-	//		meshToVolume*/
-
-	//		meshScale*overallSize,
-	//		meshScale*overallSize,
-	//		meshScale*overallSize
-	//	//volWidth / meshWidth / maxPhysicalVol * 1.42f,
-	//	//volHeight / meshHeight / maxPhysicalVol * 1.42f*1.09f,
-	//	//volDepth / meshDepth / maxPhysicalVol * 1.42f
-
-	//);
 
 
 	//s r t v p
@@ -1018,17 +748,6 @@ void MeshRenderer::RenderMeshWithCT(
 	);
 
 
-	//initialMeshWorld = XMMatrixRotationX(XM_PI)*XMMatrixTranslation(50.0f, 0.0f, 0.0f)
-	//	*XMMatrixRotationQuaternion(XMQuaternionMultiply(rotX, rotY));
-
-	//rotation = XMMatrixRotationX(XM_PI);
-
-	//s r t v p
-	//initialMeshWorld =scale * rotation;                // 그 다음 회전
-	//initialMeshWorld =rotation* centerTranslate;  //  스케일 없음
-	//initialMeshWorld = rotation/**XMMatrixTranslation(0.0f, 0.0f, 0.0f)*/; //  스케일 없음
-
-
 	//// 테스트할 회전들
 	//XMMATRIX test1 = XMMatrixRotationX(XM_PIDIV2);        // 90도
 	//XMMATRIX test2 = XMMatrixRotationX(-XM_PIDIV2);       // -90도
@@ -1039,21 +758,11 @@ void MeshRenderer::RenderMeshWithCT(
 	//XMMATRIX test5 = XMMatrixRotationX(-XM_PIDIV2) * XMMatrixRotationY(XM_PI);
 	//XMMATRIX test6 = XMMatrixRotationX(XM_PIDIV2) * XMMatrixRotationZ(XM_PI);
 
-// 개선 (Y-Z 교환 + X축 반전으로 handedness 맞추기)
-	XMMATRIX coordinateSystemTransform = XMMatrixSet(
-		1.0f, 0.0f, 0.0f, 0.0f,  // X축 반전 (handedness 변경)
-		0.0f, -1.0f, 0.0f, 0.0f,  // Y축 -> Z축
-		0.0f, 0.0f, -1.0f, 0.0f,  // Z축 -> Y축
-		0.0f, 0.0f, 0.0f, 1.0f
-	);
 
 
-	//initialMeshWorld = coordinateSystemTransform/**test4*//**rotation*/;
-	
-
-	//initialMeshWorld = coordinateSystemTransform*
+	//initialMeshWorld = 
 	//	XMMatrixRotationQuaternion(XMQuaternionMultiply(rotX, rotY))*rotation;
-	
+
 	//meshWorldMat = initialMeshWorld * XMMatrixTranspose(userRotMat);
 	ExtractAxes(&volWorldMat, &meshWorldMat);
 

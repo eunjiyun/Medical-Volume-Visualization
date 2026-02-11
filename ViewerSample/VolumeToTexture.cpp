@@ -446,17 +446,9 @@ void VolumeToTexture::RenderVolumeToTexture(
 	context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
 	context->Draw(4, 0);
 
-	//	// DrawTextureToScreen() 시작에 추가
-	//	std::cout << " RenderVolumeToTexture called" << std::endl;
-	////	std::cout << "   SRV: " << srv << std::endl;
-	//
-	//	if(nullptr== m_quadVertexBuffer.Get())
-	//		std::cout << "   QuadVB: " << m_quadVertexBuffer.Get() << std::endl;
-	//	//std::cout << "   VS: " << m_vertexShader.Get() << std::endl;
-	//	//std::cout << "   PS: " << m_pixelShader.Get() << std::endl;
 
 
-		// 상태 복원
+	// 상태 복원
 	context->OMSetRenderTargets(1, oldRTV.GetAddressOf(), oldDSV.Get());
 	context->RSSetViewports(1, &oldViewport);
 
@@ -464,49 +456,12 @@ void VolumeToTexture::RenderVolumeToTexture(
 	ID3D11ShaderResourceView* nullSRVs[6] = { nullptr };
 	context->PSSetShaderResources(0, 6, nullSRVs);
 
-
-
-	//// RenderVolumeView() 끝에 추가
-	//std::cout << " VolumeToTexture completed" << std::endl;
-	//std::cout << "   Result SRV: " <<GetResultSRV() << std::endl;
-
-
 }
 
 
 void VolumeToTexture::DrawTextureToScreen(ID3D11Device* device, ID3D11ShaderResourceView* srv, ID3D11DeviceContext* context
 	, ID3D11VertexShader* vs, ID3D11PixelShader* ps)
 {
-	//if (!m_quadVertexBuffer.Get()) {
-	//	std::cout << " DrawTextureToScreen called" << std::endl;
-	//	std::cout << "   QuadVB: " << m_quadVertexBuffer.Get() << std::endl;
-	//	return;
-	//}
-
-
-	////// DrawTextureToScreen() 시작에 추가
-	//std::cout << " DrawTextureToScreen called" << std::endl;
-	////std::cout << "   SRV: " << srv << std::endl;
-	//std::cout << "   QuadVB: " << m_quadVertexBuffer << std::endl;
-	//std::cout << "SRV ptr = " << srv << std::endl;
-	////std::cout << "   VS: " << m_vertexShader.Get() << std::endl;
-	////std::cout << "   PS: " << m_pixelShader.Get() << std::endl;
-
-
-					//			////  4. SRV 언바인딩 (중요!)
-//			//ID3D11ShaderResourceView* nullSRV = nullptr;
-//			//m_pDeviceContext->PSSetShaderResources(5, 1, &nullSRV);
-//
-
-
-	//ID3D11RenderTargetView* nullRTV = nullptr;
-	//context->OMSetRenderTargets(1, &nullRTV, nullptr);
-	//device->CreateShaderResourceView(
-	//	m_resultTexture,
-	//	nullptr,
-	//	&m_resultSRV
-	//);
-
 
 	// Simple fullscreen quad shader (텍스처 그대로 출력)
 	context->IASetInputLayout(m_inputLayout.Get());

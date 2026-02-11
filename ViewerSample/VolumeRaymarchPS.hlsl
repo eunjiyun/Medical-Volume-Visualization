@@ -11,7 +11,6 @@ cbuffer CB : register(b0)
 	float4 CameraPosAndAlpha;   // xyz = camera pos, w = mode
 	float4 VoxelAndMaxSteps;    // xyz = voxel dim, w = maxSteps
 	float4 HuParams;            // x,y unused / z = HU min / w = HU max
-
 	float4 volSize;
 };
 
@@ -36,11 +35,10 @@ Texture2D<float> MeshViewZTex  : register(t4);
 
 
 // mesh depth (0~1)
-SamplerState pointClamp : register(s5); // 포인트+클램프 추천 (디버그용)
-//SamplerState MeshViewZSamp : register(s2); // 포인트+클램프 추천 (디버그용)
+SamplerState pointClamp : register(s5); // 포인트/클램프  (디버그용)
+//SamplerState MeshViewZSamp : register(s2); // 포인트/클램프  (디버그용)
 
 RWTexture2D<float> DeltaZTex : register(u1);
-
 Texture2D<float> DebugTex : register(t3);
 
 struct PSInput
@@ -69,7 +67,6 @@ struct PSOut
 //수치 비교 기능
 
 
-
 float4 main(PSInput input) : SV_Target
 {
 	// TL viewport 기준 uv → 전체 화면 depth uv
@@ -77,16 +74,9 @@ float4 main(PSInput input) : SV_Target
 	uvFull.x = input.uv.x * 0.5;
 	uvFull.y = input.uv.y * 0.5;
 
-
-	//SampleLevel(pointClamp, uvFull, 0);
-
-
 	float2 uv = input.uv;
 	float2 ndc = uv * 2.0 - 1.0;
 	ndc.y = -ndc.y;
-
-
-
 
 	// 1. ray origin (view space)
 	float4 rayOriginVS4 = mul(float4(ndc, 0.0, 1.0), InvProj);
@@ -108,7 +98,6 @@ float4 main(PSInput input) : SV_Target
 
 	// (옵션) view-space origin (mesh depth 비교용)
 	float3 rayPosVS = rayOriginVS;
-
 
 
 	/* ---------------------------
@@ -148,11 +137,7 @@ float4 main(PSInput input) : SV_Target
 	//	uvw.y = 1 - uvw.y 같은 보정이 어느 축에 적용됐는지
 
 
-
-
 	float3 invDirL = 1.0 / (rayDirL + 1e-6);
-
-
 	float3 t0L = (boxMinL - rayPosL) * invDirL;
 	float3 t1L = (boxMaxL - rayPosL) * invDirL;
 
@@ -194,129 +179,36 @@ float4 main(PSInput input) : SV_Target
 
 
 	// World step size (THIS is the big fix: marching distance is in world units)
-	
-	
-	float maxSteps = VoxelAndMaxSteps.w;
 
-	//float maxSteps = 1024;
+
+	float maxSteps = VoxelAndMaxSteps.w;
 
 	//월드 단위 stepSize
 	float stepW = (tFarW - tNearW) / maxSteps;
 
 
 
-	//float2 uvDepth = (uv - float2(0.0, 0.0)) * 0.5;
-
-	
-
-	//screenUV = pixelCoord / ViewSize
-
 	/* ---------------------------
 	   Mesh depth (screen-space) -> view Z
 	--------------------------- */
 	float meshDepth01 = SceneDepth.SampleLevel(pointClamp, uvFull, 0);
-	/*float d = meshDepth01;
-	return float4(d, d, d, 1);
-	float meshViewZ = d;*/
-	//bool hasMesh = (meshDepth01 < 0.9999);
-	//hasMesh = false;
-
-	////float meshViewZ = hasMesh
-	////	? ReconstructViewZ_InvProj(uv, meshDepth01, InvProj)
-	////	: -1e9;
-
-
-
-	//float meshViewZ = -1e9;
-
-
-
-
-	//////바인딩 패스 문제
-	////검은 화면
-	//float d = SceneDepth.SampleLevel(pointClamp, uvFull, 0);
-	////float d = SceneDepth.SampleLevel(faceColorSamp, uv, 0);
-	//return float4(d, d, d, 1);
-
-
-	////빨간색 정사각형
-	//float d01 = SceneDepth.SampleLevel(pointClamp, uv, 0);
-	//float z = ReconstructViewZ_InvProj(uv, d01, InvProj);
-	////return float4(abs(z) / 500.0, 0, 0, 1);
-
-
-	//float meshViewZ = SceneDepth.SampleLevel(pointClamp, uvFull, 0);
 
 	int2 pixelCoord = int2(floor(input.pos.xy));
 
-		//  전체 화면 기준 UV 계산
+	//  전체 화면 기준 UV 계산
 	float2 screenUV;
 	screenUV.x = pixelCoord.x / ViewSize.x;  // ViewSize는 CB로 전달 (1276)
 	screenUV.y = pixelCoord.y / ViewSize.y;  // (728)
 
-	//float d = SceneDepth.SampleLevel(pointClamp, screenUV, 0);
-	//return float4(d, d, d, 1);
 
 	float2 meshUV;
 	meshUV.x = screenUV.x * 2.0;
 	meshUV.y = screenUV.y * 2.0;
 
 
-	//return float4(SceneDepth.Load(int3(10, 10, 0)).xxx, 1);
-
-	//float d = SceneDepth.SampleLevel(pointClamp, uvFull, 0);
-	//return float4(d, d, d, 1);
-
-
-
-
-
-	////	  //  SceneDepth 샘플링
-	////float depth01 = SceneDepth.SampleLevel(pointClamp, screenUV, 0);
-
-	//// clip space
-	//float z_ndc = meshDepth01 * 2.0f - 1.0f;
-	//float4 clip = float4(
-	//	screenUV.x * 2 - 1,
-	//	1 - screenUV.y * 2,
-	//	z_ndc,
-	//	1
-	//	);
-
-	//// view space
-	//float4 view = mul(clip, InvProj);
-	//view /= view.w;
-
-	//float meshViewZ = view.z;
-
-	////  디버그 출력
-	//return float4(abs(meshViewZ) / 500.0, 0, 0, 1);
-
-
-
-
-
-
-
-
-
-	//float meshViewZ = SceneDepth.SampleLevel(pointClamp, input.uv, 0);
-
-	//return float4(abs(meshViewZ) / 700, 0, 0, 1);
-
-
-	//float d01_half = SceneDepth.SampleLevel(pointClamp, input.uv * 0.5, 0);
-
-	// uvFull 없이 직접 샘플링
-	//float d01_full = SceneDepth.SampleLevel(pointClamp, input.uv, 0);
-
-
-	//bool hasMesh = (meshViewZ < 1e8); // background 제외
-
-
-	/* ---------------------------
-	   Accumulation
-	--------------------------- */
+/* ---------------------------
+   Accumulation
+--------------------------- */
 	float4 acc = float4(0,0,0,0);
 
 	// entry bias in WORLD units
@@ -357,283 +249,170 @@ float4 main(PSInput input) : SV_Target
 		float3 posL = mul(float4(posWS, 1), InvVolumeWorld).xyz;
 
 
-	 //  float4 colorMap = float4(0, 0, 0,1);
-	 //  if (posL.x >= 0)
-		//   colorMap = float4(1, 0, 0,1);           // 빨간색
-	 //  else
-		//   colorMap = float4(0, 1, 1,1);           // 빨간색의 보수 (시안색)
-	 //  if (posL.y >= 0)
-		//   colorMap = float4(0, 1, 0,1);           // 초록색
-	 //  else
-		//   colorMap = float4(1, 0, 1,1);           // 초록색의 보수 (마젠타)
-	 //  if (posL.z >= 0)
-		//   colorMap = float4(0, 0, 1,1);           // 파란색
-	 //  else
-		//   colorMap = float4(1, 1, 0,1);           // 파란색의 보수 (노란색)
+	//  float4 colorMap = float4(0, 0, 0,1);
+	//  if (posL.x >= 0)
+	   //   colorMap = float4(1, 0, 0,1);           // 빨간색
+	//  else
+	   //   colorMap = float4(0, 1, 1,1);           // 빨간색의 보수 (시안색)
+	//  if (posL.y >= 0)
+	   //   colorMap = float4(0, 1, 0,1);           // 초록색
+	//  else
+	   //   colorMap = float4(1, 0, 1,1);           // 초록색의 보수 (마젠타)
+	//  if (posL.z >= 0)
+	   //   colorMap = float4(0, 0, 1,1);           // 파란색
+	//  else
+	   //   colorMap = float4(1, 1, 0,1);           // 파란색의 보수 (노란색)
 
-	 //  return float4(colorMap);
+	//  return float4(colorMap);
 
 
+	   //return float4(abs(posL) * 0.01, 1);
 
+	   // Local -> UVW
+		 float3 uvw = (posL - boxMinL) / (boxMaxL - boxMinL);
+		 uvw.y = 1.0 - uvw.y;
 
 
-		//return float4(abs(posL) * 0.01, 1);
+	   ////3D볼륨 로컬축이 
+	   ////u(x) : 좌우, v(y) : 앞뒤, w(z) 
+	   ////: 위아래(axial 적층)으로 쌓여있는걸 확인
+	   //// Sagittal 단면 (X 고정)
+	   //float3 uvw = float3( input.uv.x,0.5,input.uv.y);
+	   //float v = volumeTex.Sample(samp, uvw, 0).r;
+	   //return float4(v, v, v, 1);
 
-		// Local -> UVW
-		float3 uvw = (posL - boxMinL) / (boxMaxL - boxMinL);
-		uvw.y = 1.0 - uvw.y;
+	   ////=>볼륨 3D 텍스처의 W(Z)축은 Axial 방향으로 정의되어 있으며,
+	   ////현재 볼륨 데이터는 Axial 기준으로 정상 적재됨을 확인함.
 
 
-		////3D볼륨 로컬축이 
-		////u(x) : 좌우, v(y) : 앞뒤, w(z) 
-		////: 위아래(axial 적층)으로 쌓여있는걸 확인
-		//// Sagittal 단면 (X 고정)
-		//float3 uvw = float3( input.uv.x,0.5,input.uv.y);
-		//float v = volumeTex.Sample(samp, uvw, 0).r;
-		//return float4(v, v, v, 1);
 
-		////=>볼륨 3D 텍스처의 W(Z)축은 Axial 방향으로 정의되어 있으며,
-		////현재 볼륨 데이터는 Axial 기준으로 정상 적재됨을 확인함.
 
+	   //return float4(uvw, 1);
 
+   /*	if (any(uvw < 0.0) || any(uvw > 1.0))
+		   continue;*/
 
+		   //// (optional) keep your margin/edge skip
+		   //if (any(uvw < 0.02) || any(uvw > 0.99))
+		   //	continue;
 
-		//return float4(uvw, 1);
 
-	/*	if (any(uvw < 0.0) || any(uvw > 1.0))
-			continue;*/
+		   uint dimX, dimY, dimZ;
+		   volumeTex.GetDimensions(dimX, dimY, dimZ);
 
-			//// (optional) keep your margin/edge skip
-			//if (any(uvw < 0.02) || any(uvw > 0.99))
-			//	continue;
+		   // voxel index
+		   float3 voxelIdx = uvw * float3(dimX,dimY, dimZ);
+		   voxelIdx = floor(voxelIdx) + 0.5;
 
+		   // back to uvw
+		   float3 uvwVoxel = voxelIdx / float3(dimX, dimY, dimZ);
 
-			uint dimX, dimY, dimZ;
-			volumeTex.GetDimensions(dimX, dimY, dimZ);
 
-			// voxel index
-			float3 voxelIdx = uvw * float3(dimX,dimY, dimZ);
-			voxelIdx = floor(voxelIdx) + 0.5;
+		   float hu = volumeTex.SampleLevel(samp, uvw, 0).r;
+		   float huNorm = saturate((hu - HuParams.z) / (HuParams.w - HuParams.z));
+		   float4 col = transferFunction.SampleLevel(tfSampler, huNorm, 0);
 
-			// back to uvw
-			float3 uvwVoxel = voxelIdx / float3(dimX, dimY, dimZ);
+		   if (col.a < 0.001)
+			   continue;
 
-			//float hu = volumeTex.SampleLevel(samp, uvw, 0).r;
-			//return float4(hu* 2000.0, hu* 2000.0, hu* 2000.0, 1);
+		   //메쉬 전용 패스에서 미리 계산해 둔 View Space Z 텍스처
+		   //이 픽셀에서 메쉬 표면이 
+		   //카메라로부터 얼마나 떨어져 있는지
+		   float meshViewZ = MeshViewZTex.Load(int3(pixelCoord, 0));
 
+		   //볼륨에서 hit 지점 찾는 부분
+		   //활성화된 볼륨 투명도 기준으로 충돌 지점 설정
+		   //if (!hasHit && col.a > 0.001)
 
-			//float hu = volumeTex.SampleLevel(samp, uvw, 0).r;
-			////return float4(hu, hu, hu, 1);
-			//return float4(hu * 0.001, hu * 0.001, hu * 0.001, 1);
+		   //hu 300 이상(해면골) 기준으로 충돌 지점 설정
+		   if (!hasHit && hu > 300)
+		   {
+		     // hitViewZ 계산
+		     //볼륨 hit 지점의 View Z 계산
+			 float4 posView = mul(float4(posWS, 1), View);
+		     posView /= max(abs(posView.w), 1e-6);
 
+			  //view space 변환
+			  //정규화
+			  float hitViewZ = posView.z;
 
-			//float hu = volumeTex.SampleLevel(samp, uvw, 0).r;
-			////return float4(hu, hu, hu, 1);
+		      // 깊이 차이
+			  if (meshDepth01 > 0.001f && meshDepth01 < 0.9999f)  // 메시 있음
+				 {
+					   //최종 깊이 변화량 계산
+					   //카메라 좌표계에서 피부-뼈 두께를 직접 측정하는
+					   //의료 계측식
+					   float deltaZ = abs(meshViewZ - hitViewZ);
 
-			////float hu = volumeTex.SampleLevel(samp, uvwVoxel, 0).r;
-			//////return float4(hu, hu, hu, 1);
+					   //UAV : GPU 계산 결과를 CPU에서 읽을 수 있는 리소스
+					   //DeltaZTex가 UAV로 사용됨.
 
-			float hu = volumeTex.SampleLevel(samp, uvw, 0).r;
-			float huNorm = saturate((hu - HuParams.z) / (HuParams.w - HuParams.z));
-			float4 col = transferFunction.SampleLevel(tfSampler, huNorm, 0);
+					   //메쉬와 볼륨 간 깊이 차이는 
+					   //얼굴 전체 픽셀에 대해 계산해야 하므로 
+					   //GPU에서 수행
+					   //이후 UAV에 저장된 깊이 차이 값을 CPU에서 통계 계산하는 순서
+					   DeltaZTex[pixelCoord] = deltaZ;
+				 }
+				 else
+				 {
+					   DeltaZTex[pixelCoord] = -1.0f;    // 메시 없음 표시
+				 }
 
+				 hasHit = true;
+		   }
 
-			/*	float density = volumeTex.SampleLevel(samp, uvw, 0).r;
-				return float4(density, density, density, 1);
 
-				float4 col = transferFunction.SampleLevel(tfSampler, density, 0);*/
 
 
+			 float densityScale = 0.02;
 
-				//return float4(huNorm, huNorm, huNorm, 1);
+			 float sigma = col.a * densityScale; // densityScale ≈ 0.02 ~ 0.05
+			 float alpha = 1.0 - exp(-sigma * stepW);
 
-				//return float4(col.rgb, 1);
 
-				if (col.a < 0.001)
-					continue;
+			 acc.rgb += (1.0 - acc.a) * alpha * col.rgb;
+			 acc.a += (1.0 - acc.a) * alpha;
 
+			 if (acc.a > 0.98)
+				 break;
 
-		
 
+			  posL = mul(float4(posWS, 1), InvVolumeWorld).xyz;
 
-				//half viewport, uvFull 보정
-				//depth copy 구조 보정, MRT/UAV 혼용
-				//이 상태에서 역투영은 비추천
+			   //float4 colorMap = float4(0, 0, 0, 1);
 
+			   //if (posL.z >= 0)
+			   //	acc.rgb = float3((0, 0, 1);// 파란색
+			   //else
+			   //	acc.rgb = float3((1, 1, 0);// 파란색의 보수 (노란색)
+			   //if (posL.y >= 0)
+			   //	acc.rgb = float3(0, 1, 0);// 초록색
+			   //else
+			   //	acc.rgb = float3((1, 0, 1);// 초록색의 보수 (마젠타)
 
-				////Depth 값(NDC 변환)
-				//float z_ndc = meshDepth01 * 2.0f - 1.0f;
+			   //if (posL.x >= 0)
+			   //	colorMap.rgb = float3(1, 0, 0);// 빨간색
+			   //else
+			   //	colorMap.rgb = float3(0, 1, 1);// 빨간색의 보수 (시안색)
+			   //return float4(colorMap);
 
+    }
 
-				////Clip Space 좌표 구성
-				//float4 clip = float4(
-				//	screenUV.x * 2.0f - 1.0f,
-				//	1.0f - screenUV.y * 2.0f, // D3D Y flip
-				//	z_ndc,
-				//	1.0f
-				//	);
 
+	// 루프 끝나고
+	if (!hasHit)
+	{
+		DeltaZTex[pixelCoord] = -1;
+	}
 
-				////View Space로 역투영
-				//float4 view = mul(clip, InvProj);
-				//view /= view.w;
+	acc.rgb = pow(saturate(acc.rgb), 1.0 / 2.2);
 
-				////View Space Z 추출 
-				//float meshViewZ = view.z;
 
+	if (CameraPosAndAlpha.w == 1.0) return float4(acc.rgb, 1.0);
+	if (CameraPosAndAlpha.w == 0.0) return float4(acc.rgb, 0.0);
 
-
-				//메쉬 전용 패스에서 미리 계산해 둔 View Space Z 텍스처
-				//이 픽셀에서 메쉬 표면이 
-				//카메라로부터 얼마나 떨어져 있는지
-				float meshViewZ = MeshViewZTex.Load(int3(pixelCoord, 0));
-
-				//볼륨에서 hit 지점 찾는 부분
-				//활성화된 볼륨 투명도 기준으로 충돌 지점 설정
-				//if (!hasHit && col.a > 0.001)
-				
-				//hu 300 이상(해면골) 기준으로 충돌 지점 설정
-				if (!hasHit && hu > 300)
-				{
-					// hitViewZ 계산
-					//볼륨 hit 지점의 View Z 계산
-					float4 posView = mul(float4(posWS, 1), View);
-					posView /= max(abs(posView.w), 1e-6);
-
-					//view space 변환
-					//정규화
-					float hitViewZ = posView.z;
-
-					// 깊이 차이
-					if (meshDepth01 > 0.001f && meshDepth01 < 0.9999f)  // 메시 있음
-					{
-						//최종 깊이 변화량 계산
-						//카메라 좌표계에서 피부-뼈 두께를 직접 측정하는
-						//의료 계측식
-						float deltaZ = abs(meshViewZ - hitViewZ);
-
-						//UAV : GPU 계산 결과를 CPU에서 읽을 수 있는 리소스
-						//DeltaZTex가 UAV로 사용됨.
-
-						//메쉬와 볼륨 간 깊이 차이는 
-						//얼굴 전체 픽셀에 대해 계산해야 하므로 
-						//GPU에서 수행
-						//이후 UAV에 저장된 깊이 차이 값을 CPU에서 통계 계산하는 순서
-						DeltaZTex[pixelCoord] = deltaZ;
-					}
-					else
-					{
-						DeltaZTex[pixelCoord] = -1.0f;    // 메시 없음 표시
-					}
-
-					hasHit = true;
-				}
-
-
-
-				//else
-				//{
-				//	//여기가 주로 row 값 실패값으로 출력됨.
-				//	int2 pixelCoord = int2(floor(input.pos.xy));
-				//	DeltaZTex[pixelCoord] = -1.0f;  // 메시 없음
-			
-				//}
-
-
-
-				float densityScale = 0.02;
-
-				float sigma = col.a * densityScale; // densityScale ≈ 0.02 ~ 0.05
-				float alpha = 1.0 - exp(-sigma * stepW);
-
-
-				acc.rgb += (1.0 - acc.a) * alpha * col.rgb;
-				acc.a += (1.0 - acc.a) * alpha;
-
-				if (acc.a > 0.98)
-					break;
-
-
-				posL = mul(float4(posWS, 1), InvVolumeWorld).xyz;
-
-				//float4 colorMap = float4(0, 0, 0, 1);
-
-				//if (posL.z >= 0)
-				//	acc.rgb = float3((0, 0, 1);// 파란색
-				//else
-				//	acc.rgb = float3((1, 1, 0);// 파란색의 보수 (노란색)
-				//if (posL.y >= 0)
-				//	acc.rgb = float3(0, 1, 0);// 초록색
-				//else
-				//	acc.rgb = float3((1, 0, 1);// 초록색의 보수 (마젠타)
-
-				//if (posL.x >= 0)
-				//	colorMap.rgb = float3(1, 0, 0);// 빨간색
-				//else
-				//	colorMap.rgb = float3(0, 1, 1);// 빨간색의 보수 (시안색)
-				//return float4(colorMap);
-
-			}
-
-
-			// 루프 끝나고
-			if (!hasHit)
-			{
-				DeltaZTex[pixelCoord] = -1;
-			}
-
-			acc.rgb = pow(saturate(acc.rgb), 1.0 / 2.2);
-
-
-
-			//if (hasHit)
-			//{
-			//	//// 보기 좋게 스케일 (예: 100mm 기준)
-			//	////float viz = saturate(abs(hitViewZ) / 500.0);
-
-			//	////float viz = saturate(hitViewZ / 500.0); // 200mm 기준
-			//	////return float4(viz, viz, viz, 1);
-
-			//	////float viz = saturate((abs(hitViewZ) - 150.0) / 300.0);
-
-			//	////float viz = saturate((abs(hitViewZ) - 250.0) / 250.0);
-
-
-			//	////return float4(viz, viz, viz, 1);
-
-
-			//	////return float4(deltaZ, 0, 0, 1);
-
-			//	//return float4(abs(meshViewZ) / 500.0, 0, 0, 1);
-
-			//	////return float4(abs(hitViewZ) / 500.0, 0, 0, 1);
-
-
-			//	float deltaZ = abs(meshViewZ - hitViewZ);
-			//	return float4(deltaZ / 10.0, 0, 0, 1); // 시각화용
-			//}
-
-			//return float4(0, 0, 0, 1);
-
-
-
-			//// 마지막에 디버그 오버레이 (선택)
-			//if (meshDepth01 > 0.001f && meshDepth01 < 0.9999f)
-			//{
-			//	float v = DebugTex.Sample(pointClamp, uvFull, 0);
-			//	acc.rgb = lerp(acc.rgb, float3(v, v, v), 0.3);  // 반투명 오버레이
-			//}
-
-		/*	float v = DebugTex.Sample(pointClamp, uvFull, 0);
-			return float4(v, v, 0, 1);
-*/
-
-
-			if (CameraPosAndAlpha.w == 1.0) return float4(acc.rgb, 1.0);
-			if (CameraPosAndAlpha.w == 0.0) return float4(acc.rgb, 0.0);
-
-			//return float4(acc.rgb, 0.6);
-			return float4(acc.rgb, 1.0);
+	//return float4(acc.rgb, 0.6);
+	return float4(acc.rgb, 1.0);
 }
 
 

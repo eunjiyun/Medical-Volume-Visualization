@@ -86,8 +86,6 @@ bool FileReader::LoadDICOMSeries(std::string folderPath, ID3D11Device* g_pd3dDev
 					patientName = utf8Name.c_str(); //  OFString은 std::string에서 바로 대입 가능
 				}
 
-
-
 				OFString wcStr, wwStr;
 				if (dataset->findAndGetOFString(DCM_WindowCenter, wcStr).good() &&
 					dataset->findAndGetOFString(DCM_WindowWidth, wwStr).good() &&
@@ -146,7 +144,6 @@ bool FileReader::LoadDICOMSeries(std::string folderPath, ID3D11Device* g_pd3dDev
 
 					try {
 
-
 						views.origin.x = std::stof(ox);
 						views.origin.y = std::stof(oy);
 						views.origin.z = std::stof(oz);
@@ -180,10 +177,8 @@ bool FileReader::LoadDICOMSeries(std::string folderPath, ID3D11Device* g_pd3dDev
 					}
 
 
-
-
 					// 6개 값이 모두 있는지 확인
-					if (6==count) {
+					if (6 == count) {
 						try {
 							views.rowDir.x = std::stof(vals[0]);
 							views.rowDir.y = std::stof(vals[1]);
@@ -222,27 +217,11 @@ bool FileReader::LoadDICOMSeries(std::string folderPath, ID3D11Device* g_pd3dDev
 
 
 				OFString slopeStr, interceptStr;
-
-				//  Rescale Slope (0028,1053)
-				/*if (dataset->findAndGetOFString(DCM_RescaleSlope, slopeStr).good()) {
-					m_rescaleSlope = std::stof(slopeStr.c_str());
-				}
-				else {*/
 				m_rescaleSlope = 1.0f; // 기본값
-			//}
-
-			////  Rescale Intercept (0028,1052)
-			//if (dataset->findAndGetOFString(DCM_RescaleIntercept, interceptStr).good()) {
-			//	m_rescaleIntercept = std::stof(interceptStr.c_str());
-			//}
-			//else {
 				m_rescaleIntercept = -1024.0f; // 기본값
-			//}
 
 				std::cout << "Rescale Slope: " << m_rescaleSlope
 					<< ", Intercept: " << m_rescaleIntercept << std::endl;
-
-
 			}
 		}
 	}
@@ -545,7 +524,7 @@ bool FileReader::NormalizeSlice(const std::vector<int16_t>& rawSlice,
 		}
 
 		//  Rescale 제거! Raw 값이 이미 HU!
-		float val{ static_cast<float>(rawSlice[i]) };  // ← 이것만!
+		float val{ static_cast<float>(rawSlice[i]) };
 
 		// Window/Level 적용
 		if (val < minHU) val = minHU;
@@ -568,53 +547,16 @@ bool FileReader::NormalizeVolumeFloat(
 	float windowMaxHU)
 {
 	if (rawVolume.empty()) return false;
-
 	floatData.resize(rawVolume.size());
 
-	//std::cout << rawVolume[0] << " "
-	//	<< rawVolume[100] << " "
-	//	<< rawVolume[1000] << " "
-	//	<< rawVolume[10000] << std::endl;
-
-	//float invRange = 1.0f / (windowMaxHU - windowMinHU);
 
 	for (size_t i = 0; i < rawVolume.size(); ++i)
 	{
 		////  패딩 체크
-
 		//// HU 변환
 		float hu = static_cast<float>(rawVolume[i]) * rescaleSlope + rescaleIntercept;
-
-		//std::cout << "rescaleSlope : " << rescaleSlope << std::endl;
-		//std::cout << "rescaleIntercept : " << rescaleIntercept << std::endl;
-
-		//// 예시: CT 표준 범위
-		//float density = (hu + windowCenter) / windowWidth;
-		//density = std::clamp(density, 0.0f, 1.0f);
-
-
-		////floatData[i] = density;
 		floatData[i] = hu;
-		//std::cout << "hu : " << hu << std::endl;
-
-
-		/*float norm = (hu - windowMinHU) * invRange;
-		floatData[i] = std::clamp(norm, 0.0f, 1.0f);*/
-
-		//std::cout << "floatData size:" << floatData.size() << std::endl;
-		//std::cout << "floatData sample:" << floatData[1000] << std::endl;
-
 	}
-
-
-	//float minV = 1e9f, maxV = -1e9f;
-	//for (size_t i = 0; i < rawVolume.size(); ++i)
-	//{
-	//	minV = min(minV, floatData[i]);
-	//	maxV = max(maxV, floatData[i]);
-	//}
-	//std::cout << "floatData min/max = " << minV << " " << maxV << std::endl;
-
 
 	return true;
 }
@@ -661,7 +603,7 @@ void FileReader::AnalyzeHUDistribution()
 		if (raw > maxRaw) maxRaw = raw;
 
 		// Raw 값 = HU
-		float hu{ static_cast<float>(raw) } /** 1 + (-1024.f)*/;
+		float hu{ static_cast<float>(raw) };
 
 
 		if (hu < minHU) minHU = hu;
@@ -671,7 +613,7 @@ void FileReader::AnalyzeHUDistribution()
 		++histogram[bucket];
 	}
 
-	int validVoxels=m_volumeData.size() - paddingCount - outlierCount ;
+	int validVoxels = m_volumeData.size() - paddingCount - outlierCount;
 
 	std::cout << "=== Raw Value Range ===" << std::endl;
 	std::cout << "Min Raw: " << minRaw << std::endl;

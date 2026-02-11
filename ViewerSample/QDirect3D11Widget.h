@@ -28,7 +28,6 @@ using namespace std;
 using Microsoft::WRL::ComPtr;
 
 
-
 #pragma comment(lib, "d3d11.lib")
 #pragma comment(lib, "dxgi.lib")
 #pragma comment(lib, "d3dcompiler.lib")
@@ -37,9 +36,7 @@ using Microsoft::WRL::ComPtr;
 #include <D3Dcompiler.h>
 #include <directxmath.h>
 using namespace DirectX;
-
-
-
+class FileReader;
 
 struct CB
 {
@@ -50,8 +47,8 @@ struct CB
 	DirectX::XMFLOAT4X4  InvVolumeWorld;
 	DirectX::XMFLOAT4X4 InvVolumeWorldCorrected;
 
-	DirectX::XMFLOAT4X4 View;           // ✅ 추가
-	DirectX::XMFLOAT4X4 Projection;     // ✅ 추가
+	DirectX::XMFLOAT4X4 View;
+	DirectX::XMFLOAT4X4 Projection;
 
 	XMFLOAT4 CameraPosAndAlpha;  // xyz=pos, w=alpha
 	XMFLOAT4 VoxelAndMaxSteps;   // xyz=voxel, w=maxSteps
@@ -87,19 +84,19 @@ struct ScaleOptimizationStats
 	// 생성자
 	ScaleOptimizationStats()
 		: scale(0.0f), avgDelta(FLT_MAX), medianDelta(FLT_MAX),
-		stdDelta(0.0f), percentile95(FLT_MAX), robustMetric(FLT_MAX) ,
-	
+		stdDelta(0.0f), percentile95(FLT_MAX), robustMetric(FLT_MAX),
+
 		// 품질 지표 초기값
 		inlier2mm(0.0f),      // 맞은 비율 0%
 		inlier5mm(0.0f),      // 맞은 비율 0%
 		validRatio(0.0f),     // 겹친 영역 0%
 		isValid(false)       // 기본은 무조건 FAIL
-	
+
 	{}
 };
 
 
-class FileReader;
+
 
 
 struct Vertex {
@@ -256,9 +253,18 @@ public:
 	bool scaleDirty = true;    // 다시 찾아야 하는지
 	float optimalScale = 1.0f;
 
+	int px[4], py[4];
+	int clickedViewIndex{};
 
+	D3D11_VIEWPORT viewPort;
 
-
+	ScreenPoint ctLeftEye;
+	ScreenPoint ctRightEye;
+	ScreenPoint meshLeftEye;
+	ScreenPoint meshRightEye;
+	LandmarkStep m_landmarkStep = LandmarkStep::CT_LeftEye;
+	ScaleFitResources scaleRes;
+	ComPtr<ID3D11ShaderResourceView> texArraySRV;
 public:
 
 	void UpdateVolumeMatrix();
@@ -268,13 +274,10 @@ public:
 	bool LoadMeshTexture(const std::string& filename, ID3D11Device* device);
 	bool InitializeMeshShaders();
 	bool CreateMeshConstantBuffer();
-	//bool CreateMeshDepthState();
-	//bool CreateMeshDepthBuffer();
+
 
 	bool TestSimpleTriangle();
-	//void RenderMesh(ID3D11DeviceContext* context);
-	/*bool CreateOITBuffers();
-	void ComposeMesh(ID3D11DeviceContext* context);*/
+
 	bool CreateClipSettingsBuffer();
 
 public:
@@ -301,11 +304,7 @@ public:
 		const ScreenPoint& volumeRightEye
 	);
 
-	ScreenPoint ctLeftEye;
-	ScreenPoint ctRightEye;
-	ScreenPoint meshLeftEye;
-	ScreenPoint meshRightEye;
-	LandmarkStep m_landmarkStep = LandmarkStep::CT_LeftEye;
+
 	float Distance2D(const ScreenPoint& a, const ScreenPoint& b);
 
 	void mouseMoveEvent(QMouseEvent* event);
@@ -318,13 +317,9 @@ public:
 	ViewGeometry GetCoronalGeometry();
 	ViewGeometry GetSagittalGeometry();
 	int ComputeSliceIndexForView(const XMFLOAT3& patientCoord, int viewIndex);
-	int px[4], py[4];
-	int clickedViewIndex{};
 
 
-	D3D11_VIEWPORT viewPort;
 
-	ComPtr<ID3D11ShaderResourceView> texArraySRV;
 	void RenderAllQuads();
 
 
@@ -372,19 +367,9 @@ private:
 		ID3D11UnorderedAccessView** outUAV
 	);
 
-	//ID3D11Texture2D* CreateSrvScaleFit(
-	//	ID3D11Device* device,
-	//	DXGI_FORMAT format,
-	//	ID3D11ShaderResourceView** outSRV
-	//);
 
-	//ID3D11Texture2D* CreateStagingTexScaleFit(
-	//	ID3D11Device* device,
-	//	DXGI_FORMAT format,
-	//	ID3D11ShaderResourceView** outSRV
-	//);
 
-	ScaleFitResources scaleRes;
+
 	bool CreateScaleFitResources(
 		ID3D11Device* device,
 		UINT width,
@@ -404,21 +389,18 @@ private:
 	float FindOptimalScale();
 	void DebugSceneDepthDirect();
 
-	
+
 
 	float ComputeOptimalScale(double mean, double rms);
-	// UAV → CPU → 통계 → 상수 버퍼 업데이트 함수
-	void ProcessDeltaZAndUpdateConstantBuffer(
-		ID3D11DeviceContext* context,
-		ScaleFitResources& resources
-	);
-	
-	
+	// UAV CPU 통계 상수 버퍼 업데이트 함수
+	void ProcessDeltaZAndUpdateConstantBuffer(ID3D11DeviceContext* context, ScaleFitResources& resources);
+
+
 	ID3D11ShaderResourceView* CreateTextureSRV(ID3D11Device* device, ID3D11Texture2D* texture);
 	void InitTextures(UINT, UINT);
 
 	void InitSampler();
-	
+
 
 	int ComputeSliceIndexFromPatientCoord(int viewIndex, XMFLOAT3 patientCoord);
 	int ComputeSliceIndexFromPatientCoord_Robust(
@@ -439,12 +421,10 @@ private:
 public:
 	ID3D11RenderTargetView* getRTVForTexture(ID3D11Texture2D* texture);
 	ID3D11ShaderResourceView* getSRVForTexture(ID3D11Texture2D* texture);
-	// ⭐ Getter 함수 추가
-	TransferFunction* GetTransferFunction() {
-		return m_transferFunction;
-	}
+	//  Getter 함수 추가
+	TransferFunction* GetTransferFunction() { return m_transferFunction; }
 
-
+	void SetSharpness(float value); //  setter
 	// Qt Events
 private:
 	bool           event(QEvent * event) override;
@@ -463,8 +443,8 @@ private:
 #endif
 
 signals:
-	// ✅ 2. signals: 섹션 추가
-	void rotationChanged(float x, float y);  // ✅ 3. 시그널 선언 (구현 X)
+	//  2. signals: 섹션 추가
+	void rotationChanged(float x, float y);  //  3. 시그널 선언 (구현 X)
 
 	void deviceInitialized(bool success);
 
@@ -499,7 +479,7 @@ public:
 
 	D3DCOLORVALUE * BackColor() { return &m_BackColor; }
 
-
+public:
 	SliceSeriesSrv m_SRViews;// Volume, m_SRViewsAxial, m_SRViewsCoronal, m_SRViewsSagittal;
 	ID3D11Buffer* m_colorBuffer = nullptr;//m_viewIndexBuffer
 	ID3D11Buffer* m_viewIndexBuffer = nullptr;//m_viewIndexBuffer
@@ -525,13 +505,13 @@ private:
 	bool m_bStarted;
 
 	D3DCOLORVALUE m_BackColor = { 0.0f, 0.0f, 0.0f, 1.0f }; // Black, fully opaque
-	float m_sharpness{ 0.0f };  // ⭐ 추가
+	float m_sharpness{ 0.0f };  //  추가
 public:
-	void SetSharpness(float value); // ⭐ setter
+
 
 	ComPtr<ID3D11ShaderResourceView> m_volumeSRV;   // 3D 볼륨 텍스처 SRV
 	ComPtr<ID3D11SamplerState> m_volumeSampler;     // 3D 볼륨 샘플러
-	ComPtr < ID3D11Texture1D> m_transferFunctionTexture; // ← 이게 핵심!
+	ComPtr < ID3D11Texture1D> m_transferFunctionTexture; //  이게 핵심!
 
 	ID3D11Device* m_pDevice;
 
@@ -549,22 +529,17 @@ public:
 
 	ID3D11VertexShader*       m_volumeQuadVS = nullptr;
 	ID3D11PixelShader*        m_volumeQuadPS = nullptr;
-
-
-
-
-
 	ID3D11InputLayout*        m_inputLayout = nullptr;//layoutQuad
 	ID3D11InputLayout*layoutQuad{ nullptr };
 
 	ID3D11InputLayout*        m_volumeInputLayout = nullptr;
 
 	ID3D11InputLayout*        m_prevVolumeInputLayout = nullptr;
-	ID3D11InputLayout* m_cubeInputLayout;        // ✅ 큐브용 (Position만)
+	ID3D11InputLayout* m_cubeInputLayout;        //  큐브용 (Position만)
 
 
-	ID3D11Buffer* m_volumeConstantBuffer;  // ← 여기 추가!
-	ID3D11Buffer* m_volumePrevConstantBuffer;  // ← 여기 추가!
+	ID3D11Buffer* m_volumeConstantBuffer;  //  여기 추가
+	ID3D11Buffer* m_volumePrevConstantBuffer;  //  여기 추가
 
 	// D3D11 상태 객체들
 	Microsoft::WRL::ComPtr<ID3D11BlendState>        m_alphaBlendState;
@@ -572,25 +547,24 @@ public:
 	Microsoft::WRL::ComPtr<ID3D11DepthStencilState> m_VolumeDepthState;
 
 
-	// ✅ 큐브 관련
+	// 큐브 관련
 	ID3D11Buffer* m_cubeVertexBuffer;
 	ID3D11Buffer* m_cubeIndexBuffer;
 
-	// ✅ 3D 평면들
+	//  3D 평면들
 	SlicePlane m_CoronalPlane;
 	SlicePlane m_AxialPlane;
 	SlicePlane m_SagittalPlane;
 
-	// ✅ 올바른 선언
+	//  올바른 선언
 	DirectX::XMFLOAT4X4 m_volumeViewMatrix;
 	DirectX::XMFLOAT4X4 m_volumeProjectionMatrix;
 
 	ID3D11DepthStencilView* m_pDepthStencilView;  // ← 이게 있는지 확인
-	//ID3D11Texture2D* m_depthTexture = nullptr;
-	ID3D11RenderTargetView* m_sceneDepthRTV = nullptr;
-	//ID3D11ShaderResourceView* m_sceneDepthSRV = nullptr;
 
-	// // ✅ 각 평면의 World Matrix를 저장
+	ID3D11RenderTargetView* m_sceneDepthRTV = nullptr;
+
+
 
 	VolumeConstants constants{};
 	VolumeConstants constantsPrev{};
@@ -600,27 +574,27 @@ public:
 	CB cb{};
 	DebugCB debugCb{};
 
-	XMVECTOR eye /*= XMVectorSet(0.0f, 0.0f, -3.0f, 1.0f)*/;  // 조금 더 뒤로
-	XMVECTOR at /*= XMVectorSet(0.0f, 0.0f, 0.0f, 1.0f)*/;
-	XMVECTOR up /*= XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f)*/;
-	XMMATRIX viewMat, invViewMat, projMat, invProjMat, rotx, roty, centerTranslate, /*scale,*/ worldMat, invWorldMat, scale;
+	XMVECTOR eye, at, up;  // 조금 더 뒤로
 
-	XMMATRIX initialWorld;
+	XMMATRIX viewMat, invViewMat, projMat, invProjMat, rotx, roty, centerTranslate, worldMat, invWorldMat, initialWorld;
 
-	float maxPhysicalVol, maxMesh, overallSize{ 1.f };
+	float maxPhysicalVol, maxMesh;
 	float physicalWidth, physicalHeight, physicalDepth;
 	float scaleX, scaleY, scaleZ;
-	float m_orthoScale{1.f};
+	float m_orthoScale{ 1.f };
 
-	//DebugScreenPoint m_debugPoint;
 
 	bool m_debugPointValid{ false };
 	std::vector<DebugPoint> m_debugPoints;
-public:
+
 	bool isPlaster{ false };
 	bool isMesh{ false };
+	ComPtr<ID3D11Buffer> m_quadVB;
+public:
+
+
 	void plasterVolumeShow();
-	void RenderVolumeView(/*const D3D11_VIEWPORT& vp*/);
+	void RenderVolumeView();
 	void InitializeVolumeCamera();
 	void InitializeVolumeShaders();
 
@@ -634,25 +608,21 @@ public:
 	void DrawSliceQuad();
 
 	void CreateDepthStencilBuffer();
-	//void InitializeDepthStencil();
 	void CreateDepthStencil();
-	//void resizeSwapChain();
-
-	ComPtr<ID3D11Buffer> m_quadVB;
 
 	void PrintMatrix(const XMMATRIX& mat);
 	void CreateTexture3D();
 	void FullScreenPassSet();
 
-
+public:
 	ID3D11Texture2D* m_texture = nullptr;
 	std::vector<ID3D11ShaderResourceView*> m_textureSRV;
 	std::vector < ID3D11SamplerState*> m_samplerState;
 
 	FileReader* fileReader = nullptr;
 	MeshRenderer* meshRenderer{ nullptr };
-	std::unique_ptr<VolumeToTexture> m_volumeToTexture;  // ⭐ 추가
-	std::unique_ptr<VolumeToTexture> meshSceneDepth;  // ⭐ 추가
+	std::unique_ptr<VolumeToTexture> m_volumeToTexture;  //  추가
+	std::unique_ptr<VolumeToTexture> meshSceneDepth;  //  추가
 
 	ID3D11ShaderResourceView* axialTextureSRV = nullptr;
 
@@ -688,9 +658,9 @@ public:
 
 	ID3D11Buffer* m_meshConstantBuffer{ nullptr };
 	//	ID3D11DepthStencilState* m_meshDepthState{ nullptr };
-	ID3D11PixelShader* m_composePS{ nullptr };  // ✅ 추가
+	ID3D11PixelShader* m_composePS{ nullptr };  //  추가
 	ID3D11VertexShader* m_fullscreenVS{ nullptr };
-	ID3D11Buffer* m_clipSettingsBuffer{ nullptr };  // ✅ 추가!    m_cameraBuffer
+	ID3D11Buffer* m_clipSettingsBuffer{ nullptr };  //  추가!    m_cameraBuffer
 	ID3D11Buffer* m_cameraBuffer{ nullptr };
 
 
@@ -704,10 +674,7 @@ public:
 	ID3D11Texture2D* m_colorPeelTextures[MAX_DEPTH_PEELS] = {};
 	ID3D11RenderTargetView* m_colorPeelRTVs[MAX_DEPTH_PEELS] = {};
 
-
-public:
-	//ID3D11RenderTargetView* m_volumeRTV;
-	ID3D11Texture2D* /*deltaZTex,*/ *stagingTex;
+	ID3D11Texture2D**stagingTex;
 	ID3D11Buffer*               constantBuffer = nullptr;
 
 
@@ -716,23 +683,15 @@ public:
 	ID3D11ShaderResourceView* m_depthSRV = {};
 	ID3D11ShaderResourceView* m_UAVDebugSRV = {};
 	ID3D11Texture2D* m_UAVDebugTex{ nullptr };
-	//ID3D11ShaderResourceView* m_meshViewZReadSRV = {};
-
 
 	ID3D11Texture2D*	meshViewZWriteTex = nullptr;
 	ID3D11RenderTargetView* meshViewZWriteRTV = nullptr;
 	ID3D11ShaderResourceView* meshViewZWriteSRV = nullptr;
-
+public:
 
 	bool CreateDepthPeelingBuffers();
 	void RenderMeshWithDepthPeeling(ID3D11DeviceContext* context);
-	//void ComposePeeledLayers(ID3D11DeviceContext* context);
-
-
-
 	void CreateSRV(ID3D11Texture2D* tex, ID3D11ShaderResourceView* srv);
-
-
 	void CreateMeshViewZResource();
 };
 

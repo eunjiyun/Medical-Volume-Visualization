@@ -6,6 +6,25 @@
 using namespace DirectX;
 using Microsoft::WRL::ComPtr;
 
+// Constant Buffer
+struct CBData
+{
+	XMMATRIX InvView;
+	XMMATRIX InvProj;
+	XMMATRIX InvVolumeWorld;
+	XMMATRIX View;
+	XMMATRIX Projection;
+	XMFLOAT4 CameraPosAndAlpha;  // xyz = pos, w = mode
+	XMFLOAT4 VoxelAndMaxSteps;   // xyz = voxel, w = maxSteps
+	XMFLOAT4 HuParams;            // z = min, w = max
+};
+//  Simple Quad 리소스 (텍스처를 화면에 그리기용)
+struct SimpleVertex
+{
+	XMFLOAT2 pos;
+	XMFLOAT2 uv;
+};
+
 class VolumeToTexture
 {
 public:
@@ -42,10 +61,6 @@ public:
 	void DrawTextureToScreen(ID3D11Device* device, ID3D11ShaderResourceView* srv, ID3D11DeviceContext* context,
 		ID3D11VertexShader* vs, ID3D11PixelShader* ps);
 
-	// 결과 텍스처 가져오기
-	//ID3D11ShaderResourceView* GetResultSRV() const { return m_resultSRV.Get(); }
-	//ID3D11Texture2D* GetResultTexture() const { return m_resultTexture.Get(); }
-
 	// 크기 조정
 	void Resize(ID3D11Device* device, int width, int height);
 
@@ -66,9 +81,6 @@ private:
 	bool CreateSamplers(ID3D11Device* device);
 	void ReleaseSamplers();
 
-
-	//bool InitSimpleQuad(ID3D11Device* device);
-
 public:
 	// Render Target
 	ID3D11Texture2D* m_resultTexture{ nullptr };
@@ -84,35 +96,12 @@ public:
 	ComPtr<ID3D11VertexShader> m_vertexShader;
 	ComPtr<ID3D11PixelShader> m_pixelShader;
 
-	// Constant Buffer
-	struct CBData
-	{
-		XMMATRIX InvView;
-		XMMATRIX InvProj;
-		XMMATRIX InvVolumeWorld;
-		XMMATRIX View;
-		XMMATRIX Projection;
-		XMFLOAT4 CameraPosAndAlpha;  // xyz = pos, w = mode
-		XMFLOAT4 VoxelAndMaxSteps;   // xyz = voxel, w = maxSteps
-		XMFLOAT4 HuParams;            // z = min, w = max
-	};
 	ComPtr<ID3D11Buffer> m_constantBuffer;
 
 	// Samplers
 	ComPtr<ID3D11SamplerState> m_linearSampler;
 	ComPtr<ID3D11SamplerState> m_pointClampSampler;
 
-	// ⭐ Simple Quad 리소스 (텍스처를 화면에 그리기용)
-	struct SimpleVertex
-	{
-		XMFLOAT2 pos;
-		XMFLOAT2 uv;
-	};
-
-	//ComPtr<ID3D11Buffer> m_simpleQuadVB;
-	//ComPtr<ID3D11InputLayout> m_simpleQuadLayout;
-	//ComPtr<ID3D11VertexShader> m_simpleQuadVS;
-	//ComPtr<ID3D11PixelShader> m_simpleQuadPS;
 
 
 	// Viewport

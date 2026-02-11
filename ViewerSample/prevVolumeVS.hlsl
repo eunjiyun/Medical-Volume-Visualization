@@ -20,7 +20,7 @@ VS_OUTPUT VSVolume(VS_INPUT input)
 {
 	VS_OUTPUT output;
 
-	// ✅ 0.9 스케일 제거!
+
 	output.position = mul(float4(input.position, 1.0f), World);
 	output.position = mul(output.position, View);
 	output.position = mul(output.position, Projection);
