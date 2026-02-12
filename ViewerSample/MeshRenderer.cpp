@@ -159,7 +159,6 @@ void MeshRenderer::RenderMeshDepth(ID3D11DeviceContext* context, ID3D11Buffer* m
 	}
 
 
-
 	ID3D11RenderTargetView* curRTV = nullptr;
 	ID3D11DepthStencilView* curDSV = nullptr;
 	context->OMGetRenderTargets(1, &curRTV, &curDSV);
@@ -355,7 +354,7 @@ void MeshRenderer::RenderMeshDepth(ID3D11DeviceContext* context, ID3D11Buffer* m
 	//std::cout << "Drawing" << m_meshVertexCount << "vertices..." << std::endl;
 
 
-	// 렌더링 (Depth만 기록)
+	//// 렌더링 (Depth만 기록)
 	context->Draw(m_meshVertexCount, 0);
 }
 

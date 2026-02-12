@@ -157,6 +157,8 @@ float4 main(PSInput input) : SV_Target
 
 	float z = input.viewZ;
 
+	//return float4(0.5, 0.5, 0.5, 0.65);  // 파랑
+
 	// 더 큰 범위
 	if (z < 420) return float4(1, 0, 1, finalAlpha);  // 빨강
 	if (z < 450) return float4(1, 1, 0, finalAlpha);  // 노랑
