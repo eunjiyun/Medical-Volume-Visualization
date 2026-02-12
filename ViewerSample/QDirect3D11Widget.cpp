@@ -1843,10 +1843,6 @@ void QDirect3D11Widget::RenderMeshWithDepthPeeling(ID3D11DeviceContext* context)
 		m_pDevice->CreateDepthStencilState(&depthDesc, &depthState);
 		context->OMSetDepthStencilState(depthState, 1);  //  추가!
 
-
-
-
-
 		// 이전 레이어 depth 바인딩
 		if (layer > 0)
 		{
@@ -5751,8 +5747,6 @@ void QDirect3D11Widget::UpdateSlicePlanePositions()
 
 		//XMMATRIX volumeRotationOnly = roty * /*rotx **/ volumeRotation;  // scale 제외!
 		////XMMATRIX axialWorld = axialLocal * volumeRotation;
-
-
 
 
 		XMMATRIX axialWorld = axialScale *  //  주석 해제! 

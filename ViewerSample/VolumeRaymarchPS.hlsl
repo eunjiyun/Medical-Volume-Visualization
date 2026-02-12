@@ -75,31 +75,34 @@ float4 main(PSInput input) : SV_Target
 	uvFull.y = input.uv.y * 0.5;
 
 	float2 uv = input.uv;
+
+	//<픽셀 -> 레이 생성>
 	float2 ndc = uv * 2.0 - 1.0;
 	ndc.y = -ndc.y;
-
 	// 1. ray origin (view space)
 	float4 rayOriginVS4 = mul(float4(ndc, 0.0, 1.0), InvProj);
-
 	// 각 픽셀의 월드로 나가는 시작점
 	float3 rayOriginVS = rayOriginVS4.xyz;
-
 	//모든 레이가 동일한 방향
 	// 2. ray direction (view space, fixed)
 	//레이 이동 방향이 z축인듯 하지만
 	float3 rayDirVS = float3(0, 0, 1);
 
+
+
+	//<레이를 실제 씬으로 이동>
 	// 3. view -> world
 	//월드 공간 레이 시작점
 	float3 rayPosWS = mul(float4(rayOriginVS, 1), InvView).xyz;
-
 	//월드 공간 레이 방향
 	float3 rayDirWS = normalize(mul(float4(rayDirVS, 0), InvView).xyz);
+	//카메라 기준 좌표 => 실제 월드 좌표
+	//실제 CT 볼륨 탐험 가능 상태
+
+
 
 	// (옵션) view-space origin (mesh depth 비교용)
 	float3 rayPosVS = rayOriginVS;
-
-
 	/* ---------------------------
 	   Volume bounds (LOCAL space)
 	   - still define the box in volume-local normalized space
@@ -119,6 +122,7 @@ float4 main(PSInput input) : SV_Target
 	--------------------------- */
 
 
+	//<레이 vs 볼륨 박스 교차 계산>
 	//로컬 공간에서의 교차
 	// Transform ray into volume-local space for intersection ONLY
 	float3 rayPosL = mul(float4(rayPosWS, 1), InvVolumeWorld).xyz;
@@ -156,8 +160,15 @@ float4 main(PSInput input) : SV_Target
 	// Compute entry/exit points in LOCAL
 	float3 entryL = rayPosL + rayDirL * tNearL;
 	float3 exitL = rayPosL + rayDirL * tFarL;
+	//레이가 볼륨에 언제 들어가고 언제 나오는지 계산
+	//볼륨 밖은 탐색할 필요 없음
+	//속도 핵심 최적화
 
 
+
+
+
+	//<레이마칭 준비>
 	//월드 기준으로 레이마칭 변경
 	// Transform entry/exit to WORLD
 	// (requires VolumeWorld in your CB)
@@ -185,7 +196,7 @@ float4 main(PSInput input) : SV_Target
 
 	//월드 단위 stepSize
 	float stepW = (tFarW - tNearW) / maxSteps;
-
+	//탐험 시작점, 탐험 끝점, 걸음 크기
 
 
 	/* ---------------------------
@@ -467,5 +478,123 @@ float4 main(PSInput input) : SV_Target
 //최종적으로 레이 경로를 따라 3D 텍스처를 샘플링하는 게 볼륨 레이마칭
 
 
+// 볼륨 레이마칭은 
+// 화면의 픽셀마다 3D 공간 속을 탐색해서
+// 그 픽셀의 색을 결정하는 과정
+
+// 픽셀 => 레이 생성 => 볼륨 진입 구간 찾기 => 레이 이동
+//=> 볼륨 샘플링 => 색 누적 => 픽셀 출력
+
+// 화면 픽셀 위치가
+// 카메라 공간 => 월드 공간 => 볼륨 로컬 => 텍스처 좌표
+// 이렇게 계속 변환됨
+
+//Screen
+//→ NDC
+//→ View
+//→ World
+//→ Volume Local
+//→ UVW
+
+
+//Screen Space
+//input.uv
+//화면 픽셀 위치 0~1
+//그냥 모니터 위치, 3D 정보 없음
+
+//NDC (정규화 화면)
+//ndc = uv*2 - 1
+//0~1 => -1~1
+//GPU 표준 카메라 평면 좌표
+//카메라 앞 평면의 위치, 아직 3D 아님
+
+//View Space (카메라 공간)
+//rayOriginVS = mul(ndc, InvProj)
+//픽셀이 카메라 기준에서 어느 방향인지 계산
+//카메라 = (0,0,0)
+//이제 레이 시작점 생김
+
+//World Space
+//rayPosWS = mul(rayOriginVS, InvView)
+//rayDirWS = mul(rayDirVS, InvView)
+//카메라 기준 => 실제 씬 기준
+//이제 레이가 탐험이 가능한 상태
+//볼륨, 메쉬, 모든 오브젝트 다 월드에 있음.
+
+//Volume Local Space
+//posL = mul(posWS, InvVolumeWorld)
+//씬 좌표 => 볼륨 자체 좌표
+//이 단계가 필요한 이유는 볼륨 텍스처는 자기 기준 좌표로 저장돼서.
+//월드 => 오브젝트 내부 좌표
+
+//UAV Texture Space
+//uvw = normalize(boxMinL ~ boxMaxL)
+//실제 길이(mm) => 0~1
+//텍스처 샘플링 좌표
+//GPU가 읽을 수 있음
+
+//Texture Sampling
+//volumeTex.Sample(uvw)
+//실제 CT 데이터 읽음
+
+
+//[픽셀 위치]
+//Screen
+//↓
+//NDC
+//↓
+//카메라 기준 위치
+//View Space
+//↓
+//씬 기준 위치
+//World Space
+//↓
+//볼륨 내부 좌표
+//Local Space
+//↓
+//텍스처 좌표
+//UVW
+//↓
+//CT 값 읽기
+
+//그래픽스에서 보통 흐름은
+//월드=>뷰=>프로젝션=>스크린 
+//이렇게 앞으로 가는데 
+
+//레이마칭은 반대로
+//screen에서 시작해서 거꾸로 올라감
+//스크린=>프로젝션의 역행렬=>뷰의 역행렬=>월드
+
+//프로젝션 행렬은 
+//projection은 카메라 렌즈 역할
+//3D 공간 => 2D 평면
+//멀리 있으면 작아짐, 원근 적용
+
+//프로젝션 역행렬은
+//화면 평면 => 3D 방향 복원
+//2D 위치에서 그 픽셀이 어디 방향인지 계산
+//rayOriginVS = mul(float4(ndc,0,1), InvProj);
+//카메라 평면 위치 => 카메라 기준 공간 위치
+//레이 방향 생성
+
+//Projection : 카메라가 찍음 : 3D방향=>화면
+//InvProj : 사진 보고 광선 역추적 : 화면=>3D방향
+
+//View 행렬
+//이건 카메라 위치/회전 반영
+//월드 => 카메라 기준 변환
+//씬 좌표 => 카메라 좌표
+
+//InvView 행렬
+//카메라 기준 => 실제 씬 좌표
+//카메라에서 본 방향 => 실제 공간 방향
+//카메라 기준 레이를 실제 월드 공간 레이로 변환
+
+//뷰 행렬은 세상을 카메라 기준으로 재배치
+//뷰 역행렬은 카메라 기준 좌표를 세상 좌표로 되돌림
+
+//<레이 생성 전체 흐름>
+//화면 픽셀(uv) => NDC(ndc) => InvProj(픽셀->카메라 기준 방향)
+//=>InvView(카메라 기준->실제 공간 방향) : rayDirWS
 
 
