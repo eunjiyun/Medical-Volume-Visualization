@@ -5685,8 +5685,8 @@ void QDirect3D11Widget::UpdateSlicePlanePositions()
 		//
 		//
 		//	//슬라이스 개수 * 물리 단위?(mm) = 전체 깊이
-		float totalZ = fileReader->m_depth * spacing.z; // 너 코드에서 height*spacing.y 를 axial 축으로 사용중
-		float axialZ = origin.z + fileReader->currentIndex[1] * spacing.z;
+		float totalZ{ fileReader->m_depth * spacing.z }; // 너 코드에서 height*spacing.y 를 axial 축으로 사용중
+		float axialZ{ origin.z + fileReader->currentIndex[1] * spacing.z };
 		//	// 예: origin.z=-94.8 + 316 * 0.3 = -94.8 + 94.8 = 0.0mm (중간)
 		//
 		//

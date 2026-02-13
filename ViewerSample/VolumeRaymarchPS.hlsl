@@ -68,6 +68,19 @@ struct PSOut
 
 
 float4 main(PSInput input) : SV_Target
+//픽셀 셰이더 entry
+//화면 픽셀 하나당 1번 실행
+//반환값 = 최종 픽셀 색
+// : SV_Target는 Semantic을 지정하는 부분이고, 반환되는 값이 렌더 타겟
+//(최종 출력 프레임 버퍼의 색상 값)에 쓰인다는 의미
+//SV_Target0 첫 번째 렌더 타겟에 출력
+//SV_Target1 두 번째 렌더 타겟에 출력(MRT, Multiple Render Targets)
+
+//Direct3D의 셰이더 모델에서는 단순히 float4를 반환한다는 사실만으로는 
+//그 값이 어디로 가야하는지 알 수가 없음.
+//Sementic을 붙여서 GPU에 이 값은 최종 픽셀 색상으로 쓰라고 알려줌.
+//그래서  : SV_Target는 픽셀 셰이더에서 출력이 화면에 그려질 색상 값임을
+//명시하는 역할
 {
 	// TL viewport 기준 uv → 전체 화면 depth uv
 	float2 uvFull;
@@ -79,11 +92,14 @@ float4 main(PSInput input) : SV_Target
 	//<픽셀 -> 레이 생성>
 	float2 ndc = uv * 2.0 - 1.0;
 	ndc.y = -ndc.y;
+
 	// 1. ray origin (view space)
 	float4 rayOriginVS4 = mul(float4(ndc, 0.0, 1.0), InvProj);
 	// 각 픽셀의 월드로 나가는 시작점
+
 	float3 rayOriginVS = rayOriginVS4.xyz;
 	//모든 레이가 동일한 방향
+
 	// 2. ray direction (view space, fixed)
 	//레이 이동 방향이 z축인듯 하지만
 	float3 rayDirVS = float3(0, 0, 1);
@@ -91,13 +107,14 @@ float4 main(PSInput input) : SV_Target
 
 
 	//<레이를 실제 씬으로 이동>
+	//실제 CT 볼륨 탐험 가능 상태
 	// 3. view -> world
 	//월드 공간 레이 시작점
 	float3 rayPosWS = mul(float4(rayOriginVS, 1), InvView).xyz;
 	//월드 공간 레이 방향
 	float3 rayDirWS = normalize(mul(float4(rayDirVS, 0), InvView).xyz);
 	//카메라 기준 좌표 => 실제 월드 좌표
-	//실제 CT 볼륨 탐험 가능 상태
+	
 
 
 
@@ -123,6 +140,11 @@ float4 main(PSInput input) : SV_Target
 
 
 	//<레이 vs 볼륨 박스 교차 계산>
+	/*레이가 볼륨에
+		언제 들어가고
+		언제 나오는지 계산*/
+	/* 볼륨 밖은 탐색할 필요 없음
+	=>	속도 핵심 최적화*/
 	//로컬 공간에서의 교차
 	// Transform ray into volume-local space for intersection ONLY
 	float3 rayPosL = mul(float4(rayPosWS, 1), InvVolumeWorld).xyz;
@@ -169,6 +191,11 @@ float4 main(PSInput input) : SV_Target
 
 
 	//<레이마칭 준비>
+	/*탐험 시작점
+		탐험 끝점
+		걸음 크기*/
+	/*어디서부터 어디까지
+		얼마씩 이동할지*/
 	//월드 기준으로 레이마칭 변경
 	// Transform entry/exit to WORLD
 	// (requires VolumeWorld in your CB)
@@ -236,14 +263,28 @@ float4 main(PSInput input) : SV_Target
 	bool  hasHit = false;
 	float deltaZ = 0.0f;
 
+	//레이마칭 루프 (핵심)
+	/*for (i)
+	{
+		posWS = ray 따라 이동
+			posL 변환
+			uvw 계산
+			volume 샘플
+	}*/
+	//공간 속을 한 걸음씩 걸어감
+	//카메라에서 쏜 레이를 따라 공간을 조금씩 전진하면서
+	//그 위치의 CT 값을 읽는 과정
 	[loop]
 	for (int i = 0; i < (int)maxSteps; ++i)
 	{
-		//return float4(0, 1, 0, 1);
-		float tW = tStartW + (i /*+ jitter*/)* stepW;
-
+		//레이 따라 이동
+		//현재 샘플 위치 계산
+		float tW = tStartW + (i)* stepW;
 		// World position along ray
 		float3 posWS = rayPosWS + rayDirWS * tW;
+
+
+
 
 		// View Z for mesh-occlusion compare (now consistent!)
 		float rayViewZ = mul(float4(posWS, 1), View).z;
@@ -256,6 +297,9 @@ float4 main(PSInput input) : SV_Target
 		//if (hasMesh && depthDiff < -stepV * 2.0)
 		//	continue;
 
+
+		//볼륨 로컬로 변환
+		//볼륨 텍스처는 자기 기준 좌표계로 저장됨
 		// Transform sample position to volume-local for texture lookup
 		float3 posL = mul(float4(posWS, 1), InvVolumeWorld).xyz;
 
@@ -280,6 +324,7 @@ float4 main(PSInput input) : SV_Target
 	   //return float4(abs(posL) * 0.01, 1);
 
 	   // Local -> UVW
+		//mm 좌표 → 0~1 텍스처 좌표
 		 float3 uvw = (posL - boxMinL) / (boxMaxL - boxMinL);
 		 uvw.y = 1.0 - uvw.y;
 
@@ -319,6 +364,12 @@ float4 main(PSInput input) : SV_Target
 		   float3 uvwVoxel = voxelIdx / float3(dimX, dimY, dimZ);
 
 
+
+		   //색 누적 / hit 탐지
+		 /*  hu -> transfer function -> col
+			   accumulate*/
+
+
 		   float hu = volumeTex.SampleLevel(samp, uvw, 0).r;
 		   float huNorm = saturate((hu - HuParams.z) / (HuParams.w - HuParams.z));
 		   float4 col = transferFunction.SampleLevel(tfSampler, huNorm, 0);
@@ -334,6 +385,8 @@ float4 main(PSInput input) : SV_Target
 		   //볼륨에서 hit 지점 찾는 부분
 		   //활성화된 볼륨 투명도 기준으로 충돌 지점 설정
 		   //if (!hasHit && col.a > 0.001)
+
+
 
 		   //hu 300 이상(해면골) 기준으로 충돌 지점 설정
 		   if (!hasHit && hu > 300)
@@ -362,6 +415,8 @@ float4 main(PSInput input) : SV_Target
 					   //얼굴 전체 픽셀에 대해 계산해야 하므로 
 					   //GPU에서 수행
 					   //이후 UAV에 저장된 깊이 차이 값을 CPU에서 통계 계산하는 순서
+					   
+					   //메쉬 <-> 볼륨 거리 기록
 					   DeltaZTex[pixelCoord] = deltaZ;
 				 }
 				 else
@@ -380,10 +435,22 @@ float4 main(PSInput input) : SV_Target
 			 float sigma = col.a * densityScale; // densityScale ≈ 0.02 ~ 0.05
 			 float alpha = 1.0 - exp(-sigma * stepW);
 
-
+			 //볼륨 렌더링에서의 front-to-Back Alpha Compositing
+			 //색 누적 / 광학 적분 근사
+			 //색 물리적 누적
 			 acc.rgb += (1.0 - acc.a) * alpha * col.rgb;
+
+			 //누적 투명도
 			 acc.a += (1.0 - acc.a) * alpha;
 
+
+			 //레이마칭 속도 최적화
+			 //볼륨이 거의 불투명해졌으면 뒤 볼 필요 없음
+			 //레이마칭 루프를 끝까지 돌면 모든 샘플을 계산해야하는데
+			 //중간에 누적하다가 불투명해지는 순간에는 뒤쪽은 어차피 안 보이니까
+			 //계산을 생략함
+			 //이 처리로 인해 불필요한 연산을 줄여 성능을 향상시킴
+			 //밀도가 높은 볼륨에서 특히 효과가 큼.
 			 if (acc.a > 0.98)
 				 break;
 
@@ -416,6 +483,8 @@ float4 main(PSInput input) : SV_Target
 		DeltaZTex[pixelCoord] = -1;
 	}
 
+	//감마 보정
+	//모니터 표시 보정
 	acc.rgb = pow(saturate(acc.rgb), 1.0 / 2.2);
 
 
@@ -598,3 +667,24 @@ float4 main(PSInput input) : SV_Target
 //=>InvView(카메라 기준->실제 공간 방향) : rayDirWS
 
 
+//🎥 렌더링 엔진
+//
+//raymarch
+//
+//transfer function
+//
+//accumulation
+
+
+//📏 분석 엔진
+//
+//HU 기반 hit 탐지
+//
+//mesh depth 비교
+//
+//DeltaZ 저장
+
+
+//> 픽셀마다 광선을 쏴서
+//> 볼륨을 탐색하며 색을 만들고
+//> 동시에 구조 위치를 측정한다
