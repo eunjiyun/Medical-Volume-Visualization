@@ -340,9 +340,6 @@ float4 main(PSInput input) : SV_Target
 	   ////=>볼륨 3D 텍스처의 W(Z)축은 Axial 방향으로 정의되어 있으며,
 	   ////현재 볼륨 데이터는 Axial 기준으로 정상 적재됨을 확인함.
 
-
-
-
 	   //return float4(uvw, 1);
 
    /*	if (any(uvw < 0.0) || any(uvw > 1.0))
@@ -428,8 +425,6 @@ float4 main(PSInput input) : SV_Target
 		   }
 
 
-
-
 			 float densityScale = 0.02;
 
 			 float sigma = col.a * densityScale; // densityScale ≈ 0.02 ~ 0.05
@@ -491,7 +486,6 @@ float4 main(PSInput input) : SV_Target
 	if (CameraPosAndAlpha.w == 1.0) return float4(acc.rgb, 1.0);
 	if (CameraPosAndAlpha.w == 0.0) return float4(acc.rgb, 0.0);
 
-	
 
 	//return float4(acc.rgb, 0.6);
 	return float4(acc.rgb, 1.0);

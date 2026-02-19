@@ -891,6 +891,7 @@ void QDirect3D11Widget::LoadDICOMSeries()
 	fileReader = new FileReader();
 
 	fileReader->LoadDICOMSeries((std::string)"D:\\Data\\faceData\\DCM", m_pDevice);
+	//fileReader->LoadDICOMSeries((std::string)"D:\\Data\\sez\\DICOM", m_pDevice);
 
 }
 
@@ -1270,7 +1271,7 @@ bool QDirect3D11Widget::LoadMeshFromPLY(const std::string& filename, ID3D11Devic
 
 
 	//  메쉬 범위 계산
-	if (vertices.size() > 0) {
+	if (0<vertices.size()) {
 		float minX = FLT_MAX, maxX = -FLT_MAX;
 		float minY = FLT_MAX, maxY = -FLT_MAX;
 		float minZ = FLT_MAX, maxZ = -FLT_MAX;
@@ -1844,7 +1845,7 @@ void QDirect3D11Widget::RenderMeshWithDepthPeeling(ID3D11DeviceContext* context)
 		context->OMSetDepthStencilState(depthState, 1);  //  추가!
 
 		// 이전 레이어 depth 바인딩
-		if (layer > 0)
+		if (0<layer )
 		{
 			qDebug() << "Binding prevDepth from layer" << (layer - 1);  //  추가
 			context->PSSetShaderResources(1, 1, &m_depthPeelSRVs[layer - 1]);
@@ -1882,8 +1883,6 @@ void QDirect3D11Widget::RenderMeshWithDepthPeeling(ID3D11DeviceContext* context)
 
 	if (rastState) rastState->Release();
 	if (blendState) blendState->Release();
-
-
 }
 
 void QDirect3D11Widget::CreateDepthStencil()  // 또는 initializeGL 안에서
@@ -2097,7 +2096,7 @@ void QDirect3D11Widget::initializeRenderTargets()
 					hr = m_pDevice->CreateShaderResourceView(sliceTex, nullptr, &sliceSRV);
 					if (SUCCEEDED(hr))
 					{
-						coronalTextureCacheSrv[i] = sliceSRV; // ✅ 저장
+						coronalTextureCacheSrv[i] = sliceSRV; //  저장
 					}
 
 				}

@@ -89,7 +89,8 @@ bool PLYLoader::LoadVertices(std::ifstream& file) {
 	return true;
 }
 
-bool PLYLoader::LoadFaces(std::ifstream& file) {
+bool PLYLoader::LoadFaces(std::ifstream& file)
+{
 	m_faces.resize(m_faceCount);
 
 	for (int i{}; i < m_faceCount; ++i) {
@@ -97,7 +98,7 @@ bool PLYLoader::LoadFaces(std::ifstream& file) {
 		uint8_t indexCount;
 		file.read(reinterpret_cast<char*>(&indexCount), sizeof(uint8_t));
 
-		for (int j = 0; j < indexCount; j++) {
+		for (int j{}; j < indexCount; ++j) {
 			int32_t idx;
 			file.read(reinterpret_cast<char*>(&idx), sizeof(int32_t));
 			if (j < 3) {
@@ -109,7 +110,7 @@ bool PLYLoader::LoadFaces(std::ifstream& file) {
 		uint8_t texCoordCount;
 		file.read(reinterpret_cast<char*>(&texCoordCount), sizeof(uint8_t));
 
-		for (int j = 0; j < texCoordCount; j++) {
+		for (int j{}; j < texCoordCount; ++j) {
 			float coord;
 			file.read(reinterpret_cast<char*>(&coord), sizeof(float));
 			if (j < 6) {
