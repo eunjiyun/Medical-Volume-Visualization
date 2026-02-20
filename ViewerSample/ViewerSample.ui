@@ -23,12 +23,17 @@
 			</size>
 		</property>
 		<property name="windowTitle">
-			<string>bright CT</string>
+			<string>Medical Volume Visualization</string>
 		</property>
+	
+		
+		
 		<property name="windowIcon">
 			<iconset>
 				<normaloff>images/iconDico.ico</normaloff>images/iconDico.ico</iconset>
 		</property>
+						
+						
 		<widget class="QWidget" name="centralWidget">
 			<layout class="QGridLayout" name="gridLayout">
 				<property name="leftMargin">
@@ -92,7 +97,7 @@
 							</size>
 						</property>
 						<property name="styleSheet">
-							<string notr="true">background-color: rgb(180, 180, 180);</string>
+							<string notr="true">background-color: rgb(0, 0, 0);</string>
 						</property>
 						<property name="text">
 							<string/>
@@ -189,7 +194,7 @@
 												</font>
 											</property>
 											<property name="styleSheet">
-												<string notr="true">background-color: rgb(108, 122, 144); color: white; padding-top: 17px;</string>
+												<string notr="true">background-color: rgb(0, 0, 0); color: white; padding-top: 17px;</string>
 											</property>
 											<property name="text">
 												<string>이름:</string>
@@ -220,7 +225,7 @@
 												</font>
 											</property>
 											<property name="styleSheet">
-												<string notr="true">background-color: rgb(108, 122, 144); color: white; padding-top: 3px;</string>
+												<string notr="true">background-color: rgb(0, 0, 0); color: white; padding-top: 3px;</string>
 											</property>
 											<property name="text">
 												<string>성별:</string>
@@ -251,7 +256,7 @@
 												</font>
 											</property>
 											<property name="styleSheet">
-												<string notr="true">background-color: rgb(108, 122, 144); color: white; padding-top: 12px;</string>
+												<string notr="true">background-color: rgb(0, 0, 0); color: white; padding-top: 12px;</string>
 											</property>
 											<property name="text">
 												<string>아이디</string>
@@ -282,7 +287,7 @@
 												</font>
 											</property>
 											<property name="styleSheet">
-												<string notr="true">background-color: rgb(108, 122, 144); color: white; padding-top: 12px;</string>
+												<string notr="true">background-color: rgb(0, 0, 0); color: white; padding-top: 12px;</string>
 											</property>
 											<property name="text">
 												<string>생년월일</string>
@@ -319,7 +324,7 @@
 												</font>
 											</property>
 											<property name="styleSheet">
-												<string notr="true">background-color: rgb(108, 122, 144); color: white; padding-top: 12px; padding-bottom: 5px;</string>
+												<string notr="true">background-color: rgb(0, 0, 0); color: white; padding-top: 12px; padding-bottom: 5px;</string>
 											</property>
 											<property name="text">
 												<string>검사일</string>
@@ -354,24 +359,23 @@
 								</widget>
 							</item>
 							<item>
-							
-							<widget class="QWidget" name="slidePanel" native="true">
-    <property name="sizePolicy">
-        <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
-            <horstretch>0</horstretch>
-            <verstretch>0</verstretch>
-        </sizepolicy>
-    </property>
-    <property name="minimumSize">
-        <size>
-            <width>190</width>
-            <height>0</height>
-        </size>
-    </property>
-   <property name="styleSheet">
-    <string notr="true">
+								<widget class="QWidget" name="slidePanel" native="true">
+									<property name="sizePolicy">
+										<sizepolicy hsizetype="Preferred" vsizetype="Expanding">
+											<horstretch>0</horstretch>
+											<verstretch>0</verstretch>
+										</sizepolicy>
+									</property>
+									<property name="minimumSize">
+										<size>
+											<width>190</width>
+											<height>0</height>
+										</size>
+									</property>
+									<property name="styleSheet">
+										<string notr="true">
 QWidget#slidePanel {
-    background-color: rgb(108, 122, 144);
+    background-color: rgb(0, 0, 0);
 }
 
 QSlider::groove:horizontal {
@@ -414,431 +418,434 @@ QLabel {
     font-family: "Segoe UI", Arial;
 }
     </string>
-</property>
-    <layout class="QVBoxLayout" name="verticalLayout_slide">
-        <property name="spacing">
-            <number>4</number>
-        </property>
-        <property name="leftMargin">
-            <number>8</number>
-        </property>
-        <property name="topMargin">
-            <number>8</number>
-        </property>
-        <property name="rightMargin">
-            <number>8</number>
-        </property>
-        <property name="bottomMargin">
-            <number>8</number>
-        </property>
-        
-        <!-- 슬라이더 1: HU -->
-        <item>
-            <layout class="QHBoxLayout">
-                <property name="spacing">
-                    <number>6</number>
-                </property>
-                <item>
-                    <widget class="QLabel" name="labelSlider1Icon">
-                        <property name="minimumSize">
-                            <size>
-                                <width>25</width>
-                                <height>25</height>
-                            </size>
-                        </property>
-                        <property name="maximumSize">
-                            <size>
-                                <width>25</width>
-                                <height>25</height>
-                            </size>
-                        </property>
-                        <property name="pixmap">
-                            <pixmap>:/images/huIcon.png</pixmap>
-                        </property>
-                        <property name="scaledContents">
-                            <bool>true</bool>
-                        </property>
-                    </widget>
-                </item>
-                <item>
-                    <widget class="QSlider" name="huSlider">
-                        <property name="orientation">
-                            <enum>Qt::Horizontal</enum>
-                        </property>
-                    </widget>
-                </item>
-                <item>
-                    <widget class="QLabel" name="huValueLabel">
-                        <property name="text">
-                            <string>6404</string>
-                        </property>
-                        <property name="styleSheet">
-                            <string>color: white; font-size: 10px;</string>
-                        </property>
-                        <property name="minimumSize">
-                            <size>
-                                <width>35</width>
-                                <height>0</height>
-                            </size>
-                        </property>
-                        <property name="alignment">
-                            <set>Qt::AlignRight|Qt::AlignVCenter</set>
-                        </property>
-                    </widget>
-                </item>
-            </layout>
-        </item>
-        
-        <!-- 슬라이더 2: 원형 아이콘 -->
-        <item>
-            <layout class="QHBoxLayout">
-                <property name="spacing">
-                    <number>6</number>
-                </property>
-                <item>
-                    <widget class="QLabel" name="labelSlider2Icon">
-                        <property name="minimumSize">
-                            <size>
-                                <width>25</width>
-                                <height>25</height>
-                            </size>
-                        </property>
-                        <property name="maximumSize">
-                            <size>
-                                <width>25</width>
-                                <height>25</height>
-                            </size>
-                        </property>
-                        <property name="pixmap">
-                            <pixmap>:/images/oIcon.png</pixmap>
-                        </property>
-                        <property name="scaledContents">
-                            <bool>true</bool>
-                        </property>
-                    </widget>
-                </item>
-                <item>
-                    <widget class="QSlider" name="slider2">
-                        <property name="orientation">
-                            <enum>Qt::Horizontal</enum>
-                        </property>
-                    </widget>
-                </item>
-                <item>
-                    <widget class="QLabel" name="labelValue2">
-                        <property name="text">
-                            <string>70</string>
-                        </property>
-                        <property name="styleSheet">
-                            <string>color: white; font-size: 10px;</string>
-                        </property>
-                        <property name="minimumSize">
-                            <size>
-                                <width>35</width>
-                                <height>0</height>
-                            </size>
-                        </property>
-                        <property name="alignment">
-                            <set>Qt::AlignRight|Qt::AlignVCenter</set>
-                        </property>
-                    </widget>
-                </item>
-            </layout>
-        </item>
-        
-        <!-- 나머지 슬라이더 3~7도 같은 방식으로 -->
-		
-		<!-- 슬라이더 3: Q -->
-<item>
-    <layout class="QHBoxLayout">
-        <property name="spacing">
-            <number>6</number>
-        </property>
-        <item>
-            <widget class="QLabel" name="labelSlider3Icon">
-                <property name="minimumSize">
-                    <size>
-                        <width>25</width>
-                        <height>25</height>
-                    </size>
-                </property>
-                <property name="maximumSize">
-                    <size>
-                        <width>25</width>
-                        <height>25</height>
-                    </size>
-                </property>
-                <property name="pixmap">
-                    <pixmap>:/images/qIcon.png</pixmap>
-                </property>
-                <property name="scaledContents">
-                    <bool>true</bool>
-                </property>
-            </widget>
-        </item>
-        <item>
-            <widget class="QSlider" name="slider3">
-                <property name="orientation">
-                    <enum>Qt::Horizontal</enum>
-                </property>
-            </widget>
-        </item>
-        <item>
-            <widget class="QLabel" name="labelValue3">
-                <property name="text">
-                    <string>Default</string>
-                </property>
-                <property name="styleSheet">
-                    <string>color: white; font-size: 10px;</string>
-                </property>
-                <property name="minimumSize">
-                    <size>
-                        <width>45</width>
-                        <height>0</height>
-                    </size>
-                </property>
-                <property name="alignment">
-                    <set>Qt::AlignRight|Qt::AlignVCenter</set>
-                </property>
-            </widget>
-        </item>
-    </layout>
-</item>
-
-<!-- 슬라이더 4 -->
-<item>
-    <layout class="QHBoxLayout">
-        <property name="spacing">
-            <number>6</number>
-        </property>
-        <item>
-            <widget class="QLabel" name="labelSlider4Icon">
-                <property name="minimumSize">
-                    <size>
-                        <width>25</width>
-                        <height>25</height>
-                    </size>
-                </property>
-                <property name="maximumSize">
-                    <size>
-                        <width>25</width>
-                        <height>25</height>
-                    </size>
-                </property>
-                <property name="pixmap">
-                    <pixmap>:/images/contrastIcon.png</pixmap>
-                </property>
-                <property name="scaledContents">
-                    <bool>true</bool>
-                </property>
-            </widget>
-        </item>
-        <item>
-            <widget class="QSlider" name="contrastSlider">
-                <property name="orientation">
-                    <enum>Qt::Horizontal</enum>
-                </property>
-            </widget>
-        </item>
-        <item>
-            <widget class="QLabel" name="contrastValueLabel">
-                <property name="text">
-                    <string>1</string>
-                </property>
-                <property name="styleSheet">
-                    <string>color: white; font-size: 10px;</string>
-                </property>
-                <property name="minimumSize">
-                    <size>
-                        <width>35</width>
-                        <height>0</height>
-                    </size>
-                </property>
-                <property name="alignment">
-                    <set>Qt::AlignRight|Qt::AlignVCenter</set>
-                </property>
-            </widget>
-        </item>
-    </layout>
-</item>
-
-<!-- 슬라이더 5 -->
-<item>
-    <layout class="QHBoxLayout">
-        <property name="spacing">
-            <number>6</number>
-        </property>
-        <item>
-            <widget class="QLabel" name="labelSlider5Icon">
-                <property name="minimumSize">
-                    <size>
-                        <width>25</width>
-                        <height>25</height>
-                    </size>
-                </property>
-                <property name="maximumSize">
-                    <size>
-                        <width>25</width>
-                        <height>25</height>
-                    </size>
-                </property>
-                <property name="pixmap">
-                    <pixmap>:/images/brightnessIcon.png</pixmap>
-                </property>
-                <property name="scaledContents">
-                    <bool>true</bool>
-                </property>
-            </widget>
-        </item>
-        <item>
-            <widget class="QSlider" name="brightnessSlider">
-                <property name="orientation">
-                    <enum>Qt::Horizontal</enum>
-                </property>
-            </widget>
-        </item>
-        <item>
-            <widget class="QLabel" name="brightnessValueLabel">
-                <property name="text">
-                    <string>0</string>
-                </property>
-                <property name="styleSheet">
-                    <string>color: white; font-size: 10px;</string>
-                </property>
-                <property name="minimumSize">
-                    <size>
-                        <width>35</width>
-                        <height>0</height>
-                    </size>
-                </property>
-                <property name="alignment">
-                    <set>Qt::AlignRight|Qt::AlignVCenter</set>
-                </property>
-            </widget>
-        </item>
-    </layout>
-</item>
-
-<!-- 슬라이더 6 -->
-<item>
-    <layout class="QHBoxLayout">
-        <property name="spacing">
-            <number>6</number>
-        </property>
-        <item>
-            <widget class="QLabel" name="labelSlider6Icon">
-                <property name="minimumSize">
-                    <size>
-                        <width>25</width>
-                        <height>25</height>
-                    </size>
-                </property>
-                <property name="maximumSize">
-                    <size>
-                        <width>25</width>
-                        <height>25</height>
-                    </size>
-                </property>
-                <property name="pixmap">
-                    <pixmap>:/images/sharpnessIcon.png</pixmap>
-                </property>
-                <property name="scaledContents">
-                    <bool>true</bool>
-                </property>
-            </widget>
-        </item>
-        <item>
-            <widget class="QSlider" name="sharpnessSlider">
-                <property name="orientation">
-                    <enum>Qt::Horizontal</enum>
-                </property>
-            </widget>
-        </item>
-        <item>
-            <widget class="QLabel" name="sharpnessValueLabel">
-                <property name="text">
-                    <string>None</string>
-                </property>
-                <property name="styleSheet">
-                    <string>color: white; font-size: 10px;</string>
-                </property>
-                <property name="minimumSize">
-                    <size>
-                        <width>40</width>
-                        <height>0</height>
-                    </size>
-                </property>
-                <property name="alignment">
-                    <set>Qt::AlignRight|Qt::AlignVCenter</set>
-                </property>
-            </widget>
-        </item>
-    </layout>
-</item>
-
-<!-- 슬라이더 7 -->
-<item>
-    <layout class="QHBoxLayout">
-        <property name="spacing">
-            <number>6</number>
-        </property>
-        <item>
-            <widget class="QLabel" name="labelSlider7Icon">
-                <property name="minimumSize">
-                    <size>
-                        <width>25</width>
-                        <height>25</height>
-                    </size>
-                </property>
-                <property name="maximumSize">
-                    <size>
-                        <width>25</width>
-                        <height>25</height>
-                    </size>
-                </property>
-                <property name="pixmap">
-                    <pixmap>:/images/squareIcon.png</pixmap>
-                </property>
-                <property name="scaledContents">
-                    <bool>true</bool>
-                </property>
-            </widget>
-        </item>
-        <item>
-            <widget class="QSlider" name="slider7">
-                <property name="orientation">
-                    <enum>Qt::Horizontal</enum>
-                </property>
-            </widget>
-        </item>
-        <item>
-            <widget class="QLabel" name="labelValue7">
-                <property name="text">
-                    <string>0</string>
-                </property>
-                <property name="styleSheet">
-                    <string>color: white; font-size: 10px;</string>
-                </property>
-                <property name="minimumSize">
-                    <size>
-                        <width>35</width>
-                        <height>0</height>
-                    </size>
-                </property>
-                <property name="alignment">
-                    <set>Qt::AlignRight|Qt::AlignVCenter</set>
-                </property>
-            </widget>
-        </item>
-    </layout>
-</item>
-        
-    </layout>
+									</property>
+									<layout class="QVBoxLayout" name="verticalLayout_slide">
+										<property name="spacing">
+											<number>4</number>
+										</property>
+										<property name="leftMargin">
+											<number>8</number>
+										</property>
+										<property name="topMargin">
+											<number>8</number>
+										</property>
+										<property name="rightMargin">
+											<number>8</number>
+										</property>
+										<property name="bottomMargin">
+											<number>8</number>
+										</property>
+										<!-- 슬라이더 1: HU -->
+										<item>
+											<layout class="QHBoxLayout">
+												<property name="spacing">
+													<number>6</number>
+												</property>
+												<item>
+													<widget class="QLabel" name="labelSlider1Icon">
+    <property name="minimumSize">
+        <size>
+            <width>25</width>
+            <height>25</height>
+        </size>
+    </property>
+    <property name="maximumSize">
+        <size>
+            <width>25</width>
+            <height>25</height>
+        </size>
+    </property>
+    <property name="pixmap">
+        <pixmap>:/images/huIcon.png</pixmap>
+    </property>
+    <property name="scaledContents">
+        <bool>true</bool>
+    </property>
+    <property name="styleSheet">
+        <string notr="true">background-color: white;</string>
+    </property>
 </widget>
-							
-							
-							
-
+												</item>
+												<item>
+													<widget class="QSlider" name="huSlider">
+														<property name="orientation">
+															<enum>Qt::Horizontal</enum>
+														</property>
+													</widget>
+												</item>
+												<item>
+													<widget class="QLabel" name="huValueLabel">
+														<property name="text">
+															<string>6404</string>
+														</property>
+														<property name="styleSheet">
+															<string>color: white; font-size: 10px;</string>
+														</property>
+														<property name="minimumSize">
+															<size>
+																<width>35</width>
+																<height>0</height>
+															</size>
+														</property>
+														<property name="alignment">
+															<set>Qt::AlignRight|Qt::AlignVCenter</set>
+														</property>
+													</widget>
+												</item>
+											</layout>
+										</item>
+										<!-- 슬라이더 2: 원형 아이콘 -->
+										<item>
+											<layout class="QHBoxLayout">
+												<property name="spacing">
+													<number>6</number>
+												</property>
+												<item>
+													<widget class="QLabel" name="labelSlider2Icon">
+														<property name="minimumSize">
+															<size>
+																<width>25</width>
+																<height>25</height>
+															</size>
+														</property>
+														<property name="maximumSize">
+															<size>
+																<width>25</width>
+																<height>25</height>
+															</size>
+														</property>
+														<property name="pixmap">
+															<pixmap>:/images/oIcon.png</pixmap>
+														</property>
+														<property name="scaledContents">
+															<bool>true</bool>
+														</property>
+														<property name="styleSheet">
+        <string notr="true">background-color: white;</string>
+    </property>
+													</widget>
+												</item>
+												<item>
+													<widget class="QSlider" name="slider2">
+														<property name="orientation">
+															<enum>Qt::Horizontal</enum>
+														</property>
+													</widget>
+												</item>
+												<item>
+													<widget class="QLabel" name="labelValue2">
+														<property name="text">
+															<string>70</string>
+														</property>
+														<property name="styleSheet">
+															<string>color: white; font-size: 10px;</string>
+														</property>
+														<property name="minimumSize">
+															<size>
+																<width>35</width>
+																<height>0</height>
+															</size>
+														</property>
+														<property name="alignment">
+															<set>Qt::AlignRight|Qt::AlignVCenter</set>
+														</property>
+													</widget>
+												</item>
+											</layout>
+										</item>
+										<!-- 나머지 슬라이더 3~7도 같은 방식으로 -->
+										<!-- 슬라이더 3: Q -->
+										<item>
+											<layout class="QHBoxLayout">
+												<property name="spacing">
+													<number>6</number>
+												</property>
+												<item>
+													<widget class="QLabel" name="labelSlider3Icon">
+														<property name="minimumSize">
+															<size>
+																<width>25</width>
+																<height>25</height>
+															</size>
+														</property>
+														<property name="maximumSize">
+															<size>
+																<width>25</width>
+																<height>25</height>
+															</size>
+														</property>
+														<property name="pixmap">
+															<pixmap>:/images/qIcon.png</pixmap>
+														</property>
+														<property name="scaledContents">
+															<bool>true</bool>
+														</property>
+													</widget>
+												</item>
+												<item>
+													<widget class="QSlider" name="slider3">
+														<property name="orientation">
+															<enum>Qt::Horizontal</enum>
+														</property>
+													</widget>
+												</item>
+												<item>
+													<widget class="QLabel" name="labelValue3">
+														<property name="text">
+															<string>Default</string>
+														</property>
+														<property name="styleSheet">
+															<string>color: white; font-size: 10px;</string>
+														</property>
+														<property name="minimumSize">
+															<size>
+																<width>45</width>
+																<height>0</height>
+															</size>
+														</property>
+														<property name="alignment">
+															<set>Qt::AlignRight|Qt::AlignVCenter</set>
+														</property>
+													</widget>
+												</item>
+											</layout>
+										</item>
+										<!-- 슬라이더 4 -->
+										<item>
+											<layout class="QHBoxLayout">
+												<property name="spacing">
+													<number>6</number>
+												</property>
+												<item>
+													<widget class="QLabel" name="labelSlider4Icon">
+														<property name="minimumSize">
+															<size>
+																<width>25</width>
+																<height>25</height>
+															</size>
+														</property>
+														<property name="maximumSize">
+															<size>
+																<width>25</width>
+																<height>25</height>
+															</size>
+														</property>
+														<property name="pixmap">
+															<pixmap>:/images/contrastIcon.png</pixmap>
+														</property>
+														<property name="scaledContents">
+															<bool>true</bool>
+														</property>
+															<property name="styleSheet">
+        <string notr="true">background-color: white;</string>
+    </property>
+													</widget>
+												</item>
+												<item>
+													<widget class="QSlider" name="contrastSlider">
+														<property name="orientation">
+															<enum>Qt::Horizontal</enum>
+														</property>
+													</widget>
+												</item>
+												<item>
+													<widget class="QLabel" name="contrastValueLabel">
+														<property name="text">
+															<string>1</string>
+														</property>
+														<property name="styleSheet">
+															<string>color: white; font-size: 10px;</string>
+														</property>
+														<property name="minimumSize">
+															<size>
+																<width>35</width>
+																<height>0</height>
+															</size>
+														</property>
+														<property name="alignment">
+															<set>Qt::AlignRight|Qt::AlignVCenter</set>
+														</property>
+													</widget>
+												</item>
+											</layout>
+										</item>
+										<!-- 슬라이더 5 -->
+										<item>
+											<layout class="QHBoxLayout">
+												<property name="spacing">
+													<number>6</number>
+												</property>
+												<item>
+													<widget class="QLabel" name="labelSlider5Icon">
+														<property name="minimumSize">
+															<size>
+																<width>25</width>
+																<height>25</height>
+															</size>
+														</property>
+														<property name="maximumSize">
+															<size>
+																<width>25</width>
+																<height>25</height>
+															</size>
+														</property>
+														<property name="pixmap">
+															<pixmap>:/images/brightnessIcon.png</pixmap>
+														</property>
+														<property name="scaledContents">
+															<bool>true</bool>
+														</property>
+														<property name="styleSheet">
+        <string notr="true">background-color: white;</string>
+    </property>
+													</widget>
+												</item>
+												<item>
+													<widget class="QSlider" name="brightnessSlider">
+														<property name="orientation">
+															<enum>Qt::Horizontal</enum>
+														</property>
+													</widget>
+												</item>
+												<item>
+													<widget class="QLabel" name="brightnessValueLabel">
+														<property name="text">
+															<string>0</string>
+														</property>
+														<property name="styleSheet">
+															<string>color: white; font-size: 10px;</string>
+														</property>
+														<property name="minimumSize">
+															<size>
+																<width>35</width>
+																<height>0</height>
+															</size>
+														</property>
+														<property name="alignment">
+															<set>Qt::AlignRight|Qt::AlignVCenter</set>
+														</property>
+													</widget>
+												</item>
+											</layout>
+										</item>
+										<!-- 슬라이더 6 -->
+										<item>
+											<layout class="QHBoxLayout">
+												<property name="spacing">
+													<number>6</number>
+												</property>
+												<item>
+													<widget class="QLabel" name="labelSlider6Icon">
+														<property name="minimumSize">
+															<size>
+																<width>25</width>
+																<height>25</height>
+															</size>
+														</property>
+														<property name="maximumSize">
+															<size>
+																<width>25</width>
+																<height>25</height>
+															</size>
+														</property>
+														<property name="pixmap">
+															<pixmap>:/images/sharpnessIcon.png</pixmap>
+														</property>
+														<property name="scaledContents">
+															<bool>true</bool>
+														</property>
+														
+															<property name="styleSheet">
+        <string notr="true">background-color: white;</string>
+    </property>
+													</widget>
+												</item>
+												<item>
+													<widget class="QSlider" name="sharpnessSlider">
+														<property name="orientation">
+															<enum>Qt::Horizontal</enum>
+														</property>
+													</widget>
+												</item>
+												<item>
+													<widget class="QLabel" name="sharpnessValueLabel">
+														<property name="text">
+															<string>None</string>
+														</property>
+														<property name="styleSheet">
+															<string>color: white; font-size: 10px;</string>
+														</property>
+														<property name="minimumSize">
+															<size>
+																<width>40</width>
+																<height>0</height>
+															</size>
+														</property>
+														<property name="alignment">
+															<set>Qt::AlignRight|Qt::AlignVCenter</set>
+														</property>
+													</widget>
+												</item>
+											</layout>
+										</item>
+										<!-- 슬라이더 7 -->
+										<item>
+											<layout class="QHBoxLayout">
+												<property name="spacing">
+													<number>6</number>
+												</property>
+												<item>
+													<widget class="QLabel" name="labelSlider7Icon">
+														<property name="minimumSize">
+															<size>
+																<width>25</width>
+																<height>25</height>
+															</size>
+														</property>
+														<property name="maximumSize">
+															<size>
+																<width>25</width>
+																<height>25</height>
+															</size>
+														</property>
+														<property name="pixmap">
+															<pixmap>:/images/squareIcon.png</pixmap>
+														</property>
+														<property name="scaledContents">
+															<bool>true</bool>
+														</property>
+													</widget>
+												</item>
+												<item>
+													<widget class="QSlider" name="slider7">
+														<property name="orientation">
+															<enum>Qt::Horizontal</enum>
+														</property>
+													</widget>
+												</item>
+												<item>
+													<widget class="QLabel" name="labelValue7">
+														<property name="text">
+															<string>0</string>
+														</property>
+														<property name="styleSheet">
+															<string>color: white; font-size: 10px;</string>
+														</property>
+														<property name="minimumSize">
+															<size>
+																<width>35</width>
+																<height>0</height>
+															</size>
+														</property>
+														<property name="alignment">
+															<set>Qt::AlignRight|Qt::AlignVCenter</set>
+														</property>
+													</widget>
+												</item>
+											</layout>
+										</item>
+									</layout>
+								</widget>
 							</item>
 							<item>
 								<widget class="QLabel" name="label_patientImage3">
@@ -874,7 +881,7 @@ QLabel {
 										</size>
 									</property>
 									<property name="styleSheet">
-										<string notr="true">background-color: rgb(108, 122, 144);</string>
+										<string notr="true">background-color: rgb(0, 0, 0);</string>
 									</property>
 									<layout class="QVBoxLayout" name="verticalLayout">
 										<property name="spacing">
@@ -931,82 +938,95 @@ QPushButton:pressed {
 													<number>4</number>
 												</property>
 												<item row="0" column="0">
-    <widget class="QPushButton" name="btnViewHead">
-        <property name="minimumSize">
-            <size>
-                <width>42</width>
-                <height>42</height>
-            </size>
-        </property>
-        <property name="maximumSize">
-            <size>
-                <width>42</width>
-                <height>42</height>
-            </size>
-        </property>
-        <property name="checkable">
-            <bool>true</bool>  <!-- ⭐ 토글 버튼으로 설정 -->
-        </property>
-        <property name="styleSheet">
-            <string notr="true">QPushButton {
-    border: none;
-    padding: 0px;
-    background: transparent;
-    image: url(:/images/color1.png);
-}
-QPushButton:checked {
-    image: url(:/images/color1_1.png);
-}
-QPushButton:hover {
-    background: transparent;
-}
-QPushButton:pressed {
-    background: transparent;
-}</string>
-        </property>
-        <property name="text">
-            <string/>
-        </property>
-        <!-- ⚠️ icon property 삭제! -->
-        <property name="toolTip">
-            <string>두부 보기</string>
-        </property>
-    </widget>
-</item>
-												<item row="0" column="1">
-													<widget class="QPushButton" name="btnGraphAdjust">
+													<widget class="QPushButton" name="btnViewHead">
 														<property name="minimumSize">
 															<size>
-																<width>42</width>
-																<height>42</height>
+																<width>35</width>
+																<height>35</height>
 															</size>
 														</property>
 														<property name="maximumSize">
 															<size>
-																<width>42</width>
-																<height>42</height>
+																<width>35</width>
+																<height>35</height>
 															</size>
 														</property>
-														
-														
+														<property name="checkable">
+															<bool>true</bool>
+															<!-- ⭐ 토글 버튼으로 설정 -->
+														</property>
 														<property name="styleSheet">
-													<string notr="true">QPushButton {
-    border: none;
-    padding: 0px;
-    background: transparent;
-    image: url(:/images/color2.png);
-}
-QPushButton:checked {
-    image: url(:/images/color2.png);
-}
-QPushButton:hover {
-    background: transparent;
-}
-QPushButton:pressed {
-    background: transparent;
-}</string>
-												</property>
-												
+    <string notr="true">
+        QPushButton {
+            border: none;
+            padding: 0px;
+            background-color: white;   /* 흰색 배경 */
+            image: url(:/images/color1.png);
+        }
+        QPushButton:checked {
+            image: url(:/images/color1_1.png);
+        }
+        QPushButton:hover {
+            background-color: white;   /* hover 시에도 흰색 유지 */
+        }
+        QPushButton:pressed {
+            background-color: white;   /* pressed 시에도 흰색 유지 */
+        }
+    </string>
+</property>
+
+														<property name="text">
+															<string/>
+														</property>
+														<!-- ⚠️ icon property 삭제! -->
+														<property name="toolTip">
+															<string>두부 보기</string>
+														</property>
+															
+														
+															
+														
+													</widget>
+												</item>
+												<item row="0" column="1">
+													<widget class="QPushButton" name="btnGraphAdjust">
+														<property name="minimumSize">
+															<size>
+																<width>35</width>
+																<height>35</height>
+															</size>
+														</property>
+														<property name="maximumSize">
+															<size>
+																<width>35</width>
+																<height>35</height>
+															</size>
+														</property>
+															<property name="checkable">
+															<bool>true</bool>
+															<!-- ⭐ 토글 버튼으로 설정 -->
+														</property>
+														<property name="styleSheet">
+														
+    <string notr="true">
+        QPushButton {
+            border: none;
+            padding: 0px;
+            background-color: white;   /* 흰색 배경 */
+            image: url(:/images/color2_2.png);
+        }
+        QPushButton:checked {
+            image: url(:/images/color2.png);
+        }
+        QPushButton:hover {
+            background-color: white;   /* hover 시에도 흰색 유지 */
+        }
+        QPushButton:pressed {
+            background-color: white;   /* pressed 시에도 흰색 유지 */
+        }
+    </string>
+</property>
+
 														<property name="text">
 															<string/>
 														</property>
@@ -1040,9 +1060,8 @@ QPushButton:pressed {
 																<height>42</height>
 															</size>
 														</property>
-														
 														<property name="styleSheet">
-													<string notr="true">QPushButton {
+															<string notr="true">QPushButton {
     border: none;
     padding: 0px;
     background: transparent;
@@ -1057,7 +1076,7 @@ QPushButton:hover {
 QPushButton:pressed {
     background: transparent;
 }</string>
-												</property>
+														</property>
 														<property name="text">
 															<string/>
 														</property>
@@ -1091,9 +1110,8 @@ QPushButton:pressed {
 																<height>42</height>
 															</size>
 														</property>
-														
 														<property name="styleSheet">
-													<string notr="true">QPushButton {
+															<string notr="true">QPushButton {
     border: none;
     padding: 0px;
     background: transparent;
@@ -1108,7 +1126,7 @@ QPushButton:hover {
 QPushButton:pressed {
     background: transparent;
 }</string>
-												</property>
+														</property>
 														<property name="text">
 															<string/>
 														</property>

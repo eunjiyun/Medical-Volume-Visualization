@@ -23,5 +23,6 @@
         <file>images/sharpnessIcon.png</file>
         <file>images/squareIcon.png</file>
         <file>images/color1_1.png</file>
+        <file>images/color2_2.png</file>
     </qresource>
 </RCC>

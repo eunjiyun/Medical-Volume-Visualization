@@ -119,6 +119,7 @@ float4 main(float4 pos : SV_POSITION, float2 uv : TEXCOORD0) : SV_Target
 
 
 	float stepSize = travelDist / float(MaxSteps);
+	//float stepSize = travelDist / 512.f;
 
 	// ✅ Jittering
 	float jitter = frac(sin(dot(uv * 1000.0, float2(12.9898, 78.233))) * 43758.5453);
