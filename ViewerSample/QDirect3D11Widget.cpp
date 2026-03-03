@@ -3105,10 +3105,10 @@ float QDirect3D11Widget::FindOptimalScale()
 	qDebug() << "95th Percentile:" << finalStats.percentile95 << "mm";
 	qDebug() << "";
 
-	//  데이터 품질 검증 - 중앙값 기준으로!
+	//  데이터 품질 검증 - 중앙값 기준으로
 	float avgMedianDiff = std::abs(finalStats.avgDelta - finalStats.medianDelta);
-	float stdRatio = finalStats.stdDelta / finalStats.medianDelta;  //  중앙값 기준!
-	float p95Ratio = finalStats.percentile95 / finalStats.medianDelta;  //  중앙값 기준!
+	float stdRatio = finalStats.stdDelta / finalStats.medianDelta;  //  중앙값 기준
+	float p95Ratio = finalStats.percentile95 / finalStats.medianDelta;  //  중앙값 기준
 
 	qDebug() << "--- Data Quality Check ---";
 	qDebug() << "|Avg - Median|:" << QString::number(avgMedianDiff, 'f', 2) << "mm"
