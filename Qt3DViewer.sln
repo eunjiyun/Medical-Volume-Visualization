@@ -5,6 +5,8 @@ VisualStudioVersion = 15.0.36324.19
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ViewerSample", "ViewerSample\ViewerSample.vcxproj", "{CECAEE7B-4466-46F7-AD63-DB82C1122DD9}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{717F741A-5B9A-453E-A6DF-F1F8CFBCD04D}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64

@@ -1,285 +1,90 @@
-//Texture2D tex : register(t0);
-//SamplerState samp : register(s0);
-//
-//float4 PSMain(float2 uv : TEXCOORD) : SV_Target
-//{
-//	return tex.Sample(samp, uv);
-//
-//	//return float4(1, 0, 0, 1); // ??Î™øËÄ???Í≥óÎÆÜ??//
-//}
-
-
-//Texture2D g_texture : register(t0);
-//SamplerState g_sampler : register(s0);
-//
-//struct PS_INPUT {
-//	float4 pos : SV_POSITION;
-//	float2 tex : TEXCOORD0;
-//};
-//
-//float4 PSMain(PS_INPUT input) : SV_TARGET{
-//	return g_texture.Sample(g_sampler, input.tex);
-//// return float4(1,0,0,1);  // ??????ÍªÉÏπ∞???Î§øÏÑ†???±Î™µÁ≠???úÎòª??éÏ≥û???Î™øËÄ?
-//}
-
-
-//Texture2D tex0 : register(t0);
-//SamplerState samp0 : register(s0);
-//
-//float4 PSMain(float4 pos : SV_POSITION, float2 uv : TEXCOORD) : SV_TARGET
-//{
-//	return tex0.Sample(samp0, uv);
-//}
-
-
-//cbuffer Crosshair : register(b0)
-//{
-//    float2 cross0;         // tex0øÎ Ω ¿⁄º± ¿ßƒ°
-//    float2 cross1;         // tex1øÎ
-//    float2 cross2;
-//    float2 cross3;
-//    float crossThickness;  // º± µŒ≤≤ (øπ: 0.002)
-//    float4 crossColor;     // Ω ¿⁄º± ªˆªÛ (øπ: ª°∞≠ float4(1,0,0,1))
-//}
 
 cbuffer Crosshair : register(b0)
 {
-    float2 crossUV;         // Ω ¿⁄º± ¿ßƒ° (0~1)
-    float crossThickness;   // º± µŒ≤≤
-    float4 crossColor;      // Ω ¿⁄º± ªˆªÛ
+	float2 crossUV;
+	float crossThickness;
+
+	float sharpness;        // ‚≠ê Ï∂îÍ∞Ä
+	float4 crossColor;
 }
 
-cbuffer ViewInfo : register(b1)
-{
-    int viewIndex;          // 0: Axial, 1: Coronal, 2: Sagittal
-}
-
-
-
-//Texture2D tex0 : register(t0);
-//Texture2D tex1 : register(t1);
-//Texture2D tex2 : register(t2);
-//Texture2D tex3 : register(t3);
-//
 SamplerState samp0 : register(s0);
-SamplerState samp1 : register(s1);
-SamplerState samp2 : register(s2);
-SamplerState samp3 : register(s3);
-
-Texture2D tex[4] : register(t0);       // tex[0] = Axial, tex[1] = Coronal, tex[2] = Sagittal
-//SamplerState samp[3] : register(s0);   // samp[0] = Axial, samp[1] = Coronal, samp[2] = Sagittal
-
+Texture2D tex : register(t0);       // tex[0] = Axial, tex[1] = Coronal, tex[2] = Sagittal
 
 struct PSOutput {
-    float4 color0 : SV_Target0;
-    float4 color1 : SV_Target1;
-    float4 color2 : SV_Target2;
-    float4 color3 : SV_Target3;
+	float4 color0 : SV_Target0;
 };
-
-
-
 
 struct VSOutput
 {
-    float4 position : SV_POSITION;
-    float2 texcoord : TEXCOORD;
+	float4 position : SV_POSITION;
+	float2 texcoord : TEXCOORD;
 };
 
-PSOutput PSMain(VSOutput input)
+PSOutput PSMain(VSOutput input) 
 {
-    //PSOutput o;
+	PSOutput o;
+	float2 uv = input.texcoord;
+	float4 base = tex.Sample(samp0, uv);
 
+	//  Sharpness Ï†ÅÏö© (5x5 Ïª§ÎÑê)
+	if (sharpness > 0.01) {
+		float width, height;
+		tex.GetDimensions(width, height);
+		float2 ts = 1.0 / float2(width, height);
 
-    //o.color0 = tex0.Sample(samp0, input.texcoord);
-    //o.color1 = tex1.Sample(samp1, input.texcoord);
-    //o.color2 = tex2.Sample(samp2, input.texcoord);
-    //o.color3 = tex3.Sample(samp3, input.texcoord);
+		// 5x5 Í∞ÄÏö∞ÏãúÏïà Î∏îÎü¨ (Í∞ÄÏ§ëÏπò Ï†ÅÏö©)
+		float4 blur = float4(0, 0, 0, 0);
 
-
-
- //   /*float gray0 = tex0.Sample(samp0, input.texcoord).r;
- //   float gray1 = tex1.Sample(samp1, input.texcoord).r;
- //   float gray2 = tex2.Sample(samp2, input.texcoord).r;
- //   float gray3 = tex3.Sample(samp3, input.texcoord).r;
-
- //   o.color0 = float4(gray0, gray0, gray0, 1.0);
- //   o.color1 = float4(gray1, gray1, gray1, 1.0);
- //   o.color2 = float4(gray2, gray2, gray2, 1.0);
- //   o.color3 = float4(gray3, gray3, gray3, 1.0);*/
-
-
-
-    //return o;
+		// Ï§ëÏã¨ÏóêÏÑú Í±∞Î¶¨Ïóê Îî∞Î•∏ Í∞ÄÏ§ëÏπò
+		// 1  4  6  4  1
+		// 4 16 24 16  4
+		// 6 24 36 24  6
+		// 4 16 24 16  4
+		// 1  4  6  4  1
+		// Ï¥ùÌï© = 256
 
 
 
-    PSOutput o;
 
-    float2 uv = input.texcoord;
+		blur += tex.Sample(samp0, uv + float2(-2, -2)*ts) * 1.0;
+		blur += tex.Sample(samp0, uv + float2(-1, -2)*ts) * 4.0;
+		blur += tex.Sample(samp0, uv + float2(0, -2)*ts) * 6.0;
+		blur += tex.Sample(samp0, uv + float2(1, -2)*ts) * 4.0;
+		blur += tex.Sample(samp0, uv + float2(2, -2)*ts) * 1.0;
 
-    //// ∞¢ ≈ÿΩ∫√≥ ª˘«√∏µ
-    //float4 base0 = tex0.Sample(samp0, uv);
-    //float4 base1 = tex1.Sample(samp1, uv);
-    //float4 base2 = tex2.Sample(samp2, uv);
-    //float4 base3 = tex3.Sample(samp3, uv);
+		blur += tex.Sample(samp0, uv + float2(-2, -1)*ts) * 4.0;
+		blur += tex.Sample(samp0, uv + float2(-1, -1)*ts) * 16.0;
+		blur += tex.Sample(samp0, uv + float2(0, -1)*ts) * 24.0;
+		blur += tex.Sample(samp0, uv + float2(1, -1)*ts) * 16.0;
+		blur += tex.Sample(samp0, uv + float2(2, -1)*ts) * 4.0;
 
-    //// ∞¢ ≈ÿΩ∫√≥ ª˘«√∏µ
-    //float4 base0 = tex[0].Sample(samp0, uv);
-    //float4 base1 = tex[1].Sample(samp1, uv);
-    //float4 base2 = tex[2].Sample(samp2, uv);
-    //float4 base3 = tex[3].Sample(samp3, uv);
+		blur += tex.Sample(samp0, uv + float2(-2, 0)*ts) * 6.0;
+		blur += tex.Sample(samp0, uv + float2(-1, 0)*ts) * 24.0;
+		blur += tex.Sample(samp0, uv + float2(0, 0)*ts) * 36.0;
+		blur += tex.Sample(samp0, uv + float2(1, 0)*ts) * 24.0;
+		blur += tex.Sample(samp0, uv + float2(2, 0)*ts) * 6.0;
 
-    float4 base;
-    switch (viewIndex)
-    {
-    case 0: base = tex[0].Sample(samp0, uv); break;
-    case 1: base = tex[1].Sample(samp1, uv); break;
-    case 2: base = tex[2].Sample(samp2, uv); break;
-    case 3: base = tex[3].Sample(samp3, uv); break;
-    }
+		blur += tex.Sample(samp0, uv + float2(-2, 1)*ts) * 4.0;
+		blur += tex.Sample(samp0, uv + float2(-1, 1)*ts) * 16.0;
+		blur += tex.Sample(samp0, uv + float2(0, 1)*ts) * 24.0;
+		blur += tex.Sample(samp0, uv + float2(1, 1)*ts) * 16.0;
+		blur += tex.Sample(samp0, uv + float2(2, 1)*ts) * 4.0;
 
+		blur += tex.Sample(samp0, uv + float2(-2, 2)*ts) * 1.0;
+		blur += tex.Sample(samp0, uv + float2(-1, 2)*ts) * 4.0;
+		blur += tex.Sample(samp0, uv + float2(0, 2)*ts) * 6.0;
+		blur += tex.Sample(samp0, uv + float2(1, 2)*ts) * 4.0;
+		blur += tex.Sample(samp0, uv + float2(2, 2)*ts) * 1.0;
 
-    //// Ω ¿⁄º± ¡∂∞«
-    //bool isCross0 = abs(uv.x - cross0.x) < crossThickness || abs(uv.y - cross0.y) < crossThickness;
-    //bool isCross1 = abs(uv.x - cross1.x) < crossThickness || abs(uv.y - cross1.y) < crossThickness;
-    //bool isCross2 = abs(uv.x - cross2.x) < crossThickness || abs(uv.y - cross2.y) < crossThickness;
-    //bool isCross3 = abs(uv.x - cross3.x) < crossThickness || abs(uv.y - cross3.y) < crossThickness;
+		blur /= 256.0;  // Í∞ÄÏ§ëÏπò Ï¥ùÌï©ÏúºÎ°ú ÎÇòÎàÑÍ∏∞
 
-    //bool isCross = false;
-    //if (viewIndex == 0)
-    //    isCross = abs(uv.x - crossUV.x) < crossThickness || abs(uv.y - crossUV.y) < crossThickness;
-    //else if (viewIndex == 1)
-    //    isCross = abs(uv.x - cross1.x) < crossThickness || abs(uv.y - cross1.y) < crossThickness;
-    //else if (viewIndex == 2)
-    //    isCross = abs(uv.x - cross1.x) < crossThickness || abs(uv.y - cross1.y) < crossThickness;
-    //else if (viewIndex == 3)
-    //    isCross = abs(uv.x - cross1.x) < crossThickness || abs(uv.y - cross1.y) < crossThickness;
+		// Unsharp mask
+		base = base + (base - blur) * sharpness*3.0;
+	}
 
+	bool isCross = abs(uv.x - crossUV.x) < crossThickness || abs(uv.y - crossUV.y) < crossThickness;
+	o.color0 = isCross ? float4(0.0, 0.0, 1.0, 1.0) : base;
 
-  //  float2 crossUV = ... // viewIndexø° µ˚∂Û º±≈√
-    bool isCross = abs(uv.x - crossUV.x) < crossThickness || abs(uv.y - crossUV.y) < crossThickness;
-    //bool isCross = abs(uv.x - 0.5f) < crossThickness || abs(uv.y - 0.5f) < crossThickness;
-
-    switch (viewIndex)
-    {
-
-
-        // Ω ¿⁄º± ∆˜«‘ ªˆªÛ √‚∑¬
-    case 0: o.color0 = isCross ? crossColor : base; break;
-    case 1:   o.color1 = isCross ? crossColor : base; break;
-    case 2:    o.color2 = isCross ? crossColor : base; break;
-   case 3:   o.color3 = isCross ? crossColor : base; break;
-	//case 3:   o.color3 = float4(1, 0, 0, 0); break;
-    }
-
-    return o;
-
+	return o;
 }
-
-
-//PSOutput PSMain(VSOutput input)
-//{
-//    float2 uv = input.texcoord;
-//
-//    // «ˆ¿Á ∫‰¿« ≈ÿΩ∫√≥ ª˘«√∏µ
-//    float4 base;
-//    //switch (viewIndex)
-//    //{
-//    //case 0:
-//    //    base = tex[0].Sample(samp0, uv);
-//    //    break;
-//    //case 1:
-//    //    base = tex[1].Sample(samp1, uv);
-//    //    break;
-//    //case 2:
-//    //    base = tex[2].Sample(samp2, uv);
-//    //    break;
-//    //case 3:
-//    //    base = tex[3].Sample(samp3, uv);
-//    //    break;
-//    //default:
-//    //    base = tex[0].Sample(samp0, uv); // fallback
-//    //    break;
-//    //}
-//
-//
-//
-//    switch (viewIndex)
-//    {
-//    case 0:
-//        base = tex[0].Sample(samp0, uv);
-//        break;
-//    case 1:
-//        base = tex[0].Sample(samp0, uv);
-//        break;
-//    case 2:
-//        base = tex[0].Sample(samp0, uv);
-//        break;
-//    case 3:
-//        base = tex[0].Sample(samp0, uv);
-//        break;
-//    default:
-//        base = tex[0].Sample(samp0, uv); // fallback
-//        break;
-//    }
-//
-//
-//    // Ω ¿⁄º± ¡∂∞«
-//    bool isCross = abs(uv.x - crossUV.x) < crossThickness || abs(uv.y - crossUV.y) < crossThickness;
-//
-//        PSOutput o;
-//   // o.color0= isCross ? crossColor : base;
-//
-//
-//    /*switch (viewIndex)
-//    {
-//    case 1:
-//        o.color0 = isCross ? crossColor : base;
-//        break;
-//    case 2:
-//        o.color1 = isCross ? crossColor : base;
-//        break;
-//    case 3:
-//        o.color2 = isCross ? crossColor : base;
-//        break;
-//    default:
-//        o.color3 = isCross ? crossColor : base;
-//        break;
-//    }*/
-//
-//    switch (viewIndex)
-//    {
-//    case 1:
-//        o.color0 = isCross ? crossColor : base;
-//        break;
-//    case 2:
-//        o.color1 = isCross ? crossColor : base;
-//        break;
-//    case 3:
-//        o.color2 = isCross ? crossColor : base;
-//        break;
-//    default:
-//        o.color3 = isCross ? crossColor : base;
-//        break;
-//    }
-//
-//    return o;
-//}
-
-
-//float box(float2 uv, float2 center, float2 size)
-//{
-//	float2 diff = abs(uv - center);
-//	return step(diff.x, size.x) * step(diff.y, size.y);
-//}
-//
-//PSOutput PSMain(VSOutput input)
-//{
-//	PSOutput o;
-//
-//	float2 uv = input.texcoord;
-//
-//	o.color0 = float4(box(uv, float2(0.5, 0.5), float2(0.2, 0.1)), 0, 0, 1); // ??Î™øËÄ??ÑÏèÖÎ≤??//	o.color1 = float4(0, box(uv, float2(0.3, 0.3), float2(0.1, 0.1)), 0, 1); // ?Œª?Ñ‰ª•??ÑÏèÖÎ≤??//	o.color2 = float4(0, 0, box(uv, float2(0.7, 0.7), float2(0.15, 0.15)), 1); // ??????ÑÏèÖÎ≤??//	o.color3 = float4(box(uv, float2(0.2, 0.8), float2(0.05, 0.05))); // ?ÔßèÍªã???????//
-//	return o;
-//}

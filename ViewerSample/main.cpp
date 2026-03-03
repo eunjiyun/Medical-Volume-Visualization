@@ -10,12 +10,12 @@
 //=> return->프로그램 종료
 int main(int argc, char *argv[])
 {
-    //qt gui 애플리케이션을 초기화하는 객체
-    //이벤트 루프 관리 및 모든 위젯의 생명주기를 통제함
-    QApplication a(argc, argv);
+	//qt gui 애플리케이션을 초기화하는 객체
+	//이벤트 루프 관리 및 모든 위젯의 생명주기를 통제함
+	QApplication a(argc, argv);
 
-    ViewerSample w;
-    w.show();
+	ViewerSample w;
+	w.show();
 
-    return a.exec();
+	return a.exec();
 }
